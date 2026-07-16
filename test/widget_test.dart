@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:attend_iq/app/app.dart';
@@ -13,6 +14,7 @@ void main() {
 
     // Verify that the Splash Screen is rendered and displays 'AttendIQ'
     expect(find.text('AttendIQ'), findsOneWidget);
-    expect(find.text('Go to Login'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }
+

@@ -1,16 +1,22 @@
 import 'package:isar/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_constants.dart';
+import '../../features/auth/data/models/user_local.dart';
+import '../../features/auth/data/models/semester_local.dart';
 
 part 'isar_provider.g.dart';
 
 @riverpod
 Future<Isar> isar(IsarRef ref) async {
   // In later phases, we will use path_provider to resolve the directory on mobile devices.
-  // For the Phase 0 bootstrap, we open Isar with an empty schema list.
+  // Register schemas (UserLocal, SemesterLocal) here in Phase 1
   return Isar.open(
-    schemas: const [], // Register schemas (Semester, Subject, etc.) here in Phase 1+
+    schemas: const [
+      UserLocalSchema,
+      SemesterLocalSchema,
+    ],
     name: AppConstants.isarDbName,
     directory: '.',
   );
 }
+
