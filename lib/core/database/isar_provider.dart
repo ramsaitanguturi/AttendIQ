@@ -6,6 +6,7 @@ import '../../features/auth/data/models/semester_local.dart';
 import '../../features/subject/data/models/subject_local.dart';
 import '../../features/timetable/data/models/timetable_template_local.dart';
 import '../event_generator/data/models/event_local.dart';
+import '../../features/attendance/data/models/attendance_record_local.dart';
 
 part 'isar_provider.g.dart';
 
@@ -20,6 +21,7 @@ Future<Isar> isar(IsarRef ref) async {
       SubjectLocalSchema,
       TimetableTemplateLocalSchema,
       EventLocalSchema,
+      AttendanceRecordLocalSchema,
     ],
     name: AppConstants.isarDbName,
     directory: '.',

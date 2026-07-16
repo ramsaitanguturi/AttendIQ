@@ -8,6 +8,7 @@ import '../features/auth/presentation/pages/register_page.dart';
 import '../features/auth/presentation/pages/onboarding_page.dart';
 import '../features/analytics/presentation/pages/dashboard_page.dart';
 import '../features/timetable/presentation/pages/weekly_timetable_page.dart';
+import '../features/attendance/presentation/pages/subject_details_page.dart';
 
 part 'app_router.g.dart';
 
@@ -98,6 +99,14 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/timetable',
         builder: (BuildContext context, GoRouterState state) {
           return const WeeklyTimetablePage();
+        },
+      ),
+      GoRoute(
+        path: '/subject/:id',
+        builder: (BuildContext context, GoRouterState state) {
+          final idString = state.pathParameters['id'];
+          final id = int.tryParse(idString ?? '') ?? 0;
+          return SubjectDetailsPage(subjectId: id);
         },
       ),
     ],
