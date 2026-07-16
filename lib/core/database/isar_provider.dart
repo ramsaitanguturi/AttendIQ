@@ -3,6 +3,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_constants.dart';
 import '../../features/auth/data/models/user_local.dart';
 import '../../features/auth/data/models/semester_local.dart';
+import '../../features/subject/data/models/subject_local.dart';
+import '../../features/timetable/data/models/timetable_template_local.dart';
+import '../event_generator/data/models/event_local.dart';
 
 part 'isar_provider.g.dart';
 
@@ -14,6 +17,9 @@ Future<Isar> isar(IsarRef ref) async {
     schemas: const [
       UserLocalSchema,
       SemesterLocalSchema,
+      SubjectLocalSchema,
+      TimetableTemplateLocalSchema,
+      EventLocalSchema,
     ],
     name: AppConstants.isarDbName,
     directory: '.',

@@ -7,6 +7,7 @@ import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/auth/presentation/pages/onboarding_page.dart';
 import '../features/analytics/presentation/pages/dashboard_page.dart';
+import '../features/timetable/presentation/pages/weekly_timetable_page.dart';
 
 part 'app_router.g.dart';
 
@@ -91,6 +92,12 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/dashboard',
         builder: (BuildContext context, GoRouterState state) {
           return const DashboardPage();
+        },
+      ),
+      GoRoute(
+        path: '/timetable',
+        builder: (BuildContext context, GoRouterState state) {
+          return const WeeklyTimetablePage();
         },
       ),
     ],
