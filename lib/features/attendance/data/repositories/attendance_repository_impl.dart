@@ -1,12 +1,17 @@
+import 'dart:convert';
 import '../../domain/entities/attendance_record.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../datasources/attendance_local_data_source.dart';
 import '../models/attendance_record_local.dart';
+import '../../../../core/sync/sync_queue/sync_queue.dart';
+import '../../../../core/sync/models/sync_mappers.dart';
+import '../../../../core/utils/uuid_generator.dart';
 
 class AttendanceRepositoryImpl implements AttendanceRepository {
   final AttendanceLocalDataSource _localDataSource;
+  final SyncQueue _syncQueue;
 
-  AttendanceRepositoryImpl(this._localDataSource);
+  AttendanceRepositoryImpl(this._localDataSource, this._syncQueue);
 
   AttendanceRecord _toEntity(AttendanceRecordLocal local) {
     return AttendanceRecord(
@@ -14,7 +19,10 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       serverId: local.serverId,
       eventId: local.eventId,
       subjectId: local.subjectId,
-      status: AttendanceStatus.fromString(local.status),
+      status: AttendanceStatus.values.firstWhere(
+        (e) => e.name == local.status,
+        orElse: () => AttendanceStatus.PRESENT,
+      ),
       markedAt: local.markedAt,
       updatedAt: local.updatedAt,
       isDirty: local.isDirty,
@@ -28,7 +36,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       ..serverId = entity.serverId
       ..eventId = entity.eventId
       ..subjectId = entity.subjectId
-      ..status = entity.status.toShortString()
+      ..status = entity.status.name
       ..markedAt = entity.markedAt
       ..updatedAt = entity.updatedAt
       ..isDirty = entity.isDirty
@@ -52,12 +60,47 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
 
   @override
   Future<void> saveAttendanceRecord(AttendanceRecord record) async {
-    final local = _toLocal(record);
+    final serverId = record.serverId ?? generateUuid();
+    final now = DateTime.now().toUtc();
+
+    final local = _toLocal(record)
+      ..serverId = serverId
+      ..updatedAt = now
+      ..isDirty = true
+      ..isDeleted = false;
+
+    final existing = await _localDataSource.getAttendanceForEvent(record.eventId);
+    local.createdAt = existing?.createdAt ?? now;
+
     await _localDataSource.saveAttendanceRecord(local);
+
+    await _syncQueue.enqueue(
+      collectionName: 'attendance_records',
+      documentId: serverId,
+      operationType: record.serverId != null ? 'UPDATE' : 'CREATE',
+      payload: jsonEncode(local.toMap()),
+    );
   }
 
   @override
   Future<void> deleteAttendanceRecord(int id) async {
-    await _localDataSource.deleteAttendanceRecord(id);
+    final local = await _localDataSource.getAttendanceRecordById(id);
+    if (local != null) {
+      final now = DateTime.now().toUtc();
+      local.isDeleted = true;
+      local.isDirty = true;
+      local.updatedAt = now;
+
+      await _localDataSource.saveAttendanceRecord(local);
+
+      if (local.serverId != null) {
+        await _syncQueue.enqueue(
+          collectionName: 'attendance_records',
+          documentId: local.serverId!,
+          operationType: 'DELETE',
+          payload: jsonEncode(local.toMap()),
+        );
+      }
+    }
   }
 }

@@ -42,7 +42,7 @@ final subjectRemoteDataSourceProvider =
 
 typedef SubjectRemoteDataSourceRef
     = AutoDisposeProviderRef<SubjectRemoteDataSource>;
-String _$subjectRepositoryHash() => r'e15b871228b4570fc787e3685408d4ee205ca818';
+String _$subjectRepositoryHash() => r'922283c915f515f99ed710feb064028ce2aadb45';
 
 /// See also [subjectRepository].
 @ProviderFor(subjectRepository)

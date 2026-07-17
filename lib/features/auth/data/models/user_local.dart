@@ -13,4 +13,10 @@ class UserLocal {
   late String email;
   late DateTime createdAt;
   late DateTime updatedAt;
+
+  @Index(unique: true)
+  String? serverId;
+
+  late bool isDirty;
+  late bool isDeleted;
 }

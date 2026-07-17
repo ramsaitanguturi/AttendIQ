@@ -1,24 +1,24 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'isar_provider.dart';
+part of 'sync_queue.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$isarHash() => r'16c2d8396f67aae2be634af55409f83e5f5eb93e';
+String _$syncQueueHash() => r'270d5b9a045da43a49bb7c67341b17460e0d0760';
 
-/// See also [isar].
-@ProviderFor(isar)
-final isarProvider = AutoDisposeFutureProvider<Isar>.internal(
-  isar,
-  name: r'isarProvider',
+/// See also [syncQueue].
+@ProviderFor(syncQueue)
+final syncQueueProvider = AutoDisposeProvider<SyncQueue>.internal(
+  syncQueue,
+  name: r'syncQueueProvider',
   debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$isarHash,
+      const bool.fromEnvironment('dart.vm.product') ? null : _$syncQueueHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef IsarRef = AutoDisposeFutureProviderRef<Isar>;
+typedef SyncQueueRef = AutoDisposeProviderRef<SyncQueue>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

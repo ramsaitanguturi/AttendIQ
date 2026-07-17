@@ -42,6 +42,10 @@ const AttendanceRecordLocalSchema = IsarGeneratedSchema(
         type: IsarType.dateTime,
       ),
       IsarPropertySchema(
+        name: 'createdAt',
+        type: IsarType.dateTime,
+      ),
+      IsarPropertySchema(
         name: 'updatedAt',
         type: IsarType.dateTime,
       ),
@@ -105,9 +109,11 @@ int serializeAttendanceRecordLocal(
   IsarCore.writeString(writer, 4, object.status);
   IsarCore.writeLong(writer, 5, object.markedAt.toUtc().microsecondsSinceEpoch);
   IsarCore.writeLong(
-      writer, 6, object.updatedAt.toUtc().microsecondsSinceEpoch);
-  IsarCore.writeBool(writer, 7, object.isDirty);
-  IsarCore.writeBool(writer, 8, object.isDeleted);
+      writer, 6, object.createdAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeLong(
+      writer, 7, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeBool(writer, 8, object.isDirty);
+  IsarCore.writeBool(writer, 9, object.isDeleted);
   return object.id;
 }
 
@@ -132,6 +138,16 @@ AttendanceRecordLocal deserializeAttendanceRecordLocal(IsarReader reader) {
   {
     final value = IsarCore.readLong(reader, 6);
     if (value == -9223372036854775808) {
+      object.createdAt =
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+    } else {
+      object.createdAt =
+          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
+  }
+  {
+    final value = IsarCore.readLong(reader, 7);
+    if (value == -9223372036854775808) {
       object.updatedAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
     } else {
@@ -139,8 +155,8 @@ AttendanceRecordLocal deserializeAttendanceRecordLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.isDirty = IsarCore.readBool(reader, 7);
-  object.isDeleted = IsarCore.readBool(reader, 8);
+  object.isDirty = IsarCore.readBool(reader, 8);
+  object.isDeleted = IsarCore.readBool(reader, 9);
   return object;
 }
 
@@ -178,9 +194,19 @@ dynamic deserializeAttendanceRecordLocalProp(IsarReader reader, int property) {
         }
       }
     case 7:
-      return IsarCore.readBool(reader, 7);
+      {
+        final value = IsarCore.readLong(reader, 7);
+        if (value == -9223372036854775808) {
+          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+        } else {
+          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
+              .toLocal();
+        }
+      }
     case 8:
       return IsarCore.readBool(reader, 8);
+    case 9:
+      return IsarCore.readBool(reader, 9);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -194,6 +220,7 @@ sealed class _AttendanceRecordLocalUpdate {
     int? subjectId,
     String? status,
     DateTime? markedAt,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -213,6 +240,7 @@ class _AttendanceRecordLocalUpdateImpl implements _AttendanceRecordLocalUpdate {
     Object? subjectId = ignore,
     Object? status = ignore,
     Object? markedAt = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -225,9 +253,10 @@ class _AttendanceRecordLocalUpdateImpl implements _AttendanceRecordLocalUpdate {
           if (subjectId != ignore) 3: subjectId as int?,
           if (status != ignore) 4: status as String?,
           if (markedAt != ignore) 5: markedAt as DateTime?,
-          if (updatedAt != ignore) 6: updatedAt as DateTime?,
-          if (isDirty != ignore) 7: isDirty as bool?,
-          if (isDeleted != ignore) 8: isDeleted as bool?,
+          if (createdAt != ignore) 6: createdAt as DateTime?,
+          if (updatedAt != ignore) 7: updatedAt as DateTime?,
+          if (isDirty != ignore) 8: isDirty as bool?,
+          if (isDeleted != ignore) 9: isDeleted as bool?,
         }) >
         0;
   }
@@ -241,6 +270,7 @@ sealed class _AttendanceRecordLocalUpdateAll {
     int? subjectId,
     String? status,
     DateTime? markedAt,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -261,6 +291,7 @@ class _AttendanceRecordLocalUpdateAllImpl
     Object? subjectId = ignore,
     Object? status = ignore,
     Object? markedAt = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -271,9 +302,10 @@ class _AttendanceRecordLocalUpdateAllImpl
       if (subjectId != ignore) 3: subjectId as int?,
       if (status != ignore) 4: status as String?,
       if (markedAt != ignore) 5: markedAt as DateTime?,
-      if (updatedAt != ignore) 6: updatedAt as DateTime?,
-      if (isDirty != ignore) 7: isDirty as bool?,
-      if (isDeleted != ignore) 8: isDeleted as bool?,
+      if (createdAt != ignore) 6: createdAt as DateTime?,
+      if (updatedAt != ignore) 7: updatedAt as DateTime?,
+      if (isDirty != ignore) 8: isDirty as bool?,
+      if (isDeleted != ignore) 9: isDeleted as bool?,
     });
   }
 }
@@ -294,6 +326,7 @@ sealed class _AttendanceRecordLocalQueryUpdate {
     int? subjectId,
     String? status,
     DateTime? markedAt,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -314,6 +347,7 @@ class _AttendanceRecordLocalQueryUpdateImpl
     Object? subjectId = ignore,
     Object? status = ignore,
     Object? markedAt = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -324,9 +358,10 @@ class _AttendanceRecordLocalQueryUpdateImpl
       if (subjectId != ignore) 3: subjectId as int?,
       if (status != ignore) 4: status as String?,
       if (markedAt != ignore) 5: markedAt as DateTime?,
-      if (updatedAt != ignore) 6: updatedAt as DateTime?,
-      if (isDirty != ignore) 7: isDirty as bool?,
-      if (isDeleted != ignore) 8: isDeleted as bool?,
+      if (createdAt != ignore) 6: createdAt as DateTime?,
+      if (updatedAt != ignore) 7: updatedAt as DateTime?,
+      if (isDirty != ignore) 8: isDirty as bool?,
+      if (isDeleted != ignore) 9: isDeleted as bool?,
     });
   }
 }
@@ -354,6 +389,7 @@ class _AttendanceRecordLocalQueryBuilderUpdateImpl
     Object? subjectId = ignore,
     Object? status = ignore,
     Object? markedAt = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -366,9 +402,10 @@ class _AttendanceRecordLocalQueryBuilderUpdateImpl
         if (subjectId != ignore) 3: subjectId as int?,
         if (status != ignore) 4: status as String?,
         if (markedAt != ignore) 5: markedAt as DateTime?,
-        if (updatedAt != ignore) 6: updatedAt as DateTime?,
-        if (isDirty != ignore) 7: isDirty as bool?,
-        if (isDeleted != ignore) 8: isDeleted as bool?,
+        if (createdAt != ignore) 6: createdAt as DateTime?,
+        if (updatedAt != ignore) 7: updatedAt as DateTime?,
+        if (isDirty != ignore) 8: isDirty as bool?,
+        if (isDeleted != ignore) 9: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -1110,7 +1147,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
-      QAfterFilterCondition> updatedAtEqualTo(
+      QAfterFilterCondition> createdAtEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1124,7 +1161,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
-      QAfterFilterCondition> updatedAtGreaterThan(
+      QAfterFilterCondition> createdAtGreaterThan(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1138,7 +1175,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
-      QAfterFilterCondition> updatedAtGreaterThanOrEqualTo(
+      QAfterFilterCondition> createdAtGreaterThanOrEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1152,7 +1189,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
-      QAfterFilterCondition> updatedAtLessThan(
+      QAfterFilterCondition> createdAtLessThan(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1166,7 +1203,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
-      QAfterFilterCondition> updatedAtLessThanOrEqualTo(
+      QAfterFilterCondition> createdAtLessThanOrEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1180,7 +1217,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
-      QAfterFilterCondition> updatedAtBetween(
+      QAfterFilterCondition> createdAtBetween(
     DateTime lower,
     DateTime upper,
   ) {
@@ -1196,13 +1233,99 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> updatedAtEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> updatedAtGreaterThan(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> updatedAtGreaterThanOrEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> updatedAtLessThan(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> updatedAtLessThanOrEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> updatedAtBetween(
+    DateTime lower,
+    DateTime upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 7,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
       QAfterFilterCondition> isDirtyEqualTo(
     bool value,
   ) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 7,
+          property: 8,
           value: value,
         ),
       );
@@ -1216,7 +1339,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 8,
+          property: 9,
           value: value,
         ),
       );
@@ -1328,44 +1451,58 @@ extension AttendanceRecordLocalQuerySortBy
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByUpdatedAt() {
+      sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByUpdatedAtDesc() {
+      sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByIsDirty() {
+      sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByIsDirtyDesc() {
+      sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByIsDeleted() {
+      sortByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByIsDeletedDesc() {
+      sortByIsDirtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(9);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(9, sort: Sort.desc);
     });
   }
 }
@@ -1457,44 +1594,58 @@ extension AttendanceRecordLocalQuerySortThenBy
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByUpdatedAt() {
+      thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByUpdatedAtDesc() {
+      thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDirty() {
+      thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDirtyDesc() {
+      thenByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDeleted() {
+      thenByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDeletedDesc() {
+      thenByIsDirtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(9);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(9, sort: Sort.desc);
     });
   }
 }
@@ -1537,23 +1688,30 @@ extension AttendanceRecordLocalQueryWhereDistinct
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByUpdatedAt() {
+      distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(6);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByIsDirty() {
+      distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByIsDeleted() {
+      distinctByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(8);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(9);
     });
   }
 }
@@ -1599,22 +1757,29 @@ extension AttendanceRecordLocalQueryProperty1
   }
 
   QueryBuilder<AttendanceRecordLocal, DateTime, QAfterProperty>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, bool, QAfterProperty> isDirtyProperty() {
+  QueryBuilder<AttendanceRecordLocal, DateTime, QAfterProperty>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, bool, QAfterProperty> isDirtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, bool, QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(8);
+      return query.addProperty(9);
     });
   }
 }
@@ -1663,23 +1828,30 @@ extension AttendanceRecordLocalQueryProperty2<R>
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, DateTime), QAfterProperty>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, (R, bool), QAfterProperty>
-      isDirtyProperty() {
+  QueryBuilder<AttendanceRecordLocal, (R, DateTime), QAfterProperty>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, bool), QAfterProperty>
-      isDeletedProperty() {
+      isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, (R, bool), QAfterProperty>
+      isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
     });
   }
 }
@@ -1728,23 +1900,30 @@ extension AttendanceRecordLocalQueryProperty3<R1, R2>
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, DateTime), QOperations>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, (R1, R2, bool), QOperations>
-      isDirtyProperty() {
+  QueryBuilder<AttendanceRecordLocal, (R1, R2, DateTime), QOperations>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, bool), QOperations>
-      isDeletedProperty() {
+      isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, (R1, R2, bool), QOperations>
+      isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
     });
   }
 }

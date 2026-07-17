@@ -56,7 +56,7 @@ final authRepositoryProvider = AutoDisposeProvider<AuthRepository>.internal(
 
 typedef AuthRepositoryRef = AutoDisposeProviderRef<AuthRepository>;
 String _$semesterRepositoryHash() =>
-    r'9a159b3b7b66aa5ed7113c9eb1b453a779f7a2fa';
+    r'de6a404fed9773106c62efb9eb96e588aea33295';
 
 /// See also [semesterRepository].
 @ProviderFor(semesterRepository)

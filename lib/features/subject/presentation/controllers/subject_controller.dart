@@ -11,6 +11,8 @@ import '../../../../core/database/isar_provider.dart';
 import '../../../auth/data/models/semester_local.dart';
 import '../../data/models/subject_local.dart';
 
+import '../../../../core/sync/sync_queue/sync_queue.dart';
+
 part 'subject_controller.g.dart';
 
 @riverpod
@@ -28,8 +30,7 @@ SubjectRemoteDataSource subjectRemoteDataSource(SubjectRemoteDataSourceRef ref) 
 SubjectRepository subjectRepository(SubjectRepositoryRef ref) {
   return SubjectRepositoryImpl(
     localDataSource: ref.watch(subjectLocalDataSourceProvider),
-    remoteDataSource: ref.watch(subjectRemoteDataSourceProvider),
-    authLocalDataSource: ref.watch(authLocalDataSourceProvider),
+    syncQueue: ref.watch(syncQueueProvider),
   );
 }
 

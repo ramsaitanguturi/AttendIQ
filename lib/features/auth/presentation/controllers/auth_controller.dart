@@ -15,6 +15,8 @@ import '../../domain/usecases/create_semester_use_case.dart';
 import '../../domain/entities/semester.dart';
 import '../../../../core/database/isar_provider.dart';
 
+import '../../../../core/sync/sync_queue/sync_queue.dart';
+
 part 'auth_controller.g.dart';
 
 @riverpod
@@ -40,7 +42,7 @@ AuthRepository authRepository(AuthRepositoryRef ref) {
 SemesterRepository semesterRepository(SemesterRepositoryRef ref) {
   return SemesterRepositoryImpl(
     localDataSource: ref.watch(authLocalDataSourceProvider),
-    remoteDataSource: ref.watch(authRemoteDataSourceProvider),
+    syncQueue: ref.watch(syncQueueProvider),
   );
 }
 

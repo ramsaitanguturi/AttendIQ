@@ -1,40 +1,26 @@
+import 'dart:convert';
 import '../../domain/entities/semester.dart';
 import '../../domain/repositories/semester_repository.dart';
 import '../datasources/auth_local_data_source.dart';
-import '../datasources/auth_remote_data_source.dart';
 import '../models/semester_local.dart';
+import '../../../../core/sync/sync_queue/sync_queue.dart';
+import '../../../../core/sync/models/sync_mappers.dart';
+import '../../../../core/utils/uuid_generator.dart';
 
 class SemesterRepositoryImpl implements SemesterRepository {
   final AuthLocalDataSource _localDataSource;
-  final AuthRemoteDataSource _remoteDataSource;
+  final SyncQueue _syncQueue;
 
   SemesterRepositoryImpl({
     required AuthLocalDataSource localDataSource,
-    required AuthRemoteDataSource remoteDataSource,
+    required SyncQueue syncQueue,
   })  : _localDataSource = localDataSource,
-        _remoteDataSource = remoteDataSource;
+        _syncQueue = syncQueue;
 
   @override
   Future<void> createSemester(Semester semester) async {
-    final cachedUser = await _localDataSource.getUser();
-    final uid = cachedUser?.uid ?? 'anonymous';
-
-    String? serverId;
-    bool isDirty = true;
-
-    try {
-      serverId = await _remoteDataSource.saveSemester(
-        uid: uid,
-        name: semester.name,
-        startDate: semester.startDate,
-        endDate: semester.endDate,
-        requiredAttendanceRate: semester.requiredAttendanceRate,
-      );
-      isDirty = false;
-    } catch (e) {
-      serverId = null;
-      isDirty = true;
-    }
+    final serverId = semester.id ?? generateUuid();
+    final now = DateTime.now().toUtc();
 
     final localSemester = SemesterLocal()
       ..serverId = serverId
@@ -42,11 +28,19 @@ class SemesterRepositoryImpl implements SemesterRepository {
       ..startDate = semester.startDate
       ..endDate = semester.endDate
       ..requiredAttendanceRate = semester.requiredAttendanceRate
-      ..updatedAt = DateTime.now()
-      ..isDirty = isDirty
+      ..createdAt = now
+      ..updatedAt = now
+      ..isDirty = true
       ..isDeleted = false;
 
     await _localDataSource.saveSemester(localSemester);
+
+    await _syncQueue.enqueue(
+      collectionName: 'semesters',
+      documentId: serverId,
+      operationType: 'CREATE',
+      payload: jsonEncode(localSemester.toMap()),
+    );
   }
 
   @override

@@ -1,7 +1,9 @@
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 // App Imports
+import 'package:attend_iq/features/auth/domain/entities/user.dart';
 import 'package:attend_iq/features/auth/domain/entities/semester.dart';
 import 'package:attend_iq/features/auth/data/models/user_local.dart';
 import 'package:attend_iq/features/auth/data/models/semester_local.dart';
@@ -9,68 +11,88 @@ import 'package:attend_iq/features/auth/data/datasources/auth_local_data_source.
 import 'package:attend_iq/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:attend_iq/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:attend_iq/features/auth/data/repositories/semester_repository_impl.dart';
+import 'package:attend_iq/core/sync/sync_queue/sync_queue.dart';
+import 'package:attend_iq/core/sync/models/sync_operation.dart';
 
-// Mocks
-class MockUserCredential implements fb.UserCredential {
-  @override
-  final fb.User? user;
-  MockUserCredential(this.user);
+// Fakes
+class FakeSyncQueue implements SyncQueue {
+  final List<SyncOperation> operations = [];
+  int _nextId = 1;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<void> enqueue({
+    required String collectionName,
+    required String documentId,
+    required String operationType,
+    required String payload,
+  }) async {
+    operations.add(SyncOperation()
+      ..id = _nextId++
+      ..collectionName = collectionName
+      ..documentId = documentId
+      ..operationType = operationType
+      ..payload = payload
+      ..createdAt = DateTime.now().toUtc()
+      ..retryCount = 0);
+  }
+
+  @override
+  Future<List<SyncOperation>> getPendingOperations() async => operations;
+  @override
+  Future<void> remove(int id) async => operations.removeWhere((op) => op.id == id);
+  @override
+  Future<void> incrementRetryCount(int id) async {}
 }
 
-class MockFbUser implements fb.User {
-  @override
-  final String uid;
-  @override
-  final String? email;
-  @override
-  final String? displayName;
-
-  MockFbUser({required this.uid, this.email, this.displayName});
+class FakeAuthLocalDataSource implements AuthLocalDataSource {
+  UserLocal? currentUser;
+  SemesterLocal? activeSemester;
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<void> saveUser(UserLocal user) async => currentUser = user;
+  @override
+  Future<UserLocal?> getUser() async => currentUser;
+  @override
+  Future<void> clearUser() async {
+    currentUser = null;
+    activeSemester = null;
+  }
+  @override
+  Future<void> saveSemester(SemesterLocal semester) async => activeSemester = semester;
+  @override
+  Future<SemesterLocal?> getActiveSemester() async => activeSemester;
+  @override
+  Future<bool> hasActiveSemester() async => activeSemester != null;
 }
 
 class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   final Map<String, Map<String, dynamic>> usersCollection = {};
   final Map<String, Map<String, dynamic>> semestersCollection = {};
   bool isOnline = true;
-  fb.User? currentUser;
 
   @override
-  Future<fb.UserCredential> registerWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    if (!isOnline) throw Exception('No network connection');
-    final user = MockFbUser(uid: 'mock_uid_${email.split("@")[0]}', email: email);
-    currentUser = user;
-    return MockUserCredential(user);
+  Future<fb_auth.UserCredential> registerWithEmailAndPassword({required String email, required String password}) async {
+    if (!isOnline) throw Exception('No internet');
+    return MockUserCredential('mock_uid_123');
   }
 
   @override
-  Future<fb.UserCredential> loginWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    if (!isOnline) throw Exception('No network connection');
-    final user = MockFbUser(uid: 'mock_uid_${email.split("@")[0]}', email: email);
-    currentUser = user;
-    return MockUserCredential(user);
+  Future<fb_auth.UserCredential> loginWithEmailAndPassword({required String email, required String password}) async {
+    if (!isOnline) throw Exception('No internet');
+    String uid = 'mock_uid_123';
+    for (final entry in usersCollection.entries) {
+      if (entry.value['email'] == email) {
+        uid = entry.key;
+        break;
+      }
+    }
+    return MockUserCredential(uid);
   }
 
   @override
-  Future<void> logout() async {
-    currentUser = null;
-  }
-
+  Future<void> logout() async {}
   @override
-  Future<void> sendForgotPasswordEmail({required String email}) async {
-    if (!isOnline) throw Exception('No network connection');
-  }
+  Future<void> sendForgotPasswordEmail({required String email}) async {}
 
   @override
   Future<void> saveUserProfile({
@@ -79,7 +101,6 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
     required String email,
     required DateTime createdAt,
   }) async {
-    if (!isOnline) throw Exception('No network connection');
     usersCollection[uid] = {
       'uid': uid,
       'name': name,
@@ -90,7 +111,6 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>?> fetchUserProfile({required String uid}) async {
-    if (!isOnline) throw Exception('No network connection');
     return usersCollection[uid];
   }
 
@@ -103,8 +123,8 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
     required double requiredAttendanceRate,
     String? serverId,
   }) async {
-    if (!isOnline) throw Exception('No network connection');
-    final id = serverId ?? 'mock_semester_id_${DateTime.now().millisecondsSinceEpoch}';
+    if (!isOnline) throw Exception('No internet');
+    final id = serverId ?? 'semester_abc';
     semestersCollection[id] = {
       'userId': uid,
       'name': name,
@@ -117,55 +137,35 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 }
 
-class FakeAuthLocalDataSource implements AuthLocalDataSource {
-  UserLocal? currentUser;
-  SemesterLocal? activeSemester;
-
+class MockUserCredential implements fb_auth.UserCredential {
   @override
-  Future<void> saveUser(UserLocal user) async {
-    currentUser = user;
-  }
-
+  final MockUser? user;
+  MockUserCredential(String uid) : user = MockUser(uid);
   @override
-  Future<UserLocal?> getUser() async {
-    return currentUser;
-  }
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
+class MockUser implements fb_auth.User {
   @override
-  Future<void> clearUser() async {
-    currentUser = null;
-    activeSemester = null;
-  }
-
+  final String uid;
   @override
-  Future<void> saveSemester(SemesterLocal semester) async {
-    activeSemester = semester;
-  }
-
+  final String? displayName;
+  MockUser(this.uid, {this.displayName});
   @override
-  Future<SemesterLocal?> getActiveSemester() async {
-    if (activeSemester != null && !activeSemester!.isDeleted) {
-      return activeSemester;
-    }
-    return null;
-  }
-
-  @override
-  Future<bool> hasActiveSemester() async {
-    final active = await getActiveSemester();
-    return active != null;
-  }
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
-  late AuthLocalDataSource localDataSource;
+  late FakeAuthLocalDataSource localDataSource;
   late FakeAuthRemoteDataSource remoteDataSource;
+  late FakeSyncQueue syncQueue;
   late AuthRepositoryImpl authRepository;
   late SemesterRepositoryImpl semesterRepository;
 
   setUp(() {
     localDataSource = FakeAuthLocalDataSource();
     remoteDataSource = FakeAuthRemoteDataSource();
+    syncQueue = FakeSyncQueue();
 
     authRepository = AuthRepositoryImpl(
       localDataSource: localDataSource,
@@ -174,11 +174,9 @@ void main() {
 
     semesterRepository = SemesterRepositoryImpl(
       localDataSource: localDataSource,
-      remoteDataSource: remoteDataSource,
+      syncQueue: syncQueue,
     );
   });
-
-  tearDown(() {});
 
   group('Authentication Caching & Profiles', () {
     test('Register stores user locally and remotely', () async {
@@ -240,13 +238,16 @@ void main() {
         ..name = 'Rohan'
         ..email = 'rohan@test.com'
         ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now());
+        ..updatedAt = DateTime.now()
+        ..isDirty = false
+        ..isDeleted = false);
 
       await localDataSource.saveSemester(SemesterLocal()
         ..name = 'Fall 2026'
         ..startDate = DateTime.now()
         ..endDate = DateTime.now().add(const Duration(days: 90))
         ..requiredAttendanceRate = 75.0
+        ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false);
@@ -267,7 +268,9 @@ void main() {
         ..name = 'Kevin'
         ..email = 'kevin@test.com'
         ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now();
+        ..updatedAt = DateTime.now()
+        ..isDirty = false
+        ..isDeleted = false;
 
       await localDataSource.saveUser(localUser);
 
@@ -282,13 +285,15 @@ void main() {
   });
 
   group('Onboarding Setup Flow', () {
-    test('Create semester sets local status and pushes remotely if online', () async {
+    test('Create semester sets local status to dirty and enqueues CREATE sync operation', () async {
       await localDataSource.saveUser(UserLocal()
         ..uid = 'user123'
         ..name = 'Rohan'
         ..email = 'rohan@test.com'
         ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now());
+        ..updatedAt = DateTime.now()
+        ..isDirty = false
+        ..isDeleted = false);
 
       final start = DateTime.now();
       final end = start.add(const Duration(days: 90));
@@ -306,43 +311,15 @@ void main() {
       expect(active, isNotNull);
       expect(active!.name, 'Spring 2026');
       expect(active.requiredAttendanceRate, 80.0);
-      expect(active.isDirty, isFalse); // Should be false because remote succeeded
-      expect(active.serverId, isNotNull);
+      expect(active.isDirty, isTrue); // In outbox flow, this starts as true
+      expect(active.serverId, isNotNull); // UUID is generated locally offline
 
-      // Verify remote document
-      expect(remoteDataSource.semestersCollection, isNotEmpty);
-      final remoteDoc = remoteDataSource.semestersCollection[active.serverId!];
-      expect(remoteDoc, isNotNull);
-      expect(remoteDoc!['name'], 'Spring 2026');
-    });
-
-    test('Create semester caches locally with isDirty=true when remote throws offline', () async {
-      await localDataSource.saveUser(UserLocal()
-        ..uid = 'user123'
-        ..name = 'Rohan'
-        ..email = 'rohan@test.com'
-        ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now());
-
-      remoteDataSource.isOnline = false; // Go offline
-
-      final start = DateTime.now();
-      final end = start.add(const Duration(days: 90));
-      final semester = Semester(
-        name: 'Spring 2026 (Offline)',
-        startDate: start,
-        endDate: end,
-        requiredAttendanceRate: 80.0,
-      );
-
-      await semesterRepository.createSemester(semester);
-
-      // Verify local status
-      final active = await localDataSource.getActiveSemester();
-      expect(active, isNotNull);
-      expect(active!.name, 'Spring 2026 (Offline)');
-      expect(active.isDirty, isTrue); // Must be marked dirty
-      expect(active.serverId, isNull);
+      // Verify Sync Queue has the CREATE operation
+      expect(syncQueue.operations.length, 1);
+      final op = syncQueue.operations.first;
+      expect(op.collectionName, 'semesters');
+      expect(op.documentId, active.serverId);
+      expect(op.operationType, 'CREATE');
     });
   });
 }

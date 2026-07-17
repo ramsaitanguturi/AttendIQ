@@ -1,22 +1,21 @@
+import 'dart:convert';
 import '../../domain/entities/subject.dart';
 import '../../domain/repositories/subject_repository.dart';
 import '../datasources/subject_local_data_source.dart';
-import '../datasources/subject_remote_data_source.dart';
 import '../models/subject_local.dart';
-import '../../../auth/data/datasources/auth_local_data_source.dart';
+import '../../../../core/sync/sync_queue/sync_queue.dart';
+import '../../../../core/sync/models/sync_mappers.dart';
+import '../../../../core/utils/uuid_generator.dart';
 
 class SubjectRepositoryImpl implements SubjectRepository {
   final SubjectLocalDataSource _localDataSource;
-  final SubjectRemoteDataSource _remoteDataSource;
-  final AuthLocalDataSource _authLocalDataSource;
+  final SyncQueue _syncQueue;
 
   SubjectRepositoryImpl({
     required SubjectLocalDataSource localDataSource,
-    required SubjectRemoteDataSource remoteDataSource,
-    required AuthLocalDataSource authLocalDataSource,
+    required SyncQueue syncQueue,
   })  : _localDataSource = localDataSource,
-        _remoteDataSource = remoteDataSource,
-        _authLocalDataSource = authLocalDataSource;
+        _syncQueue = syncQueue;
 
   Subject _toEntity(SubjectLocal local) {
     return Subject(
@@ -70,90 +69,68 @@ class SubjectRepositoryImpl implements SubjectRepository {
 
   @override
   Future<void> createSubject(Subject subject) async {
-    final cachedUser = await _authLocalDataSource.getUser();
-    final uid = cachedUser?.uid ?? 'anonymous';
-
-    String? serverId;
-    bool isDirty = true;
-
-    try {
-      serverId = await _remoteDataSource.saveSubject(
-        uid: uid,
-        semesterId: subject.semesterId.toString(),
-        name: subject.name,
-        code: subject.code,
-        faculty: subject.faculty,
-        credits: subject.credits,
-        attendanceTarget: subject.attendanceTarget,
-        color: subject.color,
-        type: subject.type.toShortString(),
-      );
-      isDirty = false;
-    } catch (e) {
-      serverId = null;
-      isDirty = true;
-    }
+    final serverId = subject.serverId ?? generateUuid();
+    final now = DateTime.now().toUtc();
 
     final localSubject = _toLocal(subject)
       ..serverId = serverId
-      ..isDirty = isDirty
-      ..updatedAt = DateTime.now();
+      ..createdAt = now
+      ..updatedAt = now
+      ..isDirty = true
+      ..isDeleted = false;
 
     await _localDataSource.saveSubject(localSubject);
+
+    await _syncQueue.enqueue(
+      collectionName: 'subjects',
+      documentId: serverId,
+      operationType: 'CREATE',
+      payload: jsonEncode(localSubject.toMap()),
+    );
   }
 
   @override
   Future<void> updateSubject(Subject subject) async {
-    final cachedUser = await _authLocalDataSource.getUser();
-    final uid = cachedUser?.uid ?? 'anonymous';
-
-    bool isDirty = true;
-    try {
-      if (subject.serverId != null) {
-        await _remoteDataSource.saveSubject(
-          uid: uid,
-          semesterId: subject.semesterId.toString(),
-          name: subject.name,
-          code: subject.code,
-          faculty: subject.faculty,
-          credits: subject.credits,
-          attendanceTarget: subject.attendanceTarget,
-          color: subject.color,
-          type: subject.type.toShortString(),
-          serverId: subject.serverId,
-        );
-        isDirty = false;
-      }
-    } catch (e) {
-      isDirty = true;
-    }
+    final now = DateTime.now().toUtc();
+    final serverId = subject.serverId ?? generateUuid();
 
     final localSubject = _toLocal(subject)
-      ..isDirty = isDirty
-      ..updatedAt = DateTime.now();
+      ..serverId = serverId
+      ..updatedAt = now
+      ..isDirty = true;
+
+    final existing = await _localDataSource.getSubjectById(localSubject.id);
+    localSubject.createdAt = existing?.createdAt ?? now;
 
     await _localDataSource.saveSubject(localSubject);
+
+    await _syncQueue.enqueue(
+      collectionName: 'subjects',
+      documentId: serverId,
+      operationType: 'UPDATE',
+      payload: jsonEncode(localSubject.toMap()),
+    );
   }
 
   @override
   Future<void> deleteSubject(int id) async {
     final local = await _localDataSource.getSubjectById(id);
     if (local != null) {
-      bool isDirty = true;
-      try {
-        if (local.serverId != null) {
-          await _remoteDataSource.deleteSubject(local.serverId!);
-          isDirty = false;
-        }
-      } catch (e) {
-        isDirty = true;
-      }
-
+      final now = DateTime.now().toUtc();
       local.isDeleted = true;
-      local.isDirty = isDirty;
-      local.updatedAt = DateTime.now();
+      local.isDirty = true;
+      local.updatedAt = now;
 
       await _localDataSource.saveSubject(local);
+
+      if (local.serverId != null) {
+        await _syncQueue.enqueue(
+          collectionName: 'subjects',
+          documentId: local.serverId!,
+          operationType: 'DELETE',
+          payload: jsonEncode(local.toMap()),
+        );
+      }
     }
   }
 }

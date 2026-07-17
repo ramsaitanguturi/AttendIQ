@@ -54,6 +54,10 @@ const TimetableTemplateLocalSchema = IsarGeneratedSchema(
         type: IsarType.string,
       ),
       IsarPropertySchema(
+        name: 'createdAt',
+        type: IsarType.dateTime,
+      ),
+      IsarPropertySchema(
         name: 'updatedAt',
         type: IsarType.dateTime,
       ),
@@ -141,9 +145,11 @@ int serializeTimetableTemplateLocal(
     }
   }
   IsarCore.writeLong(
-      writer, 9, object.updatedAt.toUtc().microsecondsSinceEpoch);
-  IsarCore.writeBool(writer, 10, object.isDirty);
-  IsarCore.writeBool(writer, 11, object.isDeleted);
+      writer, 9, object.createdAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeLong(
+      writer, 10, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeBool(writer, 11, object.isDirty);
+  IsarCore.writeBool(writer, 12, object.isDeleted);
   return object.id;
 }
 
@@ -162,6 +168,16 @@ TimetableTemplateLocal deserializeTimetableTemplateLocal(IsarReader reader) {
   {
     final value = IsarCore.readLong(reader, 9);
     if (value == -9223372036854775808) {
+      object.createdAt =
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+    } else {
+      object.createdAt =
+          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
+  }
+  {
+    final value = IsarCore.readLong(reader, 10);
+    if (value == -9223372036854775808) {
       object.updatedAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
     } else {
@@ -169,8 +185,8 @@ TimetableTemplateLocal deserializeTimetableTemplateLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.isDirty = IsarCore.readBool(reader, 10);
-  object.isDeleted = IsarCore.readBool(reader, 11);
+  object.isDirty = IsarCore.readBool(reader, 11);
+  object.isDeleted = IsarCore.readBool(reader, 12);
   return object;
 }
 
@@ -206,9 +222,19 @@ dynamic deserializeTimetableTemplateLocalProp(IsarReader reader, int property) {
         }
       }
     case 10:
-      return IsarCore.readBool(reader, 10);
+      {
+        final value = IsarCore.readLong(reader, 10);
+        if (value == -9223372036854775808) {
+          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+        } else {
+          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
+              .toLocal();
+        }
+      }
     case 11:
       return IsarCore.readBool(reader, 11);
+    case 12:
+      return IsarCore.readBool(reader, 12);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -225,6 +251,7 @@ sealed class _TimetableTemplateLocalUpdate {
     String? room,
     String? faculty,
     String? notes,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -248,6 +275,7 @@ class _TimetableTemplateLocalUpdateImpl
     Object? room = ignore,
     Object? faculty = ignore,
     Object? notes = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -263,9 +291,10 @@ class _TimetableTemplateLocalUpdateImpl
           if (room != ignore) 6: room as String?,
           if (faculty != ignore) 7: faculty as String?,
           if (notes != ignore) 8: notes as String?,
-          if (updatedAt != ignore) 9: updatedAt as DateTime?,
-          if (isDirty != ignore) 10: isDirty as bool?,
-          if (isDeleted != ignore) 11: isDeleted as bool?,
+          if (createdAt != ignore) 9: createdAt as DateTime?,
+          if (updatedAt != ignore) 10: updatedAt as DateTime?,
+          if (isDirty != ignore) 11: isDirty as bool?,
+          if (isDeleted != ignore) 12: isDeleted as bool?,
         }) >
         0;
   }
@@ -282,6 +311,7 @@ sealed class _TimetableTemplateLocalUpdateAll {
     String? room,
     String? faculty,
     String? notes,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -305,6 +335,7 @@ class _TimetableTemplateLocalUpdateAllImpl
     Object? room = ignore,
     Object? faculty = ignore,
     Object? notes = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -318,9 +349,10 @@ class _TimetableTemplateLocalUpdateAllImpl
       if (room != ignore) 6: room as String?,
       if (faculty != ignore) 7: faculty as String?,
       if (notes != ignore) 8: notes as String?,
-      if (updatedAt != ignore) 9: updatedAt as DateTime?,
-      if (isDirty != ignore) 10: isDirty as bool?,
-      if (isDeleted != ignore) 11: isDeleted as bool?,
+      if (createdAt != ignore) 9: createdAt as DateTime?,
+      if (updatedAt != ignore) 10: updatedAt as DateTime?,
+      if (isDirty != ignore) 11: isDirty as bool?,
+      if (isDeleted != ignore) 12: isDeleted as bool?,
     });
   }
 }
@@ -344,6 +376,7 @@ sealed class _TimetableTemplateLocalQueryUpdate {
     String? room,
     String? faculty,
     String? notes,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -367,6 +400,7 @@ class _TimetableTemplateLocalQueryUpdateImpl
     Object? room = ignore,
     Object? faculty = ignore,
     Object? notes = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -380,9 +414,10 @@ class _TimetableTemplateLocalQueryUpdateImpl
       if (room != ignore) 6: room as String?,
       if (faculty != ignore) 7: faculty as String?,
       if (notes != ignore) 8: notes as String?,
-      if (updatedAt != ignore) 9: updatedAt as DateTime?,
-      if (isDirty != ignore) 10: isDirty as bool?,
-      if (isDeleted != ignore) 11: isDeleted as bool?,
+      if (createdAt != ignore) 9: createdAt as DateTime?,
+      if (updatedAt != ignore) 10: updatedAt as DateTime?,
+      if (isDirty != ignore) 11: isDirty as bool?,
+      if (isDeleted != ignore) 12: isDeleted as bool?,
     });
   }
 }
@@ -414,6 +449,7 @@ class _TimetableTemplateLocalQueryBuilderUpdateImpl
     Object? room = ignore,
     Object? faculty = ignore,
     Object? notes = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -429,9 +465,10 @@ class _TimetableTemplateLocalQueryBuilderUpdateImpl
         if (room != ignore) 6: room as String?,
         if (faculty != ignore) 7: faculty as String?,
         if (notes != ignore) 8: notes as String?,
-        if (updatedAt != ignore) 9: updatedAt as DateTime?,
-        if (isDirty != ignore) 10: isDirty as bool?,
-        if (isDeleted != ignore) 11: isDeleted as bool?,
+        if (createdAt != ignore) 9: createdAt as DateTime?,
+        if (updatedAt != ignore) 10: updatedAt as DateTime?,
+        if (isDirty != ignore) 11: isDirty as bool?,
+        if (isDeleted != ignore) 12: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -1857,7 +1894,7 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
-      QAfterFilterCondition> updatedAtEqualTo(
+      QAfterFilterCondition> createdAtEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1871,7 +1908,7 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
-      QAfterFilterCondition> updatedAtGreaterThan(
+      QAfterFilterCondition> createdAtGreaterThan(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1885,7 +1922,7 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
-      QAfterFilterCondition> updatedAtGreaterThanOrEqualTo(
+      QAfterFilterCondition> createdAtGreaterThanOrEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1899,7 +1936,7 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
-      QAfterFilterCondition> updatedAtLessThan(
+      QAfterFilterCondition> createdAtLessThan(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1913,7 +1950,7 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
-      QAfterFilterCondition> updatedAtLessThanOrEqualTo(
+      QAfterFilterCondition> createdAtLessThanOrEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1927,7 +1964,7 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
-      QAfterFilterCondition> updatedAtBetween(
+      QAfterFilterCondition> createdAtBetween(
     DateTime lower,
     DateTime upper,
   ) {
@@ -1943,13 +1980,99 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
+      QAfterFilterCondition> updatedAtEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
+      QAfterFilterCondition> updatedAtGreaterThan(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
+      QAfterFilterCondition> updatedAtGreaterThanOrEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
+      QAfterFilterCondition> updatedAtLessThan(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
+      QAfterFilterCondition> updatedAtLessThanOrEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
+      QAfterFilterCondition> updatedAtBetween(
+    DateTime lower,
+    DateTime upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 10,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal,
       QAfterFilterCondition> isDirtyEqualTo(
     bool value,
   ) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 10,
+          property: 11,
           value: value,
         ),
       );
@@ -1963,7 +2086,7 @@ extension TimetableTemplateLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 11,
+          property: 12,
           value: value,
         ),
       );
@@ -2145,44 +2268,58 @@ extension TimetableTemplateLocalQuerySortBy
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      sortByUpdatedAt() {
+      sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      sortByUpdatedAtDesc() {
+      sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      sortByIsDirty() {
+      sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      sortByIsDirtyDesc() {
+      sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10, sort: Sort.desc);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      sortByIsDeleted() {
+      sortByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      sortByIsDeletedDesc() {
+      sortByIsDirtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
+      sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
+      sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12, sort: Sort.desc);
     });
   }
 }
@@ -2316,44 +2453,58 @@ extension TimetableTemplateLocalQuerySortThenBy on QueryBuilder<
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      thenByUpdatedAt() {
+      thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      thenByUpdatedAtDesc() {
+      thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      thenByIsDirty() {
+      thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      thenByIsDirtyDesc() {
+      thenByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10, sort: Sort.desc);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      thenByIsDeleted() {
+      thenByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
-      thenByIsDeletedDesc() {
+      thenByIsDirtyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
+      thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12, sort: Sort.desc);
     });
   }
 }
@@ -2417,23 +2568,30 @@ extension TimetableTemplateLocalQueryWhereDistinct
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterDistinct>
-      distinctByUpdatedAt() {
+      distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(9);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterDistinct>
-      distinctByIsDirty() {
+      distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(10);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterDistinct>
-      distinctByIsDeleted() {
+      distinctByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(11);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, TimetableTemplateLocal, QAfterDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(12);
     });
   }
 }
@@ -2501,22 +2659,29 @@ extension TimetableTemplateLocalQueryProperty1
   }
 
   QueryBuilder<TimetableTemplateLocal, DateTime, QAfterProperty>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(9);
     });
   }
 
-  QueryBuilder<TimetableTemplateLocal, bool, QAfterProperty> isDirtyProperty() {
+  QueryBuilder<TimetableTemplateLocal, DateTime, QAfterProperty>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(10);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, bool, QAfterProperty> isDirtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(11);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, bool, QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(11);
+      return query.addProperty(12);
     });
   }
 }
@@ -2586,23 +2751,30 @@ extension TimetableTemplateLocalQueryProperty2<R>
   }
 
   QueryBuilder<TimetableTemplateLocal, (R, DateTime), QAfterProperty>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(9);
     });
   }
 
-  QueryBuilder<TimetableTemplateLocal, (R, bool), QAfterProperty>
-      isDirtyProperty() {
+  QueryBuilder<TimetableTemplateLocal, (R, DateTime), QAfterProperty>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(10);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, (R, bool), QAfterProperty>
-      isDeletedProperty() {
+      isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, (R, bool), QAfterProperty>
+      isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
     });
   }
 }
@@ -2673,23 +2845,30 @@ extension TimetableTemplateLocalQueryProperty3<R1, R2>
   }
 
   QueryBuilder<TimetableTemplateLocal, (R1, R2, DateTime), QOperations>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(9);
     });
   }
 
-  QueryBuilder<TimetableTemplateLocal, (R1, R2, bool), QOperations>
-      isDirtyProperty() {
+  QueryBuilder<TimetableTemplateLocal, (R1, R2, DateTime), QOperations>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(10);
     });
   }
 
   QueryBuilder<TimetableTemplateLocal, (R1, R2, bool), QOperations>
-      isDeletedProperty() {
+      isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<TimetableTemplateLocal, (R1, R2, bool), QOperations>
+      isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
     });
   }
 }

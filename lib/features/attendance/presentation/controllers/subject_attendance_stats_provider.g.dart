@@ -7,7 +7,7 @@ part of 'subject_attendance_stats_provider.dart';
 // **************************************************************************
 
 String _$subjectAttendanceStatsHash() =>
-    r'e3ccfcf990201dee2ac6f6a634344fc65f77e5d3';
+    r'90c94b8e6a3f0b4d41b3eea015aa633f04c34293';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -198,7 +198,7 @@ final overallAttendancePercentageProvider =
 );
 
 typedef OverallAttendancePercentageRef = AutoDisposeFutureProviderRef<double>;
-String _$subjectEventsHash() => r'52ef5df427c05c76544602307d1f3d5f351dae51';
+String _$subjectEventsHash() => r'ae6d0b1d920ea5c4bddc0a102f50cfdcde2f2f73';
 
 /// See also [subjectEvents].
 @ProviderFor(subjectEvents)
@@ -328,7 +328,7 @@ class _SubjectEventsProviderElement
   int get subjectId => (origin as SubjectEventsProvider).subjectId;
 }
 
-String _$todayEventsHash() => r'd4678d08bffaa52bf671881a481bf0dcb7be58f9';
+String _$todayEventsHash() => r'de426b24fbf4bbc03826391a566eff85a273c4db';
 
 /// See also [todayEvents].
 @ProviderFor(todayEvents)

@@ -25,7 +25,7 @@ final attendanceLocalDataSourceProvider =
 typedef AttendanceLocalDataSourceRef
     = AutoDisposeProviderRef<AttendanceLocalDataSource>;
 String _$attendanceRepositoryHash() =>
-    r'4a30883a80655e0f1a3f3c309bc9b429a6939e30';
+    r'e0fc730fce77dcabc705e5c4ed5e703f0e3f0a0d';
 
 /// See also [attendanceRepository].
 @ProviderFor(attendanceRepository)
@@ -42,7 +42,7 @@ final attendanceRepositoryProvider =
 
 typedef AttendanceRepositoryRef = AutoDisposeProviderRef<AttendanceRepository>;
 String _$attendanceControllerHash() =>
-    r'9815b8b5d20409c478d7b023c13506b24d256897';
+    r'457c5fbcd27c97af62b323e51da59626728c9211';
 
 /// See also [AttendanceController].
 @ProviderFor(AttendanceController)

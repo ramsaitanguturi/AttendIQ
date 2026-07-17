@@ -40,12 +40,32 @@ const UserLocalSchema = IsarGeneratedSchema(
         name: 'updatedAt',
         type: IsarType.dateTime,
       ),
+      IsarPropertySchema(
+        name: 'serverId',
+        type: IsarType.string,
+      ),
+      IsarPropertySchema(
+        name: 'isDirty',
+        type: IsarType.bool,
+      ),
+      IsarPropertySchema(
+        name: 'isDeleted',
+        type: IsarType.bool,
+      ),
     ],
     indexes: [
       IsarIndexSchema(
         name: 'uid',
         properties: [
           "uid",
+        ],
+        unique: true,
+        hash: false,
+      ),
+      IsarIndexSchema(
+        name: 'serverId',
+        properties: [
+          "serverId",
         ],
         unique: true,
         hash: false,
@@ -69,6 +89,16 @@ int serializeUserLocal(IsarWriter writer, UserLocal object) {
       writer, 4, object.createdAt.toUtc().microsecondsSinceEpoch);
   IsarCore.writeLong(
       writer, 5, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  {
+    final value = object.serverId;
+    if (value == null) {
+      IsarCore.writeNull(writer, 6);
+    } else {
+      IsarCore.writeString(writer, 6, value);
+    }
+  }
+  IsarCore.writeBool(writer, 7, object.isDirty);
+  IsarCore.writeBool(writer, 8, object.isDeleted);
   return object.id;
 }
 
@@ -99,6 +129,9 @@ UserLocal deserializeUserLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
+  object.serverId = IsarCore.readString(reader, 6);
+  object.isDirty = IsarCore.readBool(reader, 7);
+  object.isDeleted = IsarCore.readBool(reader, 8);
   return object;
 }
 
@@ -133,6 +166,12 @@ dynamic deserializeUserLocalProp(IsarReader reader, int property) {
               .toLocal();
         }
       }
+    case 6:
+      return IsarCore.readString(reader, 6);
+    case 7:
+      return IsarCore.readBool(reader, 7);
+    case 8:
+      return IsarCore.readBool(reader, 8);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -146,6 +185,9 @@ sealed class _UserLocalUpdate {
     String? email,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? serverId,
+    bool? isDirty,
+    bool? isDeleted,
   });
 }
 
@@ -162,6 +204,9 @@ class _UserLocalUpdateImpl implements _UserLocalUpdate {
     Object? email = ignore,
     Object? createdAt = ignore,
     Object? updatedAt = ignore,
+    Object? serverId = ignore,
+    Object? isDirty = ignore,
+    Object? isDeleted = ignore,
   }) {
     return collection.updateProperties([
           id
@@ -171,6 +216,9 @@ class _UserLocalUpdateImpl implements _UserLocalUpdate {
           if (email != ignore) 3: email as String?,
           if (createdAt != ignore) 4: createdAt as DateTime?,
           if (updatedAt != ignore) 5: updatedAt as DateTime?,
+          if (serverId != ignore) 6: serverId as String?,
+          if (isDirty != ignore) 7: isDirty as bool?,
+          if (isDeleted != ignore) 8: isDeleted as bool?,
         }) >
         0;
   }
@@ -184,6 +232,9 @@ sealed class _UserLocalUpdateAll {
     String? email,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? serverId,
+    bool? isDirty,
+    bool? isDeleted,
   });
 }
 
@@ -200,6 +251,9 @@ class _UserLocalUpdateAllImpl implements _UserLocalUpdateAll {
     Object? email = ignore,
     Object? createdAt = ignore,
     Object? updatedAt = ignore,
+    Object? serverId = ignore,
+    Object? isDirty = ignore,
+    Object? isDeleted = ignore,
   }) {
     return collection.updateProperties(id, {
       if (uid != ignore) 1: uid as String?,
@@ -207,6 +261,9 @@ class _UserLocalUpdateAllImpl implements _UserLocalUpdateAll {
       if (email != ignore) 3: email as String?,
       if (createdAt != ignore) 4: createdAt as DateTime?,
       if (updatedAt != ignore) 5: updatedAt as DateTime?,
+      if (serverId != ignore) 6: serverId as String?,
+      if (isDirty != ignore) 7: isDirty as bool?,
+      if (isDeleted != ignore) 8: isDeleted as bool?,
     });
   }
 }
@@ -224,6 +281,9 @@ sealed class _UserLocalQueryUpdate {
     String? email,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? serverId,
+    bool? isDirty,
+    bool? isDeleted,
   });
 }
 
@@ -240,6 +300,9 @@ class _UserLocalQueryUpdateImpl implements _UserLocalQueryUpdate {
     Object? email = ignore,
     Object? createdAt = ignore,
     Object? updatedAt = ignore,
+    Object? serverId = ignore,
+    Object? isDirty = ignore,
+    Object? isDeleted = ignore,
   }) {
     return query.updateProperties(limit: limit, {
       if (uid != ignore) 1: uid as String?,
@@ -247,6 +310,9 @@ class _UserLocalQueryUpdateImpl implements _UserLocalQueryUpdate {
       if (email != ignore) 3: email as String?,
       if (createdAt != ignore) 4: createdAt as DateTime?,
       if (updatedAt != ignore) 5: updatedAt as DateTime?,
+      if (serverId != ignore) 6: serverId as String?,
+      if (isDirty != ignore) 7: isDirty as bool?,
+      if (isDeleted != ignore) 8: isDeleted as bool?,
     });
   }
 }
@@ -271,6 +337,9 @@ class _UserLocalQueryBuilderUpdateImpl implements _UserLocalQueryUpdate {
     Object? email = ignore,
     Object? createdAt = ignore,
     Object? updatedAt = ignore,
+    Object? serverId = ignore,
+    Object? isDirty = ignore,
+    Object? isDeleted = ignore,
   }) {
     final q = query.build();
     try {
@@ -280,6 +349,9 @@ class _UserLocalQueryBuilderUpdateImpl implements _UserLocalQueryUpdate {
         if (email != ignore) 3: email as String?,
         if (createdAt != ignore) 4: createdAt as DateTime?,
         if (updatedAt != ignore) 5: updatedAt as DateTime?,
+        if (serverId != ignore) 6: serverId as String?,
+        if (isDirty != ignore) 7: isDirty as bool?,
+        if (isDeleted != ignore) 8: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -1065,6 +1137,220 @@ extension UserLocalQueryFilter
       );
     });
   }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 6));
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition>
+      serverIdIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 6));
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdGreaterThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition>
+      serverIdGreaterThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdLessThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition>
+      serverIdLessThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdBetween(
+    String? lower,
+    String? upper, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 6,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        StartsWithCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EndsWithCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        ContainsCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        MatchesCondition(
+          property: 6,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> serverIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const EqualCondition(
+          property: 6,
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition>
+      serverIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const GreaterCondition(
+          property: 6,
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> isDirtyEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterFilterCondition> isDeletedEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 8,
+          value: value,
+        ),
+      );
+    });
+  }
 }
 
 extension UserLocalQueryObject
@@ -1169,6 +1455,51 @@ extension UserLocalQuerySortBy on QueryBuilder<UserLocal, UserLocal, QSortBy> {
       return query.addSortBy(5, sort: Sort.desc);
     });
   }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> sortByServerId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        6,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> sortByServerIdDesc(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        6,
+        sort: Sort.desc,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> sortByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(7);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> sortByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(7, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(8);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(8, sort: Sort.desc);
+    });
+  }
 }
 
 extension UserLocalQuerySortThenBy
@@ -1250,6 +1581,44 @@ extension UserLocalQuerySortThenBy
       return query.addSortBy(5, sort: Sort.desc);
     });
   }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> thenByServerId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(6, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> thenByServerIdDesc(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(6, sort: Sort.desc, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> thenByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(7);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> thenByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(7, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(8);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterSortBy> thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(8, sort: Sort.desc);
+    });
+  }
 }
 
 extension UserLocalQueryWhereDistinct
@@ -1284,6 +1653,25 @@ extension UserLocalQueryWhereDistinct
   QueryBuilder<UserLocal, UserLocal, QAfterDistinct> distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(5);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterDistinct> distinctByServerId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(6, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterDistinct> distinctByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(7);
+    });
+  }
+
+  QueryBuilder<UserLocal, UserLocal, QAfterDistinct> distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(8);
     });
   }
 }
@@ -1325,6 +1713,24 @@ extension UserLocalQueryProperty1
       return query.addProperty(5);
     });
   }
+
+  QueryBuilder<UserLocal, String?, QAfterProperty> serverIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(6);
+    });
+  }
+
+  QueryBuilder<UserLocal, bool, QAfterProperty> isDirtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(7);
+    });
+  }
+
+  QueryBuilder<UserLocal, bool, QAfterProperty> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(8);
+    });
+  }
 }
 
 extension UserLocalQueryProperty2<R>
@@ -1364,6 +1770,24 @@ extension UserLocalQueryProperty2<R>
       return query.addProperty(5);
     });
   }
+
+  QueryBuilder<UserLocal, (R, String?), QAfterProperty> serverIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(6);
+    });
+  }
+
+  QueryBuilder<UserLocal, (R, bool), QAfterProperty> isDirtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(7);
+    });
+  }
+
+  QueryBuilder<UserLocal, (R, bool), QAfterProperty> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(8);
+    });
+  }
 }
 
 extension UserLocalQueryProperty3<R1, R2>
@@ -1401,6 +1825,24 @@ extension UserLocalQueryProperty3<R1, R2>
   QueryBuilder<UserLocal, (R1, R2, DateTime), QOperations> updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(5);
+    });
+  }
+
+  QueryBuilder<UserLocal, (R1, R2, String?), QOperations> serverIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(6);
+    });
+  }
+
+  QueryBuilder<UserLocal, (R1, R2, bool), QOperations> isDirtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(7);
+    });
+  }
+
+  QueryBuilder<UserLocal, (R1, R2, bool), QOperations> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(8);
     });
   }
 }

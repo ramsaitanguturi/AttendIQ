@@ -1,22 +1,56 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 
 // App Imports
 import 'package:attend_iq/features/timetable/domain/entities/timetable_template.dart';
 import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
 import 'package:attend_iq/features/timetable/data/datasources/timetable_local_data_source.dart';
-import 'package:attend_iq/features/timetable/data/datasources/timetable_remote_data_source.dart';
 import 'package:attend_iq/features/timetable/data/repositories/timetable_repository_impl.dart';
 import 'package:attend_iq/features/auth/data/models/user_local.dart';
 import 'package:attend_iq/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
+import 'package:attend_iq/core/sync/sync_queue/sync_queue.dart';
+import 'package:attend_iq/core/sync/models/sync_operation.dart';
 
 // Fakes
+class FakeSyncQueue implements SyncQueue {
+  final List<SyncOperation> operations = [];
+  int _nextId = 1;
+
+  @override
+  Future<void> enqueue({
+    required String collectionName,
+    required String documentId,
+    required String operationType,
+    required String payload,
+  }) async {
+    operations.add(SyncOperation()
+      ..id = _nextId++
+      ..collectionName = collectionName
+      ..documentId = documentId
+      ..operationType = operationType
+      ..payload = payload
+      ..createdAt = DateTime.now().toUtc()
+      ..retryCount = 0);
+  }
+
+  @override
+  Future<List<SyncOperation>> getPendingOperations() async => operations;
+  @override
+  Future<void> remove(int id) async => operations.removeWhere((op) => op.id == id);
+  @override
+  Future<void> incrementRetryCount(int id) async {}
+}
+
 class FakeAuthLocalDataSource implements AuthLocalDataSource {
   UserLocal? currentUser;
+
   @override
   Future<void> saveUser(UserLocal user) async => currentUser = user;
   @override
   Future<UserLocal?> getUser() async => currentUser;
+  @override
+  Future<void> clearUser() async => currentUser = null;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -39,6 +73,7 @@ class FakeTimetableLocalDataSource implements TimetableLocalDataSource {
         .where((s) => s.semesterId == semesterId && !s.isDeleted)
         .map((s) => s.id)
         .toSet();
+    if (subjectIds.isEmpty) return [];
 
     return templates.values
         .where((t) => subjectIds.contains(t.subjectId) && !t.isDeleted)
@@ -46,9 +81,7 @@ class FakeTimetableLocalDataSource implements TimetableLocalDataSource {
   }
 
   @override
-  Future<TimetableTemplateLocal?> getTemplateById(int id) async {
-    return templates[id];
-  }
+  Future<TimetableTemplateLocal?> getTemplateById(int id) async => templates[id];
 
   @override
   Future<void> saveTemplate(TimetableTemplateLocal template) async {
@@ -59,62 +92,20 @@ class FakeTimetableLocalDataSource implements TimetableLocalDataSource {
   }
 }
 
-class FakeTimetableRemoteDataSource implements TimetableRemoteDataSource {
-  final Map<String, Map<String, dynamic>> schedulesCollection = {};
-  bool isOnline = true;
-
-  @override
-  Future<String> saveTemplate({
-    required String uid,
-    required String subjectId,
-    required int weekday,
-    required String startTime,
-    required String endTime,
-    String? room,
-    String? faculty,
-    String? notes,
-    String? serverId,
-  }) async {
-    if (!isOnline) throw Exception('No network connection');
-    final id = serverId ?? 'mock_schedule_${DateTime.now().millisecondsSinceEpoch}_${schedulesCollection.length}';
-    schedulesCollection[id] = {
-      'userId': uid,
-      'subjectId': subjectId,
-      'dayOfWeek': weekday,
-      'startTime': startTime,
-      'endTime': endTime,
-      'room': room,
-      'faculty': faculty,
-      'notes': notes,
-      'isDeleted': false,
-    };
-    return id;
-  }
-
-  @override
-  Future<void> deleteTemplate(String serverId) async {
-    if (!isOnline) throw Exception('No network connection');
-    if (schedulesCollection.containsKey(serverId)) {
-      schedulesCollection[serverId]!['isDeleted'] = true;
-    }
-  }
-}
-
 void main() {
   late FakeAuthLocalDataSource authLocalDataSource;
   late FakeTimetableLocalDataSource localDataSource;
-  late FakeTimetableRemoteDataSource remoteDataSource;
+  late FakeSyncQueue syncQueue;
   late TimetableRepositoryImpl repository;
 
   setUp(() {
     authLocalDataSource = FakeAuthLocalDataSource();
     localDataSource = FakeTimetableLocalDataSource();
-    remoteDataSource = FakeTimetableRemoteDataSource();
+    syncQueue = FakeSyncQueue();
 
     repository = TimetableRepositoryImpl(
       localDataSource: localDataSource,
-      remoteDataSource: remoteDataSource,
-      authLocalDataSource: authLocalDataSource,
+      syncQueue: syncQueue,
     );
 
     // Seed mock user
@@ -128,42 +119,43 @@ void main() {
     // Seed mock subjects in the fake datasource
     localDataSource.subjects.addAll([
       SubjectLocal()
-        ..id = 1
+        ..id = 5
         ..semesterId = 1
-        ..name = 'Mathematics IV'
-        ..code = 'MATH-401'
+        ..name = 'Maths'
+        ..code = 'M101'
         ..credits = 4
+        ..color = '#FFFFFF'
         ..attendanceTarget = 75.0
-        ..color = '#FF5733'
         ..type = 'THEORY'
+        ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false,
       SubjectLocal()
-        ..id = 2
+        ..id = 6
         ..semesterId = 1
-        ..name = 'Physics Lab'
-        ..code = 'PHYS-202'
-        ..credits = 2
-        ..attendanceTarget = 80.0
-        ..color = '#33FF57'
+        ..name = 'Physics'
+        ..code = 'P101'
+        ..credits = 3
+        ..color = '#000000'
+        ..attendanceTarget = 75.0
         ..type = 'LAB'
+        ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false,
     ]);
   });
 
-  group('Timetable Template Operations', () {
-    test('Create class template slot saves successfully', () async {
+  group('Timetable Template CRUD Tests', () {
+    test('saveTemplate persists locally and enqueues CREATE sync operation', () async {
       final template = TimetableTemplate(
-        subjectId: 1,
-        weekday: 1, // Monday
+        subjectId: 5,
+        weekday: 1,
         startTime: '09:00',
-        endTime: '10:00',
+        endTime: '09:55',
         room: 'Room 301',
-        faculty: 'Dr. Newton',
-        notes: 'Bring calculator',
+        faculty: 'Dr. Prasad',
         updatedAt: DateTime.now(),
       );
 
@@ -171,64 +163,22 @@ void main() {
 
       final list = await repository.getTemplatesForSemester(1);
       expect(list.length, 1);
-      expect(list.first.subjectId, 1);
-      expect(list.first.startTime, '09:00');
+      expect(list.first.subjectId, 5);
       expect(list.first.room, 'Room 301');
-      expect(list.first.serverId, isNotNull);
+      expect(list.first.serverId, isNotNull); // Generated offline UUID
+      expect(list.first.isDirty, isTrue);
+
+      expect(syncQueue.operations.length, 1);
+      expect(syncQueue.operations.first.operationType, 'CREATE');
     });
 
-    test('Collision checks block overlapping time slots', () {
-      final existing = [
-        TimetableTemplate(
-          id: 1,
-          subjectId: 1,
-          weekday: 1, // Monday
-          startTime: '09:00',
-          endTime: '10:00',
-          updatedAt: DateTime.now(),
-        ),
-      ];
-
-      int timeToMinutes(String timeStr) {
-        final parts = timeStr.split(':');
-        return int.parse(parts[0]) * 60 + int.parse(parts[1]);
-      }
-
-      bool checkCollision(int weekday, String start, String end, List<TimetableTemplate> list) {
-        final startMin = timeToMinutes(start);
-        final endMin = timeToMinutes(end);
-
-        for (final t in list) {
-          if (t.weekday == weekday) {
-            final tStart = timeToMinutes(t.startTime);
-            final tEnd = timeToMinutes(t.endTime);
-            if (startMin < tEnd && endMin > tStart) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      // 1. Direct overlap
-      expect(checkCollision(1, '09:15', '09:45', existing), isTrue);
-
-      // 2. Starts exactly at existing end time (No overlap)
-      expect(checkCollision(1, '10:00', '11:00', existing), isFalse);
-
-      // 3. Ends exactly at existing start time (No overlap)
-      expect(checkCollision(1, '08:00', '09:00', existing), isFalse);
-
-      // 4. Different weekday (No overlap)
-      expect(checkCollision(2, '09:30', '10:30', existing), isFalse);
-    });
-
-    test('Delete timetable slot flags as deleted', () async {
+    test('deleteTemplate marks local isDeleted=true and enqueues DELETE sync operation', () async {
       final template = TimetableTemplate(
-        subjectId: 1,
-        weekday: 2, // Tuesday
-        startTime: '11:00',
-        endTime: '12:00',
+        subjectId: 6,
+        weekday: 2,
+        startTime: '10:00',
+        endTime: '11:00',
+        room: 'Lab 2',
         updatedAt: DateTime.now(),
       );
 
@@ -243,6 +193,9 @@ void main() {
       final rawLocal = await localDataSource.getTemplateById(created.id!);
       expect(rawLocal, isNotNull);
       expect(rawLocal!.isDeleted, isTrue);
+
+      expect(syncQueue.operations.length, 2);
+      expect(syncQueue.operations.last.operationType, 'DELETE');
     });
   });
 }

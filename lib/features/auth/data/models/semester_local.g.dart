@@ -41,6 +41,10 @@ const SemesterLocalSchema = IsarGeneratedSchema(
         type: IsarType.double,
       ),
       IsarPropertySchema(
+        name: 'createdAt',
+        type: IsarType.dateTime,
+      ),
+      IsarPropertySchema(
         name: 'updatedAt',
         type: IsarType.dateTime,
       ),
@@ -88,9 +92,11 @@ int serializeSemesterLocal(IsarWriter writer, SemesterLocal object) {
   IsarCore.writeLong(writer, 4, object.endDate.toUtc().microsecondsSinceEpoch);
   IsarCore.writeDouble(writer, 5, object.requiredAttendanceRate);
   IsarCore.writeLong(
-      writer, 6, object.updatedAt.toUtc().microsecondsSinceEpoch);
-  IsarCore.writeBool(writer, 7, object.isDirty);
-  IsarCore.writeBool(writer, 8, object.isDeleted);
+      writer, 6, object.createdAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeLong(
+      writer, 7, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeBool(writer, 8, object.isDirty);
+  IsarCore.writeBool(writer, 9, object.isDeleted);
   return object.id;
 }
 
@@ -124,6 +130,16 @@ SemesterLocal deserializeSemesterLocal(IsarReader reader) {
   {
     final value = IsarCore.readLong(reader, 6);
     if (value == -9223372036854775808) {
+      object.createdAt =
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+    } else {
+      object.createdAt =
+          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
+  }
+  {
+    final value = IsarCore.readLong(reader, 7);
+    if (value == -9223372036854775808) {
       object.updatedAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
     } else {
@@ -131,8 +147,8 @@ SemesterLocal deserializeSemesterLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.isDirty = IsarCore.readBool(reader, 7);
-  object.isDeleted = IsarCore.readBool(reader, 8);
+  object.isDirty = IsarCore.readBool(reader, 8);
+  object.isDeleted = IsarCore.readBool(reader, 9);
   return object;
 }
 
@@ -178,9 +194,19 @@ dynamic deserializeSemesterLocalProp(IsarReader reader, int property) {
         }
       }
     case 7:
-      return IsarCore.readBool(reader, 7);
+      {
+        final value = IsarCore.readLong(reader, 7);
+        if (value == -9223372036854775808) {
+          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+        } else {
+          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
+              .toLocal();
+        }
+      }
     case 8:
       return IsarCore.readBool(reader, 8);
+    case 9:
+      return IsarCore.readBool(reader, 9);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -194,6 +220,7 @@ sealed class _SemesterLocalUpdate {
     DateTime? startDate,
     DateTime? endDate,
     double? requiredAttendanceRate,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -213,6 +240,7 @@ class _SemesterLocalUpdateImpl implements _SemesterLocalUpdate {
     Object? startDate = ignore,
     Object? endDate = ignore,
     Object? requiredAttendanceRate = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -226,9 +254,10 @@ class _SemesterLocalUpdateImpl implements _SemesterLocalUpdate {
           if (endDate != ignore) 4: endDate as DateTime?,
           if (requiredAttendanceRate != ignore)
             5: requiredAttendanceRate as double?,
-          if (updatedAt != ignore) 6: updatedAt as DateTime?,
-          if (isDirty != ignore) 7: isDirty as bool?,
-          if (isDeleted != ignore) 8: isDeleted as bool?,
+          if (createdAt != ignore) 6: createdAt as DateTime?,
+          if (updatedAt != ignore) 7: updatedAt as DateTime?,
+          if (isDirty != ignore) 8: isDirty as bool?,
+          if (isDeleted != ignore) 9: isDeleted as bool?,
         }) >
         0;
   }
@@ -242,6 +271,7 @@ sealed class _SemesterLocalUpdateAll {
     DateTime? startDate,
     DateTime? endDate,
     double? requiredAttendanceRate,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -261,6 +291,7 @@ class _SemesterLocalUpdateAllImpl implements _SemesterLocalUpdateAll {
     Object? startDate = ignore,
     Object? endDate = ignore,
     Object? requiredAttendanceRate = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -272,9 +303,10 @@ class _SemesterLocalUpdateAllImpl implements _SemesterLocalUpdateAll {
       if (endDate != ignore) 4: endDate as DateTime?,
       if (requiredAttendanceRate != ignore)
         5: requiredAttendanceRate as double?,
-      if (updatedAt != ignore) 6: updatedAt as DateTime?,
-      if (isDirty != ignore) 7: isDirty as bool?,
-      if (isDeleted != ignore) 8: isDeleted as bool?,
+      if (createdAt != ignore) 6: createdAt as DateTime?,
+      if (updatedAt != ignore) 7: updatedAt as DateTime?,
+      if (isDirty != ignore) 8: isDirty as bool?,
+      if (isDeleted != ignore) 9: isDeleted as bool?,
     });
   }
 }
@@ -292,6 +324,7 @@ sealed class _SemesterLocalQueryUpdate {
     DateTime? startDate,
     DateTime? endDate,
     double? requiredAttendanceRate,
+    DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -311,6 +344,7 @@ class _SemesterLocalQueryUpdateImpl implements _SemesterLocalQueryUpdate {
     Object? startDate = ignore,
     Object? endDate = ignore,
     Object? requiredAttendanceRate = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -322,9 +356,10 @@ class _SemesterLocalQueryUpdateImpl implements _SemesterLocalQueryUpdate {
       if (endDate != ignore) 4: endDate as DateTime?,
       if (requiredAttendanceRate != ignore)
         5: requiredAttendanceRate as double?,
-      if (updatedAt != ignore) 6: updatedAt as DateTime?,
-      if (isDirty != ignore) 7: isDirty as bool?,
-      if (isDeleted != ignore) 8: isDeleted as bool?,
+      if (createdAt != ignore) 6: createdAt as DateTime?,
+      if (updatedAt != ignore) 7: updatedAt as DateTime?,
+      if (isDirty != ignore) 8: isDirty as bool?,
+      if (isDeleted != ignore) 9: isDeleted as bool?,
     });
   }
 }
@@ -351,6 +386,7 @@ class _SemesterLocalQueryBuilderUpdateImpl
     Object? startDate = ignore,
     Object? endDate = ignore,
     Object? requiredAttendanceRate = ignore,
+    Object? createdAt = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -364,9 +400,10 @@ class _SemesterLocalQueryBuilderUpdateImpl
         if (endDate != ignore) 4: endDate as DateTime?,
         if (requiredAttendanceRate != ignore)
           5: requiredAttendanceRate as double?,
-        if (updatedAt != ignore) 6: updatedAt as DateTime?,
-        if (isDirty != ignore) 7: isDirty as bool?,
-        if (isDeleted != ignore) 8: isDeleted as bool?,
+        if (createdAt != ignore) 6: createdAt as DateTime?,
+        if (updatedAt != ignore) 7: updatedAt as DateTime?,
+        if (isDirty != ignore) 8: isDirty as bool?,
+        if (isDeleted != ignore) 9: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -1112,7 +1149,7 @@ extension SemesterLocalQueryFilter
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
-      updatedAtEqualTo(
+      createdAtEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1126,7 +1163,7 @@ extension SemesterLocalQueryFilter
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
-      updatedAtGreaterThan(
+      createdAtGreaterThan(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1140,7 +1177,7 @@ extension SemesterLocalQueryFilter
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
-      updatedAtGreaterThanOrEqualTo(
+      createdAtGreaterThanOrEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1154,7 +1191,7 @@ extension SemesterLocalQueryFilter
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
-      updatedAtLessThan(
+      createdAtLessThan(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1168,7 +1205,7 @@ extension SemesterLocalQueryFilter
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
-      updatedAtLessThanOrEqualTo(
+      createdAtLessThanOrEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
@@ -1182,7 +1219,7 @@ extension SemesterLocalQueryFilter
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
-      updatedAtBetween(
+      createdAtBetween(
     DateTime lower,
     DateTime upper,
   ) {
@@ -1198,13 +1235,99 @@ extension SemesterLocalQueryFilter
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
+      updatedAtEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
+      updatedAtGreaterThan(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
+      updatedAtGreaterThanOrEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
+      updatedAtLessThan(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
+      updatedAtLessThanOrEqualTo(
+    DateTime value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 7,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
+      updatedAtBetween(
+    DateTime lower,
+    DateTime upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 7,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterFilterCondition>
       isDirtyEqualTo(
     bool value,
   ) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 7,
+          property: 8,
           value: value,
         ),
       );
@@ -1218,7 +1341,7 @@ extension SemesterLocalQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 8,
+          property: 9,
           value: value,
         ),
       );
@@ -1324,41 +1447,54 @@ extension SemesterLocalQuerySortBy
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByUpdatedAt() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6);
     });
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy>
-      sortByUpdatedAtDesc() {
+      sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6, sort: Sort.desc);
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByIsDirty() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7);
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByIsDirtyDesc() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy>
+      sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7, sort: Sort.desc);
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByIsDeleted() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(8, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(9);
     });
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy>
       sortByIsDeletedDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(8, sort: Sort.desc);
+      return query.addSortBy(9, sort: Sort.desc);
     });
   }
 }
@@ -1444,41 +1580,54 @@ extension SemesterLocalQuerySortThenBy
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByUpdatedAt() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6);
     });
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy>
-      thenByUpdatedAtDesc() {
+      thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6, sort: Sort.desc);
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByIsDirty() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7);
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByIsDirtyDesc() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy>
+      thenByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7, sort: Sort.desc);
     });
   }
 
-  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByIsDeleted() {
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(8, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy> thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(9);
     });
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterSortBy>
       thenByIsDeletedDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(8, sort: Sort.desc);
+      return query.addSortBy(9, sort: Sort.desc);
     });
   }
 }
@@ -1521,23 +1670,30 @@ extension SemesterLocalQueryWhereDistinct
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterDistinct>
-      distinctByUpdatedAt() {
+      distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(6);
     });
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterDistinct>
-      distinctByIsDirty() {
+      distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(7);
     });
   }
 
   QueryBuilder<SemesterLocal, SemesterLocal, QAfterDistinct>
-      distinctByIsDeleted() {
+      distinctByIsDirty() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(8);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, SemesterLocal, QAfterDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(9);
     });
   }
 }
@@ -1581,21 +1737,27 @@ extension SemesterLocalQueryProperty1
     });
   }
 
-  QueryBuilder<SemesterLocal, DateTime, QAfterProperty> updatedAtProperty() {
+  QueryBuilder<SemesterLocal, DateTime, QAfterProperty> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
-  QueryBuilder<SemesterLocal, bool, QAfterProperty> isDirtyProperty() {
+  QueryBuilder<SemesterLocal, DateTime, QAfterProperty> updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
-  QueryBuilder<SemesterLocal, bool, QAfterProperty> isDeletedProperty() {
+  QueryBuilder<SemesterLocal, bool, QAfterProperty> isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, bool, QAfterProperty> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
     });
   }
 }
@@ -1641,21 +1803,28 @@ extension SemesterLocalQueryProperty2<R>
   }
 
   QueryBuilder<SemesterLocal, (R, DateTime), QAfterProperty>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
-  QueryBuilder<SemesterLocal, (R, bool), QAfterProperty> isDirtyProperty() {
+  QueryBuilder<SemesterLocal, (R, DateTime), QAfterProperty>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
-  QueryBuilder<SemesterLocal, (R, bool), QAfterProperty> isDeletedProperty() {
+  QueryBuilder<SemesterLocal, (R, bool), QAfterProperty> isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, (R, bool), QAfterProperty> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
     });
   }
 }
@@ -1703,21 +1872,28 @@ extension SemesterLocalQueryProperty3<R1, R2>
   }
 
   QueryBuilder<SemesterLocal, (R1, R2, DateTime), QOperations>
-      updatedAtProperty() {
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
-  QueryBuilder<SemesterLocal, (R1, R2, bool), QOperations> isDirtyProperty() {
+  QueryBuilder<SemesterLocal, (R1, R2, DateTime), QOperations>
+      updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
-  QueryBuilder<SemesterLocal, (R1, R2, bool), QOperations> isDeletedProperty() {
+  QueryBuilder<SemesterLocal, (R1, R2, bool), QOperations> isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
+    });
+  }
+
+  QueryBuilder<SemesterLocal, (R1, R2, bool), QOperations> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
     });
   }
 }

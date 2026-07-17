@@ -1,15 +1,46 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 
 // App Imports
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/subject/data/datasources/subject_local_data_source.dart';
-import 'package:attend_iq/features/subject/data/datasources/subject_remote_data_source.dart';
 import 'package:attend_iq/features/subject/data/repositories/subject_repository_impl.dart';
 import 'package:attend_iq/features/auth/data/models/user_local.dart';
 import 'package:attend_iq/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:attend_iq/core/sync/sync_queue/sync_queue.dart';
+import 'package:attend_iq/core/sync/models/sync_operation.dart';
 
 // Fakes
+class FakeSyncQueue implements SyncQueue {
+  final List<SyncOperation> operations = [];
+  int _nextId = 1;
+
+  @override
+  Future<void> enqueue({
+    required String collectionName,
+    required String documentId,
+    required String operationType,
+    required String payload,
+  }) async {
+    operations.add(SyncOperation()
+      ..id = _nextId++
+      ..collectionName = collectionName
+      ..documentId = documentId
+      ..operationType = operationType
+      ..payload = payload
+      ..createdAt = DateTime.now().toUtc()
+      ..retryCount = 0);
+  }
+
+  @override
+  Future<List<SyncOperation>> getPendingOperations() async => operations;
+  @override
+  Future<void> remove(int id) async => operations.removeWhere((op) => op.id == id);
+  @override
+  Future<void> incrementRetryCount(int id) async {}
+}
+
 class FakeAuthLocalDataSource implements AuthLocalDataSource {
   UserLocal? currentUser;
 
@@ -48,64 +79,20 @@ class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
   }
 }
 
-class FakeSubjectRemoteDataSource implements SubjectRemoteDataSource {
-  final Map<String, Map<String, dynamic>> subjectsCollection = {};
-  bool isOnline = true;
-
-  @override
-  Future<String> saveSubject({
-    required String uid,
-    required String semesterId,
-    required String name,
-    required String code,
-    String? faculty,
-    required int credits,
-    required double attendanceTarget,
-    required String color,
-    required String type,
-    String? serverId,
-  }) async {
-    if (!isOnline) throw Exception('No network connection');
-    final id = serverId ?? 'mock_sub_${DateTime.now().millisecondsSinceEpoch}_${subjectsCollection.length}';
-    subjectsCollection[id] = {
-      'userId': uid,
-      'semesterId': semesterId,
-      'name': name,
-      'courseCode': code,
-      'instructor': faculty,
-      'credits': credits,
-      'colorHex': color,
-      'requiredAttendanceOverride': attendanceTarget,
-      'type': type,
-      'isDeleted': false,
-    };
-    return id;
-  }
-
-  @override
-  Future<void> deleteSubject(String serverId) async {
-    if (!isOnline) throw Exception('No network connection');
-    if (subjectsCollection.containsKey(serverId)) {
-      subjectsCollection[serverId]!['isDeleted'] = true;
-    }
-  }
-}
-
 void main() {
   late FakeAuthLocalDataSource authLocalDataSource;
   late FakeSubjectLocalDataSource localDataSource;
-  late FakeSubjectRemoteDataSource remoteDataSource;
+  late FakeSyncQueue syncQueue;
   late SubjectRepositoryImpl repository;
 
   setUp(() {
     authLocalDataSource = FakeAuthLocalDataSource();
     localDataSource = FakeSubjectLocalDataSource();
-    remoteDataSource = FakeSubjectRemoteDataSource();
+    syncQueue = FakeSyncQueue();
 
     repository = SubjectRepositoryImpl(
       localDataSource: localDataSource,
-      remoteDataSource: remoteDataSource,
-      authLocalDataSource: authLocalDataSource,
+      syncQueue: syncQueue,
     );
 
     // Seed mock user
@@ -118,7 +105,7 @@ void main() {
   });
 
   group('Subject CRUD Operations', () {
-    test('Create Subject saves locally and remotely when online', () async {
+    test('Create Subject saves locally and enqueues CREATE operation in SyncQueue', () async {
       final subject = Subject(
         semesterId: 1,
         name: 'Mathematics IV',
@@ -137,40 +124,18 @@ void main() {
       expect(list.length, 1);
       expect(list.first.name, 'Mathematics IV');
       expect(list.first.id, 1);
-      expect(list.first.serverId, isNotNull);
-      expect(list.first.isDirty, isFalse);
+      expect(list.first.serverId, isNotNull); // UUID is generated locally offline
+      expect(list.first.isDirty, isTrue); // Set to dirty for outbox sync
 
-      // Verify remote document
-      final remoteId = list.first.serverId!;
-      final remoteDoc = remoteDataSource.subjectsCollection[remoteId];
-      expect(remoteDoc, isNotNull);
-      expect(remoteDoc!['name'], 'Mathematics IV');
-      expect(remoteDoc['courseCode'], 'MATH-401');
+      // Verify enqueued sync operation
+      expect(syncQueue.operations.length, 1);
+      final op = syncQueue.operations.first;
+      expect(op.collectionName, 'subjects');
+      expect(op.documentId, list.first.serverId);
+      expect(op.operationType, 'CREATE');
     });
 
-    test('Create Subject sets isDirty=true and serverId=null when offline', () async {
-      remoteDataSource.isOnline = false;
-
-      final subject = Subject(
-        semesterId: 1,
-        name: 'Physics Lab',
-        code: 'PHYS-202',
-        credits: 2,
-        attendanceTarget: 80.0,
-        color: '#33FF57',
-        type: SubjectType.LAB,
-        updatedAt: DateTime.now(),
-      );
-
-      await repository.createSubject(subject);
-
-      final list = await repository.getSubjectsBySemester(1);
-      expect(list.length, 1);
-      expect(list.first.serverId, isNull);
-      expect(list.first.isDirty, isTrue);
-    });
-
-    test('Update Subject modifications persist', () async {
+    test('Update Subject modifications persist and enqueue UPDATE operation', () async {
       final subject = Subject(
         semesterId: 1,
         name: 'Chemistry',
@@ -195,9 +160,13 @@ void main() {
       final updatedList = await repository.getSubjectsBySemester(1);
       expect(updatedList.first.name, 'Advanced Chemistry');
       expect(updatedList.first.credits, 4);
+
+      // Verify UPDATE operation enqueued (1 from create, 1 from update = 2)
+      expect(syncQueue.operations.length, 2);
+      expect(syncQueue.operations.last.operationType, 'UPDATE');
     });
 
-    test('Delete Subject flags isDeleted=true (Soft Delete)', () async {
+    test('Delete Subject flags isDeleted=true (Soft Delete) and enqueues DELETE operation', () async {
       final subject = Subject(
         semesterId: 1,
         name: 'History',
@@ -222,6 +191,10 @@ void main() {
       final rawLocal = await localDataSource.getSubjectById(created.id!);
       expect(rawLocal, isNotNull);
       expect(rawLocal!.isDeleted, isTrue);
+
+      // Verify DELETE operation enqueued (1 from create, 1 from delete = 2)
+      expect(syncQueue.operations.length, 2);
+      expect(syncQueue.operations.last.operationType, 'DELETE');
     });
   });
 }

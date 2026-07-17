@@ -4,6 +4,7 @@ import '../models/attendance_record_local.dart';
 abstract class AttendanceLocalDataSource {
   Future<List<AttendanceRecordLocal>> getAttendanceForSubject(int subjectId);
   Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId);
+  Future<AttendanceRecordLocal?> getAttendanceRecordById(int id);
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record);
   Future<void> deleteAttendanceRecord(int id);
 }
@@ -32,8 +33,16 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
   }
 
   @override
+  Future<AttendanceRecordLocal?> getAttendanceRecordById(int id) async {
+    return _isar.attendanceRecordLocals.get(id);
+  }
+
+  @override
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
     await _isar.writeAsync((isar) {
+      if (record.id == 0) {
+        record.id = isar.attendanceRecordLocals.autoIncrement();
+      }
       isar.attendanceRecordLocals.put(record);
     });
   }
@@ -45,7 +54,7 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
       if (record != null) {
         record.isDeleted = true;
         record.isDirty = true;
-        record.updatedAt = DateTime.now();
+        record.updatedAt = DateTime.now().toUtc();
         isar.attendanceRecordLocals.put(record);
       }
     });

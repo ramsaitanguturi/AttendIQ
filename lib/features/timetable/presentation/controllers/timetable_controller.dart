@@ -11,6 +11,8 @@ import '../../../../core/database/isar_provider.dart';
 import '../../../auth/data/models/semester_local.dart';
 import '../../data/models/timetable_template_local.dart';
 
+import '../../../../core/sync/sync_queue/sync_queue.dart';
+
 part 'timetable_controller.g.dart';
 
 @riverpod
@@ -28,8 +30,7 @@ TimetableRemoteDataSource timetableRemoteDataSource(TimetableRemoteDataSourceRef
 TimetableRepository timetableRepository(TimetableRepositoryRef ref) {
   return TimetableRepositoryImpl(
     localDataSource: ref.watch(timetableLocalDataSourceProvider),
-    remoteDataSource: ref.watch(timetableRemoteDataSourceProvider),
-    authLocalDataSource: ref.watch(authLocalDataSourceProvider),
+    syncQueue: ref.watch(syncQueueProvider),
   );
 }
 

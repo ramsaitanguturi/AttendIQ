@@ -7,6 +7,8 @@ import '../../../../core/database/isar_provider.dart';
 import '../../../../core/event_generator/data/models/event_local.dart';
 
 
+import '../../../../core/sync/sync_queue/sync_queue.dart';
+
 part 'attendance_controller.g.dart';
 
 @riverpod
@@ -17,7 +19,10 @@ AttendanceLocalDataSource attendanceLocalDataSource(AttendanceLocalDataSourceRef
 
 @riverpod
 AttendanceRepository attendanceRepository(AttendanceRepositoryRef ref) {
-  return AttendanceRepositoryImpl(ref.watch(attendanceLocalDataSourceProvider));
+  return AttendanceRepositoryImpl(
+    ref.watch(attendanceLocalDataSourceProvider),
+    ref.watch(syncQueueProvider),
+  );
 }
 
 @riverpod
