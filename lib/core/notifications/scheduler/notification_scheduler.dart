@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
 import '../models/notification_item.dart';
 import '../services/notification_service.dart';
@@ -71,9 +72,24 @@ class NotificationScheduler {
 
   Future<void> rescheduleAll({List<int> reminderOffsets = const [15], DateTime? customNow}) async {
     final now = customNow ?? DateTime.now();
-    await rescheduleRollingWindow(offsets: reminderOffsets, customNow: now);
-    await checkAttendanceRisks(customNow: now);
-    await scheduleWeeklyReport(customNow: now);
+    try {
+      await rescheduleRollingWindow(offsets: reminderOffsets, customNow: now);
+    } catch (e, stack) {
+      debugPrint('Failed to reschedule rolling window reminders: $e');
+      debugPrint(stack.toString());
+    }
+    try {
+      await checkAttendanceRisks(customNow: now);
+    } catch (e, stack) {
+      debugPrint('Failed to check attendance risks: $e');
+      debugPrint(stack.toString());
+    }
+    try {
+      await scheduleWeeklyReport(customNow: now);
+    } catch (e, stack) {
+      debugPrint('Failed to schedule weekly report: $e');
+      debugPrint(stack.toString());
+    }
   }
 
   Future<void> rescheduleRollingWindow({List<int> offsets = const [15], DateTime? customNow}) async {

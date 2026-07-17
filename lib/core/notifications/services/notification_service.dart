@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -169,17 +170,38 @@ class LocalNotificationServiceImpl implements NotificationService {
       iOS: iosDetails,
     );
 
-    await _plugin.zonedSchedule(
-      item.id,
-      item.title,
-      item.body,
-      scheduledTZDateTime,
-      platformDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: item.relatedId,
-    );
+    try {
+      await _plugin.zonedSchedule(
+        item.id,
+        item.title,
+        item.body,
+        scheduledTZDateTime,
+        platformDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: item.relatedId,
+      );
+    } catch (e) {
+      debugPrint('Exact notification scheduling failed (e.g., SecurityException on Android 14+): $e');
+      debugPrint('Attempting fallback to inexact notification scheduling...');
+      try {
+        await _plugin.zonedSchedule(
+          item.id,
+          item.title,
+          item.body,
+          scheduledTZDateTime,
+          platformDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: item.relatedId,
+        );
+        debugPrint('Inexact notification scheduling fallback succeeded.');
+      } catch (fallbackError) {
+        debugPrint('Fallback notification scheduling also failed: $fallbackError');
+      }
+    }
   }
 
   @override

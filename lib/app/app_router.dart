@@ -43,10 +43,10 @@ GoRouter appRouter(AppRouterRef ref) {
 
       // 2. Not logged in
       if (!isLoggedIn) {
-        if (isSplash || isLogin || isRegister) {
-          return null; // Stay on login/register/splash
+        if (isLogin || isRegister) {
+          return null; // Stay on login/register
         }
-        return '/login';
+        return '/login'; // Redirect to login from splash or elsewhere
       }
 
       // 3. Logged in - check onboarding (semester status)

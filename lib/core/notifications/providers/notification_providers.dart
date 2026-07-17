@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:isar/isar.dart';
 import '../../database/isar_provider.dart';
@@ -30,9 +31,14 @@ Future<void> notificationInitializer(NotificationInitializerRef ref) async {
   final service = ref.watch(notificationServiceProvider);
   final scheduler = ref.watch(notificationSchedulerProvider);
 
-  // 1. Initialize notification service and request permissions
+  // 1. Initialize notification service
   await service.initialize();
-  await service.requestPermissions();
+  
+  // Request permissions asynchronously so it doesn't block app boot
+  service.requestPermissions().catchError((e) {
+    debugPrint('Asynchronous notification permission request failed: $e');
+    return false;
+  });
 
   // 2. Set up database observers to auto-reschedule on edits or sync writes
   final timetableSub = isar.timetableTemplateLocals.where().watchLazy().listen((_) {

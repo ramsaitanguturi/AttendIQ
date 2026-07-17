@@ -1,31 +1,54 @@
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
 import 'core/database/isar_provider.dart';
 import 'core/notifications/providers/notification_providers.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('AttendIQ starting initialization...');
 
-  // Initialize Firebase (wrapped in a try-catch for safe Phase 0 initialization)
+  // Initialize Firebase (wrapped in a try-catch and timeout for safe Phase 0 initialization)
   try {
-    await Firebase.initializeApp();
-  } catch (e) {
+    debugPrint('Initializing Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 5), onTimeout: () {
+      debugPrint('Firebase initialization timed out (5s).');
+      throw TimeoutException('Firebase initialization timed out');
+    });
+    debugPrint('Firebase initialized successfully.');
+  } catch (e, stack) {
     debugPrint('Firebase initialization failed: $e');
-    debugPrint('Please add firebase_options.dart or platform configs to configure Firebase fully.');
+    debugPrint(stack.toString());
   }
 
-  // Pre-warm the Isar database provider so it is initialized before the UI loads
   final container = ProviderContainer();
+  
+  // Pre-warm the Isar database provider and Notification Service with timeouts
   try {
-    await container.read(isarProvider.future);
-    // Initialize Notification Service and run scheduler
-    await container.read(notificationInitializerProvider.future);
-  } catch (e) {
-    debugPrint('Initialization failed: $e');
+    debugPrint('Initializing Isar database...');
+    await container.read(isarProvider.future).timeout(const Duration(seconds: 5), onTimeout: () {
+      debugPrint('Isar database initialization timed out (5s).');
+      throw TimeoutException('Isar database initialization timed out');
+    });
+    debugPrint('Isar database initialized successfully.');
+
+    debugPrint('Initializing Notification Service...');
+    await container.read(notificationInitializerProvider.future).timeout(const Duration(seconds: 5), onTimeout: () {
+      debugPrint('Notification service initialization timed out (5s).');
+      throw TimeoutException('Notification service initialization timed out');
+    });
+    debugPrint('Notification Service initialized successfully.');
+  } catch (e, stack) {
+    debugPrint('Startup service initialization failed: $e');
+    debugPrint(stack.toString());
   }
 
+  debugPrint('Initialization steps completed or timed out. Booting UI...');
   runApp(
     UncontrolledProviderScope(
       container: container,
