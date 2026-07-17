@@ -24,7 +24,7 @@ final notificationServiceProvider =
 
 typedef NotificationServiceRef = AutoDisposeProviderRef<NotificationService>;
 String _$notificationSchedulerHash() =>
-    r'b0f431f0bfd5a7f068ecebc3a34cccdb86d1f718';
+    r'bdc49a3e9c77eaf2de1df48f3e5c9e71fc6c533a';
 
 /// See also [notificationScheduler].
 @ProviderFor(notificationScheduler)

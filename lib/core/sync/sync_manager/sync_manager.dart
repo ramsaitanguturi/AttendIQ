@@ -17,6 +17,7 @@ import '../../../../features/subject/data/models/subject_local.dart';
 import '../../../../features/timetable/data/models/timetable_template_local.dart';
 import '../../event_generator/data/models/event_local.dart';
 import '../../../../features/attendance/data/models/attendance_record_local.dart';
+import '../../../../features/settings/data/models/user_preferences_local.dart';
 
 part 'sync_manager.g.dart';
 
@@ -89,11 +90,13 @@ class SyncManager {
 
     try {
       final pending = await _syncQueue.getPendingOperations();
+      bool hasFailed = false;
       for (final op in pending) {
         try {
           await _processOperation(op, userId);
           await _syncQueue.remove(op.id);
         } catch (e) {
+          hasFailed = true;
           if (_isPoisonPill(e)) {
             await isolatePoisonPill(op, e.toString());
             await _syncQueue.remove(op.id);
@@ -104,9 +107,24 @@ class SyncManager {
           }
         }
       }
+      if (!hasFailed && pending.isNotEmpty) {
+        await _updatePreferencesLastSyncTime(userId);
+      }
     } finally {
       _isSyncing = false;
     }
+  }
+
+  Future<void> _updatePreferencesLastSyncTime(String userId) async {
+    await writeToLocalDatabase((isar) async {
+      if (isar == null) return;
+      final existing = await isar.userPreferencesLocals.where().serverIdEqualTo(userId).findFirst();
+      if (existing != null) {
+        existing.lastSyncTime = DateTime.now().toUtc();
+        existing.isDirty = false;
+        isar.userPreferencesLocals.put(existing);
+      }
+    });
   }
 
   void _scheduleRetry(int retryCount) {
@@ -213,6 +231,8 @@ class SyncManager {
         return _isar!.eventLocals.where().serverIdEqualTo(serverId).findFirst();
       case 'attendance_records':
         return _isar!.attendanceRecordLocals.where().serverIdEqualTo(serverId).findFirst();
+      case 'user_preferences':
+        return _isar!.userPreferencesLocals.where().serverIdEqualTo(serverId).findFirst();
       default:
         return null;
     }
@@ -235,6 +255,9 @@ class SyncManager {
         break;
       case 'attendance_records':
         isar.attendanceRecordLocals.put(model as AttendanceRecordLocal);
+        break;
+      case 'user_preferences':
+        isar.userPreferencesLocals.put(model as UserPreferencesLocal);
         break;
     }
   }
@@ -262,6 +285,10 @@ class SyncManager {
         case 'attendance_records':
           final existing = await isar.attendanceRecordLocals.where().serverIdEqualTo(serverId).findFirst();
           if (existing != null) isar.attendanceRecordLocals.delete(existing.id);
+          break;
+        case 'user_preferences':
+          final existing = await isar.userPreferencesLocals.where().serverIdEqualTo(serverId).findFirst();
+          if (existing != null) isar.userPreferencesLocals.delete(existing.id);
           break;
       }
     });
@@ -416,6 +443,26 @@ class SyncManager {
           }
           isar.attendanceRecordLocals.put(local);
           break;
+
+        case 'user_preferences':
+          final existing = await isar.userPreferencesLocals.where().serverIdEqualTo(serverId).findFirst();
+          final local = (existing ?? UserPreferencesLocal())
+            ..serverId = serverId
+            ..themeMode = remoteData['themeMode'] as String? ?? 'system'
+            ..defaultAttendanceTarget = (remoteData['defaultAttendanceTarget'] as num?)?.toDouble() ?? 75.0
+            ..classReminderOffset = remoteData['classReminderOffset'] as int? ?? 5
+            ..enableNotifications = remoteData['enableNotifications'] as bool? ?? true
+            ..enableAttendanceWarnings = remoteData['enableAttendanceWarnings'] as bool? ?? true
+            ..weeklyReportEnabled = remoteData['weeklyReportEnabled'] as bool? ?? true
+            ..updatedAt = updatedAt
+            ..isDirty = false
+            ..isDeleted = remoteData['isDeleted'] as bool? ?? false;
+
+          if (local.id == 0) {
+            local.id = isar.userPreferencesLocals.autoIncrement();
+          }
+          isar.userPreferencesLocals.put(local);
+          break;
       }
     });
   }
@@ -444,6 +491,9 @@ class SyncManager {
     }
     if (result.containsKey('date') && result['date'] != null) {
       result['date'] = Timestamp.fromDate(DateTime.parse(result['date'] as String));
+    }
+    if (result.containsKey('lastSyncTime') && result['lastSyncTime'] != null) {
+      result['lastSyncTime'] = Timestamp.fromDate(DateTime.parse(result['lastSyncTime'] as String));
     }
     
     if (isar == null) return result;

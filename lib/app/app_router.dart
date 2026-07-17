@@ -10,6 +10,8 @@ import '../features/analytics/presentation/pages/dashboard_page.dart';
 import '../features/analytics/presentation/pages/analytics_page.dart';
 import '../features/timetable/presentation/pages/weekly_timetable_page.dart';
 import '../features/attendance/presentation/pages/subject_details_page.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
+import '../features/settings/presentation/pages/profile_page.dart';
 
 part 'app_router.g.dart';
 
@@ -115,6 +117,18 @@ GoRouter appRouter(AppRouterRef ref) {
           final idString = state.pathParameters['id'];
           final id = int.tryParse(idString ?? '') ?? 0;
           return SubjectDetailsPage(subjectId: id);
+        },
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (BuildContext context, GoRouterState state) {
+          return const SettingsPage();
+        },
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (BuildContext context, GoRouterState state) {
+          return const ProfilePage();
         },
       ),
     ],

@@ -157,6 +157,24 @@ class AuthController extends _$AuthController {
     
     ref.invalidate(hasActiveSemesterProvider);
   }
+
+  Future<void> updateProfileName(String name) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repo = ref.read(authRepositoryProvider);
+      await repo.updateProfileName(name);
+      return await repo.getCurrentUser();
+    });
+  }
+
+  Future<void> deleteAccount() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repo = ref.read(authRepositoryProvider);
+      await repo.deleteAccount();
+      return null;
+    });
+  }
 }
 
 @riverpod

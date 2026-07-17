@@ -9,6 +9,7 @@ import '../event_generator/data/models/event_local.dart';
 import '../../features/attendance/data/models/attendance_record_local.dart';
 import '../sync/models/sync_operation.dart';
 import '../notifications/models/notification_item.dart';
+import '../../features/settings/data/models/user_preferences_local.dart';
 
 part 'isar_provider.g.dart';
 
@@ -27,6 +28,7 @@ Future<Isar> isar(IsarRef ref) async {
       SyncOperationSchema,
       FailedSyncOperationSchema,
       NotificationItemSchema,
+      UserPreferencesLocalSchema,
     ],
     name: AppConstants.isarDbName,
     directory: '.',

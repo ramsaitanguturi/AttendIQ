@@ -167,7 +167,7 @@ final hasActiveSemesterProvider = AutoDisposeFutureProvider<bool>.internal(
 );
 
 typedef HasActiveSemesterRef = AutoDisposeFutureProviderRef<bool>;
-String _$authControllerHash() => r'801567ef944b2bbec48c8c9912c31cadcb654008';
+String _$authControllerHash() => r'1838fe47d0ebec42070eb964ff0560a11907921a';
 
 /// See also [AuthController].
 @ProviderFor(AuthController)

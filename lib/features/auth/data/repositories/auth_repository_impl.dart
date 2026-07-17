@@ -134,4 +134,38 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<User?> get authStateChanges => _authStateController.stream;
+
+  @override
+  Future<void> updateProfileName(String name) async {
+    final cached = await _localDataSource.getUser();
+    if (cached != null) {
+      cached.name = name;
+      cached.updatedAt = DateTime.now().toUtc();
+      await _localDataSource.saveUser(cached);
+      
+      await _remoteDataSource.saveUserProfile(
+        uid: cached.uid,
+        name: name,
+        email: cached.email,
+        createdAt: cached.createdAt,
+      );
+      
+      final updatedUser = User(
+        id: cached.uid,
+        name: name,
+        email: cached.email,
+        createdAt: cached.createdAt,
+      );
+      _authStateController.add(updatedUser);
+    }
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    try {
+      await _remoteDataSource.deleteUserAccount();
+    } catch (_) {}
+    await _localDataSource.clearUser();
+    _authStateController.add(null);
+  }
 }

@@ -33,6 +33,8 @@ abstract class AuthRemoteDataSource {
     required double requiredAttendanceRate,
     String? serverId,
   });
+
+  Future<void> deleteUserAccount();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -122,5 +124,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     });
 
     return docRef.id;
+  }
+
+  @override
+  Future<void> deleteUserAccount() async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      await _firestore.collection('users').doc(uid).delete();
+      await user.delete();
+    }
   }
 }

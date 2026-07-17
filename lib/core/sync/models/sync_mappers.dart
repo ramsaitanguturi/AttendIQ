@@ -3,6 +3,7 @@ import '../../../../features/subject/data/models/subject_local.dart';
 import '../../../../features/timetable/data/models/timetable_template_local.dart';
 import '../../event_generator/data/models/event_local.dart';
 import '../../../../features/attendance/data/models/attendance_record_local.dart';
+import '../../../../features/settings/data/models/user_preferences_local.dart';
 
 extension SemesterLocalMapper on SemesterLocal {
   Map<String, dynamic> toMap() {
@@ -181,6 +182,41 @@ extension AttendanceRecordLocalMapper on AttendanceRecordLocal {
       ..createdAt = map['createdAt'] != null
           ? DateTime.parse(map['createdAt']).toUtc()
           : DateTime.now().toUtc()
+      ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
+      ..isDirty = map['isDirty'] ?? false
+      ..isDeleted = map['isDeleted'] ?? false;
+  }
+}
+
+extension UserPreferencesLocalMapper on UserPreferencesLocal {
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'serverId': serverId,
+      'themeMode': themeMode,
+      'defaultAttendanceTarget': defaultAttendanceTarget,
+      'classReminderOffset': classReminderOffset,
+      'enableNotifications': enableNotifications,
+      'enableAttendanceWarnings': enableAttendanceWarnings,
+      'weeklyReportEnabled': weeklyReportEnabled,
+      'lastSyncTime': lastSyncTime?.toUtc().toIso8601String(),
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
+      'isDirty': isDirty,
+      'isDeleted': isDeleted,
+    };
+  }
+
+  static UserPreferencesLocal fromMap(Map<String, dynamic> map) {
+    return UserPreferencesLocal()
+      ..id = map['id'] ?? 0
+      ..serverId = map['serverId']
+      ..themeMode = map['themeMode'] ?? 'system'
+      ..defaultAttendanceTarget = (map['defaultAttendanceTarget'] as num?)?.toDouble() ?? 75.0
+      ..classReminderOffset = map['classReminderOffset'] ?? 5
+      ..enableNotifications = map['enableNotifications'] ?? true
+      ..enableAttendanceWarnings = map['enableAttendanceWarnings'] ?? true
+      ..weeklyReportEnabled = map['weeklyReportEnabled'] ?? true
+      ..lastSyncTime = map['lastSyncTime'] != null ? DateTime.parse(map['lastSyncTime']).toUtc() : null
       ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
       ..isDirty = map['isDirty'] ?? false
       ..isDeleted = map['isDeleted'] ?? false;

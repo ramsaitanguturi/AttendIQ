@@ -135,6 +135,9 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
     };
     return id;
   }
+
+  @override
+  Future<void> deleteUserAccount() async {}
 }
 
 class MockUserCredential implements fb_auth.UserCredential {
