@@ -145,6 +145,16 @@ class DashboardPage extends ConsumerWidget {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/ai-assistant'),
+        backgroundColor: Colors.deepPurpleAccent,
+        elevation: 6,
+        tooltip: 'Ask AI Advisor',
+        child: const Icon(
+          Icons.auto_awesome,
+          color: Colors.black,
+        ),
+      ),
     );
   }
 

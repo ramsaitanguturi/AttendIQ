@@ -1,24 +1,25 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'app_router.dart';
+part of 'ai_context_builder.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appRouterHash() => r'e4a1b61f112aa06da6726568c26e3ca8c9e4cb8c';
+String _$aiContextHash() => r'644f4731e3822b86acf09b5b3260eceb51508339';
 
-/// See also [appRouter].
-@ProviderFor(appRouter)
-final appRouterProvider = AutoDisposeProvider<GoRouter>.internal(
-  appRouter,
-  name: r'appRouterProvider',
+/// See also [aiContext].
+@ProviderFor(aiContext)
+final aiContextProvider =
+    AutoDisposeFutureProvider<AttendanceAIContext>.internal(
+  aiContext,
+  name: r'aiContextProvider',
   debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$appRouterHash,
+      const bool.fromEnvironment('dart.vm.product') ? null : _$aiContextHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef AppRouterRef = AutoDisposeProviderRef<GoRouter>;
+typedef AiContextRef = AutoDisposeFutureProviderRef<AttendanceAIContext>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
