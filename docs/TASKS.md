@@ -24,14 +24,14 @@ This document provides a detailed list of tasks required to build the AttendIQ m
 
 ### TASK 0.3: Clean Architecture Folder Structure Setup
 - **Priority**: High
-- **Description**: Create the directory tree under `lib/` matching `FOLDER_STRUCTURE.md` including features (`auth`, `subject`, `attendance`, `timetable`, `analytics`, `ai_advisor`), core subdirectories, and app routing layouts.
+- **Description**: Create the directory tree under `lib/` matching [FOLDER_STRUCTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FOLDER_STRUCTURE.md) including features (`auth`, `subject`, `attendance`, `timetable`, `analytics`, `ai_advisor`), core subdirectories, and app routing layouts.
 - **Dependencies**: TASK 0.1
 - **Completion Criteria**:
   - All directories exist, and dummy barrel files or template layout classes are set up successfully.
 
 ### TASK 0.4: CI/CD Pipeline Automation (GitHub Actions)
 - **Priority**: High
-- **Description**: Configure the Git repository branch protection rules for `main` and `development`, and create the `.github/workflows/ci.yml` workflow file as specified in `CI_CD.md`.
+- **Description**: Configure the Git repository branch protection rules for `main` and `development`, and create the `.github/workflows/ci.yml` workflow file as specified in [CI_CD.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/CI_CD.md).
 - **Dependencies**: TASK 0.1
 - **Completion Criteria**:
   - Pushing commits triggers formatting, static analysis checks, testing, and staging build tasks on GitHub Actions successfully.
@@ -98,7 +98,7 @@ This document provides a detailed list of tasks required to build the AttendIQ m
 
 ### TASK 3.1: Outbox Sync Queue & Sync Manager Engine
 - **Priority**: High
-- **Description**: Implement the offline-first synchronization process following the architecture defined in [SYNC_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/SYNC_ENGINE.md). Build the `SyncQueueEntry` Outbox system, write FIFO queue processing with exponential backoff and poison-pill isolation, LWW conflict resolution, and soft-delete tombstone synchronization.
+- **Description**: Implement the offline-first synchronization process following the architecture defined in [SYNC_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/SYNC_ENGINE.md). Build the `SyncQueueEntry` Outbox system, write FIFO queue processing with exponential backoff and poison-pill isolation, LWW conflict resolution, and soft-delete tombstone synchronization.
 - **Dependencies**: TASK 2.3
 - **Completion Criteria**:
   - Intercepting local writes adds them to the outbox and marks Isar models as dirty.
@@ -137,7 +137,7 @@ This document provides a detailed list of tasks required to build the AttendIQ m
 
 ### TASK 3.6: Domain Rules & Heuristics Verification
 - **Priority**: High
-- **Description**: Implement and run comprehensive unit tests confirming that all attendance logging calculations, semester date boundary rules, and calculations for $P$, $B_{safe}$, and $A_{req}$ comply strictly with the formulas and edge cases specified in [DOMAIN_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/DOMAIN_RULES.md).
+- **Description**: Implement and run comprehensive unit tests confirming that all attendance logging calculations, semester date boundary rules, and calculations for $P$, $B_{safe}$, and $A_{req}$ comply strictly with the formulas and edge cases specified in [DOMAIN_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/DOMAIN_RULES.md).
 - **Dependencies**: TASK 3.4
 - **Completion Criteria**:
   - 100% unit test coverage for `attendance_math.dart`.

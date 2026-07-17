@@ -11,7 +11,7 @@ To ensure focused execution and prevent scope creep, the development roadmap enf
 *   **MVP Release Phases (Phases 0-3)**: Consists of the base setup, folder structure establishment, authentication, logging, rolling schedule generator, offline outbox synchronization, notifications, and core calculators. This establishes the complete functional product for users.
 *   **Post-MVP Release Phases (Phase 4)**: Includes the Gemini AI Advisor integration. Development on Phase 4 will *only* commence after all MVP phase completion criteria have been fully verified and approved.
 
-For details on boundaries and criteria, refer to [MVP_SCOPE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/MVP_SCOPE.md).
+For details on boundaries and criteria, refer to [MVP_SCOPE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/MVP_SCOPE.md).
 
 ---
 
@@ -27,8 +27,8 @@ Initialize the codebase structure, configure dependencies, set up environment fl
 - Repository templates and base exception classes.
 
 ### Required Files
-- [x] [FOLDER_STRUCTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/FOLDER_STRUCTURE.md)
-- [x] [CI_CD.md](file:///c:/Users/ramsa/Desktop/AttendIQ/CI_CD.md)
+- [x] [FOLDER_STRUCTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FOLDER_STRUCTURE.md)
+- [x] [CI_CD.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/CI_CD.md)
 - `lib/main_development.dart` & `lib/main_staging.dart` & `lib/main.dart`
 - `pubspec.yaml` (dependencies config)
 - `analysis_options.yaml` (strict linter rules)
@@ -40,8 +40,8 @@ Initialize the codebase structure, configure dependencies, set up environment fl
 - `flutter_riverpod`, `isar`, `isar_flutter_libs`, `firebase_core`, `build_runner`, `isar_generator`, `riverpod_generator`.
 
 ### Development Order
-1. **Folder Structure Setup**: Initialize the base project directories (app, core, features, shared) as defined in [FOLDER_STRUCTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/FOLDER_STRUCTURE.md).
-2. **CI/CD Pipeline Setup**: Configure Git branch protections and the GitHub Actions workflow script according to [CI_CD.md](file:///c:/Users/ramsa/Desktop/AttendIQ/CI_CD.md).
+1. **Folder Structure Setup**: Initialize the base project directories (app, core, features, shared) as defined in [FOLDER_STRUCTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FOLDER_STRUCTURE.md).
+2. **CI/CD Pipeline Setup**: Configure Git branch protections and the GitHub Actions workflow script according to [CI_CD.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/CI_CD.md).
 3. **Linter & Flavor Config**: Add `analysis_options.yaml` and entrypoints (`main_*.dart`).
 4. **Pubspec Dependencies**: Add packages and trigger `flutter pub get`.
 5. **Core Theme System**: Create HSL color tokens and `AppTheme` class.
@@ -140,11 +140,11 @@ Implement background synchronization, establish local rolling notifications, and
 - Analytics Charts (Semester Trend Line, comparison bars).
 
 ### Required Files
-- [x] [DOMAIN_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/DOMAIN_RULES.md)
-- [x] [SYNC_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/SYNC_ENGINE.md)
-- [x] [ATTENDANCE_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/ATTENDANCE_ENGINE.md)
-- [x] [FIREBASE_SECURITY.md](file:///c:/Users/ramsa/Desktop/AttendIQ/FIREBASE_SECURITY.md)
-- [x] [NOTIFICATION_SERVICE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/NOTIFICATION_SERVICE.md)
+- [x] [DOMAIN_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/DOMAIN_RULES.md)
+- [x] [SYNC_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/SYNC_ENGINE.md)
+- [x] [ATTENDANCE_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/ATTENDANCE_ENGINE.md)
+- [x] [FIREBASE_SECURITY.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FIREBASE_SECURITY.md)
+- [x] [NOTIFICATION_SERVICE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/NOTIFICATION_SERVICE.md)
 - `lib/core/sync/sync_manager.dart`
 - `lib/core/sync/sync_worker.dart` (Workmanager binding)
 - `lib/core/notifications/notification_service.dart`
@@ -155,9 +155,9 @@ Implement background synchronization, establish local rolling notifications, and
 - `connectivity_plus`, `cloud_firestore`, `workmanager`, `flutter_local_notifications`, `firebase_messaging`, `fl_chart`.
 
 ### Development Order
-1. **Domain Logic & Math Heuristics**: Package `attendance_math.dart` ensuring calculations conform strictly to [DOMAIN_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/DOMAIN_RULES.md) and build unit tests.
+1. **Domain Logic & Math Heuristics**: Package `attendance_math.dart` ensuring calculations conform strictly to [DOMAIN_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/DOMAIN_RULES.md) and build unit tests.
 2. **Notification Service**: Implement rolling 7-day queue manager.
-3. **Sync Engine Outbox Pattern**: Implement outbox sync queue logic and synchronization execution flow conforming strictly to [SYNC_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/SYNC_ENGINE.md).
+3. **Sync Engine Outbox Pattern**: Implement outbox sync queue logic and synchronization execution flow conforming strictly to [SYNC_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/SYNC_ENGINE.md).
 4. **Background Sync Runner**: Configure Workmanager background schedule.
 5. **Analytics Charts UI**: Integrate FL Charts.
 
