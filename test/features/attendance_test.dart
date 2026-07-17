@@ -78,6 +78,19 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
       record.updatedAt = DateTime.now();
     }
   }
+
+  @override
+  Stream<void> watchAttendance(int subjectId) {
+    return const Stream.empty();
+  }
+
+  @override
+  Future<void> updateEventStatus(int eventId, String status) async {}
+
+  @override
+  Future<int> createExtraClassEvent(int subjectId, DateTime date, String status) async {
+    return 999;
+  }
 }
 
 void main() {

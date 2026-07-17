@@ -1,5 +1,6 @@
 class Semester {
   final String? id;
+  final int? localId;
   final String name;
   final DateTime startDate;
   final DateTime endDate;
@@ -7,6 +8,7 @@ class Semester {
 
   const Semester({
     this.id,
+    this.localId,
     required this.name,
     required this.startDate,
     required this.endDate,
@@ -19,6 +21,7 @@ class Semester {
       other is Semester &&
           runtimeType == other.runtimeType &&
           id == other.id &&
+          localId == other.localId &&
           name == other.name &&
           startDate == other.startDate &&
           endDate == other.endDate &&
@@ -27,6 +30,7 @@ class Semester {
   @override
   int get hashCode =>
       id.hashCode ^
+      localId.hashCode ^
       name.hashCode ^
       startDate.hashCode ^
       endDate.hashCode ^
@@ -34,6 +38,6 @@ class Semester {
 
   @override
   String toString() {
-    return 'Semester(id: $id, name: $name, startDate: $startDate, endDate: $endDate, requiredAttendanceRate: $requiredAttendanceRate)';
+    return 'Semester(id: $id, localId: $localId, name: $name, startDate: $startDate, endDate: $endDate, requiredAttendanceRate: $requiredAttendanceRate)';
   }
 }

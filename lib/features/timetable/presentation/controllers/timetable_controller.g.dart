@@ -60,7 +60,7 @@ final timetableRepositoryProvider =
 
 typedef TimetableRepositoryRef = AutoDisposeProviderRef<TimetableRepository>;
 String _$timetableListControllerHash() =>
-    r'89d2df2b6779712f9bb4807087043488fe73aaeb';
+    r'8816a9e7b98e698579c96fefbbe0f2aa2ea92170';
 
 /// See also [TimetableListController].
 @ProviderFor(TimetableListController)

@@ -6,4 +6,5 @@ abstract class SubjectRepository {
   Future<void> createSubject(Subject subject);
   Future<void> updateSubject(Subject subject);
   Future<void> deleteSubject(int id);
+  Stream<void> watchSubjects(int semesterId);
 }

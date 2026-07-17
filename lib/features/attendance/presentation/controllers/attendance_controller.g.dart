@@ -42,7 +42,7 @@ final attendanceRepositoryProvider =
 
 typedef AttendanceRepositoryRef = AutoDisposeProviderRef<AttendanceRepository>;
 String _$attendanceControllerHash() =>
-    r'457c5fbcd27c97af62b323e51da59626728c9211';
+    r'40ac507f45c3f882116b73e5a7e12407a9e3d4cb';
 
 /// See also [AttendanceController].
 @ProviderFor(AttendanceController)

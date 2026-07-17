@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_constants.dart';
 import '../../features/auth/data/models/user_local.dart';
@@ -15,8 +17,15 @@ part 'isar_provider.g.dart';
 
 @riverpod
 Future<Isar> isar(IsarRef ref) async {
-  // In later phases, we will use path_provider to resolve the directory on mobile devices.
-  // Register schemas (UserLocal, SemesterLocal) here in Phase 1
+  String dir = '.';
+  if (!kIsWeb) {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      dir = appDir.path;
+    } catch (e) {
+      debugPrint('Failed to get application documents directory, falling back to local: $e');
+    }
+  }
   return Isar.open(
     schemas: const [
       UserLocalSchema,
@@ -31,7 +40,7 @@ Future<Isar> isar(IsarRef ref) async {
       UserPreferencesLocalSchema,
     ],
     name: AppConstants.isarDbName,
-    directory: '.',
+    directory: dir,
   );
 }
 

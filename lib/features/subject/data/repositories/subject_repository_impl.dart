@@ -133,4 +133,9 @@ class SubjectRepositoryImpl implements SubjectRepository {
       }
     }
   }
+
+  @override
+  Stream<void> watchSubjects(int semesterId) {
+    return _localDataSource.watchSubjects(semesterId);
+  }
 }

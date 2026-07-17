@@ -6,6 +6,40 @@ AttendIQ is a cross-platform mobile application built with Flutter that helps st
 
 ---
 
+## Showcase
+
+![Dashboard Screenshot](assets/screenshots/dashboard_mockup.png)
+
+### Core Features
+
+- **Smart Attendance Logging**: Easily log attendance with status options: *Present*, *Absent*, *Late*, *Cancelled*, *Extra Present*, and *Extra Absent*.
+- **Offline-First Synchronization**: Changes are registered instantly in a local ACID-compliant database (Isar) and enqueued in an Outbox sync queue. Bidirectional syncing with Cloud Firestore happens silently in the background when network connectivity is restored (Last-Write-Wins logic).
+- **Attendance Analytics & Forecasting**: Real-time calculators for current attendance rates, safe bunk margins, and required catch-up class streaks, conforming strictly to domain constraints.
+- **Dynamic Notifications**: Rolling 7-day scheduled reminders (to bypass OS limits), pre-class notifications, and weekly email digests.
+- **AI Academic Advisor**: Packaged student context analyzed by Gemini to generate academic prioritization advice, fallback to rule-based offline diagnostics when offline.
+
+---
+
+## Technical Architecture
+
+AttendIQ strictly follows **Clean Architecture** combined with a **Feature-First** structure to maintain separate, decoupled boundaries between components.
+
+```mermaid
+graph TD
+    UI[Presentation / Widgets] -->|Reads / Listens| Providers[Presentation / Notifiers]
+    Providers -->|Invokes| RepositoriesInterface[Domain / Repository Interfaces]
+    RepositoriesInterface -->|Defines| Entities[Domain / Entities]
+    RepositoryImpl[Data / Repository Implementation] -.->|Implements| RepositoriesInterface
+    RepositoryImpl -->|Reads / Writes| LocalDS[Data / Local Datasource Isar]
+    RepositoryImpl -->|Reads / Writes| RemoteDS[Data / Remote Datasource Firestore]
+    LocalDS -->|Uses| IsarSchemas[Data / Isar Models]
+    RemoteDS -->|Uses| FirestoreDTOs[Data / DTO Models]
+    style Entities fill:#64b5f6,stroke:#1565c0,stroke-width:2px,color:#000
+    style RepositoriesInterface fill:#64b5f6,stroke:#1565c0,stroke-width:2px,color:#000
+```
+
+---
+
 ## Technical Documentation Index
 
 Please refer to the following documentation files for detailed architecture, design, and code specifications:
@@ -33,41 +67,49 @@ Please refer to the following documentation files for detailed architecture, des
 | 📂 [FOLDER_STRUCTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FOLDER_STRUCTURE.md) | Standardized Clean Architecture, Feature-First Flutter folder structure. |
 | 🎯 [MVP_SCOPE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/MVP_SCOPE.md) | Target boundaries, in-scope features, exclusions, and release criteria. |
 | 🚀 [CI_CD.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/CI_CD.md) | Git branching, conventional commits, code reviews, and GitHub Actions CI. |
+| 📋 [RELEASE_CHECKLIST.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/RELEASE_CHECKLIST.md) | Full verification and compilation guidelines for app store releases. |
 
 ---
 
-## Problem
+## Installation & Setup
 
-College students often struggle to maintain attendance requirements because they manually track classes and calculate attendance percentages.
+### Prerequisites
 
-AttendIQ solves this by automatically tracking attendance and predicting attendance outcomes.
+1. Install the [Flutter SDK](https://flutter.dev/docs/get-started/install) (stable channel, version `3.22.0` or higher).
+2. Set up Android Studio, VS Code, or Xcode with Dart/Flutter plugins.
+3. Configure target device emulator.
 
-## Tech Stack
+### Build Instructions
 
-**Frontend**:
-- Flutter (v3.22+)
-- Dart (v3.4+)
+1. **Clone the repository**:
+   ```bash
+   git clone <repository_url>
+   cd AttendIQ
+   ```
 
-**Backend**:
-- Firebase Authentication
-- Cloud Firestore
+2. **Retrieve Dependencies**:
+   ```bash
+   flutter pub get
+   ```
 
-**Local Storage**:
-- Isar Database (NoSQL)
+3. **Generate Riverpod and Isar bindings**:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
 
-**Notifications**:
-- Flutter Local Notifications
-- Firebase Messaging (FCM)
+4. **Add Generative AI API Key**:
+   Gemini API Key is provided as a compile-time string mapping variable named `GEMINI_API_KEY`:
+   - Add your key during execution as follows:
+     ```bash
+     flutter run --dart-define=GEMINI_API_KEY="YOUR_API_KEY_HERE"
+     ```
+
+5. **Compile Staging Flavor APK**:
+   ```bash
+   flutter build apk --flavor dev -t lib/main_development.dart --release
+   ```
 
 ---
-
-## Future Plans
-
-- AI attendance assistant (implemented in Phase 4)
-- OCR timetable scanner
-- GPA tracker
-- Timetable sharing
-- Wear OS support
 
 ## Author
 

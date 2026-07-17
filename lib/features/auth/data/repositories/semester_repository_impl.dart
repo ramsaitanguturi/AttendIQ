@@ -49,6 +49,7 @@ class SemesterRepositoryImpl implements SemesterRepository {
     if (cached != null) {
       return Semester(
         id: cached.serverId ?? cached.id.toString(),
+        localId: cached.id,
         name: cached.name,
         startDate: cached.startDate,
         endDate: cached.endDate,

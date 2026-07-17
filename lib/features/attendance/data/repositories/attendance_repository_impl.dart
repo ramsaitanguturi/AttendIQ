@@ -103,4 +103,19 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       }
     }
   }
+
+  @override
+  Stream<void> watchAttendance(int subjectId) {
+    return _localDataSource.watchAttendance(subjectId);
+  }
+
+  @override
+  Future<void> updateEventStatus(int eventId, String status) async {
+    await _localDataSource.updateEventStatus(eventId, status);
+  }
+
+  @override
+  Future<int> createExtraClassEvent(int subjectId, DateTime date, String status) async {
+    return await _localDataSource.createExtraClassEvent(subjectId, date, status);
+  }
 }

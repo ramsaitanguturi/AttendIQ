@@ -110,7 +110,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 if (email.isNotEmpty) {
                   try {
                     await ref.read(authControllerProvider.notifier).forgotPassword(email);
-                    if (mounted) {
+                    if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -120,7 +120,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       );
                     }
                   } catch (e) {
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Error: ${e.toString()}'),

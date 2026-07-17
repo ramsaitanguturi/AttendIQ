@@ -7,6 +7,7 @@ abstract class TimetableLocalDataSource {
   Future<List<TimetableTemplateLocal>> getTemplatesForSemester(int semesterId);
   Future<TimetableTemplateLocal?> getTemplateById(int id);
   Future<void> saveTemplate(TimetableTemplateLocal template);
+  Stream<void> watchTemplates(int semesterId);
 }
 
 class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
@@ -56,5 +57,10 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
       }
       isar.timetableTemplateLocals.put(template);
     });
+  }
+
+  @override
+  Stream<void> watchTemplates(int semesterId) {
+    return _isar.timetableTemplateLocals.where().isDeletedEqualTo(false).watch();
   }
 }

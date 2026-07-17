@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 
 // App Imports
@@ -89,6 +88,11 @@ class FakeTimetableLocalDataSource implements TimetableLocalDataSource {
       template.id = _nextId++;
     }
     templates[template.id] = template;
+  }
+
+  @override
+  Stream<void> watchTemplates(int semesterId) {
+    return const Stream.empty();
   }
 }
 

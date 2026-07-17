@@ -117,4 +117,9 @@ class TimetableRepositoryImpl implements TimetableRepository {
       }
     }
   }
+
+  @override
+  Stream<void> watchTemplates(int semesterId) {
+    return _localDataSource.watchTemplates(semesterId);
+  }
 }

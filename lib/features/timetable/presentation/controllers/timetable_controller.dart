@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:isar/isar.dart';
 import '../../domain/entities/timetable_template.dart';
 import '../../domain/repositories/timetable_repository.dart';
 import '../../data/datasources/timetable_local_data_source.dart';
@@ -8,8 +7,6 @@ import '../../data/datasources/timetable_remote_data_source.dart';
 import '../../data/repositories/timetable_repository_impl.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/database/isar_provider.dart';
-import '../../../auth/data/models/semester_local.dart';
-import '../../data/models/timetable_template_local.dart';
 
 import '../../../../core/sync/sync_queue/sync_queue.dart';
 
@@ -38,21 +35,19 @@ TimetableRepository timetableRepository(TimetableRepositoryRef ref) {
 class TimetableListController extends _$TimetableListController {
   @override
   FutureOr<List<TimetableTemplate>> build() async {
-    final isar = ref.watch(isarProvider).requireValue;
-    
-    // Get local active semester
-    final localSem = isar.semesterLocals.where().isDeletedEqualTo(false).findFirst();
-    if (localSem == null) {
+    final semester = await ref.watch(semesterRepositoryProvider).getActiveSemester();
+    if (semester == null || semester.localId == null) {
       return const [];
     }
 
     final repo = ref.watch(timetableRepositoryProvider);
+    final localSemId = semester.localId!;
     
-    // Listen to changes in Isar timetableTemplateLocals
-    final stream = isar.timetableTemplateLocals.where().isDeletedEqualTo(false).watch();
+    // Listen to changes in timetableRepository stream
+    final stream = repo.watchTemplates(localSemId);
 
     final sub = stream.listen((_) async {
-      final updatedList = await repo.getTemplatesForSemester(localSem.id);
+      final updatedList = await repo.getTemplatesForSemester(localSemId);
       state = AsyncValue.data(updatedList);
     });
 
@@ -60,7 +55,7 @@ class TimetableListController extends _$TimetableListController {
       sub.cancel();
     });
 
-    return repo.getTemplatesForSemester(localSem.id);
+    return repo.getTemplatesForSemester(localSemId);
   }
 
   int _timeToMinutes(String timeStr) {

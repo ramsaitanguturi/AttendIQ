@@ -6,4 +6,5 @@ abstract class TimetableRepository {
   Future<TimetableTemplate?> getTemplateById(int id);
   Future<void> saveTemplate(TimetableTemplate template);
   Future<void> deleteTemplate(int id);
+  Stream<void> watchTemplates(int semesterId);
 }

@@ -8,10 +8,8 @@ import '../../../subject/domain/entities/subject.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/attendance_record.dart';
 import 'attendance_controller.dart';
-import '../../data/models/attendance_record_local.dart';
-import '../../../subject/data/models/subject_local.dart';
-import '../../../auth/data/models/semester_local.dart';
-import '../../../timetable/data/models/timetable_template_local.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../timetable/presentation/controllers/timetable_controller.dart';
 import '../../../../core/event_generator/data/models/event_local.dart';
 
 part 'subject_attendance_stats_provider.g.dart';
@@ -45,32 +43,26 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   SubjectAttendanceStatsRef ref,
   int subjectId,
 ) async {
-  final isar = ref.watch(isarProvider).requireValue;
+  final repo = ref.watch(subjectRepositoryProvider);
+  final attendanceRepo = ref.watch(attendanceRepositoryProvider);
+  final timetableRepo = ref.watch(timetableRepositoryProvider);
 
-  // Let's watch the subjectLocals and attendanceRecordLocals collections by making this provider depend on it
-  final stream = isar.attendanceRecordLocals.where().subjectIdEqualTo(subjectId).watch();
+  // Watch attendance changes using repository stream
+  final stream = attendanceRepo.watchAttendance(subjectId);
   final sub = stream.listen((_) {
     ref.invalidateSelf();
   });
   ref.onDispose(() => sub.cancel());
 
-  final subjectStream = isar.subjectLocals.where().idEqualTo(subjectId).watch();
-  final subSub = subjectStream.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => subSub.cancel());
-
   // 1. Fetch Subject
-  final repo = ref.watch(subjectRepositoryProvider);
   final subject = await repo.getSubjectById(subjectId);
   if (subject == null) return null;
 
   // 2. Fetch active semester for end date
-  final semester = isar.semesterLocals.where().isDeletedEqualTo(false).findFirst();
+  final semester = await ref.watch(semesterRepositoryProvider).getActiveSemester();
   if (semester == null) return null;
 
   // 3. Fetch all attendance records for this subject
-  final attendanceRepo = ref.read(attendanceRepositoryProvider);
   final records = await attendanceRepo.getAttendanceForSubject(subjectId);
 
   // 4. Calculate present, absent counts
@@ -91,12 +83,8 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   final safeBunks = AttendanceCalculator.calculateSafeBunks(attended: present, total: total, target: target);
   final requiredClasses = AttendanceCalculator.calculateRequiredClasses(attended: present, total: total, target: target);
 
-  // 6. Calculate remaining classes
-  final templates = isar.timetableTemplateLocals
-      .where()
-      .subjectIdEqualTo(subjectId)
-      .isDeletedEqualTo(false)
-      .findAll();
+  // 6. Calculate remaining classes using repository
+  final templates = await timetableRepo.getTemplatesForSubject(subjectId);
   final templateWeekdays = templates.map((t) => t.weekday).toList();
 
   int remaining = 0;
@@ -106,7 +94,7 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
     DateTime current = DateTime.utc(today.year, today.month, today.day);
     final end = DateTime.utc(semester.endDate.year, semester.endDate.month, semester.endDate.day);
     while (!current.isAfter(end)) {
-      remaining += templateWeekdays.where((w) => w == current.weekday).length;
+      remaining += templateWeekdays.where((int w) => w == current.weekday).length;
       current = current.add(const Duration(days: 1));
     }
   }
@@ -162,11 +150,10 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 
 @riverpod
 Future<List<SubjectAttendanceStats>> allSubjectAttendanceStats(AllSubjectAttendanceStatsRef ref) async {
-  final isar = ref.watch(isarProvider).requireValue;
-  final localSem = isar.semesterLocals.where().isDeletedEqualTo(false).findFirst();
-  if (localSem == null) return const [];
+  final semester = await ref.watch(semesterRepositoryProvider).getActiveSemester();
+  if (semester == null || semester.localId == null) return const [];
 
-  final subjects = await ref.watch(subjectRepositoryProvider).getSubjectsBySemester(localSem.id);
+  final subjects = await ref.watch(subjectRepositoryProvider).getSubjectsBySemester(semester.localId!);
   final List<SubjectAttendanceStats> statsList = [];
   for (final sub in subjects) {
     final stats = await ref.watch(subjectAttendanceStatsProvider(sub.id!).future);

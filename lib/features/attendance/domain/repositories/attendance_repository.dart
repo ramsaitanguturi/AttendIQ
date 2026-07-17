@@ -5,4 +5,7 @@ abstract class AttendanceRepository {
   Future<AttendanceRecord?> getAttendanceForEvent(int eventId);
   Future<void> saveAttendanceRecord(AttendanceRecord record);
   Future<void> deleteAttendanceRecord(int id);
+  Stream<void> watchAttendance(int subjectId);
+  Future<void> updateEventStatus(int eventId, String status);
+  Future<int> createExtraClassEvent(int subjectId, DateTime date, String status);
 }

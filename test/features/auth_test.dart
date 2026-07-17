@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_test/flutter_test.dart';
 
 // App Imports
-import 'package:attend_iq/features/auth/domain/entities/user.dart';
 import 'package:attend_iq/features/auth/domain/entities/semester.dart';
 import 'package:attend_iq/features/auth/data/models/user_local.dart';
 import 'package:attend_iq/features/auth/data/models/semester_local.dart';

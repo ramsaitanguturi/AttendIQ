@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 
 // App Imports
@@ -76,6 +75,11 @@ class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
       subject.id = _nextId++;
     }
     subjects[subject.id] = subject;
+  }
+
+  @override
+  Stream<void> watchSubjects(int semesterId) {
+    return const Stream.empty();
   }
 }
 

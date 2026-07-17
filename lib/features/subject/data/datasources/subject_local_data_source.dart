@@ -5,6 +5,7 @@ abstract class SubjectLocalDataSource {
   Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId);
   Future<SubjectLocal?> getSubjectById(int id);
   Future<void> saveSubject(SubjectLocal subject);
+  Stream<void> watchSubjects(int semesterId);
 }
 
 class SubjectLocalDataSourceImpl implements SubjectLocalDataSource {
@@ -34,5 +35,14 @@ class SubjectLocalDataSourceImpl implements SubjectLocalDataSource {
       }
       isar.subjectLocals.put(subject);
     });
+  }
+
+  @override
+  Stream<void> watchSubjects(int semesterId) {
+    return _isar.subjectLocals
+        .where()
+        .semesterIdEqualTo(semesterId)
+        .isDeletedEqualTo(false)
+        .watch();
   }
 }

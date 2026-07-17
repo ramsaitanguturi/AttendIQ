@@ -1,7 +1,8 @@
+// ignore_for_file: subtype_of_sealed_class
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
@@ -176,6 +177,11 @@ class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
     }
     subjects[subject.id] = subject;
   }
+
+  @override
+  Stream<void> watchSubjects(int semesterId) {
+    return const Stream.empty();
+  }
 }
 
 // Testable SyncManager subclass to bypass Isar native dll loading
@@ -288,13 +294,11 @@ class TestSyncManager extends SyncManager {
 // Unit Tests Main
 void main() {
   group('Part 1 & 3: Offline Create & Outbox Queue Creation', () {
-    late FakeAuthLocalDataSource authLocalDataSource;
     late FakeSubjectLocalDataSource localDataSource;
     late FakeSyncQueue syncQueue;
     late SubjectRepositoryImpl repository;
 
     setUp(() {
-      authLocalDataSource = FakeAuthLocalDataSource();
       localDataSource = FakeSubjectLocalDataSource();
       syncQueue = FakeSyncQueue();
       repository = SubjectRepositoryImpl(
