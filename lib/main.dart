@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
 import 'core/database/isar_provider.dart';
+import 'core/notifications/providers/notification_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,8 +20,10 @@ void main() async {
   final container = ProviderContainer();
   try {
     await container.read(isarProvider.future);
+    // Initialize Notification Service and run scheduler
+    await container.read(notificationInitializerProvider.future);
   } catch (e) {
-    debugPrint('Isar initialization failed: $e');
+    debugPrint('Initialization failed: $e');
   }
 
   runApp(

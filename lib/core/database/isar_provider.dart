@@ -8,6 +8,7 @@ import '../../features/timetable/data/models/timetable_template_local.dart';
 import '../event_generator/data/models/event_local.dart';
 import '../../features/attendance/data/models/attendance_record_local.dart';
 import '../sync/models/sync_operation.dart';
+import '../notifications/models/notification_item.dart';
 
 part 'isar_provider.g.dart';
 
@@ -25,6 +26,7 @@ Future<Isar> isar(IsarRef ref) async {
       AttendanceRecordLocalSchema,
       SyncOperationSchema,
       FailedSyncOperationSchema,
+      NotificationItemSchema,
     ],
     name: AppConstants.isarDbName,
     directory: '.',
