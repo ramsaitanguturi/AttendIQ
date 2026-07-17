@@ -8,6 +8,7 @@ import '../features/auth/presentation/pages/register_page.dart';
 import '../features/auth/presentation/pages/onboarding_page.dart';
 import '../features/analytics/presentation/pages/dashboard_page.dart';
 import '../features/analytics/presentation/pages/analytics_page.dart';
+import '../features/analytics/presentation/pages/reports_page.dart';
 import '../features/timetable/presentation/pages/weekly_timetable_page.dart';
 import '../features/attendance/presentation/pages/subject_details_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
@@ -129,6 +130,12 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/profile',
         builder: (BuildContext context, GoRouterState state) {
           return const ProfilePage();
+        },
+      ),
+      GoRoute(
+        path: '/reports',
+        builder: (BuildContext context, GoRouterState state) {
+          return const ReportsPage();
         },
       ),
     ],

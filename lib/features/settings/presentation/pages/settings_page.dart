@@ -178,6 +178,13 @@ class SettingsPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         ListTile(
+                          leading: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.secondary),
+                          title: const Text('Attendance Reports'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/reports'),
+                        ),
+                        _buildDivider(isDark),
+                        ListTile(
                           leading: const Icon(Icons.person_outline, color: AppColors.secondary),
                           title: const Text('View Profile'),
                           trailing: const Icon(Icons.chevron_right),
