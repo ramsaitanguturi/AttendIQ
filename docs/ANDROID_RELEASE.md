@@ -94,3 +94,21 @@ flutter build apk --release --dart-define=GEMINI_API_KEY="YOUR_API_KEY"
 The compiled binaries will be output to:
 *   **App Bundle**: `build/app/outputs/bundle/release/app-release.aab`
 *   **APK**: `build/app/outputs/flutter-apk/app-release.apk`
+
+---
+
+## 🛠️ 4. Troubleshooting JDK & Gradle Compatibility
+
+If you run into compilation errors such as `Unsupported class file major version 68` when executing Gradle tasks or building the app, it means your default system Java version (e.g. Java 24) is incompatible with the project's Gradle version (Gradle 7.6.3).
+
+To resolve this:
+1. Ensure Java 17 is installed (e.g., Eclipse Adoptium JDK 17).
+2. Set your `JAVA_HOME` environment variable to Java 17 in your terminal session before running build commands:
+   ```powershell
+   $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.19.10-hotspot"
+   ```
+3. Configure the Flutter SDK to use this JDK:
+   ```bash
+   flutter config --jdk-dir "C:\Program Files\Eclipse Adoptium\jdk-17.0.19.10-hotspot"
+   ```
+

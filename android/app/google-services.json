@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "981454566644",
+    "project_id": "attendiq-b3f1c",
+    "storage_bucket": "attendiq-b3f1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981454566644:android:c361541c6b59edcca41aa1",
+        "android_client_info": {
+          "package_name": "com.ramsa.attendiq.attend_iq"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeLLb-awRCOEYDrOY24Oo07e03cqTo10o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
