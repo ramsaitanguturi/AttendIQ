@@ -23,18 +23,18 @@ extension SemesterLocalMapper on SemesterLocal {
 
   static SemesterLocal fromMap(Map<String, dynamic> map) {
     return SemesterLocal()
-      ..id = map['id'] ?? 0
-      ..serverId = map['serverId']
-      ..name = map['name']
-      ..startDate = DateTime.parse(map['startDate']).toUtc()
-      ..endDate = DateTime.parse(map['endDate']).toUtc()
+      ..id = (map['id'] as num?)?.toInt() ?? 0
+      ..serverId = map['serverId'] as String?
+      ..name = map['name'] as String
+      ..startDate = DateTime.parse(map['startDate'] as String).toUtc()
+      ..endDate = DateTime.parse(map['endDate'] as String).toUtc()
       ..requiredAttendanceRate = (map['requiredAttendanceRate'] as num).toDouble()
       ..createdAt = map['createdAt'] != null
-          ? DateTime.parse(map['createdAt']).toUtc()
+          ? DateTime.parse(map['createdAt'] as String).toUtc()
           : DateTime.now().toUtc()
-      ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
-      ..isDirty = map['isDirty'] ?? false
-      ..isDeleted = map['isDeleted'] ?? false;
+      ..updatedAt = DateTime.parse(map['updatedAt'] as String).toUtc()
+      ..isDirty = map['isDirty'] as bool? ?? false
+      ..isDeleted = map['isDeleted'] as bool? ?? false;
   }
 }
 
@@ -60,22 +60,22 @@ extension SubjectLocalMapper on SubjectLocal {
 
   static SubjectLocal fromMap(Map<String, dynamic> map) {
     return SubjectLocal()
-      ..id = map['id'] ?? 0
-      ..serverId = map['serverId']
-      ..semesterId = map['semesterId'] ?? 0
-      ..name = map['name']
-      ..code = map['code']
-      ..faculty = map['faculty']
-      ..credits = map['credits'] ?? 0
+      ..id = (map['id'] as num?)?.toInt() ?? 0
+      ..serverId = map['serverId'] as String?
+      ..semesterId = (map['semesterId'] as num?)?.toInt() ?? 0
+      ..name = map['name'] as String
+      ..code = map['code'] as String
+      ..faculty = map['faculty'] as String?
+      ..credits = (map['credits'] as num?)?.toInt() ?? 0
       ..attendanceTarget = (map['attendanceTarget'] as num).toDouble()
-      ..color = map['color']
-      ..type = map['type']
+      ..color = map['color'] as String
+      ..type = map['type'] as String
       ..createdAt = map['createdAt'] != null
-          ? DateTime.parse(map['createdAt']).toUtc()
+          ? DateTime.parse(map['createdAt'] as String).toUtc()
           : DateTime.now().toUtc()
-      ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
-      ..isDirty = map['isDirty'] ?? false
-      ..isDeleted = map['isDeleted'] ?? false;
+      ..updatedAt = DateTime.parse(map['updatedAt'] as String).toUtc()
+      ..isDirty = map['isDirty'] as bool? ?? false
+      ..isDeleted = map['isDeleted'] as bool? ?? false;
   }
 }
 
@@ -100,21 +100,21 @@ extension TimetableTemplateLocalMapper on TimetableTemplateLocal {
 
   static TimetableTemplateLocal fromMap(Map<String, dynamic> map) {
     return TimetableTemplateLocal()
-      ..id = map['id'] ?? 0
-      ..serverId = map['serverId']
-      ..subjectId = map['subjectId'] ?? 0
-      ..weekday = map['weekday'] ?? 1
-      ..startTime = map['startTime']
-      ..endTime = map['endTime']
-      ..room = map['room']
-      ..faculty = map['faculty']
-      ..notes = map['notes']
+      ..id = (map['id'] as num?)?.toInt() ?? 0
+      ..serverId = map['serverId'] as String?
+      ..subjectId = (map['subjectId'] as num?)?.toInt() ?? 0
+      ..weekday = (map['weekday'] as num?)?.toInt() ?? 1
+      ..startTime = map['startTime'] as String
+      ..endTime = map['endTime'] as String
+      ..room = map['room'] as String?
+      ..faculty = map['faculty'] as String?
+      ..notes = map['notes'] as String?
       ..createdAt = map['createdAt'] != null
-          ? DateTime.parse(map['createdAt']).toUtc()
+          ? DateTime.parse(map['createdAt'] as String).toUtc()
           : DateTime.now().toUtc()
-      ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
-      ..isDirty = map['isDirty'] ?? false
-      ..isDeleted = map['isDeleted'] ?? false;
+      ..updatedAt = DateTime.parse(map['updatedAt'] as String).toUtc()
+      ..isDirty = map['isDirty'] as bool? ?? false
+      ..isDeleted = map['isDeleted'] as bool? ?? false;
   }
 }
 
@@ -138,20 +138,20 @@ extension EventLocalMapper on EventLocal {
 
   static EventLocal fromMap(Map<String, dynamic> map) {
     return EventLocal()
-      ..id = map['id'] ?? 0
-      ..serverId = map['serverId']
-      ..subjectId = map['subjectId'] ?? 0
-      ..date = DateTime.parse(map['date']).toUtc()
-      ..startTime = map['startTime']
-      ..endTime = map['endTime']
-      ..eventType = map['eventType']
-      ..status = map['status']
+      ..id = (map['id'] as num?)?.toInt() ?? 0
+      ..serverId = map['serverId'] as String?
+      ..subjectId = (map['subjectId'] as num?)?.toInt() ?? 0
+      ..date = DateTime.parse(map['date'] as String).toUtc()
+      ..startTime = map['startTime'] as String
+      ..endTime = map['endTime'] as String
+      ..eventType = map['eventType'] as String
+      ..status = map['status'] as String
       ..createdAt = map['createdAt'] != null
-          ? DateTime.parse(map['createdAt']).toUtc()
+          ? DateTime.parse(map['createdAt'] as String).toUtc()
           : DateTime.now().toUtc()
-      ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
-      ..isDirty = map['isDirty'] ?? false
-      ..isDeleted = map['isDeleted'] ?? false;
+      ..updatedAt = DateTime.parse(map['updatedAt'] as String).toUtc()
+      ..isDirty = map['isDirty'] as bool? ?? false
+      ..isDeleted = map['isDeleted'] as bool? ?? false;
   }
 }
 
@@ -173,18 +173,18 @@ extension AttendanceRecordLocalMapper on AttendanceRecordLocal {
 
   static AttendanceRecordLocal fromMap(Map<String, dynamic> map) {
     return AttendanceRecordLocal()
-      ..id = map['id'] ?? 0
-      ..serverId = map['serverId']
-      ..eventId = map['eventId'] ?? 0
-      ..subjectId = map['subjectId'] ?? 0
-      ..status = map['status']
-      ..markedAt = DateTime.parse(map['markedAt']).toUtc()
+      ..id = (map['id'] as num?)?.toInt() ?? 0
+      ..serverId = map['serverId'] as String?
+      ..eventId = (map['eventId'] as num?)?.toInt() ?? 0
+      ..subjectId = (map['subjectId'] as num?)?.toInt() ?? 0
+      ..status = map['status'] as String
+      ..markedAt = DateTime.parse(map['markedAt'] as String).toUtc()
       ..createdAt = map['createdAt'] != null
-          ? DateTime.parse(map['createdAt']).toUtc()
+          ? DateTime.parse(map['createdAt'] as String).toUtc()
           : DateTime.now().toUtc()
-      ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
-      ..isDirty = map['isDirty'] ?? false
-      ..isDeleted = map['isDeleted'] ?? false;
+      ..updatedAt = DateTime.parse(map['updatedAt'] as String).toUtc()
+      ..isDirty = map['isDirty'] as bool? ?? false
+      ..isDeleted = map['isDeleted'] as bool? ?? false;
   }
 }
 
@@ -208,17 +208,17 @@ extension UserPreferencesLocalMapper on UserPreferencesLocal {
 
   static UserPreferencesLocal fromMap(Map<String, dynamic> map) {
     return UserPreferencesLocal()
-      ..id = map['id'] ?? 0
-      ..serverId = map['serverId']
-      ..themeMode = map['themeMode'] ?? 'system'
+      ..id = (map['id'] as num?)?.toInt() ?? 0
+      ..serverId = map['serverId'] as String?
+      ..themeMode = map['themeMode'] as String? ?? 'system'
       ..defaultAttendanceTarget = (map['defaultAttendanceTarget'] as num?)?.toDouble() ?? 75.0
-      ..classReminderOffset = map['classReminderOffset'] ?? 5
-      ..enableNotifications = map['enableNotifications'] ?? true
-      ..enableAttendanceWarnings = map['enableAttendanceWarnings'] ?? true
-      ..weeklyReportEnabled = map['weeklyReportEnabled'] ?? true
-      ..lastSyncTime = map['lastSyncTime'] != null ? DateTime.parse(map['lastSyncTime']).toUtc() : null
-      ..updatedAt = DateTime.parse(map['updatedAt']).toUtc()
-      ..isDirty = map['isDirty'] ?? false
-      ..isDeleted = map['isDeleted'] ?? false;
+      ..classReminderOffset = (map['classReminderOffset'] as num?)?.toInt() ?? 5
+      ..enableNotifications = map['enableNotifications'] as bool? ?? true
+      ..enableAttendanceWarnings = map['enableAttendanceWarnings'] as bool? ?? true
+      ..weeklyReportEnabled = map['weeklyReportEnabled'] as bool? ?? true
+      ..lastSyncTime = map['lastSyncTime'] != null ? DateTime.parse(map['lastSyncTime'] as String).toUtc() : null
+      ..updatedAt = DateTime.parse(map['updatedAt'] as String).toUtc()
+      ..isDirty = map['isDirty'] as bool? ?? false
+      ..isDeleted = map['isDeleted'] as bool? ?? false;
   }
 }

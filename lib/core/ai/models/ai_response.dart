@@ -28,7 +28,7 @@ class AIResponse {
     if (json['relatedSubjects'] != null && json['relatedSubjects'] is List) {
       parsedRelated.addAll((json['relatedSubjects'] as List).map((e) => e.toString()));
     } else if (json['criticalWarnings'] != null && json['criticalWarnings'] is List) {
-      for (final item in json['criticalWarnings']) {
+      for (final item in json['criticalWarnings'] as List) {
         if (item is Map && item['title'] != null) {
           parsedRelated.add(item['title'].toString());
         }
@@ -39,7 +39,7 @@ class AIResponse {
     if (json['actionItems'] != null && json['actionItems'] is List) {
       parsedActions.addAll((json['actionItems'] as List).map((e) => e.toString()));
     } else if (json['recommendations'] != null && json['recommendations'] is List) {
-      for (final item in json['recommendations']) {
+      for (final item in json['recommendations'] as List) {
         if (item is Map && item['description'] != null) {
           parsedActions.add(item['description'].toString());
         }

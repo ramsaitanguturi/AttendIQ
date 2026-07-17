@@ -5,7 +5,6 @@ import '../../database/isar_provider.dart';
 import '../models/attendance_analytics.dart';
 import '../models/risk_status.dart';
 import '../calculators/analytics_calculator.dart';
-import '../../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../../features/auth/domain/entities/semester.dart';
 import '../../../features/subject/presentation/controllers/subject_controller.dart';
 import '../../../features/attendance/presentation/controllers/attendance_controller.dart';
@@ -107,8 +106,7 @@ class AnalyticsService {
 @riverpod
 AnalyticsService analyticsService(AnalyticsServiceRef ref) {
   final isar = ref.watch(isarProvider).requireValue;
-  // We cast ref to dynamic or use AutoDisposeRef subclass because of generator types
-  return AnalyticsService(isar, ref as dynamic);
+  return AnalyticsService(isar, ref);
 }
 
 @riverpod

@@ -7,7 +7,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../database/isar_provider.dart';
 import '../models/sync_operation.dart';
-import '../models/sync_mappers.dart';
 import '../sync_queue/sync_queue.dart';
 import 'firebase_sync_service.dart';
 import '../conflict_resolver/conflict_resolver.dart';
@@ -40,7 +39,7 @@ class SyncManager {
   final FirebaseSyncService _remoteSyncService;
   
   bool _isSyncing = false;
-  StreamSubscription? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _retryTimer;
 
   SyncManager(this._isar, this._syncQueue, this._remoteSyncService) {
@@ -170,9 +169,9 @@ class SyncManager {
     
     DateTime localUpdatedAt;
     if (localModel != null) {
-      localUpdatedAt = localModel.updatedAt;
+      localUpdatedAt = localModel.updatedAt as DateTime;
     } else {
-      localUpdatedAt = DateTime.parse(localModelMap['updatedAt'] ?? DateTime.now().toUtc().toIso8601String()).toUtc();
+      localUpdatedAt = DateTime.parse(localModelMap['updatedAt'] as String? ?? DateTime.now().toUtc().toIso8601String()).toUtc();
     }
 
     final remoteDoc = await _remoteSyncService.fetchRemoteDocument(op.collectionName, op.documentId);

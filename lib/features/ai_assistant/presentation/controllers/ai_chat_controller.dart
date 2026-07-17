@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../../../../core/ai/context/attendance_ai_context.dart';
 import '../../../../core/ai/context/ai_context_builder.dart';
 import '../../../../core/ai/models/ai_response.dart';
 import '../../../../core/ai/services/ai_provider.dart';

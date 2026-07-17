@@ -1,0 +1,44 @@
+name: AttendIQ CI Pipeline
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main, development ]
+
+jobs:
+  analyze_and_test:
+    name: Flutter Analyze and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java Development Kit
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Verify Formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Run Build Runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run Static Code Analysis
+        run: flutter analyze
+
+      - name: Run Unit & Widget Tests
+        run: flutter test

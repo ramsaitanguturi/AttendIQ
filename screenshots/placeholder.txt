@@ -1,0 +1,5 @@
+This folder is designated for application screenshots:
+- dashboard.png
+- attendance.png
+- analytics.png
+- ai_assistant.png
