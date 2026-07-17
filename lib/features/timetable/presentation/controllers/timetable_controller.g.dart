@@ -43,7 +43,7 @@ final timetableRemoteDataSourceProvider =
 typedef TimetableRemoteDataSourceRef
     = AutoDisposeProviderRef<TimetableRemoteDataSource>;
 String _$timetableRepositoryHash() =>
-    r'b7512fe3ce1b8670da5115913c0eb4cc62125aae';
+    r'9d7cf8d7445086b2ef80b10f0a947413ff0b8464';
 
 /// See also [timetableRepository].
 @ProviderFor(timetableRepository)
