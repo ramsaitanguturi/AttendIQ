@@ -24,25 +24,7 @@ final subjectLocalDataSourceProvider =
 
 typedef SubjectLocalDataSourceRef
     = AutoDisposeProviderRef<SubjectLocalDataSource>;
-String _$subjectRemoteDataSourceHash() =>
-    r'14ef7255dfe8263ce79ffd68a0c891fafe010f4e';
-
-/// See also [subjectRemoteDataSource].
-@ProviderFor(subjectRemoteDataSource)
-final subjectRemoteDataSourceProvider =
-    AutoDisposeProvider<SubjectRemoteDataSource>.internal(
-  subjectRemoteDataSource,
-  name: r'subjectRemoteDataSourceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$subjectRemoteDataSourceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef SubjectRemoteDataSourceRef
-    = AutoDisposeProviderRef<SubjectRemoteDataSource>;
-String _$subjectRepositoryHash() => r'57c94b09e0b04ee36f07e49d69b4072ca1c8fa06';
+String _$subjectRepositoryHash() => r'995c9a4138bfca906d46db782852b025956a2a6c';
 
 /// See also [subjectRepository].
 @ProviderFor(subjectRepository)
@@ -59,7 +41,7 @@ final subjectRepositoryProvider =
 
 typedef SubjectRepositoryRef = AutoDisposeProviderRef<SubjectRepository>;
 String _$subjectListControllerHash() =>
-    r'9379c9da59bb6af46ffd0517aecea9367ad58bbb';
+    r'2e50d3d6e9f00619f20b19039f0f0feb8bc90673';
 
 /// See also [SubjectListController].
 @ProviderFor(SubjectListController)

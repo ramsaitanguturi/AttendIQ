@@ -1,21 +1,15 @@
-import 'dart:convert';
 import '../../domain/entities/subject.dart';
 import '../../domain/repositories/subject_repository.dart';
 import '../datasources/subject_local_data_source.dart';
 import '../models/subject_local.dart';
-import '../../../../core/sync/sync_queue/sync_queue.dart';
-import '../../../../core/sync/models/sync_mappers.dart';
 import '../../../../core/utils/uuid_generator.dart';
 
 class SubjectRepositoryImpl implements SubjectRepository {
   final SubjectLocalDataSource _localDataSource;
-  final SyncQueue _syncQueue;
 
   SubjectRepositoryImpl({
     required SubjectLocalDataSource localDataSource,
-    required SyncQueue syncQueue,
-  })  : _localDataSource = localDataSource,
-        _syncQueue = syncQueue;
+  }) : _localDataSource = localDataSource;
 
   Subject _toEntity(SubjectLocal local) {
     return Subject(
@@ -76,17 +70,10 @@ class SubjectRepositoryImpl implements SubjectRepository {
       ..serverId = serverId
       ..createdAt = now
       ..updatedAt = now
-      ..isDirty = true
+      ..isDirty = false
       ..isDeleted = false;
 
     await _localDataSource.saveSubject(localSubject);
-
-    await _syncQueue.enqueue(
-      collectionName: 'subjects',
-      documentId: serverId,
-      operationType: 'CREATE',
-      payload: jsonEncode(localSubject.toMap()),
-    );
   }
 
   @override
@@ -97,19 +84,12 @@ class SubjectRepositoryImpl implements SubjectRepository {
     final localSubject = _toLocal(subject)
       ..serverId = serverId
       ..updatedAt = now
-      ..isDirty = true;
+      ..isDirty = false;
 
     final existing = await _localDataSource.getSubjectById(localSubject.id);
     localSubject.createdAt = existing?.createdAt ?? now;
 
     await _localDataSource.saveSubject(localSubject);
-
-    await _syncQueue.enqueue(
-      collectionName: 'subjects',
-      documentId: serverId,
-      operationType: 'UPDATE',
-      payload: jsonEncode(localSubject.toMap()),
-    );
   }
 
   @override
@@ -118,19 +98,10 @@ class SubjectRepositoryImpl implements SubjectRepository {
     if (local != null) {
       final now = DateTime.now().toUtc();
       local.isDeleted = true;
-      local.isDirty = true;
+      local.isDirty = false;
       local.updatedAt = now;
 
       await _localDataSource.saveSubject(local);
-
-      if (local.serverId != null) {
-        await _syncQueue.enqueue(
-          collectionName: 'subjects',
-          documentId: local.serverId!,
-          operationType: 'DELETE',
-          payload: jsonEncode(local.toMap()),
-        );
-      }
     }
   }
 

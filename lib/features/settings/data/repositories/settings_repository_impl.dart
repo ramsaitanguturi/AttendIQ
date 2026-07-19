@@ -1,24 +1,18 @@
-import 'dart:convert';
 import 'package:isar/isar.dart';
 import '../../domain/entities/user_preferences.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../models/user_preferences_local.dart';
-import '../../../../core/sync/sync_queue/sync_queue.dart';
-import '../../../../core/sync/models/sync_mappers.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   final Isar _isar;
-  final SyncQueue _syncQueue;
 
   SettingsRepositoryImpl({
     required Isar isar,
-    required SyncQueue syncQueue,
-  })  : _isar = isar,
-        _syncQueue = syncQueue;
+  }) : _isar = isar;
 
   UserPreferences _toEntity(UserPreferencesLocal local) {
     return UserPreferences(
-      id: local.serverId ?? '',
+      id: local.serverId ?? 'local_user',
       themeMode: local.themeMode,
       defaultAttendanceTarget: local.defaultAttendanceTarget,
       classReminderOffset: local.classReminderOffset,
@@ -30,7 +24,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   UserPreferencesLocal _toLocal(UserPreferences preferences) {
     final local = UserPreferencesLocal()
-      ..serverId = preferences.id
+      ..serverId = preferences.id.isEmpty ? 'local_user' : preferences.id
       ..themeMode = preferences.themeMode
       ..defaultAttendanceTarget = preferences.defaultAttendanceTarget
       ..classReminderOffset = preferences.classReminderOffset
@@ -42,45 +36,38 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   @override
   Future<UserPreferences?> getPreferences(String userId) async {
-    final local = _isar.userPreferencesLocals.where().serverIdEqualTo(userId).findFirst();
-    if (local != null) {
-      return _toEntity(local);
+    final list = await _isar.userPreferencesLocals.where().findAll();
+    if (list.isNotEmpty) {
+      return _toEntity(list.first);
     }
     return null;
   }
 
   @override
   Future<void> savePreferences(UserPreferences preferences) async {
-    final serverId = preferences.id;
-    if (serverId.isEmpty) return;
-
     final now = DateTime.now().toUtc();
     final localPref = _toLocal(preferences)
       ..updatedAt = now
-      ..isDirty = true
+      ..isDirty = false
       ..isDeleted = false;
 
+    final existingList = await _isar.userPreferencesLocals.where().findAll();
+    if (existingList.isNotEmpty) {
+      localPref.id = existingList.first.id;
+    }
+
     await _isar.writeAsync((isar) {
-      final existing = isar.userPreferencesLocals.where().serverIdEqualTo(serverId).findFirst();
-      if (existing != null) {
-        localPref.id = existing.id;
+      if (localPref.id == 0) {
+        localPref.id = isar.userPreferencesLocals.autoIncrement();
       }
       isar.userPreferencesLocals.put(localPref);
     });
-
-    await _syncQueue.enqueue(
-      collectionName: 'user_preferences',
-      documentId: serverId,
-      operationType: 'UPDATE',
-      payload: jsonEncode(localPref.toMap()),
-    );
   }
 
   @override
   Stream<UserPreferences?> watchPreferences(String userId) {
     return _isar.userPreferencesLocals
         .where()
-        .serverIdEqualTo(userId)
         .watch(fireImmediately: true)
         .map((list) => list.isNotEmpty ? _toEntity(list.first) : null);
   }

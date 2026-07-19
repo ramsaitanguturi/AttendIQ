@@ -3,38 +3,6 @@ import 'package:attend_iq/features/attendance/domain/entities/attendance_record.
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
 import 'package:attend_iq/features/attendance/data/datasources/attendance_local_data_source.dart';
 import 'package:attend_iq/features/attendance/data/repositories/attendance_repository_impl.dart';
-import 'package:attend_iq/core/sync/sync_queue/sync_queue.dart';
-import 'package:attend_iq/core/sync/models/sync_operation.dart';
-
-// Fakes
-class FakeSyncQueue implements SyncQueue {
-  final List<SyncOperation> operations = [];
-  int _nextId = 1;
-
-  @override
-  Future<void> enqueue({
-    required String collectionName,
-    required String documentId,
-    required String operationType,
-    required String payload,
-  }) async {
-    operations.add(SyncOperation()
-      ..id = _nextId++
-      ..collectionName = collectionName
-      ..documentId = documentId
-      ..operationType = operationType
-      ..payload = payload
-      ..createdAt = DateTime.now().toUtc()
-      ..retryCount = 0);
-  }
-
-  @override
-  Future<List<SyncOperation>> getPendingOperations() async => operations;
-  @override
-  Future<void> remove(int id) async => operations.removeWhere((op) => op.id == id);
-  @override
-  Future<void> incrementRetryCount(int id) async {}
-}
 
 class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
   final Map<int, AttendanceRecordLocal> records = {};
@@ -96,16 +64,14 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
 void main() {
   group('Attendance Repository Implementation Tests', () {
     late FakeAttendanceLocalDataSource fakeLocalDataSource;
-    late FakeSyncQueue syncQueue;
     late AttendanceRepositoryImpl repository;
 
     setUp(() {
       fakeLocalDataSource = FakeAttendanceLocalDataSource();
-      syncQueue = FakeSyncQueue();
-      repository = AttendanceRepositoryImpl(fakeLocalDataSource, syncQueue);
+      repository = AttendanceRepositoryImpl(fakeLocalDataSource);
     });
 
-    test('saveAttendanceRecord persists and maps correctly and enqueues sync CREATE operation', () async {
+    test('saveAttendanceRecord persists and maps correctly', () async {
       final record = AttendanceRecord(
         eventId: 10,
         subjectId: 5,
@@ -122,10 +88,6 @@ void main() {
       expect(savedLocal.subjectId, 5);
       expect(savedLocal.status, 'PRESENT');
       expect(savedLocal.serverId, isNotNull);
-      expect(savedLocal.isDirty, isTrue);
-
-      expect(syncQueue.operations.length, 1);
-      expect(syncQueue.operations.first.operationType, 'CREATE');
     });
 
     test('getAttendanceForSubject fetches active records only', () async {
@@ -152,7 +114,7 @@ void main() {
           ..createdAt = DateTime.now()
           ..updatedAt = DateTime.now()
           ..isDirty = false
-          ..isDeleted = true, // Deleted
+          ..isDeleted = true,
       );
 
       final result = await repository.getAttendanceForSubject(5);
@@ -181,7 +143,7 @@ void main() {
       expect(result.status, AttendanceStatus.ABSENT);
     });
 
-    test('deleteAttendanceRecord marks local isDeleted=true and enqueues DELETE operation', () async {
+    test('deleteAttendanceRecord marks local isDeleted=true', () async {
       final record = AttendanceRecord(
         eventId: 300,
         subjectId: 5,
@@ -198,9 +160,6 @@ void main() {
       final finalLocal = fakeLocalDataSource.records[created.id];
       expect(finalLocal, isNotNull);
       expect(finalLocal!.isDeleted, isTrue);
-
-      expect(syncQueue.operations.length, 2);
-      expect(syncQueue.operations.last.operationType, 'DELETE');
     });
   });
 }

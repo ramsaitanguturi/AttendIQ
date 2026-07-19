@@ -19,6 +19,6 @@ class UserPreferencesLocal {
 
   // Sync Metadata
   late DateTime updatedAt;
-  late bool isDirty;
-  late bool isDeleted;
+  bool isDirty = false;
+  bool isDeleted = false;
 }

@@ -4,13 +4,15 @@ import 'package:attend_iq/core/notifications/scheduler/notification_scheduler.da
 import 'package:attend_iq/core/notifications/scheduler/notification_database.dart';
 import 'package:attend_iq/core/notifications/services/notification_service.dart';
 import 'package:attend_iq/core/event_generator/data/models/event_local.dart';
-import 'package:attend_iq/features/auth/data/models/semester_local.dart';
+import 'package:attend_iq/features/semester/data/models/semester_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
 import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
+import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
 
 class MockNotificationDatabase implements NotificationDatabase {
   final List<EventLocal> events = [];
+  final List<AcademicEventLocal> academicEvents = [];
   final List<SubjectLocal> subjects = [];
   final List<TimetableTemplateLocal> templates = [];
   final List<AttendanceRecordLocal> attendanceRecords = [];
@@ -23,6 +25,14 @@ class MockNotificationDatabase implements NotificationDatabase {
   Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async {
     // start and end are typically stripped UTC dates for our queries
     return events.where((e) {
+      final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
+      return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
+    }).toList();
+  }
+
+  @override
+  Future<List<AcademicEventLocal>> getAcademicEvents(DateTime start, DateTime end) async {
+    return academicEvents.where((e) {
       final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
     }).toList();

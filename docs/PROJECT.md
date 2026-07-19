@@ -94,14 +94,14 @@ $$P_{predicted} = \left( \frac{A_{predicted\_present}}{A_{predicted\_total}} \ri
 ## 4. Scope and Exclusions
 
 ### In Scope
-- Offline-first logging of subject attendance.
+- 100% offline-first logging of subject attendance.
 - Customizable subject thresholds, weightings for late attendance, and timetables.
 - Visual status dashboards (charts, trends, cards).
 - Algorithmic predictions (forecasts, safe bunks).
-- Automatic database sync when network is restored.
+- Complete database backup and restore engine (.attendiq).
 - Local AI Advisor analyzing student schedule and statistics.
 
 ### Out of Scope
-- Multi-user sharing (each user manages their own account).
-- Automated integration with official university attendance systems (which usually lack public APIs). All inputs are logged by the student.
+- User accounts, registration, login, or cloud sync.
+- Automated integration with official university attendance systems. All inputs are logged by the student.
 - Complex professor dashboard (AttendIQ is exclusively client-facing for students).

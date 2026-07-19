@@ -1,109 +1,18 @@
-// ignore_for_file: subtype_of_sealed_class
-
 import 'package:flutter_test/flutter_test.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 // App imports
-import 'package:attend_iq/features/auth/data/models/user_local.dart';
-import 'package:attend_iq/features/auth/data/models/semester_local.dart';
+import 'package:attend_iq/features/semester/data/models/semester_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
+import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
 import 'package:attend_iq/core/event_generator/data/models/event_local.dart';
-import 'package:attend_iq/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:attend_iq/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:attend_iq/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:attend_iq/core/ai/services/local_advisor_service.dart';
 import 'package:attend_iq/core/ai/context/attendance_ai_context.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_scheduler.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_database.dart';
 import 'package:attend_iq/core/notifications/services/notification_service.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
-
-// Manual Fakes
-class MockUserCredential implements fb_auth.UserCredential {
-  @override
-  fb_auth.User? get user => MockFirebaseUser();
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class MockFirebaseUser implements fb_auth.User {
-  @override
-  String get uid => 'user_123';
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class FakeAuthLocalDataSource implements AuthLocalDataSource {
-  UserLocal? currentUser;
-  SemesterLocal? activeSemester;
-  bool saveUserCalled = false;
-
-  @override
-  Future<UserLocal?> getUser() async => currentUser;
-
-  @override
-  Future<void> saveUser(UserLocal user) async {
-    saveUserCalled = true;
-    currentUser = user;
-  }
-
-  @override
-  Future<void> clearUser() async {
-    currentUser = null;
-    activeSemester = null;
-  }
-
-  @override
-  Future<void> saveSemester(SemesterLocal semester) async {
-    activeSemester = semester;
-  }
-
-  @override
-  Future<SemesterLocal?> getActiveSemester() async {
-    return activeSemester;
-  }
-
-  @override
-  Future<bool> hasActiveSemester() async {
-    return activeSemester != null;
-  }
-}
-
-class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
-  bool shouldThrow = false;
-  bool shouldThrowFetch = false;
-
-  @override
-  Future<fb_auth.UserCredential> registerWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    if (shouldThrow) throw Exception('Network disconnected');
-    return MockUserCredential();
-  }
-
-  @override
-  Future<fb_auth.UserCredential> loginWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    if (shouldThrow) throw Exception('Network disconnected');
-    return MockUserCredential();
-  }
-
-  @override
-  Future<Map<String, dynamic>?> fetchUserProfile({required String uid}) async {
-    if (shouldThrowFetch) throw Exception('Firestore access denied');
-    return {'uid': uid, 'name': 'Bob'};
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
 
 class FakeNotificationDatabase implements NotificationDatabase {
   SemesterLocal? activeSemester;
@@ -120,6 +29,9 @@ class FakeNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async => [];
+
+  @override
+  Future<List<AcademicEventLocal>> getAcademicEvents(DateTime start, DateTime end) async => [];
 
   @override
   Future<List<TimetableTemplateLocal>> getTemplates() async => [];
@@ -156,51 +68,6 @@ class FakeNotificationService implements NotificationService {
 }
 
 void main() {
-  group('Production Readiness - Authentication Edge Cases', () {
-    late FakeAuthLocalDataSource localDS;
-    late FakeAuthRemoteDataSource remoteDS;
-    late AuthRepositoryImpl authRepo;
-
-    setUp(() {
-      localDS = FakeAuthLocalDataSource();
-      remoteDS = FakeAuthRemoteDataSource();
-      authRepo = AuthRepositoryImpl(
-        localDataSource: localDS,
-        remoteDataSource: remoteDS,
-      );
-    });
-
-    test('Register fails when remote API throws an error (e.g. no internet)', () async {
-      remoteDS.shouldThrow = true;
-
-      expect(
-        () => authRepo.registerWithEmailAndPassword(
-          name: 'Bob',
-          email: 'bob@test.com',
-          password: 'password',
-        ),
-        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('Network disconnected'))),
-      );
-
-      // Verify that local database was NOT modified
-      expect(localDS.saveUserCalled, false);
-    });
-
-    test('Login fails when remote profile fetch throws exception', () async {
-      remoteDS.shouldThrowFetch = true;
-
-      expect(
-        () => authRepo.loginWithEmailAndPassword(
-          email: 'bob@test.com',
-          password: 'password',
-        ),
-        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('Firestore access denied'))),
-      );
-
-      expect(localDS.saveUserCalled, false);
-    });
-  });
-
   group('Production Readiness - AI Fallback Heuristics', () {
     test('LocalAdvisorService fallback generates mathematically correct suggestions when offline', () async {
       const localAdvisor = LocalAdvisorService();
@@ -215,7 +82,7 @@ void main() {
             'id': 1,
             'name': 'Math',
             'present': 10,
-            'total': 15, // 66.7%
+            'total': 15,
             'attendanceTarget': 75.0,
             'safeBunks': 0,
             'mustAttendConsecutive': 5,
@@ -273,7 +140,6 @@ void main() {
       mockDb.notifications = [];
       mockService.shouldThrow = true;
 
-      // Executing this should not crash
       await expectLater(
         scheduler.checkAttendanceRisks(customNow: DateTime.now()),
         completes,

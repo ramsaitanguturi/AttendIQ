@@ -1,6 +1,6 @@
 # Technical Architecture: AttendIQ
 
-AttendIQ is structured as a Clean Architecture application organized in a Feature-First directory layout. It uses Riverpod for state management and dependency injection, and incorporates a background synchronization engine to support its offline-first capability.
+AttendIQ is structured as a 100% offline Clean Architecture application organized in a Feature-First directory layout. It uses Riverpod for state management and dependency injection, and incorporates an internal Backup & Restore engine (`.attendiq`) for user data portability without cloud servers or accounts.
 
 ---
 
@@ -11,55 +11,56 @@ We use a **Feature-First** structure. Each directory in `lib/features/` represen
 ```
 lib/
 ├── core/                         # Shared core infrastructure
-│   ├── database/                 # Isar DB helper, opening/closing connections
+│   ├── database/                 # Isar DB provider and schema registration
+│   ├── backup/                   # BackupExporter, BackupImporter, BackupService
 │   ├── theme/                    # Color palettes, typography, theme notifier
-│   ├── sync/                     # Sync engine, outbox handlers, sync worker
-│   ├── network/                  # Internet connection checker, client wrappers
-│   ├── widgets/                  # Reusable UI elements (custom buttons, inputs)
+│   ├── notifications/            # Local notification scheduler and services
+│   ├── event_generator/          # Generator mapping timetable templates to events
+│   ├── analytics/                # Calculated metrics and risk resolvers
+│   ├── attendance_engine/        # Mathematical bunk & catch-up calculators
+│   ├── reports/                  # PDF/CSV report generation service
+│   ├── ai/                       # Local AI advisor & context builders
+│   ├── widgets/                  # Reusable UI elements
 │   ├── errors/                   # Failure classes, exceptions
-│   └── utils/                    # Math formulas, Date/Time extensions
+│   └── utils/                    # Math formulas, UUID generators, Date extensions
 │
 ├── features/                     # Feature directories
-│   ├── auth/                     # Authentication & onboarding flow
+│   ├── semester/                 # Semester repository, entities, Isar models
 │   ├── subject/                  # Subject CRUD, credit settings, targets
 │   ├── attendance/               # Attendance logging (Present, Absent, Late)
-│   ├── timetable/                # Weekly schedule, slots, notifications
+│   ├── timetable/                # Weekly schedule, slots, collision checks
 │   ├── analytics/                # Trends, forecasts, bunk calculator page
-│   └── ai_advisor/               # Gemini AI assistant client & suggestions
+│   ├── backup/                   # Export & Import UI screens
+│   ├── onboarding/               # First launch wizard & splash
+│   ├── settings/                 # App settings, info, privacy
+│   └── ai_assistant/             # Gemini AI assistant client & suggestions
 │
 └── main.dart                     # Application entry point
 ```
 
-Within each **feature folder** (e.g., `lib/features/subject/`), the following layers must be strictly maintained:
+Within each **feature folder** (e.g., `lib/features/subject/`), Clean Architecture layers are strictly maintained:
 
 ```
 subject/
 ├── data/
-│   ├── datasources/             # Local (Isar) and Remote (Firestore) sources
-│   │   ├── subject_local_data_source.dart
-│   │   └── subject_remote_data_source.dart
-│   ├── models/                  # Isar schemas, DTOs, JSON converters
-│   │   ├── subject_isar_model.dart
-│   │   └── subject_firestore_dto.dart
-│   └── repositories/            # Repository implementations mapping data to domain
+│   ├── datasources/             # Local (Isar) datasource
+│   │   └── subject_local_data_source.dart
+│   ├── models/                  # Isar schemas & JSON converters
+│   │   └── subject_local.dart
+│   └── repositories/            # Repository implementation mapping data to domain
 │       └── subject_repository_impl.dart
 │
 ├── domain/
-│   ├── entities/                # Pure Dart business models (Plain Old Dart Objects)
+│   ├── entities/                # Pure Dart business models
 │   │   └── subject.dart
-│   ├── repositories/            # Interface definitions for repositories
-│   │   └── subject_repository.dart
-│   └── usecases/                # Specific business operations (optional, only if complex logic exists)
-│       └── calculate_subject_stats.dart
+│   └── repositories/            # Interface definitions for repositories
+│       └── subject_repository.dart
 │
 └── presentation/
     ├── controllers/             # Riverpod Notifiers managing UI state
-    │   └── subject_list_controller.dart
+    │   └── subject_controller.dart
     ├── pages/                   # Full screens
-    │   ├── subject_list_page.dart
-    │   └── subject_detail_page.dart
-    └── widgets/                 # Feature-specific widgets (SubjectCard, etc.)
-        └── subject_progress_bar.dart
+    └── widgets/                 # Feature-specific widgets
 ```
 
 ---
@@ -68,8 +69,8 @@ subject/
 
 Following Clean Architecture principles, **dependencies must only point inward**:
 - The **Presentation** layer depends on the **Domain** layer (to invoke business logic) and uses **Core** for UI blocks.
-- The **Data** layer depends on the **Domain** layer (implementing Repository interfaces, mapping Models to Entities).
-- The **Domain** layer is completely independent of other layers. It contains no references to Flutter packages, Isar, Firebase, or HTTP clients. It is pure Dart.
+- The **Data** layer depends on the **Domain** layer (implementing Repository interfaces).
+- The **Domain** layer is completely independent of other layers. It contains no references to Flutter packages, Isar, or network clients. It is pure Dart.
 
 ```mermaid
 graph TD
@@ -78,9 +79,8 @@ graph TD
     RepositoriesInterface -->|Defines| Entities[Domain / Entities]
     RepositoryImpl[Data / Repository Implementation] -.->|Implements| RepositoriesInterface
     RepositoryImpl -->|Reads / Writes| LocalDS[Data / Local Datasource Isar]
-    RepositoryImpl -->|Reads / Writes| RemoteDS[Data / Remote Datasource Firestore]
     LocalDS -->|Uses| IsarSchemas[Data / Isar Models]
-    RemoteDS -->|Uses| FirestoreDTOs[Data / DTO Models]
+    BackupEngine[Core / Backup Engine] -->|Exports / Imports| LocalDS
     style Entities fill:#64b5f6,stroke:#1565c0,stroke-width:2px,color:#000
     style RepositoriesInterface fill:#64b5f6,stroke:#1565c0,stroke-width:2px,color:#000
 ```
@@ -90,74 +90,33 @@ graph TD
 ## 3. State Management & Data Flow
 
 Riverpod is used as the application's reactive engine. 
-- **Notifiers** (`Notifier` or `AsyncNotifier` from Riverpod Generator) read repository instances, call async methods, update their state, and notify subscribers.
-- **UI Widgets** consume Notifiers using `ref.watch()`. When state transitions (e.g., from loading to success), the UI automatically rebuilds.
+- **Notifiers** read repository instances, call async methods, update state, and notify subscribers.
+- **UI Widgets** consume Notifiers using `ref.watch()`.
 
 ### Standard Data Read Flow
 1. Widget does `ref.watch(subjectListControllerProvider)`.
-2. The controller gets the repository instance (injected via a Riverpod provider).
+2. The controller gets the repository instance.
 3. The repository queries Isar database locally.
 4. The local models are converted into domain entities.
-5. The list of entities is emitted as the state (`AsyncData([Subject])`).
-6. Widget builds and renders the lists.
+5. The list of entities is emitted as state (`AsyncData([Subject])`).
 
-### Standard Write Flow (Offline-First)
+### Standard Write Flow (100% Offline)
 1. User taps "Mark Present" on a class widget.
-2. Widget calls `ref.read(attendanceControllerProvider.notifier).markAttendance(subjectId, AttendanceStatus.present)`.
-3. The controller calls `attendanceRepository.logAttendance(record)`.
-4. The Repository writes the record into **Isar local database** immediately, setting `isDirty = true` and updating `updatedAt = DateTime.now()`.
-5. The Repository triggers the background sync loop asynchronously.
-6. The user interface updates immediately because Isar's local stream broadcasts the updated list.
+2. Widget calls `ref.read(attendanceControllerProvider.notifier).markAttendance(...)`.
+3. The controller calls `attendanceRepository.saveAttendanceRecord(record)`.
+4. The Repository writes the record into **Isar local database** inside an ACID transaction scope.
+5. The user interface updates immediately via Isar's local watcher stream.
 
 ---
 
-## 4. Offline-First Sync Engine
+## 4. Backup & Restore Architecture (.attendiq)
 
-The sync engine ensures data consistency between Isar and Firestore. It works as an outbox queue that process tasks asynchronously.
+AttendIQ user data is preserved entirely on the local device. Data portability is handled via an offline Backup & Restore system.
 
-### 4.1 Sync Architecture Components
-- **Sync Envelope**: Every local model contains:
-  - `updatedAt`: Unix timestamp of the last local update.
-  - `isDeleted`: Tombstone flag indicating deleted records.
-  - `isDirty`: Flag indicating if local changes are not yet synced.
-- **Connectivity Listener**: Listens to internet connection changes. If connection is restored, it triggers the sync cycle.
-- **Sync Worker**: A background worker (using Workmanager on Android/iOS) that runs periodic sync tasks and listens to remote changes.
-
-### 4.2 Sync Cycle Sequence
-When a sync starts, the following flow occurs:
-
-```mermaid
-sequenceDiagram
-    participant App as Flutter App / Isar
-    participant Sync as Sync Manager
-    participant DB as Isar Database
-    participant Remote as Firebase Firestore
-    
-    Sync->>DB: Fetch records where isDirty == true
-    DB-->>Sync: Return local dirty records
-    Note over Sync, Remote: PUSH CYCLE (Upload Local Edits)
-    loop For each dirty record
-        Sync->>Remote: Fetch remote document by ID
-        Remote-->>Sync: Return remote document metadata
-        alt Remote document doesn't exist OR local.updatedAt > remote.updatedAt
-            Sync->>Remote: Write local record to Firestore
-            Sync->>DB: Set record isDirty = false
-        else Remote document is newer (remote.updatedAt > local.updatedAt)
-            Sync->>DB: Overwrite local record with Remote record, set isDirty = false
-        end
-    end
-    Note over Sync, Remote: PULL CYCLE (Download Remote Edits)
-    Sync->>Remote: Fetch records where remote.updatedAt > lastSyncedTime
-    Remote-->>Sync: Return list of updated documents
-    loop For each remote update
-        Sync->>DB: Upsert into Isar (merge fields, set isDirty = false)
-    end
-    Sync->>DB: Update lastSyncedTime value
-```
-
-### 4.3 Tombstoning (Deletes)
-If a user deletes a record (e.g., deletes a Subject):
-1. Locally, the repository calls `isar.writeTxn(() => subject.isDeleted = true, subject.isDirty = true)`.
-2. During the next sync cycle, the deleted record is pushed to Firestore.
-3. Firestore writes the document with `isDeleted = true` (or deletes it permanently, depending on backend arch).
-4. Once successfully synced (Firestore responds with success), the record is permanently removed from the local Isar database to save space.
+### 4.1 Backup Components
+- **BackupMetadata**: Includes `appVersion`, `backupVersion`, `createdAt`, and `devicePlatform`.
+- **BackupExporter**: Extracts data from all Isar collections (`UserPreferences`, `Semester`, `Subject`, `TimetableTemplate`, `AttendanceRecord`, `Event`, `NotificationItem`) into a structured JSON container.
+- **BackupImporter**: Validates payload structure and `backupVersion`. Provides two restore strategies:
+  - **Replace**: Clears existing local database collections before inserting imported records.
+  - **Merge**: Integrates imported records alongside existing records without deleting existing collections.
+- **BackupService**: Coordinates export file writing (`.attendiq` extension) and holds extension hooks for future AES payload encryption.

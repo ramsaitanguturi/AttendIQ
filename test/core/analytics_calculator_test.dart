@@ -3,7 +3,7 @@ import 'package:attend_iq/core/analytics/models/risk_status.dart';
 import 'package:attend_iq/core/analytics/calculators/analytics_calculator.dart';
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/attendance/domain/entities/attendance_record.dart';
-import 'package:attend_iq/features/auth/domain/entities/semester.dart';
+import 'package:attend_iq/features/semester/domain/entities/semester.dart';
 
 void main() {
   group('AnalyticsCalculator - Subject Analytics Tests', () {

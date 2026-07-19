@@ -34,5 +34,5 @@ class NotificationItem {
 
   String? relatedId;
 
-  late bool isRead;
+  bool isRead = false;
 }

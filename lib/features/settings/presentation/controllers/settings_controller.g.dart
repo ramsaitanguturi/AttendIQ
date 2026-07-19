@@ -7,7 +7,7 @@ part of 'settings_controller.dart';
 // **************************************************************************
 
 String _$settingsRepositoryHash() =>
-    r'2ae5046c39d7db593eea17ee3e2b48821d06c098';
+    r'e26839cc4714f70017021042427fff0e6fa80d38';
 
 /// See also [settingsRepository].
 @ProviderFor(settingsRepository)
@@ -37,24 +37,8 @@ final appThemeModeProvider = AutoDisposeProvider<ThemeMode>.internal(
 );
 
 typedef AppThemeModeRef = AutoDisposeProviderRef<ThemeMode>;
-String _$pendingOperationsCountHash() =>
-    r'4273e4b7f21d876aba037c28901be3fbfdc9a9d4';
-
-/// See also [pendingOperationsCount].
-@ProviderFor(pendingOperationsCount)
-final pendingOperationsCountProvider = AutoDisposeStreamProvider<int>.internal(
-  pendingOperationsCount,
-  name: r'pendingOperationsCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$pendingOperationsCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef PendingOperationsCountRef = AutoDisposeStreamProviderRef<int>;
 String _$settingsControllerHash() =>
-    r'2cada5a808cd577ceb4b95535e45226ffc09811e';
+    r'c8e2d9d0cf073b9bf6c26912a516bc2849f3390d';
 
 /// See also [SettingsController].
 @ProviderFor(SettingsController)

@@ -1,21 +1,15 @@
-import 'dart:convert';
 import '../../domain/entities/timetable_template.dart';
 import '../../domain/repositories/timetable_repository.dart';
 import '../datasources/timetable_local_data_source.dart';
 import '../models/timetable_template_local.dart';
-import '../../../../core/sync/sync_queue/sync_queue.dart';
-import '../../../../core/sync/models/sync_mappers.dart';
 import '../../../../core/utils/uuid_generator.dart';
 
 class TimetableRepositoryImpl implements TimetableRepository {
   final TimetableLocalDataSource _localDataSource;
-  final SyncQueue _syncQueue;
 
   TimetableRepositoryImpl({
     required TimetableLocalDataSource localDataSource,
-    required SyncQueue syncQueue,
-  })  : _localDataSource = localDataSource,
-        _syncQueue = syncQueue;
+  }) : _localDataSource = localDataSource;
 
   TimetableTemplate _toEntity(TimetableTemplateLocal local) {
     return TimetableTemplate(
@@ -79,21 +73,13 @@ class TimetableRepositoryImpl implements TimetableRepository {
     final localTemplate = _toLocal(template)
       ..serverId = serverId
       ..updatedAt = now
-      ..isDirty = true
+      ..isDirty = false
       ..isDeleted = false;
 
-    // Check if we already have a createdAt, if not use now
     final existing = await _localDataSource.getTemplateById(localTemplate.id);
     localTemplate.createdAt = existing?.createdAt ?? now;
 
     await _localDataSource.saveTemplate(localTemplate);
-
-    await _syncQueue.enqueue(
-      collectionName: 'schedules',
-      documentId: serverId,
-      operationType: template.serverId != null ? 'UPDATE' : 'CREATE',
-      payload: jsonEncode(localTemplate.toMap()),
-    );
   }
 
   @override
@@ -102,19 +88,10 @@ class TimetableRepositoryImpl implements TimetableRepository {
     if (local != null) {
       final now = DateTime.now().toUtc();
       local.isDeleted = true;
-      local.isDirty = true;
+      local.isDirty = false;
       local.updatedAt = now;
 
       await _localDataSource.saveTemplate(local);
-
-      if (local.serverId != null) {
-        await _syncQueue.enqueue(
-          collectionName: 'schedules',
-          documentId: local.serverId!,
-          operationType: 'DELETE',
-          payload: jsonEncode(local.toMap()),
-        );
-      }
     }
   }
 

@@ -1,13 +1,15 @@
 import 'package:isar/isar.dart';
 import '../../event_generator/data/models/event_local.dart';
-import '../../../features/auth/data/models/semester_local.dart';
+import '../../../features/semester/data/models/semester_local.dart';
 import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
 import '../../../features/timetable/data/models/timetable_template_local.dart';
+import '../../../features/timetable/data/models/academic_event_local.dart';
 import '../models/notification_item.dart';
 
 abstract class NotificationDatabase {
   Future<List<EventLocal>> getEvents(DateTime start, DateTime end);
+  Future<List<AcademicEventLocal>> getAcademicEvents(DateTime start, DateTime end);
   Future<List<SubjectLocal>> getSubjects();
   Future<List<TimetableTemplateLocal>> getTemplates();
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(int subjectId);
@@ -30,6 +32,15 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
   @override
   Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async {
     return _isar.eventLocals
+        .where()
+        .dateBetween(start, end)
+        .isDeletedEqualTo(false)
+        .findAll();
+  }
+
+  @override
+  Future<List<AcademicEventLocal>> getAcademicEvents(DateTime start, DateTime end) async {
+    return _isar.academicEventLocals
         .where()
         .dateBetween(start, end)
         .isDeletedEqualTo(false)

@@ -1,183 +1,277 @@
-# AttendIQ 🎓🤖
+# AttendIQ - Smart Academic Management System
 
-Smart Offline-First Attendance Planner & Academic Advisor for College Students.
+> A privacy-focused offline-first student productivity application for managing attendance, timetable, academic calendar, tasks, and semester planning.
 
-AttendIQ is a premium, cross-platform mobile application built with Flutter that empowers students to manage their timetables, track class attendance, analyze real-time eligibility margins, and receive AI-guided academic prioritization recommendations. By combining offline-first local persistence with seamless cloud synchronization, AttendIQ ensures student records are always accessible and secure.
-
----
-
-## 📌 Problem Statement
-
-College students often face strict academic regulations requiring a minimum attendance percentage (typically 75% or 80%) to qualify for exams. Keeping track of daily schedules, calculating safe bunk counts, and anticipating attendance dips is a tedious, error-prone manual task. Failing to meet these thresholds can lead to severe academic and administrative penalties.
-
-AttendIQ solves this by acting as an intelligent scheduling assistant. It automates timetable event generation, delivers predictive and reactive calculators (detailing how many classes can be safely missed or must be attended), and provides personalized, AI-driven study and attendance suggestions to keep students on track.
+[![Flutter](https://img.shields.io/badge/Flutter-3.22+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.4+-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
+[![Isar Database](https://img.shields.io/badge/Isar-4.0--dev-00A98F?style=for-the-badge&logo=database&logoColor=white)](https://isar.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop-lightgrey?style=for-the-badge)]()
 
 ---
 
-## 🎨 Screenshots Showcase
+## Overview
 
-Below are the mockups and screenshots showing the AttendIQ user interface.
-*(Note: If screenshots are not showing, please add actual png assets to the `screenshots/` directory).*
+### What is AttendIQ?
+**AttendIQ** is a comprehensive, offline-first academic management application built using Flutter and Material 3 design. It equips college and university students with real-time attendance analytics, intelligent timetable scheduling, monthly calendar tracking, deadline prioritization, and manual backup control.
 
-| Dashboard | Smart Attendance | Analytics Dashboard | AI Academic Advisor |
-| :---: | :---: | :---: | :---: |
-| ![Dashboard Screenshot](screenshots/dashboard.png) | ![Attendance Logger Screenshot](screenshots/attendance.png) | ![Analytics Screenshot](screenshots/analytics.png) | ![AI Assistant Screenshot](screenshots/ai_assistant.png) |
+### The Problem It Solves
+Academic institutions typically mandate strict attendance thresholds (e.g., 75% or 80%) for exam eligibility. Students struggle with manual spreadsheet calculations, unexpected timetable shifts, missing assignment deadlines, and tracking allowable absences ("safe bunks"). A simple mistake can lead to academic debarment.
 
-> [!NOTE]
-> To update these visual showcases, place your high-resolution app screenshots in the `/screenshots` directory under the filenames `dashboard.png`, `attendance.png`, `analytics.png`, and `ai_assistant.png`.
+AttendIQ automates schedule generation, calculates exact safety margins, alerts students to upcoming classes/deadlines, and provides end-of-semester eligibility predictions without relying on central university servers or third-party cloud services.
 
----
+### Target Users
+- **College & University Students**: Managing multi-subject weekly schedules and attendance targets.
+- **Academic Planners**: Students managing assignments, lab submissions, mid-semester, and end-semester exams.
+- **Privacy-Conscious Individuals**: Users who want complete control over their personal data without sign-ups or cloud sync.
 
-## ✨ Features Showcase
-
-### 🔐 Authentication & Onboarding
-*   **Flexible Logins**: Secure authentication via email/password or single-tap Google Sign-In (OAuth).
-*   **Instant Access**: Cached auth sessions bypass remote backend calls on startup, launching the app instantly even without cell service.
-
-### 📅 Smart Attendance Logging
-*   **Granular Status Options**: Track classes as *Present*, *Absent*, *Late*, *Cancelled*, *Extra Present*, or *Extra Absent*.
-*   **Intuitive Gestures**: Swipe right for present and left for absent directly on the home screen carousel.
-*   **Detailed Calendar View**: Review and edit logs retroactively by selecting dates on the calendar.
-
-### 🗓️ Timetable Planner
-*   **Weekly Grid Layout**: Plan repeating weekly schedules with custom start and end times.
-*   **Collision Detection**: Real-time validation warns you if a new class slot overlaps with an existing scheduled class.
-
-### 📊 Attendance Analytics
-*   **Real-time Metrics**: Dynamic indicators displaying overall and subject-specific attendance percentages.
-*   **Safe Bunk Predictor**: Mathematical calculation of how many upcoming classes can be safely missed without falling below the target.
-*   **Catch-up Estimator**: Accurate counts of how many consecutive classes must be attended to restore target levels.
-
-### 🔔 Smart Notifications
-*   **Class Reminders**: Pre-class alerts reminding you to attend upcoming slots.
-*   **Rolling 7-day Queue**: Custom scheduler updating local notifications in the background to work around OS constraints.
-*   **Low Attendance Warnings**: Push alerts when a subject's rate falls below the designated threshold.
-
-### 🤖 AI Academic Advisor
-*   **Gemini AI Recommendations**: Analyzes your weekly timetable and attendance records to draft academic strategies.
-*   **Local Rule Engine Fallback**: Rule-based heuristic suggestions display immediately if the device is offline.
-
-### 📈 Reports & Exports
-*   **Historical Digests**: Comprehensive summaries of semester-long attendance patterns.
-*   **CSV/PDF Exports**: Generate clean logs of your records suitable for academic reviews or sharing.
+### Why Offline-First Architecture?
+1. **100% Data Privacy**: No user data leaves the device. Zero tracking, zero telemetry, zero server storage.
+2. **Airplane Mode Reliability**: Fully operational inside basements, auditoriums, or areas with poor cellular connectivity.
+3. **Instant Responsiveness**: Zero network latencies with local database reads and writes via Isar DB.
+4. **No Account Overhead**: Instant onboarding without registration, email verification, or passwords.
 
 ---
 
-## 🏗️ Technical Architecture
+## Features
 
-AttendIQ strictly follows **Clean Architecture** combined with a **Feature-First** structure to maintain separate, decoupled boundaries between components.
+### Attendance Management
+- **Subject-Wise Attendance Tracking**: Track total conducted, attended, missed, and cancelled sessions for every subject.
+- **Present / Absent / Cancelled Tracking**: Direct status logging with real-time UI status updates.
+- **Attendance Percentage Calculation**: Instant calculation of current attendance rates versus minimum target percentage (e.g., 75%).
+- **Safe Bunk & Must-Attend Calculation**:
+  - *Safe Bunks*: Mathematical count of consecutive classes you can safely skip while remaining above target.
+  - *Must-Attend*: Precise number of consecutive classes required to recover from an attendance dip.
+- **Attendance Reports**: Generate structured PDF and CSV summaries for academic reviews.
 
-```mermaid
-graph TD
-    UI[Presentation / Widgets] -->|Reads / Listens| Providers[Presentation / Notifiers]
-    Providers -->|Invokes| RepositoriesInterface[Domain / Repository Interfaces]
-    RepositoriesInterface -->|Defines| Entities[Domain / Entities]
-    RepositoryImpl[Data / Repository Implementation] -.->|Implements| RepositoriesInterface
-    RepositoryImpl -->|Reads / Writes| LocalDS[Data / Local Datasource Isar]
-    RepositoryImpl -->|Reads / Writes| RemoteDS[Data / Remote Datasource Firestore]
-    LocalDS -->|Uses| IsarSchemas[Data / Isar Models]
-    RemoteDS -->|Uses| FirestoreDTOs[Data / DTO Models]
-    style Entities fill:#64b5f6,stroke:#1565c0,stroke-width:2px,color:#000
-    style RepositoriesInterface fill:#64b5f6,stroke:#1565c0,stroke-width:2px,color:#000
+### Smart Timetable
+- **Weekly Timetable**: Interactive weekly schedule view with collision prevention and room allocations.
+- **Semester-Based Navigation**: Seamlessly manage active semesters and start/end dates.
+- **Flexible Subject Scheduling**: Custom colors, credit hours, course codes, and faculty details.
+- **Multiple Timings for Same Subject**: Configure recurring weekly rules with multiple distinct slots on different days.
+  ```text
+  Example: Operating Systems (OS)
+  ├── Monday:   09:00 AM - 10:00 AM (Lecture - Hall A)
+  ├── Tuesday:  12:00 PM - 01:00 PM (Lecture - Hall B)
+  └── Friday:   10:00 AM - 11:00 AM (Lab - Room 302)
+  ```
+
+### Daily Schedule
+- **Today's Classes**: Chronological carousel displaying scheduled slots for the current day.
+- **Mark Attendance Directly**: Quick interactive check-ins (`Present`, `Absent`, `Cancelled`) directly from the home screen card.
+- **Extra Classes Support**: Add single-occurrence extra sessions without modifying recurring weekly templates.
+- **Cancelled Classes Handling**: Cancel specific sessions without affecting future weekly rules.
+
+### Academic Calendar
+- **Monthly Calendar View**: Comprehensive overview of academic commitments across the semester.
+- **Semester Date Navigation**: Filter calendar items by date boundaries and months.
+- **Exams**: Visually highlighted exam dates with subject associations.
+- **Holidays**: Mark single-day or multi-day institutional holidays that auto-suppress class alerts.
+- **Events**: Track guest lectures, seminars, and campus events.
+- **Extra Classes & Task Deadlines**: Unified calendar rendering of all deadlines and extra sessions.
+
+### Academic Planner
+- **Assignments & Projects**: Organize coursework by priority, category, and due dates.
+- **Mid-Semester & End-Semester Exams**: Dedicated tracking for major academic milestones.
+- **Deadlines & Reminders**: Countdown indicators for urgent tasks.
+- **Priority Tracking**: High, Medium, and Low priority tagging for efficient task scheduling.
+
+### Backup System
+- **Offline Data Storage**: Powered by ultra-fast Isar local storage engine.
+- **Import / Export Backup**: Package entire database schemas into portable `.attendiq` backup files.
+- **No Account Required**: Full data portability without cloud logins or server locks.
+- **User Owns Their Data**: Complete control to back up, restore, or wipe data at any time.
+
+### Notifications
+- **Class Reminders**: Pre-class alerts (e.g., 5 or 15 minutes before class starts).
+- **Deadline Reminders**: Alerts for upcoming assignments, projects, and exam schedules.
+- **Exam Reminders**: Timely notifications for scheduled mid-semester and final exams.
+
+---
+
+## Architecture
+
+AttendIQ follows **Clean Architecture** principles decoupled into feature modules:
+
+```text
+               ┌─────────────────────────────────────────┐
+               │           Presentation Layer            │
+               │  (Flutter UI Widgets & Riverpod State)  │
+               └────────────────────┬────────────────────┘
+                                    │
+                                    ▼
+               ┌─────────────────────────────────────────┐
+               │              Domain Layer               │
+               │   (Entities, Use Cases & Interfaces)    │
+               └────────────────────┬────────────────────┘
+                                    │
+                                    ▼
+               ┌─────────────────────────────────────────┐
+               │               Data Layer                │
+               │  (Isar DB, Models & Repositories Impl)  │
+               └─────────────────────────────────────────┘
 ```
 
-### Development Principles
-1.  **Dependency Inversion**: Outer layers (Data, Frameworks, UI) depend on the inner core (Domain). The Domain depends on nothing.
-2.  **Single Source of Truth**: UI listens to streams from the local database (Isar). Writing data automatically updates local streams, creating a highly responsive interface.
-3.  **ACID Compliance**: Local changes are registered inside transactional scopes and scheduled in an outbox queue to be synced when internet connectivity is active.
-
-### Technical Documentation Index
-Please refer to the following documentation files for detailed architecture, design, and code specifications:
-
-| Document | Purpose |
-|---|---|
-| 📑 [PROJECT.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/PROJECT.md) | Product vision, target personas, core business rules, and mathematical formulas. |
-| 🏗️ [ARCHITECTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/ARCHITECTURE.md) | Clean Architecture + Feature-First structure and data flow details. |
-| ⚙️ [ATTENDANCE_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/ATTENDANCE_ENGINE.md) | Calculations logic, timetable-to-event generation mechanics, and state flow. |
-| 🔔 [NOTIFICATION_SERVICE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/NOTIFICATION_SERVICE.md) | Local reminders, rolling 7-day queue architecture, and FCM integrations. |
-| 🗃️ [DATABASE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/DATABASE.md) | Local Isar database schemas and remote Cloud Firestore collections. |
-| 🛡️ [FIREBASE_SECURITY.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FIREBASE_SECURITY.md) | Security rules (`firestore.rules` structure), data isolation, and backup strategy. |
-| 🎯 [FEATURES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FEATURES.md) | Functional spec detailing onboarding, timetable, logger, and calculators. |
-| 🎨 [UI_GUIDE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/UI_GUIDE.md) | HSL color system, typography sheets, screen mockups, and gestures. |
-| 🛠️ [TECH_STACK.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/TECH_STACK.md) | Core dependencies, Flutter/Dart SDK requirements, and pubspec configuration. |
-| 🏃‍♂️ [DEVELOPMENT.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/DEVELOPMENT.md) | Local runner instructions, environment flavors, lint validations, and Git rules. |
-| 📐 [CODING_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/CODING_RULES.md) | Directory layers code rules, Riverpod generators guidelines, and Isar transaction policies. |
-| 🧪 [TESTING.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/TESTING.md) | Mathematical calculators coverage unit tests, Mocktail mocks, and widget test templates. |
-| 🗺️ [ROADMAP.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/ROADMAP.md) | Detailed 5-phase schedule detailing feature ordering and deliverables. |
-| 🧠 [AI_AGENT.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/AI_AGENT.md) | Gemini integration prompt layouts, JSON schemas, and offline local heuristics. |
-| 📋 [TASKS.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/TASKS.md) | Comprehensive task backlog with prioritizations and completion criteria. |
-| 📝 [DECISIONS.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/DECISIONS.md) | Architectural Decision Records (ADRs) explaining tech stack choices. |
-| ⚖️ [DOMAIN_RULES.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/DOMAIN_RULES.md) | Domain business rules independent of storage, framework, or backend. |
-| 🔄 [SYNC_ENGINE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/SYNC_ENGINE.md) | Offline-first database outbox sync queue and conflict resolution mechanics. |
-| 📂 [FOLDER_STRUCTURE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/FOLDER_STRUCTURE.md) | Standardized Clean Architecture, Feature-First Flutter folder structure. |
-| 🎯 [MVP_SCOPE.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/MVP_SCOPE.md) | Target boundaries, in-scope features, exclusions, and release criteria. |
-| 🚀 [CI_CD.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/CI_CD.md) | Git branching, conventional commits, code reviews, and GitHub Actions CI. |
-| 📋 [RELEASE_CHECKLIST.md](file:///c:/Users/ramsa/Desktop/AttendIQ/docs/RELEASE_CHECKLIST.md) | Full verification and compilation guidelines for app store releases. |
+### Layer Responsibilities
+- **Presentation**: UI screens, Material 3 themes, interactive widgets, and Riverpod Notifiers/Providers.
+- **Domain**: Pure Dart business logic, mathematical engines (safe bunk / must-attend algorithms), entities, and abstract repository contracts.
+- **Data**: Isar database schemas, local datasources, backup engine adapters, and repository implementations.
 
 ---
 
-## ⚙️ Installation & Setup
+## Tech Stack
 
-### Requirements
-*   **Flutter SDK**: `>= 3.22.0` (stable channel)
-*   **Dart SDK**: `>= 3.4.0 < 4.0.0`
-*   **Android Development**: Android Studio, Android SDK Platform 34, Min SDK 21
-*   **iOS Development**: Xcode `>= 15.0`, CocoaPods (for iOS deployment only)
+| Technology | Purpose |
+| :--- | :--- |
+| **Flutter** | Cross-platform UI framework for mobile & desktop |
+| **Dart** | High-performance type-safe programming language |
+| **Riverpod** | Reactive, compile-safe state management framework |
+| **Isar** | Extremely fast, asynchronous local NoSQL database |
+| **Build Runner** | Code generation engine for Isar schemas & Riverpod generators |
+| **Material 3** | Modern design system with dynamic HSL color tokens |
 
-### Flutter & Project Setup
-1.  **Clone the Repository**:
-    ```bash
-    git clone https://github.com/ramsaitanguturi/AttendIQ.git
-    cd AttendIQ
-    ```
-2.  **Get Dependencies**:
-    ```bash
-    flutter pub get
-    ```
-3.  **Run Code Generation**:
-    Build code components for Riverpod annotation and Isar schema bindings:
-    ```bash
-    dart run build_runner build --delete-conflicting-outputs
-    ```
+---
 
-### Firebase Setup
-1.  Create a project on the [Firebase Console](https://console.firebase.google.com/).
-2.  Add Android and iOS applications with the bundle identifier `com.ramsa.attendiq.attend_iq`.
-3.  Download and configure layout files:
-    *   Place `google-services.json` in `android/app/`.
-    *   Place `GoogleService-Info.plist` in `ios/Runner/`.
-4.  Enable **Firestore Database** and **Firebase Authentication** (Email/Password & Google Sign-In) in your Firebase project.
+## Project Structure
 
-### Environment & Run Configuration
-Add the Gemini API key during compilation. Create a `.env` file or pass it directly to compilation commands:
+```text
+lib/
+ ├── core/                  # Shared utilities, database, notifications & base widgets
+ │    ├── attendance_engine/# Attendance percentage & safe bunk calculators
+ │    ├── backup/           # Import/export backup manager (.attendiq)
+ │    ├── database/         # Isar instance setup & schemas
+ │    ├── notifications/    # Local notification queue manager
+ │    └── theme/            # Material 3 dark/light HSL color tokens
+ └── features/              # Feature-First Clean Architecture modules
+      ├── academic_planner/ # Tasks, assignments, projects & calendar events
+      ├── attendance/       # Daily check-ins, event generation & status updates
+      ├── analytics/        # Attendance progress, reports & trends (PDF/CSV)
+      ├── onboarding/       # Initial semester configuration wizard
+      ├── semester/         # Active semester metadata & subject management
+      ├── settings/         # App settings, backups, theme selection
+      └── timetable/        # Weekly slot rules & schedule generation
+```
+
+---
+
+## Screenshots
+
+> *Note: Visual screenshots can be added here as the UI design evolves.*
+
+| Dashboard | Timetable | Attendance |
+| :---: | :---: | :---: |
+| *(Placeholder)* | *(Placeholder)* | *(Placeholder)* |
+
+| Calendar | Tasks | Reports |
+| :---: | :---: | :---: |
+| *(Placeholder)* | *(Placeholder)* | *(Placeholder)* |
+
+---
+
+## Installation Guide
+
+### Prerequisites
+- **Flutter SDK**: `>=3.22.0`
+- **Dart SDK**: `>=3.4.0`
+- **Android Studio** / **VS Code**: Latest version with Flutter plugin installed
+- **JDK**: Version 17
+
+### Installation Steps
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/username/AttendIQ.git
+   cd AttendIQ
+   ```
+
+2. **Install Dependencies**:
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run Code Generation**:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+4. **Run the Application**:
+   ```bash
+   flutter run
+   ```
+
+---
+
+## Build Release APK
+
+To generate a production release APK for Android:
 
 ```bash
-# Run in debug mode on a connected emulator
-flutter run --dart-define=GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+flutter build apk --release
+```
 
-# Build Android release APK
-flutter build apk --dart-define=GEMINI_API_KEY="YOUR_GEMINI_API_KEY" --release
+**Output Location**:
+```text
+build/app/outputs/flutter-apk/app-release.apk
 ```
 
 ---
 
-## 🤝 Contribution Guidelines
+## Testing Section
 
-We welcome contributions to AttendIQ! Please follow these standards:
+AttendIQ includes comprehensive automated tests ensuring business logic accuracy and widget integrity.
 
-1.  **Branching Strategy**:
-    *   Feature development: `feature/<feature-name>` branched off `development`.
-    *   Bug fixes: `bugfix/<issue-name>` branched off `development`.
-    *   All merges target `development` first. Merges to `main` are reserved for verified releases.
-2.  **Commit Message Format**:
-    Use Conventional Commits: `type(scope): description` (e.g., `feat(analytics): calculate consecutive classes needed`).
-3.  **Pull Requests**:
-    *   Ensure all unit tests pass: `flutter test`
-    *   Verify static analysis is clean: `flutter analyze`
-    *   Run `dart format . --set-exit-if-changed` before submitting.
+- **Unit Tests**: Mathematical validation for safe bunk calculations, percentage algorithms, and Isar database adapters.
+- **Widget Tests**: UI layout verification, timetable carousel interactions, and status transitions.
+- **Architecture Tests**: Dependency rules and repository isolation checks.
+
+Run all tests using:
+```bash
+flutter test
+```
 
 ---
 
-## ⚖️ License
+## Privacy Section
 
-Private repository. All rights reserved. Developed by [Ram Sai](https://github.com/ramsaitanguturi).
+AttendIQ is built around strict data privacy guarantees:
+
+- 🔒 **Zero Data Collection**: No metrics, tracking pixels, or telemetry collected.
+- 🚫 **No Cloud Dependency**: Operates 100% offline without Firebase or AWS backend connections.
+- 🔑 **No Authentication**: Instant usage without requiring email, phone number, or social logins.
+- 💾 **Local Ownership**: All attendance logs and timetable entries stay stored locally on your device.
+
+---
+
+## Roadmap
+
+- [ ] **iOS Release**: Finalize App Store distribution pipeline and iOS notifications.
+- [ ] **Optional Cloud Sync**: Opt-in encrypted backup sync via user-owned Google Drive or iCloud.
+- [ ] **AI Academic Assistant**: Local AI recommendations for study schedules based on attendance margins.
+- [ ] **Smart Attendance Predictions**: Predictive forecasting for exam eligibility based on historical trends.
+- [ ] **College Timetable Import**: ICS calendar import & OCR-based timetable image parsing.
+
+---
+
+## Contribution Section
+
+Contributions are welcome! If you'd like to contribute:
+
+1. Fork the project repository.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes adhering to conventional commit messages (`git commit -m 'feat: Add AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+---
+
+## License Section
+
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more details.
+
+---
+
+<p align="center">
+  Built with ❤️ for students worldwide.
+</p>

@@ -6,7 +6,7 @@ import '../domain/usecases/event_generator.dart';
 import '../../database/isar_provider.dart';
 import '../../../features/timetable/data/models/timetable_template_local.dart';
 import '../../../features/timetable/domain/entities/timetable_template.dart';
-import '../../../features/auth/data/models/semester_local.dart';
+import '../../../features/semester/data/models/semester_local.dart';
 import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/subject/domain/entities/subject.dart';
 

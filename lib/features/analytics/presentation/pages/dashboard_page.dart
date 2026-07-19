@@ -3,28 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/colors.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
 import '../../../../core/event_generator/data/models/event_local.dart';
+import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
+import '../../../timetable/presentation/widgets/semester_weekly_calendar_view.dart';
+import '../../../timetable/presentation/widgets/today_schedule_card.dart';
+import '../../../timetable/presentation/widgets/academic_calendar_widget.dart';
 import '../../../../core/attendance_engine/bunk_analyzer.dart';
 import '../../../../core/analytics/models/attendance_analytics.dart';
 import '../../../../core/analytics/models/risk_status.dart';
 import '../controllers/analytics_controller.dart';
+
+import '../../../academic_planner/presentation/controllers/task_controller.dart';
+import '../../../academic_planner/presentation/widgets/task_card_widget.dart';
+import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authControllerProvider);
-    final userName = authState.valueOrNull?.name ?? 'Student';
+    const userName = 'Student';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final analyticsAsync = ref.watch(analyticsControllerProvider);
     final statsListAsync = ref.watch(allSubjectAttendanceStatsProvider);
-    final todayEventsAsync = ref.watch(todayEventsProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
@@ -37,20 +42,28 @@ class DashboardPage extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/settings'),
+            icon: const Icon(Icons.task_alt_outlined),
+            tooltip: 'Academic Planner',
+            onPressed: () => context.push('/planner'),
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            icon: const Icon(Icons.backup_outlined),
+            tooltip: 'Backup & Restore',
+            onPressed: () => context.push('/backup'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => context.push('/settings'),
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(allSubjectAttendanceStatsProvider);
-          ref.invalidate(todayEventsProvider);
+          ref.invalidate(todayScheduleProvider);
           ref.invalidate(analyticsControllerProvider);
+          ref.invalidate(taskListControllerProvider);
         },
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -88,18 +101,37 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24.0),
 
-                // Overall Attendance Summary Card (with quick analytics button)
+                // 1. Semester Weekly Calendar Section (Top)
+                const Text(
+                  'Semester Weekly Calendar',
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12.0),
+                const SizedBox(
+                  height: 520.0,
+                  child: SemesterWeeklyCalendarView(),
+                ),
+                const SizedBox(height: 28.0),
+
+                // 2. Today's Schedule Card with Attendance Actions
+                const TodayScheduleCard(),
+                const SizedBox(height: 28.0),
+
+                // 3. Overall Attendance Summary Card (with quick analytics button)
                 _buildOverallProgressCard(context, analyticsAsync, isDark),
                 const SizedBox(height: 24.0),
 
-                // Danger Subjects
+                // 4. Danger Subjects
                 statsListAsync.when(
                   data: (stats) => _buildDangerSubjectsSection(context, stats, isDark),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
 
-                // Attendance Trend Preview
+                // 5. Attendance Trend Preview
                 analyticsAsync.when(
                   data: (analytics) => analytics == null
                       ? const SizedBox.shrink()
@@ -108,19 +140,7 @@ class DashboardPage extends ConsumerWidget {
                   error: (_, __) => const SizedBox.shrink(),
                 ),
 
-                // Today's schedule section
-                const Text(
-                  "Today's Schedule",
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12.0),
-                _buildTodayScheduleList(context, ref, todayEventsAsync, statsListAsync, isDark),
-                const SizedBox(height: 24.0),
-
-                // Subjects Grid Header
+                // 6. Subjects Grid Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -139,6 +159,14 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8.0),
                 _buildSubjectsGrid(context, statsListAsync, isDark),
+                const SizedBox(height: 28.0),
+
+                // 7. Academic Calendar
+                const AcademicCalendarWidget(),
+                const SizedBox(height: 28.0),
+
+                // 8. Upcoming Tasks Section
+                _buildUpcomingTasksSection(context, ref, isDark),
                 const SizedBox(height: 32.0),
               ],
             ),
@@ -507,168 +535,7 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildTodayScheduleList(
-    BuildContext context,
-    WidgetRef ref,
-    AsyncValue<List<EventLocal>> todayEventsAsync,
-    AsyncValue<List<SubjectAttendanceStats>> statsListAsync,
-    bool isDark,
-  ) {
-    return todayEventsAsync.when(
-      data: (events) {
-        if (events.isEmpty) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              ),
-            ),
-            child: const Center(
-              child: Text(
-                'No classes scheduled for today',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-          );
-        }
 
-        final statsList = statsListAsync.valueOrNull ?? [];
-        final subjectMap = {
-          for (var s in statsList) s.subject.id: s
-        };
-
-        return SizedBox(
-          height: 110,
-          child: ListView.separated(
-            physics: const BouncingScrollPhysics(),
-            scrollDirection: Axis.horizontal,
-            itemCount: events.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final event = events[index];
-              final stats = subjectMap[event.subjectId];
-              final subjectName = stats?.subject.name ?? 'Subject';
-              final subjectColorHex = stats?.subject.color ?? '#00E599';
-              final color = _parseColor(subjectColorHex);
-
-              return Container(
-                width: 250,
-                padding: const EdgeInsets.all(12.0),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                  borderRadius: BorderRadius.circular(16.0),
-                  border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            subjectName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.0,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${event.startTime} - ${event.endTime}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12.0,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              _buildQuickLogButton(
-                                text: 'Present',
-                                color: AppColors.primary,
-                                isMarked: event.status == 'PRESENT',
-                                onTap: () => ref
-                                    .read(attendanceControllerProvider.notifier)
-                                    .markAttendance(
-                                      eventId: event.id,
-                                      subjectId: event.subjectId,
-                                      status: AttendanceStatus.PRESENT,
-                                    ),
-                              ),
-                              const SizedBox(width: 8),
-                              _buildQuickLogButton(
-                                text: 'Absent',
-                                color: AppColors.attendanceLow,
-                                isMarked: event.status == 'ABSENT',
-                                onTap: () => ref
-                                    .read(attendanceControllerProvider.notifier)
-                                    .markAttendance(
-                                      eventId: event.id,
-                                      subjectId: event.subjectId,
-                                      status: AttendanceStatus.ABSENT,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error loading today\'s schedule: $err')),
-    );
-  }
-
-  Widget _buildQuickLogButton({
-    required String text,
-    required Color color,
-    required bool isMarked,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isMarked ? color : Colors.transparent,
-          border: Border.all(color: color),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isMarked ? Colors.black : color,
-            fontSize: 11.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildSubjectsGrid(
     BuildContext context,
@@ -829,4 +696,112 @@ class DashboardPage extends ConsumerWidget {
       return AppColors.primary;
     }
   }
+
+  Widget _buildUpcomingTasksSection(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+  ) {
+    final upcomingTasks = ref.watch(dashboardUpcomingTasksProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Row(
+              children: [
+                Icon(
+                  Icons.task_alt,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Upcoming Tasks',
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () => context.push('/planner'),
+              child: const Text('View All', style: TextStyle(color: AppColors.primary)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12.0),
+
+        if (upcomingTasks.isEmpty) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.primary.withOpacity(0.6),
+                  size: 32,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'No Upcoming Tasks',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.0,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'You are all caught up! Tap + to add an academic task.',
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (ctx) => const AddEditTaskSheet(),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: upcomingTasks.length,
+            itemBuilder: (context, index) {
+              return TaskCardWidget(task: upcomingTasks[index]);
+            },
+          ),
+        ],
+      ],
+    );
+  }
 }
+

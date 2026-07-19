@@ -1,30 +1,13 @@
 import 'dart:async';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
 import 'core/database/isar_provider.dart';
 import 'core/notifications/providers/notification_providers.dart';
-import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint('AttendIQ starting initialization...');
-
-  // Initialize Firebase (wrapped in a try-catch and timeout for safe Phase 0 initialization)
-  try {
-    debugPrint('Initializing Firebase...');
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(const Duration(seconds: 5), onTimeout: () {
-      debugPrint('Firebase initialization timed out (5s).');
-      throw TimeoutException('Firebase initialization timed out');
-    });
-    debugPrint('Firebase initialized successfully.');
-  } catch (e, stack) {
-    debugPrint('Firebase initialization failed: $e');
-    debugPrint(stack.toString());
-  }
 
   final container = ProviderContainer();
   

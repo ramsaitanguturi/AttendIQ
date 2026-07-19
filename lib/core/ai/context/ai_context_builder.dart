@@ -1,9 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:isar/isar.dart';
 import '../../database/isar_provider.dart';
-import '../../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../../features/attendance/presentation/controllers/subject_attendance_stats_provider.dart';
-import '../../../features/auth/data/models/semester_local.dart';
+import '../../../features/semester/data/models/semester_local.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
 import '../../event_generator/data/models/event_local.dart';
 import 'attendance_ai_context.dart';
@@ -12,10 +11,8 @@ part 'ai_context_builder.g.dart';
 
 @riverpod
 Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
-  final authState = ref.watch(authControllerProvider);
-  final user = authState.valueOrNull;
-  final userName = user?.name ?? 'Student';
-  final userEmail = user?.email ?? '';
+  const userName = 'Student';
+  const userEmail = 'student@attendiq.local';
 
   final isar = ref.watch(isarProvider).requireValue;
 

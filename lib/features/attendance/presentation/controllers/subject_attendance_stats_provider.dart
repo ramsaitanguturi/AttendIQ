@@ -8,7 +8,7 @@ import '../../../subject/domain/entities/subject.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/attendance_record.dart';
 import 'attendance_controller.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../timetable/presentation/controllers/timetable_controller.dart';
 import '../../../../core/event_generator/data/models/event_local.dart';
 

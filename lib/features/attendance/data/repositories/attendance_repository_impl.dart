@@ -1,17 +1,13 @@
-import 'dart:convert';
 import '../../domain/entities/attendance_record.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../datasources/attendance_local_data_source.dart';
 import '../models/attendance_record_local.dart';
-import '../../../../core/sync/sync_queue/sync_queue.dart';
-import '../../../../core/sync/models/sync_mappers.dart';
 import '../../../../core/utils/uuid_generator.dart';
 
 class AttendanceRepositoryImpl implements AttendanceRepository {
   final AttendanceLocalDataSource _localDataSource;
-  final SyncQueue _syncQueue;
 
-  AttendanceRepositoryImpl(this._localDataSource, this._syncQueue);
+  AttendanceRepositoryImpl(this._localDataSource);
 
   AttendanceRecord _toEntity(AttendanceRecordLocal local) {
     return AttendanceRecord(
@@ -66,20 +62,13 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     final local = _toLocal(record)
       ..serverId = serverId
       ..updatedAt = now
-      ..isDirty = true
+      ..isDirty = false
       ..isDeleted = false;
 
     final existing = await _localDataSource.getAttendanceForEvent(record.eventId);
     local.createdAt = existing?.createdAt ?? now;
 
     await _localDataSource.saveAttendanceRecord(local);
-
-    await _syncQueue.enqueue(
-      collectionName: 'attendance_records',
-      documentId: serverId,
-      operationType: record.serverId != null ? 'UPDATE' : 'CREATE',
-      payload: jsonEncode(local.toMap()),
-    );
   }
 
   @override
@@ -88,19 +77,10 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     if (local != null) {
       final now = DateTime.now().toUtc();
       local.isDeleted = true;
-      local.isDirty = true;
+      local.isDirty = false;
       local.updatedAt = now;
 
       await _localDataSource.saveAttendanceRecord(local);
-
-      if (local.serverId != null) {
-        await _syncQueue.enqueue(
-          collectionName: 'attendance_records',
-          documentId: local.serverId!,
-          operationType: 'DELETE',
-          payload: jsonEncode(local.toMap()),
-        );
-      }
     }
   }
 

@@ -1,10 +1,19 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
+import '../../../subject/presentation/widgets/add_edit_subject_dialog.dart';
+import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../domain/entities/timetable_template.dart';
+import '../../domain/entities/schedule_exception.dart';
 import '../controllers/timetable_controller.dart';
+import '../controllers/weekly_schedule_view_controller.dart';
 import '../../../subject/domain/entities/subject.dart';
 import '../../../../core/theme/colors.dart';
+
+import '../widgets/semester_weekly_calendar_view.dart';
+
+import '../widgets/add_extra_class_dialog.dart';
 
 class WeeklyTimetablePage extends ConsumerStatefulWidget {
   const WeeklyTimetablePage({super.key});
@@ -13,311 +22,162 @@ class WeeklyTimetablePage extends ConsumerStatefulWidget {
   ConsumerState<WeeklyTimetablePage> createState() => _WeeklyTimetablePageState();
 }
 
-class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final List<String> _days = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday'
-  ];
+class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
+  int _selectedWeekdayIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    // Default to today's weekday (1 = Mon, 7 = Sun)
-    final initialIndex = (DateTime.now().weekday - 1).clamp(0, 6);
-    _tabController = TabController(
-      length: 7,
-      vsync: this,
-      initialIndex: initialIndex,
-    );
-  }
+  final List<String> _dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Color _parseColor(String hex) {
-    try {
-      var h = hex.replaceAll('#', '');
-      if (h.length == 6) {
-        h = 'FF$h';
-      }
-      return Color(int.parse(h, radix: 16));
-    } catch (_) {
-      return AppColors.primary;
-    }
+  List<DateTime> _getCurrentWeekDates() {
+    final today = DateTime.now();
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    return List.generate(7, (i) => monday.add(Duration(days: i)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final timetableAsync = ref.watch(timetableListControllerProvider);
     final subjectsAsync = ref.watch(subjectListControllerProvider);
+    final semesterAsync = ref.watch(activeSemesterProvider);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeSemester = semesterAsync.valueOrNull;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.darkBackground
-          : AppColors.lightBackground,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
-        title: const Text(
-          'Weekly Schedule',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        elevation: 0,
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Weekly Schedule',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+            if (activeSemester != null)
+              Text(
+                activeSemester.name,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
-          tabs: _days.map((day) => Tab(text: day)).toList(),
+        actions: [
+          IconButton(
+            tooltip: 'Add Extra Class',
+            icon: const Icon(Icons.add_task),
+            onPressed: () => AddExtraClassDialog.show(context),
+          ),
+          IconButton(
+            tooltip: 'Add Subject',
+            icon: const Icon(Icons.library_add_outlined),
+            onPressed: () => AddEditSubjectDialog.show(context),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: SemesterWeeklyCalendarView(
+            onSlotTap: (slot) => _handleSlotTap(context, slot),
+          ),
         ),
       ),
-      body: timetableAsync.when(
-        data: (templates) {
-          return subjectsAsync.when(
-            data: (subjects) {
-              return TabBarView(
-                controller: _tabController,
-                children: List.generate(7, (index) {
-                  final weekday = index + 1;
-                  final dayTemplates = templates
-                      .where((t) => t.weekday == weekday)
-                      .toList();
-                  
-                  // Sort chronologically by start time
-                  dayTemplates.sort((a, b) => a.startTime.compareTo(b.startTime));
-
-                  return _buildDayView(
-                    context,
-                    dayTemplates,
-                    subjects,
-                    weekday,
-                  );
-                }),
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Center(child: Text('Error loading subjects: $e')),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error loading schedule: $e')),
-      ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           final subjects = ref.read(subjectListControllerProvider).valueOrNull ?? [];
           if (subjects.isEmpty) {
             _showNoSubjectsAlert(context);
           } else {
-            _showAddEditTemplateBottomSheet(
-              context: context,
-              subjects: subjects,
-              weekday: _tabController.index + 1,
-            );
+            AddEditSubjectDialog.show(context);
           }
         },
         backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.black),
+        icon: const Icon(Icons.add, color: Colors.black),
+        label: const Text(
+          'Add Class',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
 
-  Widget _buildDayView(
-    BuildContext context,
-    List<TimetableTemplate> templates,
-    List<Subject> subjects,
-    int weekday,
-  ) {
-    if (templates.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.calendar_today_outlined,
-              size: 80.0,
-              color: Colors.grey,
-            ),
-            const SizedBox(height: 16.0),
-            const Text(
-              'No Classes Scheduled',
-              style: TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8.0),
-            Text(
-              'Enjoy your rest day, or schedule one below!',
-              style: TextStyle(
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+  void _handleSlotTap(BuildContext context, ScheduleClassSlot slot) async {
+    final subjects = ref.read(subjectListControllerProvider).valueOrNull ?? [];
+    final subject = subjects.where((s) => s.id == slot.subjectId).firstOrNull;
+    if (subject == null) return;
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: templates.length,
-      itemBuilder: (context, index) {
-        final template = templates[index];
-        final subject = subjects.firstWhere(
-          (s) => s.id == template.subjectId,
-          orElse: () => Subject(
-            semesterId: 0,
-            name: 'Unknown Subject',
-            code: 'N/A',
-            credits: 0,
-            attendanceTarget: 75.0,
-            color: '#FF5733',
-            type: SubjectType.THEORY,
-            updatedAt: DateTime.now(),
-          ),
-        );
-
-        final subjectColor = _parseColor(subject.color);
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16.0),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () {
-              _showAddEditTemplateBottomSheet(
-                context: context,
-                subjects: subjects,
-                weekday: weekday,
-                existingTemplate: template,
-              );
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: subjectColor,
-                    width: 6.0,
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0,
-                                vertical: 2.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: subjectColor.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(4.0),
-                              ),
-                              child: Text(
-                                subject.code,
-                                style: TextStyle(
-                                  color: subjectColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12.0,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0,
-                                vertical: 2.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(4.0),
-                              ),
-                              child: Text(
-                                subject.type.toShortString(),
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12.0,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8.0),
-                        Text(
-                          subject.name,
-                          style: const TextStyle(
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (template.room != null && template.room!.isNotEmpty) ...[
-                          const SizedBox(height: 4.0),
-                          Row(
-                            children: [
-                              const Icon(Icons.room, size: 14.0, color: Colors.grey),
-                              const SizedBox(width: 4.0),
-                              Text(
-                                'Room: ${template.room}',
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (template.faculty != null && template.faculty!.isNotEmpty) ...[
-                          const SizedBox(height: 4.0),
-                          Row(
-                            children: [
-                              const Icon(Icons.person, size: 14.0, color: Colors.grey),
-                              const SizedBox(width: 4.0),
-                              Text(
-                                'Faculty: ${template.faculty}',
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16.0),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        template.startTime,
-                        style: const TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Icon(Icons.arrow_downward, size: 12.0, color: Colors.grey),
-                      Text(
-                        template.endTime,
-                        style: const TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                const SizedBox(height: 16),
+                Text(
+                  '${slot.code} - ${slot.title}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                Text(
+                  '${slot.startTime} – ${slot.endTime}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(Icons.event_busy_outlined, color: Colors.orange),
+                  title: const Text('Edit this occurrence only'),
+                  subtitle: const Text('Remove or set exception for this date without changing weekly rule'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showOccurrenceExceptionDialog(
+                      context: context,
+                      subject: subject,
+                      date: DateTime.now(),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.calendar_month_outlined, color: AppColors.primary),
+                  title: const Text('Edit entire subject schedule'),
+                  subtitle: const Text('Modify weekly recurring days and times'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    AddEditSubjectDialog.show(context, existingSubject: subject);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: AppColors.attendanceLow),
+                  title: const Text('Delete Class Slot', style: TextStyle(color: AppColors.attendanceLow)),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    if (slot.id != 0) {
+                      await ref.read(weeklyScheduleRuleListControllerProvider.notifier).removeRule(slot.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Class slot deleted.')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
             ),
           ),
         );
@@ -325,14 +185,128 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage>
     );
   }
 
+  void _showOccurrenceExceptionDialog({
+    required BuildContext context,
+    required Subject subject,
+    required DateTime date,
+  }) {
+    ScheduleExceptionType selectedType = ScheduleExceptionType.CANCELLED_CLASS;
+    final titleController = TextEditingController(text: '${subject.code} Class Cancelled');
+    final descController = TextEditingController();
+
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Date Exception'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Date: ${date.day}/${date.month}/${date.year}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<ScheduleExceptionType>(
+                    value: selectedType,
+                    decoration: const InputDecoration(
+                      labelText: 'Exception Type',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: ScheduleExceptionType.CANCELLED_CLASS,
+                        child: Text('Cancel Class for this Date'),
+                      ),
+                      DropdownMenuItem(
+                        value: ScheduleExceptionType.EXAM,
+                        child: Text('Exam for this Date'),
+                      ),
+                      DropdownMenuItem(
+                        value: ScheduleExceptionType.HOLIDAY,
+                        child: Text('Holiday (Remove all classes)'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          selectedType = val;
+                          if (val == ScheduleExceptionType.CANCELLED_CLASS) {
+                            titleController.text = '${subject.code} Class Cancelled';
+                          } else if (val == ScheduleExceptionType.EXAM) {
+                            titleController.text = '${subject.code} Exam';
+                          } else if (val == ScheduleExceptionType.HOLIDAY) {
+                            titleController.text = 'Holiday';
+                          }
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description / Reason (Optional)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await ref.read(scheduleExceptionControllerProvider.notifier).addException(
+                          date: date,
+                          subjectId: selectedType == ScheduleExceptionType.HOLIDAY ? null : subject.id,
+                          type: selectedType,
+                          title: titleController.text.trim(),
+                          description: descController.text.trim().isEmpty ? null : descController.text.trim(),
+                        );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Date exception saved successfully.'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  child: const Text('Save Exception', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Alert when no subjects exist: opens AddEditSubjectDialog
   void _showNoSubjectsAlert(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('No Subjects Registered'),
+          title: const Text('Subject Registration Required'),
           content: const Text(
-            'Please register at least one subject before scheduling classes in your weekly timetable.',
+            'You have no registered subjects for this semester. Please register at least one subject to create your timetable.',
           ),
           actions: [
             TextButton(
@@ -342,16 +316,10 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage>
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // In Phase 2: Subject management UI is stubbed, but we can navigate to subject list.
-                // For now, show alert or mock creation.
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Subject registration is required.'),
-                  ),
-                );
+                AddEditSubjectDialog.show(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Add Subject', style: TextStyle(color: Colors.black)),
+              child: const Text('Register Subject', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
         );

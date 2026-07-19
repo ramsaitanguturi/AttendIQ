@@ -1,14 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
-import 'package:attend_iq/features/auth/domain/entities/semester.dart';
-import 'package:attend_iq/features/auth/domain/repositories/semester_repository.dart';
+import 'package:attend_iq/features/semester/domain/entities/semester.dart';
+import 'package:attend_iq/features/semester/domain/repositories/semester_repository.dart';
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/domain/repositories/subject_repository.dart';
 import 'package:attend_iq/features/attendance/domain/entities/attendance_record.dart';
 import 'package:attend_iq/features/attendance/domain/repositories/attendance_repository.dart';
-import 'package:attend_iq/features/auth/domain/entities/user.dart';
-import 'package:attend_iq/features/auth/domain/repositories/auth_repository.dart';
 
 import 'package:attend_iq/core/reports/services/report_service.dart';
 import 'package:attend_iq/core/reports/models/attendance_report.dart';
@@ -19,16 +17,6 @@ import 'package:attend_iq/core/analytics/models/risk_status.dart';
 
 // Fakes
 class FakeIsar extends Fake implements Isar {}
-
-class FakeAuthRepository implements AuthRepository {
-  User? currentUser;
-
-  @override
-  Future<User?> getCurrentUser() async => currentUser;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
 
 class FakeSemesterRepository implements SemesterRepository {
   Semester? activeSemester;
@@ -70,7 +58,6 @@ class TestReportService extends ReportService {
 
   TestReportService({
     required this.mockSemesterId,
-    required super.authRepository,
     required super.semesterRepository,
     required super.subjectRepository,
     required super.attendanceRepository,
@@ -84,21 +71,18 @@ class TestReportService extends ReportService {
 
 void main() {
   group('Reports System Unit Tests', () {
-    late FakeAuthRepository authRepository;
     late FakeSemesterRepository semesterRepository;
     late FakeSubjectRepository subjectRepository;
     late FakeAttendanceRepository attendanceRepository;
     late TestReportService reportService;
 
     setUp(() {
-      authRepository = FakeAuthRepository();
       semesterRepository = FakeSemesterRepository();
       subjectRepository = FakeSubjectRepository();
       attendanceRepository = FakeAttendanceRepository();
 
       reportService = TestReportService(
         mockSemesterId: 1,
-        authRepository: authRepository,
         semesterRepository: semesterRepository,
         subjectRepository: subjectRepository,
         attendanceRepository: attendanceRepository,
@@ -118,16 +102,9 @@ void main() {
         endDate: DateTime.utc(2026, 12, 1),
         requiredAttendanceRate: 75.0,
       );
-      authRepository.currentUser = User(
-        id: 'user_123',
-        name: 'Alice Smith',
-        email: 'alice@test.com',
-        createdAt: DateTime.now(),
-      );
-
       final report = await reportService.generateSemesterReport();
       expect(report, isNotNull);
-      expect(report!.studentName, 'Alice Smith');
+      expect(report!.studentName, 'Student');
       expect(report.semesterName, 'Fall 2026');
       expect(report.overallPercentage, 100.0);
       expect(report.totalClasses, 0);
@@ -141,12 +118,6 @@ void main() {
         startDate: DateTime.utc(2026, 8, 1),
         endDate: DateTime.utc(2026, 12, 1),
         requiredAttendanceRate: 75.0,
-      );
-      authRepository.currentUser = User(
-        id: 'user_123',
-        name: 'Alice Smith',
-        email: 'alice@test.com',
-        createdAt: DateTime.now(),
       );
 
       final sub1 = Subject(

@@ -5,7 +5,7 @@ import '../services/notification_service.dart';
 import 'notification_database.dart';
 import '../../analytics/calculators/analytics_calculator.dart';
 import '../../analytics/models/risk_status.dart';
-import '../../../features/auth/domain/entities/semester.dart';
+import '../../../features/semester/domain/entities/semester.dart';
 import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/subject/domain/entities/subject.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
@@ -135,16 +135,57 @@ class NotificationScheduler {
           t.startTime == event.startTime);
       final room = template?.room;
 
+      final isExtra = event.eventType == 'EXTRA_CLASS';
+
       for (final offset in offsets) {
         final triggerTime = localClassTime.subtract(Duration(minutes: offset));
         if (triggerTime.isAfter(now)) {
           desiredReminders.add(DesiredReminder(
             eventId: event.id,
             subjectId: event.subjectId,
-            title: '${subject.name} class starts in $offset minutes',
-            body: 'Starts at ${event.startTime}${room != null ? " in $room" : ""}',
+            title: isExtra
+                ? 'Extra ${subject.name} class starts in $offset minutes'
+                : '${subject.name} class starts in $offset minutes',
+            body: isExtra
+                ? 'Extra ${subject.name} class today at ${event.startTime}'
+                : 'Starts at ${event.startTime}${room != null ? " in $room" : ""}',
             scheduledTime: triggerTime,
             offsetMinutes: offset,
+          ));
+        }
+      }
+    }
+
+    // 1b. Fetch academic events for next 14 days and schedule 1-day-before & 30-min-before reminders
+    final academicEvents = await _db.getAcademicEvents(startUtc, now.add(const Duration(days: 14)));
+    for (final ae in academicEvents) {
+      final eventDate = DateTime(ae.date.year, ae.date.month, ae.date.day, 9, 0);
+      final oneDayBefore = eventDate.subtract(const Duration(days: 1));
+      if (oneDayBefore.isAfter(now)) {
+        desiredReminders.add(DesiredReminder(
+          eventId: ae.id + 100000,
+          subjectId: 0,
+          title: 'Tomorrow:',
+          body: '${ae.title}',
+          scheduledTime: oneDayBefore,
+          offsetMinutes: 1440,
+        ));
+      }
+
+      if (ae.startTime != null && ae.startTime!.contains(':')) {
+        final parts = ae.startTime!.split(':');
+        final hour = int.tryParse(parts[0]) ?? 9;
+        final minute = int.tryParse(parts[1]) ?? 0;
+        final startTimeDate = DateTime(ae.date.year, ae.date.month, ae.date.day, hour, minute);
+        final thirtyMinBefore = startTimeDate.subtract(const Duration(minutes: 30));
+        if (thirtyMinBefore.isAfter(now)) {
+          desiredReminders.add(DesiredReminder(
+            eventId: ae.id + 200000,
+            subjectId: 0,
+            title: '${ae.title} starts at ${ae.startTime}',
+            body: ae.description ?? ae.title,
+            scheduledTime: thirtyMinBefore,
+            offsetMinutes: 30,
           ));
         }
       }

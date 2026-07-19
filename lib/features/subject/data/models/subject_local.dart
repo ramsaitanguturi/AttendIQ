@@ -24,6 +24,6 @@ class SubjectLocal {
   // Sync Metadata
   late DateTime createdAt;
   late DateTime updatedAt;
-  late bool isDirty;
-  late bool isDeleted;
+  bool isDirty = false;
+  bool isDeleted = false;
 }

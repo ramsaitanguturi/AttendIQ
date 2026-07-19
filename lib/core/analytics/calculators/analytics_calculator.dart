@@ -4,7 +4,7 @@ import '../models/subject_analytics.dart';
 import '../models/attendance_analytics.dart';
 import '../../../features/subject/domain/entities/subject.dart';
 import '../../../features/attendance/domain/entities/attendance_record.dart';
-import '../../../features/auth/domain/entities/semester.dart';
+import '../../../features/semester/domain/entities/semester.dart';
 
 class LoggedOccurrence {
   final DateTime date;
