@@ -5,6 +5,7 @@ import '../../../../core/event_generator/data/models/event_local.dart';
 abstract class AttendanceLocalDataSource {
   Future<List<AttendanceRecordLocal>> getAttendanceForSubject(int subjectId);
   Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId);
+  Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId);
   Future<AttendanceRecordLocal?> getAttendanceRecordById(int id);
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record);
   Future<void> deleteAttendanceRecord(int id);
@@ -37,6 +38,14 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
   }
 
   @override
+  Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId) async {
+    return _isar.attendanceRecordLocals
+        .where()
+        .eventIdEqualTo(eventId)
+        .findFirst();
+  }
+
+  @override
   Future<AttendanceRecordLocal?> getAttendanceRecordById(int id) async {
     return _isar.attendanceRecordLocals.get(id);
   }
@@ -45,7 +54,15 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
     await _isar.writeAsync((isar) {
       if (record.id == 0) {
-        record.id = isar.attendanceRecordLocals.autoIncrement();
+        final existing = isar.attendanceRecordLocals
+            .where()
+            .eventIdEqualTo(record.eventId)
+            .findFirst();
+        if (existing != null) {
+          record.id = existing.id;
+        } else {
+          record.id = isar.attendanceRecordLocals.autoIncrement();
+        }
       }
       isar.attendanceRecordLocals.put(record);
     });

@@ -20,6 +20,7 @@ import '../../data/repositories/schedule_exception_repository_impl.dart';
 import '../../data/repositories/academic_event_repository_impl.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../../core/database/isar_provider.dart';
+import '../../../widgets/services/widget_refresh_service.dart';
 
 part 'timetable_controller.g.dart';
 
@@ -47,6 +48,9 @@ class AcademicEventController extends _$AcademicEventController {
     final sub = stream.listen((_) async {
       final updated = await repo.getAllEvents();
       state = AsyncValue.data(updated);
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
     });
 
     ref.onDispose(() => sub.cancel());
@@ -75,12 +79,18 @@ class AcademicEventController extends _$AcademicEventController {
     );
     await repo.saveEvent(event);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 
   Future<void> removeEvent(int id) async {
     final repo = ref.read(academicEventRepositoryProvider);
     await repo.deleteEvent(id);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 }
 
@@ -142,6 +152,9 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     final sub = stream.listen((_) async {
       final updatedRules = await repo.getRulesForSemester(localSemId);
       state = AsyncValue.data(updatedRules);
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
     });
 
     ref.onDispose(() {
@@ -209,6 +222,9 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
 
     await repo.saveRules(newRules);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 
   Future<void> saveRule(WeeklyScheduleRule rule) async {
@@ -218,18 +234,27 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.saveRule(rule);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 
   Future<void> removeRule(int id) async {
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.deleteRule(id);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 
   Future<void> removeRulesForSubject(int subjectId) async {
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.deleteRulesForSubject(subjectId);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 }
 
@@ -247,6 +272,9 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     final sub = stream.listen((_) async {
       final updated = await repo.getExceptionsForRange(start, end);
       state = AsyncValue.data(updated);
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
     });
 
     ref.onDispose(() => sub.cancel());
@@ -273,12 +301,18 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     );
     await repo.saveException(exception);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 
   Future<void> removeException(int id) async {
     final repo = ref.read(scheduleExceptionRepositoryProvider);
     await repo.deleteException(id);
     ref.invalidateSelf();
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 }
 

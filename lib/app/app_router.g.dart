@@ -21,7 +21,7 @@ final routerNotifierProvider = Provider<RouterNotifier>.internal(
 );
 
 typedef RouterNotifierRef = ProviderRef<RouterNotifier>;
-String _$appRouterHash() => r'05b592aecce416635845403c373360e96f2413bf';
+String _$appRouterHash() => r'b88964829519d95d07640c9be16202104ff2a4a2';
 
 /// See also [appRouter].
 @ProviderFor(appRouter)

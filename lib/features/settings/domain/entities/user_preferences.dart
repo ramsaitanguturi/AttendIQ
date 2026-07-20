@@ -7,6 +7,10 @@ class UserPreferences {
   final bool enableAttendanceWarnings;
   final bool weeklyReportEnabled;
   final DateTime? lastSyncTime;
+  final bool enableAutoBackup;
+  final DateTime? lastBackupDate;
+  final int autoBackupDay; // 1-7, where 7 = Sunday
+  final int autoBackupHour; // 0-23, default 2
 
   const UserPreferences({
     required this.id,
@@ -17,6 +21,10 @@ class UserPreferences {
     required this.enableAttendanceWarnings,
     required this.weeklyReportEnabled,
     this.lastSyncTime,
+    this.enableAutoBackup = false,
+    this.lastBackupDate,
+    this.autoBackupDay = 7,
+    this.autoBackupHour = 2,
   });
 
   UserPreferences copyWith({
@@ -28,6 +36,10 @@ class UserPreferences {
     bool? enableAttendanceWarnings,
     bool? weeklyReportEnabled,
     DateTime? lastSyncTime,
+    bool? enableAutoBackup,
+    DateTime? lastBackupDate,
+    int? autoBackupDay,
+    int? autoBackupHour,
   }) {
     return UserPreferences(
       id: id ?? this.id,
@@ -38,6 +50,10 @@ class UserPreferences {
       enableAttendanceWarnings: enableAttendanceWarnings ?? this.enableAttendanceWarnings,
       weeklyReportEnabled: weeklyReportEnabled ?? this.weeklyReportEnabled,
       lastSyncTime: lastSyncTime ?? this.lastSyncTime,
+      enableAutoBackup: enableAutoBackup ?? this.enableAutoBackup,
+      lastBackupDate: lastBackupDate ?? this.lastBackupDate,
+      autoBackupDay: autoBackupDay ?? this.autoBackupDay,
+      autoBackupHour: autoBackupHour ?? this.autoBackupHour,
     );
   }
 
@@ -53,7 +69,11 @@ class UserPreferences {
           enableNotifications == other.enableNotifications &&
           enableAttendanceWarnings == other.enableAttendanceWarnings &&
           weeklyReportEnabled == other.weeklyReportEnabled &&
-          lastSyncTime == other.lastSyncTime;
+          lastSyncTime == other.lastSyncTime &&
+          enableAutoBackup == other.enableAutoBackup &&
+          lastBackupDate == other.lastBackupDate &&
+          autoBackupDay == other.autoBackupDay &&
+          autoBackupHour == other.autoBackupHour;
 
   @override
   int get hashCode =>
@@ -64,10 +84,14 @@ class UserPreferences {
       enableNotifications.hashCode ^
       enableAttendanceWarnings.hashCode ^
       weeklyReportEnabled.hashCode ^
-      lastSyncTime.hashCode;
+      lastSyncTime.hashCode ^
+      enableAutoBackup.hashCode ^
+      lastBackupDate.hashCode ^
+      autoBackupDay.hashCode ^
+      autoBackupHour.hashCode;
 
   @override
   String toString() {
-    return 'UserPreferences(id: $id, themeMode: $themeMode, defaultAttendanceTarget: $defaultAttendanceTarget, classReminderOffset: $classReminderOffset, enableNotifications: $enableNotifications, enableAttendanceWarnings: $enableAttendanceWarnings, weeklyReportEnabled: $weeklyReportEnabled, lastSyncTime: $lastSyncTime)';
+    return 'UserPreferences(id: $id, themeMode: $themeMode, defaultAttendanceTarget: $defaultAttendanceTarget, classReminderOffset: $classReminderOffset, enableNotifications: $enableNotifications, enableAttendanceWarnings: $enableAttendanceWarnings, weeklyReportEnabled: $weeklyReportEnabled, lastSyncTime: $lastSyncTime, enableAutoBackup: $enableAutoBackup, lastBackupDate: $lastBackupDate, autoBackupDay: $autoBackupDay, autoBackupHour: $autoBackupHour)';
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
-import '../../../semester/domain/entities/semester.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../domain/utils/semester_week_calculator.dart';
 import '../controllers/weekly_schedule_view_controller.dart';
@@ -10,7 +9,7 @@ import 'day_header_strip.dart';
 import 'day_timeline_view.dart';
 
 class SemesterWeeklyCalendarView extends ConsumerStatefulWidget {
-  final Function(ScheduleClassSlot)? onSlotTap;
+  final void Function(ScheduleClassSlot)? onSlotTap;
 
   const SemesterWeeklyCalendarView({
     super.key,

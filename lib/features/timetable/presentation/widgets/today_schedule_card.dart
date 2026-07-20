@@ -7,6 +7,7 @@ import '../../../../core/theme/colors.dart';
 import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../controllers/today_schedule_provider.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
+import '../../../subject/domain/entities/subject.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import 'add_extra_class_dialog.dart';
 
@@ -26,9 +27,9 @@ class TodayScheduleCard extends ConsumerWidget {
     final todayScheduleAsync = ref.watch(todayScheduleProvider(customDate: normalizedParam));
     final subjectsAsync = ref.watch(subjectListControllerProvider);
 
-    final subjectMap = subjectsAsync.maybeWhen(
+    final subjectMap = subjectsAsync.maybeWhen<Map<int, Subject>>(
       data: (list) => {for (var s in list) s.id!: s},
-      orElse: () => {},
+      orElse: () => <int, Subject>{},
     );
 
     return Column(
@@ -189,7 +190,7 @@ class TodayScheduleCard extends ConsumerWidget {
                   err.toString(),
                   style: TextStyle(fontSize: 12, color: isDark ? Colors.red.shade200 : Colors.red.shade900),
                 ),
-                if (kDebugMode && stackTrace != null) ...[
+                if (kDebugMode) ...[
                   const SizedBox(height: 8),
                   Text(
                     stackTrace.toString(),
@@ -382,88 +383,21 @@ class _OccurrenceCard extends ConsumerWidget {
   }
 
   Widget _buildActionArea(BuildContext context, WidgetRef ref) {
-    switch (occurrence.status) {
-      case OccurrenceStatus.PRESENT:
-        return _buildStatusBadge(
-          context,
-          ref,
-          label: '🟢 Present',
-          color: AppColors.primary,
-        );
-      case OccurrenceStatus.ABSENT:
-        return _buildStatusBadge(
-          context,
-          ref,
-          label: '🔴 Absent',
-          color: AppColors.attendanceLow,
-        );
-      case OccurrenceStatus.CANCELLED:
-        return _buildStatusBadge(
-          context,
-          ref,
-          label: '⚪ Cancelled',
-          color: Colors.grey,
-        );
-      case OccurrenceStatus.UPCOMING:
-        return _buildActionButtons(ref);
-    }
-  }
-
-  Widget _buildStatusBadge(
-    BuildContext context,
-    WidgetRef ref, {
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      key: ValueKey(label),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          Row(
-            children: [
-              TextButton(
-                onPressed: () => _resetStatus(ref),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: const Text(
-                  'Change',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    return _buildActionButtons(ref);
   }
 
   Widget _buildActionButtons(WidgetRef ref) {
+    final currentStatus = occurrence.status;
+
     return Row(
-      key: const ValueKey('ActionButtons'),
+      key: ValueKey('ActionButtons_${currentStatus.name}'),
       children: [
         Expanded(
           child: _ActionButton(
             label: 'Present',
             color: AppColors.primary,
             icon: Icons.check_circle_outline,
+            isSelected: currentStatus == OccurrenceStatus.PRESENT,
             onPressed: () => ref
                 .read(attendanceControllerProvider.notifier)
                 .markOccurrencePresent(occurrence),
@@ -475,6 +409,7 @@ class _OccurrenceCard extends ConsumerWidget {
             label: 'Absent',
             color: AppColors.attendanceLow,
             icon: Icons.cancel_outlined,
+            isSelected: currentStatus == OccurrenceStatus.ABSENT,
             onPressed: () => ref
                 .read(attendanceControllerProvider.notifier)
                 .markOccurrenceAbsent(occurrence),
@@ -486,6 +421,7 @@ class _OccurrenceCard extends ConsumerWidget {
             label: 'Cancelled',
             color: Colors.grey,
             icon: Icons.remove_circle_outline,
+            isSelected: currentStatus == OccurrenceStatus.CANCELLED,
             onPressed: () => ref
                 .read(attendanceControllerProvider.notifier)
                 .markOccurrenceCancelled(occurrence),
@@ -494,42 +430,61 @@ class _OccurrenceCard extends ConsumerWidget {
       ],
     );
   }
-
-  Future<void> _resetStatus(WidgetRef ref) async {
-    final updated = occurrence.copyWith(status: OccurrenceStatus.UPCOMING);
-    await ref.read(attendanceControllerProvider.notifier).markOccurrenceCancelled(updated);
-  }
 }
 
 class _ActionButton extends StatelessWidget {
   final String label;
   final Color color;
   final IconData icon;
+  final bool isSelected;
   final VoidCallback onPressed;
 
   const _ActionButton({
     required this.label,
     required this.color,
     required this.icon,
+    this.isSelected = false,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
+    if (isSelected) {
+      return ElevatedButton.icon(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        ),
+        icon: Icon(icon, size: 14),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+          ),
+        ),
+      );
+    }
+
+    return OutlinedButton.icon(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
         side: BorderSide(color: color.withOpacity(0.6)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
       ),
-      child: Text(
+      icon: Icon(icon, size: 14),
+      label: Text(
         label,
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 11,
         ),
       ),
     );

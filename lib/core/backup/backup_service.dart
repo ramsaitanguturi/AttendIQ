@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'backup_exporter.dart';
 import 'backup_importer.dart';
 import 'backup_models.dart';
+import 'backup_path_helper.dart';
 
 class BackupService {
   final Isar _isar;
@@ -36,16 +37,47 @@ class BackupService {
     return _exporter.exportToJsonString(appVersion: appVersion);
   }
 
-  /// Exports backup to a default file on local storage and returns file path
+  /// Exports backup to `Documents/AttendIQ Backups/` and returns the exported file path
   Future<String> exportToFile({String? customFileName}) async {
     final jsonContent = await exportBackupString();
     final fileName = customFileName ??
         'attendiq_backup_${DateTime.now().millisecondsSinceEpoch}.attendiq';
-    
-    final Directory dir = await getApplicationDocumentsDirectory();
+
+    final Directory dir = await BackupPathHelper.getBackupDirectory();
     final File file = File('${dir.path}/$fileName');
     await file.writeAsString(jsonContent);
     return file.path;
+  }
+
+  /// Lists all backup files from the public `Documents/AttendIQ Backups` directory
+  Future<List<BackupFileItem>> listBackups() async {
+    return BackupPathHelper.listBackupFiles();
+  }
+
+  /// Deletes a backup file by path
+  Future<bool> deleteBackupFile(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (await file.exists()) {
+        await file.delete();
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// Shares a backup file using system share dialog
+  Future<void> shareBackupFile(String filePath, {String? text}) async {
+    final file = File(filePath);
+    if (await file.exists()) {
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: text ?? 'AttendIQ Backup File (.attendiq)',
+        subject: 'AttendIQ Backup',
+      );
+    } else {
+      throw FileSystemException('Backup file not found at path: $filePath');
+    }
   }
 
   /// Validates a raw backup JSON string

@@ -25,6 +25,15 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
   }
 
   @override
+  Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId) async {
+    try {
+      return records.values.firstWhere((r) => r.eventId == eventId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
   Future<AttendanceRecordLocal?> getAttendanceRecordById(int id) async {
     return records[id];
   }
@@ -32,7 +41,12 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
   @override
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
     if (record.id == 0) {
-      record.id = _nextId++;
+      final existing = records.values.where((r) => r.eventId == record.eventId).firstOrNull;
+      if (existing != null) {
+        record.id = existing.id;
+      } else {
+        record.id = _nextId++;
+      }
     }
     records[record.id] = record;
   }
@@ -160,6 +174,55 @@ void main() {
       final finalLocal = fakeLocalDataSource.records[created.id];
       expect(finalLocal, isNotNull);
       expect(finalLocal!.isDeleted, isTrue);
+    });
+
+    test('Editing attendance status multiple times updates existing record without duplicates', () async {
+      // 1. Initial Present
+      final recordPresent = AttendanceRecord(
+        eventId: 500,
+        subjectId: 10,
+        status: AttendanceStatus.PRESENT,
+        markedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await repository.saveAttendanceRecord(recordPresent);
+      expect(fakeLocalDataSource.records.length, 1);
+      expect(fakeLocalDataSource.records.values.first.status, 'PRESENT');
+
+      // 2. Edit to Absent
+      final recordAbsent = AttendanceRecord(
+        eventId: 500,
+        subjectId: 10,
+        status: AttendanceStatus.ABSENT,
+        markedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await repository.saveAttendanceRecord(recordAbsent);
+      expect(fakeLocalDataSource.records.length, 1); // No duplicates
+      expect(fakeLocalDataSource.records.values.first.status, 'ABSENT');
+
+      // 3. Edit to Cancelled (Soft Delete)
+      final existing = await repository.getAttendanceForEventAnyStatus(500);
+      expect(existing, isNotNull);
+      await repository.deleteAttendanceRecord(existing!.id!);
+      expect(fakeLocalDataSource.records.length, 1);
+      expect(fakeLocalDataSource.records.values.first.isDeleted, isTrue);
+
+      // 4. Edit back to Present
+      final recordBackPresent = AttendanceRecord(
+        eventId: 500,
+        subjectId: 10,
+        status: AttendanceStatus.PRESENT,
+        markedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await repository.saveAttendanceRecord(recordBackPresent);
+      expect(fakeLocalDataSource.records.length, 1); // Reused row
+      expect(fakeLocalDataSource.records.values.first.isDeleted, isFalse);
+      expect(fakeLocalDataSource.records.values.first.status, 'PRESENT');
     });
   });
 }

@@ -19,6 +19,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
       enableNotifications: local.enableNotifications,
       enableAttendanceWarnings: local.enableAttendanceWarnings,
       weeklyReportEnabled: local.weeklyReportEnabled,
+      enableAutoBackup: local.enableAutoBackup,
+      lastBackupDate: local.lastBackupDate,
+      autoBackupDay: local.autoBackupDay,
+      autoBackupHour: local.autoBackupHour,
     );
   }
 
@@ -30,7 +34,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ..classReminderOffset = preferences.classReminderOffset
       ..enableNotifications = preferences.enableNotifications
       ..enableAttendanceWarnings = preferences.enableAttendanceWarnings
-      ..weeklyReportEnabled = preferences.weeklyReportEnabled;
+      ..weeklyReportEnabled = preferences.weeklyReportEnabled
+      ..enableAutoBackup = preferences.enableAutoBackup
+      ..lastBackupDate = preferences.lastBackupDate
+      ..autoBackupDay = preferences.autoBackupDay
+      ..autoBackupHour = preferences.autoBackupHour;
     return local;
   }
 

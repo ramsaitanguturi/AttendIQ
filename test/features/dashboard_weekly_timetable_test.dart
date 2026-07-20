@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:attend_iq/features/semester/domain/entities/semester.dart';
 import 'package:attend_iq/features/timetable/domain/utils/semester_week_calculator.dart';
 import 'package:attend_iq/features/timetable/presentation/controllers/weekly_schedule_view_controller.dart';
 import 'package:attend_iq/features/timetable/presentation/widgets/week_selector_widget.dart';
-import 'package:attend_iq/features/timetable/presentation/widgets/day_header_strip.dart';
-import 'package:attend_iq/features/timetable/domain/entities/weekly_schedule_rule.dart';
 import 'package:attend_iq/features/timetable/domain/entities/schedule_exception.dart';
 
 void main() {

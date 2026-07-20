@@ -14,17 +14,23 @@ void main() async {
   // Pre-warm the Isar database provider and Notification Service with timeouts
   try {
     debugPrint('Initializing Isar database...');
-    await container.read(isarProvider.future).timeout(const Duration(seconds: 5), onTimeout: () {
-      debugPrint('Isar database initialization timed out (5s).');
-      throw TimeoutException('Isar database initialization timed out');
-    });
+    await container.read(isarProvider.future).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        debugPrint('Isar database initialization timed out (5s).');
+        throw TimeoutException('Isar database initialization timed out');
+      },
+    );
     debugPrint('Isar database initialized successfully.');
 
     debugPrint('Initializing Notification Service...');
-    await container.read(notificationInitializerProvider.future).timeout(const Duration(seconds: 5), onTimeout: () {
-      debugPrint('Notification service initialization timed out (5s).');
-      throw TimeoutException('Notification service initialization timed out');
-    });
+    await container.read(notificationInitializerProvider.future).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        debugPrint('Notification service initialization timed out (5s).');
+        throw TimeoutException('Notification service initialization timed out');
+      },
+    );
     debugPrint('Notification Service initialized successfully.');
   } catch (e, stack) {
     debugPrint('Startup service initialization failed: $e');

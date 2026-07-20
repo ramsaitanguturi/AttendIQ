@@ -167,6 +167,21 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
+                  // Widgets Section
+                  _buildSectionHeader('Home Screen Widgets', isDark),
+                  const SizedBox(height: 10),
+                  _buildCard(
+                    isDark,
+                    child: ListTile(
+                      leading: const Icon(Icons.widgets_outlined, color: AppColors.primary),
+                      title: const Text('Widgets Configuration'),
+                      subtitle: const Text('Configure Today, Weekly, and Calendar widgets'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/widget-settings'),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // Backup & Data Section
                   _buildSectionHeader('Data Management', isDark),
                   const SizedBox(height: 10),

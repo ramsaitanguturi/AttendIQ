@@ -17,6 +17,7 @@ import '../features/backup/presentation/pages/backup_page.dart';
 import '../features/ai_assistant/presentation/pages/ai_assistant_page.dart';
 
 import '../features/academic_planner/presentation/pages/academic_planner_page.dart';
+import '../features/widgets/presentation/pages/widget_settings_page.dart';
 
 part 'app_router.g.dart';
 
@@ -141,6 +142,12 @@ GoRouter appRouter(AppRouterRef ref) {
         path: '/planner',
         builder: (BuildContext context, GoRouterState state) {
           return const AcademicPlannerPage();
+        },
+      ),
+      GoRoute(
+        path: '/widget-settings',
+        builder: (BuildContext context, GoRouterState state) {
+          return const WidgetSettingsPage();
         },
       ),
     ],

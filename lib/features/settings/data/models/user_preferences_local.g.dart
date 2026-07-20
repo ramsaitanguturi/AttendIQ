@@ -54,6 +54,22 @@ const UserPreferencesLocalSchema = IsarGeneratedSchema(
         type: IsarType.dateTime,
       ),
       IsarPropertySchema(
+        name: 'enableAutoBackup',
+        type: IsarType.bool,
+      ),
+      IsarPropertySchema(
+        name: 'lastBackupDate',
+        type: IsarType.dateTime,
+      ),
+      IsarPropertySchema(
+        name: 'autoBackupDay',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
+        name: 'autoBackupHour',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
         name: 'updatedAt',
         type: IsarType.dateTime,
       ),
@@ -107,10 +123,18 @@ int serializeUserPreferencesLocal(
       8,
       object.lastSyncTime?.toUtc().microsecondsSinceEpoch ??
           -9223372036854775808);
+  IsarCore.writeBool(writer, 9, object.enableAutoBackup);
   IsarCore.writeLong(
-      writer, 9, object.updatedAt.toUtc().microsecondsSinceEpoch);
-  IsarCore.writeBool(writer, 10, object.isDirty);
-  IsarCore.writeBool(writer, 11, object.isDeleted);
+      writer,
+      10,
+      object.lastBackupDate?.toUtc().microsecondsSinceEpoch ??
+          -9223372036854775808);
+  IsarCore.writeLong(writer, 11, object.autoBackupDay);
+  IsarCore.writeLong(writer, 12, object.autoBackupHour);
+  IsarCore.writeLong(
+      writer, 13, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeBool(writer, 14, object.isDirty);
+  IsarCore.writeBool(writer, 15, object.isDeleted);
   return object.id;
 }
 
@@ -134,8 +158,20 @@ UserPreferencesLocal deserializeUserPreferencesLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
+  object.enableAutoBackup = IsarCore.readBool(reader, 9);
   {
-    final value = IsarCore.readLong(reader, 9);
+    final value = IsarCore.readLong(reader, 10);
+    if (value == -9223372036854775808) {
+      object.lastBackupDate = null;
+    } else {
+      object.lastBackupDate =
+          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
+  }
+  object.autoBackupDay = IsarCore.readLong(reader, 11);
+  object.autoBackupHour = IsarCore.readLong(reader, 12);
+  {
+    final value = IsarCore.readLong(reader, 13);
     if (value == -9223372036854775808) {
       object.updatedAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
@@ -144,8 +180,8 @@ UserPreferencesLocal deserializeUserPreferencesLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.isDirty = IsarCore.readBool(reader, 10);
-  object.isDeleted = IsarCore.readBool(reader, 11);
+  object.isDirty = IsarCore.readBool(reader, 14);
+  object.isDeleted = IsarCore.readBool(reader, 15);
   return object;
 }
 
@@ -179,8 +215,24 @@ dynamic deserializeUserPreferencesLocalProp(IsarReader reader, int property) {
         }
       }
     case 9:
+      return IsarCore.readBool(reader, 9);
+    case 10:
       {
-        final value = IsarCore.readLong(reader, 9);
+        final value = IsarCore.readLong(reader, 10);
+        if (value == -9223372036854775808) {
+          return null;
+        } else {
+          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
+              .toLocal();
+        }
+      }
+    case 11:
+      return IsarCore.readLong(reader, 11);
+    case 12:
+      return IsarCore.readLong(reader, 12);
+    case 13:
+      {
+        final value = IsarCore.readLong(reader, 13);
         if (value == -9223372036854775808) {
           return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
         } else {
@@ -188,10 +240,10 @@ dynamic deserializeUserPreferencesLocalProp(IsarReader reader, int property) {
               .toLocal();
         }
       }
-    case 10:
-      return IsarCore.readBool(reader, 10);
-    case 11:
-      return IsarCore.readBool(reader, 11);
+    case 14:
+      return IsarCore.readBool(reader, 14);
+    case 15:
+      return IsarCore.readBool(reader, 15);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -208,6 +260,10 @@ sealed class _UserPreferencesLocalUpdate {
     bool? enableAttendanceWarnings,
     bool? weeklyReportEnabled,
     DateTime? lastSyncTime,
+    bool? enableAutoBackup,
+    DateTime? lastBackupDate,
+    int? autoBackupDay,
+    int? autoBackupHour,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -230,6 +286,10 @@ class _UserPreferencesLocalUpdateImpl implements _UserPreferencesLocalUpdate {
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableAutoBackup = ignore,
+    Object? lastBackupDate = ignore,
+    Object? autoBackupDay = ignore,
+    Object? autoBackupHour = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -247,9 +307,13 @@ class _UserPreferencesLocalUpdateImpl implements _UserPreferencesLocalUpdate {
             6: enableAttendanceWarnings as bool?,
           if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
           if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
-          if (updatedAt != ignore) 9: updatedAt as DateTime?,
-          if (isDirty != ignore) 10: isDirty as bool?,
-          if (isDeleted != ignore) 11: isDeleted as bool?,
+          if (enableAutoBackup != ignore) 9: enableAutoBackup as bool?,
+          if (lastBackupDate != ignore) 10: lastBackupDate as DateTime?,
+          if (autoBackupDay != ignore) 11: autoBackupDay as int?,
+          if (autoBackupHour != ignore) 12: autoBackupHour as int?,
+          if (updatedAt != ignore) 13: updatedAt as DateTime?,
+          if (isDirty != ignore) 14: isDirty as bool?,
+          if (isDeleted != ignore) 15: isDeleted as bool?,
         }) >
         0;
   }
@@ -266,6 +330,10 @@ sealed class _UserPreferencesLocalUpdateAll {
     bool? enableAttendanceWarnings,
     bool? weeklyReportEnabled,
     DateTime? lastSyncTime,
+    bool? enableAutoBackup,
+    DateTime? lastBackupDate,
+    int? autoBackupDay,
+    int? autoBackupHour,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -289,6 +357,10 @@ class _UserPreferencesLocalUpdateAllImpl
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableAutoBackup = ignore,
+    Object? lastBackupDate = ignore,
+    Object? autoBackupDay = ignore,
+    Object? autoBackupHour = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -304,9 +376,13 @@ class _UserPreferencesLocalUpdateAllImpl
         6: enableAttendanceWarnings as bool?,
       if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
       if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
-      if (updatedAt != ignore) 9: updatedAt as DateTime?,
-      if (isDirty != ignore) 10: isDirty as bool?,
-      if (isDeleted != ignore) 11: isDeleted as bool?,
+      if (enableAutoBackup != ignore) 9: enableAutoBackup as bool?,
+      if (lastBackupDate != ignore) 10: lastBackupDate as DateTime?,
+      if (autoBackupDay != ignore) 11: autoBackupDay as int?,
+      if (autoBackupHour != ignore) 12: autoBackupHour as int?,
+      if (updatedAt != ignore) 13: updatedAt as DateTime?,
+      if (isDirty != ignore) 14: isDirty as bool?,
+      if (isDeleted != ignore) 15: isDeleted as bool?,
     });
   }
 }
@@ -330,6 +406,10 @@ sealed class _UserPreferencesLocalQueryUpdate {
     bool? enableAttendanceWarnings,
     bool? weeklyReportEnabled,
     DateTime? lastSyncTime,
+    bool? enableAutoBackup,
+    DateTime? lastBackupDate,
+    int? autoBackupDay,
+    int? autoBackupHour,
     DateTime? updatedAt,
     bool? isDirty,
     bool? isDeleted,
@@ -353,6 +433,10 @@ class _UserPreferencesLocalQueryUpdateImpl
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableAutoBackup = ignore,
+    Object? lastBackupDate = ignore,
+    Object? autoBackupDay = ignore,
+    Object? autoBackupHour = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -368,9 +452,13 @@ class _UserPreferencesLocalQueryUpdateImpl
         6: enableAttendanceWarnings as bool?,
       if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
       if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
-      if (updatedAt != ignore) 9: updatedAt as DateTime?,
-      if (isDirty != ignore) 10: isDirty as bool?,
-      if (isDeleted != ignore) 11: isDeleted as bool?,
+      if (enableAutoBackup != ignore) 9: enableAutoBackup as bool?,
+      if (lastBackupDate != ignore) 10: lastBackupDate as DateTime?,
+      if (autoBackupDay != ignore) 11: autoBackupDay as int?,
+      if (autoBackupHour != ignore) 12: autoBackupHour as int?,
+      if (updatedAt != ignore) 13: updatedAt as DateTime?,
+      if (isDirty != ignore) 14: isDirty as bool?,
+      if (isDeleted != ignore) 15: isDeleted as bool?,
     });
   }
 }
@@ -401,6 +489,10 @@ class _UserPreferencesLocalQueryBuilderUpdateImpl
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableAutoBackup = ignore,
+    Object? lastBackupDate = ignore,
+    Object? autoBackupDay = ignore,
+    Object? autoBackupHour = ignore,
     Object? updatedAt = ignore,
     Object? isDirty = ignore,
     Object? isDeleted = ignore,
@@ -418,9 +510,13 @@ class _UserPreferencesLocalQueryBuilderUpdateImpl
           6: enableAttendanceWarnings as bool?,
         if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
         if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
-        if (updatedAt != ignore) 9: updatedAt as DateTime?,
-        if (isDirty != ignore) 10: isDirty as bool?,
-        if (isDeleted != ignore) 11: isDeleted as bool?,
+        if (enableAutoBackup != ignore) 9: enableAutoBackup as bool?,
+        if (lastBackupDate != ignore) 10: lastBackupDate as DateTime?,
+        if (autoBackupDay != ignore) 11: autoBackupDay as int?,
+        if (autoBackupHour != ignore) 12: autoBackupHour as int?,
+        if (updatedAt != ignore) 13: updatedAt as DateTime?,
+        if (isDirty != ignore) 14: isDirty as bool?,
+        if (isDeleted != ignore) 15: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -1230,13 +1326,299 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> enableAutoBackupEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 9,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 10));
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 10));
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateEqualTo(
+    DateTime? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateGreaterThan(
+    DateTime? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateGreaterThanOrEqualTo(
+    DateTime? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateLessThan(
+    DateTime? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateLessThanOrEqualTo(
+    DateTime? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 10,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> lastBackupDateBetween(
+    DateTime? lower,
+    DateTime? upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 10,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupDayEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 11,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupDayGreaterThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 11,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupDayGreaterThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 11,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupDayLessThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 11,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupDayLessThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 11,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupDayBetween(
+    int lower,
+    int upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 11,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupHourEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 12,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupHourGreaterThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 12,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupHourGreaterThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 12,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupHourLessThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 12,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupHourLessThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 12,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> autoBackupHourBetween(
+    int lower,
+    int upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 12,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
       QAfterFilterCondition> updatedAtEqualTo(
     DateTime value,
   ) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 9,
+          property: 13,
           value: value,
         ),
       );
@@ -1250,7 +1632,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 9,
+          property: 13,
           value: value,
         ),
       );
@@ -1264,7 +1646,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 9,
+          property: 13,
           value: value,
         ),
       );
@@ -1278,7 +1660,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 9,
+          property: 13,
           value: value,
         ),
       );
@@ -1292,7 +1674,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 9,
+          property: 13,
           value: value,
         ),
       );
@@ -1307,7 +1689,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 9,
+          property: 13,
           lower: lower,
           upper: upper,
         ),
@@ -1322,7 +1704,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 10,
+          property: 14,
           value: value,
         ),
       );
@@ -1336,7 +1718,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 11,
+          property: 15,
           value: value,
         ),
       );
@@ -1490,44 +1872,100 @@ extension UserPreferencesLocalQuerySortBy
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByUpdatedAt() {
+      sortByEnableAutoBackup() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByUpdatedAtDesc() {
+      sortByEnableAutoBackupDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDirty() {
+      sortByLastBackupDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDirtyDesc() {
+      sortByLastBackupDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDeleted() {
+      sortByAutoBackupDay() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDeletedDesc() {
+      sortByAutoBackupDayDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByAutoBackupHour() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByAutoBackupHourDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(13);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(13, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(14);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(14, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(15);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(15, sort: Sort.desc);
     });
   }
 }
@@ -1661,44 +2099,100 @@ extension UserPreferencesLocalQuerySortThenBy
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByUpdatedAt() {
+      thenByEnableAutoBackup() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByUpdatedAtDesc() {
+      thenByEnableAutoBackupDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDirty() {
+      thenByLastBackupDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDirtyDesc() {
+      thenByLastBackupDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDeleted() {
+      thenByAutoBackupDay() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDeletedDesc() {
+      thenByAutoBackupDayDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByAutoBackupHour() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByAutoBackupHourDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(12, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(13);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(13, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(14);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(14, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(15);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(15, sort: Sort.desc);
     });
   }
 }
@@ -1762,23 +2256,51 @@ extension UserPreferencesLocalQueryWhereDistinct
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByUpdatedAt() {
+      distinctByEnableAutoBackup() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(9);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByIsDirty() {
+      distinctByLastBackupDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(10);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByIsDeleted() {
+      distinctByAutoBackupDay() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(11);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByAutoBackupHour() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(12);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(13);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(14);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(15);
     });
   }
 }
@@ -1847,22 +2369,50 @@ extension UserPreferencesLocalQueryProperty1
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, DateTime, QAfterProperty>
-      updatedAtProperty() {
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
+      enableAutoBackupProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(9);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty> isDirtyProperty() {
+  QueryBuilder<UserPreferencesLocal, DateTime?, QAfterProperty>
+      lastBackupDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(10);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty> isDeletedProperty() {
+  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
+      autoBackupDayProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
+      autoBackupHourProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, DateTime, QAfterProperty>
+      updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(13);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty> isDirtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(14);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(15);
     });
   }
 }
@@ -1931,24 +2481,52 @@ extension UserPreferencesLocalQueryProperty2<R>
     });
   }
 
+  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
+      enableAutoBackupProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R, DateTime?), QAfterProperty>
+      lastBackupDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(10);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
+      autoBackupDayProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
+      autoBackupHourProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
+    });
+  }
+
   QueryBuilder<UserPreferencesLocal, (R, DateTime), QAfterProperty>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
+      return query.addProperty(14);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(11);
+      return query.addProperty(15);
     });
   }
 }
@@ -2017,24 +2595,52 @@ extension UserPreferencesLocalQueryProperty3<R1, R2>
     });
   }
 
+  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
+      enableAutoBackupProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R1, R2, DateTime?), QOperations>
+      lastBackupDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(10);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
+      autoBackupDayProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
+      autoBackupHourProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
+    });
+  }
+
   QueryBuilder<UserPreferencesLocal, (R1, R2, DateTime), QOperations>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
+      return query.addProperty(14);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(11);
+      return query.addProperty(15);
     });
   }
 }

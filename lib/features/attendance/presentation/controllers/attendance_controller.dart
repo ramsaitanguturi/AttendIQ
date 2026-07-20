@@ -9,6 +9,8 @@ import '../../../timetable/domain/repositories/daily_schedule_occurrence_reposit
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
 import 'subject_attendance_stats_provider.dart';
 import '../../../analytics/presentation/controllers/analytics_controller.dart';
+import '../../../analytics/presentation/controllers/reports_controller.dart';
+import '../../../widgets/services/widget_refresh_service.dart';
 
 part 'attendance_controller.g.dart';
 
@@ -45,7 +47,7 @@ class AttendanceController extends _$AttendanceController {
 
     if (savedOccurrence.subjectId != null) {
       final eventId = savedOccurrence.id ?? 0;
-      final existingRecord = await attendanceRepo.getAttendanceForEvent(eventId);
+      final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(eventId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_PRESENT
           : AttendanceStatus.PRESENT;
@@ -81,7 +83,7 @@ class AttendanceController extends _$AttendanceController {
 
     if (savedOccurrence.subjectId != null) {
       final eventId = savedOccurrence.id ?? 0;
-      final existingRecord = await attendanceRepo.getAttendanceForEvent(eventId);
+      final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(eventId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_ABSENT
           : AttendanceStatus.ABSENT;
@@ -116,7 +118,7 @@ class AttendanceController extends _$AttendanceController {
     final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
     if (savedOccurrence.id != null) {
-      final existingRecord = await attendanceRepo.getAttendanceForEvent(savedOccurrence.id!);
+      final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(savedOccurrence.id!);
       if (existingRecord?.id != null) {
         await attendanceRepo.deleteAttendanceRecord(existingRecord!.id!);
       }
@@ -163,7 +165,7 @@ class AttendanceController extends _$AttendanceController {
   }) async {
     final repo = ref.read(attendanceRepositoryProvider);
 
-    final existing = await repo.getAttendanceForEvent(eventId);
+    final existing = await repo.getAttendanceForEventAnyStatus(eventId);
     final record = AttendanceRecord(
       id: existing?.id,
       serverId: existing?.serverId,
@@ -211,7 +213,12 @@ class AttendanceController extends _$AttendanceController {
   void _invalidateProviders() {
     ref.invalidate(todayScheduleProvider);
     ref.invalidate(allSubjectAttendanceStatsProvider);
+    ref.invalidate(overallAttendancePercentageProvider);
     ref.invalidate(analyticsControllerProvider);
+    ref.invalidate(reportsControllerProvider);
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
   }
 
   String _mapToEventStatus(AttendanceStatus status) {

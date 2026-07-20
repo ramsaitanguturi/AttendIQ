@@ -102,6 +102,28 @@ class SettingsController extends _$SettingsController {
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
   }
+
+  Future<void> updateEnableAutoBackup(bool enabled) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(enableAutoBackup: enabled);
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+
+  Future<void> updateLastBackupDate(DateTime date) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(lastBackupDate: date);
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
 }
 
 @riverpod

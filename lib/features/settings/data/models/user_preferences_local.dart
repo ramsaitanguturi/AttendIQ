@@ -17,6 +17,12 @@ class UserPreferencesLocal {
   late bool weeklyReportEnabled;
   DateTime? lastSyncTime;
 
+  // Backup preferences
+  bool enableAutoBackup = false;
+  DateTime? lastBackupDate;
+  int autoBackupDay = 7;
+  int autoBackupHour = 2;
+
   // Sync Metadata
   late DateTime updatedAt;
   bool isDirty = false;

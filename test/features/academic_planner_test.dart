@@ -10,8 +10,6 @@ import 'package:attend_iq/features/academic_planner/services/task_notification_s
 import 'package:attend_iq/features/timetable/presentation/controllers/academic_calendar_controller.dart';
 import 'package:attend_iq/features/semester/domain/entities/semester.dart';
 import 'package:attend_iq/features/semester/presentation/controllers/semester_controller.dart';
-import 'package:attend_iq/features/subject/presentation/controllers/subject_controller.dart';
-import 'package:attend_iq/features/timetable/presentation/controllers/timetable_controller.dart';
 import 'package:attend_iq/core/notifications/services/notification_service.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
 

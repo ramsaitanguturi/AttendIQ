@@ -221,7 +221,7 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                 );
               }
               return const SizedBox.shrink();
-            }),
+            },),
           ],
 
           // Empty state if no items scheduled

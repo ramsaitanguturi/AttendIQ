@@ -9,6 +9,7 @@ import '../../domain/entities/academic_task.dart';
 import '../../domain/entities/task_enums.dart';
 import '../../domain/repositories/task_repository.dart';
 import '../../services/task_notification_scheduler.dart';
+import '../../../widgets/services/widget_refresh_service.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   final isar = ref.watch(isarProvider).requireValue;
@@ -30,6 +31,9 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
     _subscription?.cancel();
     _subscription = repository.watchTasks().listen((_) async {
       ref.invalidateSelf();
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
     });
     ref.onDispose(() => _subscription?.cancel());
 
