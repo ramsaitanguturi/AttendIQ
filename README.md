@@ -271,7 +271,3 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more details.
 
 ---
-
-<p align="center">
-  Built with ❤️ for students worldwide.
-</p>
