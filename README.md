@@ -152,22 +152,6 @@ lib/
       └── timetable/        # Weekly slot rules & schedule generation
 ```
 
----
-
-## Screenshots
-
-> *Note: Visual screenshots can be added here as the UI design evolves.*
-
-| Dashboard | Timetable | Attendance |
-| :---: | :---: | :---: |
-| *(Placeholder)* | *(Placeholder)* | *(Placeholder)* |
-
-| Calendar | Tasks | Reports |
-| :---: | :---: | :---: |
-| *(Placeholder)* | *(Placeholder)* | *(Placeholder)* |
-
----
-
 ## Installation Guide
 
 ### Prerequisites
