@@ -1,6 +1,5 @@
 # AttendIQ - Smart Academic Management System
 
----
  
 > A privacy-focused offline-first student productivity application for managing attendance, timetable, academic calendar, tasks, and semester planning.
 
