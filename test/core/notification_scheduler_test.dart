@@ -3,18 +3,21 @@ import 'package:attend_iq/core/notifications/models/notification_item.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_scheduler.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_database.dart';
 import 'package:attend_iq/core/notifications/services/notification_service.dart';
-import 'package:attend_iq/core/event_generator/data/models/event_local.dart';
 import 'package:attend_iq/features/semester/data/models/semester_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
-import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
+import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
+import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
 import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
+import 'package:attend_iq/features/timetable/data/utils/occurrence_identity.dart';
 
 class MockNotificationDatabase implements NotificationDatabase {
-  final List<EventLocal> events = [];
+  final List<DailyScheduleOccurrenceLocal> occurrences = [];
+  final List<WeeklyScheduleRuleLocal> weeklyRules = [];
+  final List<ScheduleExceptionLocal> scheduleExceptions = [];
   final List<AcademicEventLocal> academicEvents = [];
   final List<SubjectLocal> subjects = [];
-  final List<TimetableTemplateLocal> templates = [];
   final List<AttendanceRecordLocal> attendanceRecords = [];
   final List<NotificationItem> notifications = [];
   SemesterLocal? activeSemester;
@@ -22,9 +25,21 @@ class MockNotificationDatabase implements NotificationDatabase {
   int _nextNotificationId = 1;
 
   @override
-  Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async {
-    // start and end are typically stripped UTC dates for our queries
-    return events.where((e) {
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
+      DateTime start, DateTime end) async {
+    return occurrences.where((o) {
+      final dateStripped = DateTime.utc(o.date.year, o.date.month, o.date.day);
+      return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
+    }).toList();
+  }
+
+  @override
+  Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules() async => weeklyRules;
+
+  @override
+  Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
+      DateTime start, DateTime end) async {
+    return scheduleExceptions.where((e) {
       final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
     }).toList();
@@ -41,9 +56,6 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<SubjectLocal>> getSubjects() async => subjects;
-
-  @override
-  Future<List<TimetableTemplateLocal>> getTemplates() async => templates;
 
   @override
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
@@ -173,11 +185,11 @@ void main() {
         ..isDeleted = false;
       mockDb.subjects.add(subject);
 
-      // Insert templates
-      final template = TimetableTemplateLocal()
+      // Insert canonical weekly rules
+      final ruleFri = WeeklyScheduleRuleLocal()
         ..id = 50
         ..subjectId = 1
-        ..weekday = 5 // Friday
+        ..dayOfWeek = 5 // Friday
         ..startTime = '10:00'
         ..endTime = '11:00'
         ..room = 'Room 302'
@@ -185,12 +197,12 @@ void main() {
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false;
-      mockDb.templates.add(template);
+      mockDb.weeklyRules.add(ruleFri);
 
-      final templateSaturday = TimetableTemplateLocal()
+      final ruleSat = WeeklyScheduleRuleLocal()
         ..id = 51
         ..subjectId = 1
-        ..weekday = 6 // Saturday
+        ..dayOfWeek = 6 // Saturday
         ..startTime = '14:00'
         ..endTime = '15:00'
         ..room = 'Room 303'
@@ -198,63 +210,70 @@ void main() {
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false;
-      mockDb.templates.add(templateSaturday);
+      mockDb.weeklyRules.add(ruleSat);
 
-      // Insert Events (one starting at 10:00 AM today, one starting at 2:00 PM tomorrow, one cancelled)
-      final event1 = EventLocal()
+      // Insert canonical occurrences (one starting at 10:00 AM today, one starting at 2:00 PM tomorrow, one cancelled)
+      final occ1 = DailyScheduleOccurrenceLocal()
         ..id = 101
         ..subjectId = 1
+        ..ruleId = 50
         ..date = DateTime.utc(2026, 7, 17)
+        ..title = 'Operating Systems'
         ..startTime = '10:00'
         ..endTime = '11:00'
-        ..eventType = 'REGULAR_CLASS'
-        ..status = 'UNMARKED'
+        ..type = 'REGULAR_CLASS'
+        ..status = 'UPCOMING'
+        ..createdFrom = 'WEEKLY_RULE'
         ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false;
-      mockDb.events.add(event1);
+      occ1.slotKey = computeSlotKeyForLocal(occ1);
+      mockDb.occurrences.add(occ1);
 
-      final event2 = EventLocal()
+      final occ2 = DailyScheduleOccurrenceLocal()
         ..id = 102
         ..subjectId = 1
+        ..ruleId = 51
         ..date = DateTime.utc(2026, 7, 18)
+        ..title = 'Operating Systems'
         ..startTime = '14:00'
         ..endTime = '15:00'
-        ..eventType = 'REGULAR_CLASS'
-        ..status = 'UNMARKED'
+        ..type = 'REGULAR_CLASS'
+        ..status = 'UPCOMING'
+        ..createdFrom = 'WEEKLY_RULE'
         ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false;
-      mockDb.events.add(event2);
+      occ2.slotKey = computeSlotKeyForLocal(occ2);
+      mockDb.occurrences.add(occ2);
 
-      final eventCancelled = EventLocal()
+      final occCancelled = DailyScheduleOccurrenceLocal()
         ..id = 103
         ..subjectId = 1
         ..date = DateTime.utc(2026, 7, 17)
+        ..title = 'Operating Systems'
         ..startTime = '12:00'
         ..endTime = '13:00'
-        ..eventType = 'REGULAR_CLASS'
+        ..type = 'REGULAR_CLASS'
         ..status = 'CANCELLED'
+        ..createdFrom = 'WEEKLY_RULE'
         ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false;
-      mockDb.events.add(eventCancelled);
+      occCancelled.slotKey = computeSlotKeyForLocal(occCancelled);
+      mockDb.occurrences.add(occCancelled);
 
       // Run rolling scheduler
       await scheduler
           .rescheduleRollingWindow(offsets: [15, 30], customNow: now);
 
       // Verify that reminders were scheduled:
-      // event 1 (starts 10:00 AM today):
-      // - 15 mins before: 9:45 AM (future, should schedule)
-      // - 30 mins before: 9:30 AM (future, should schedule)
-      // event 2 (starts 2:00 PM tomorrow):
-      // - 15 mins before: 1:45 PM tomorrow (future, should schedule)
-      // - 30 mins before: 1:30 PM tomorrow (future, should schedule)
-      // eventCancelled: should not be scheduled at all!
+      // occ 1 (starts 10:00 AM today): 9:45 AM, 9:30 AM
+      // occ 2 (starts 2:00 PM tomorrow): 1:45 PM tomorrow, 1:30 PM tomorrow
+      // occCancelled: should not be scheduled at all!
 
       final scheduledNotifs = mockDb.notifications;
       expect(scheduledNotifs.length, 4);
@@ -265,9 +284,10 @@ void main() {
       // Verify mock service schedules them
       expect(mockService.scheduled.length, 4);
 
-      // Verify body text includes room info
+      // Verify body text includes room info and namespaced slotKey relatedId
+      final expectedKey1 = NotificationRelatedKeys.forSlotKey(occ1.slotKey!);
       final testReminder = mockService.scheduled.firstWhere(
-          (n) => n.relatedId == '101' && n.body.contains('Room 302'));
+          (n) => n.relatedId == expectedKey1 && n.body.contains('Room 302'));
       expect(testReminder, isNotNull);
 
       // Try running scheduler again: should not schedule duplicates or double-register
@@ -393,20 +413,22 @@ void main() {
         ..isDeleted = false;
       mockDb.attendanceRecords.add(rec);
 
-      // Schedule Event
-      final event = EventLocal()
+      // Schedule Occurrence
+      final occ = DailyScheduleOccurrenceLocal()
         ..id = 301
         ..subjectId = 1
         ..date = DateTime.utc(2026, 7, 15)
+        ..title = 'Operating Systems'
         ..startTime = '10:00'
         ..endTime = '11:00'
-        ..eventType = 'REGULAR_CLASS'
+        ..type = 'REGULAR_CLASS'
         ..status = 'PRESENT'
+        ..createdFrom = 'WEEKLY_RULE'
         ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..isDirty = false
         ..isDeleted = false;
-      mockDb.events.add(event);
+      mockDb.occurrences.add(occ);
 
       // Run weekly report scheduler
       await scheduler.scheduleWeeklyReport(customNow: now);
@@ -427,7 +449,7 @@ void main() {
     });
 
     test(
-        'rescheduleRollingWindow deduplicates repeated offsets and cancels exact Android ID on event removal',
+        'rescheduleRollingWindow deduplicates repeated offsets and cancels exact Android ID on occurrence cancellation',
         () async {
       final now = DateTime(2026, 7, 17, 9, 0);
       mockDb.subjects.add(
@@ -444,27 +466,34 @@ void main() {
           ..updatedAt = now,
       );
 
-      final event1 = EventLocal()
+      final occ1 = DailyScheduleOccurrenceLocal()
         ..id = 201
         ..subjectId = 1
         ..date = DateTime.utc(2026, 7, 17)
+        ..title = 'Algorithms'
         ..startTime = '11:00'
         ..endTime = '12:00'
-        ..eventType = 'REGULAR_CLASS'
-        ..status = 'UNMARKED'
+        ..type = 'REGULAR_CLASS'
+        ..status = 'UPCOMING'
+        ..createdFrom = 'WEEKLY_RULE'
         ..createdAt = now
         ..updatedAt = now;
-      final event2 = EventLocal()
+      occ1.slotKey = computeSlotKeyForLocal(occ1);
+
+      final occ2 = DailyScheduleOccurrenceLocal()
         ..id = 202
         ..subjectId = 1
         ..date = DateTime.utc(2026, 7, 17)
+        ..title = 'Algorithms'
         ..startTime = '15:00'
         ..endTime = '16:00'
-        ..eventType = 'REGULAR_CLASS'
-        ..status = 'UNMARKED'
+        ..type = 'REGULAR_CLASS'
+        ..status = 'UPCOMING'
+        ..createdFrom = 'WEEKLY_RULE'
         ..createdAt = now
         ..updatedAt = now;
-      mockDb.events.addAll([event1, event2]);
+      occ2.slotKey = computeSlotKeyForLocal(occ2);
+      mockDb.occurrences.addAll([occ1, occ2]);
 
       await scheduler.rescheduleRollingWindow(
         offsets: [15, 15],
@@ -484,12 +513,14 @@ void main() {
         hasLength(2),
       );
 
-      // Cancel event1 and verify only event1's Android ID is cancelled.
-      final event1Notif =
-          mockDb.notifications.firstWhere((n) => n.relatedId == '201');
-      final event2Notif =
-          mockDb.notifications.firstWhere((n) => n.relatedId == '202');
-      event1.status = 'CANCELLED';
+      // Cancel occ1 and verify only occ1's Android ID is cancelled.
+      final key1 = NotificationRelatedKeys.forSlotKey(occ1.slotKey!);
+      final key2 = NotificationRelatedKeys.forSlotKey(occ2.slotKey!);
+      final occ1Notif =
+          mockDb.notifications.firstWhere((n) => n.relatedId == key1);
+      final occ2Notif =
+          mockDb.notifications.firstWhere((n) => n.relatedId == key2);
+      occ1.status = 'CANCELLED';
 
       await scheduler.rescheduleRollingWindow(
         offsets: [15],
@@ -498,10 +529,10 @@ void main() {
 
       expect(
         mockService.cancelled,
-        equals([event1Notif.effectiveAndroidNotificationId]),
+        equals([occ1Notif.effectiveAndroidNotificationId]),
       );
-      expect(mockDb.notifications.map((n) => n.id), equals([event2Notif.id]));
-      expect(mockService.scheduled.map((n) => n.id), equals([event2Notif.id]));
+      expect(mockDb.notifications.map((n) => n.id), equals([occ2Notif.id]));
+      expect(mockService.scheduled.map((n) => n.id), equals([occ2Notif.id]));
     });
   });
 }

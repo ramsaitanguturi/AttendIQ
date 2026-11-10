@@ -13,6 +13,7 @@ import '../../timetable/domain/repositories/academic_event_repository.dart';
 import '../../timetable/domain/entities/schedule_exception.dart';
 import '../../timetable/domain/entities/daily_schedule_occurrence.dart';
 import '../../timetable/domain/entities/academic_event.dart';
+import '../../timetable/data/utils/occurrence_identity.dart';
 import '../../academic_planner/domain/repositories/task_repository.dart';
 import '../../semester/domain/repositories/semester_repository.dart';
 import '../../subject/domain/repositories/subject_repository.dart';
@@ -110,30 +111,74 @@ class WidgetDataService {
       final todayRules = rules.where((r) => r.dayOfWeek == weekday && r.isActive).toList();
 
       final savedOccurrences = await occurrenceRepo.getOccurrencesForDate(todayUtc);
+      final consumedOccIds = <int>{};
+      final savedOccIds = <int>{
+        for (final o in savedOccurrences)
+          if (o.id != null) o.id!,
+      };
+      final matchedByRuleIndex = <int, DailyScheduleOccurrence?>{};
+      final unmaterializedCountBySubject = <int, int>{};
 
-      for (final rule in todayRules) {
+      for (var i = 0; i < todayRules.length; i++) {
+        final rule = todayRules[i];
+        final normStart = normalizeTimeSlotPart(rule.startTime);
+        final normEnd = normalizeTimeSlotPart(rule.endTime);
+
+        DailyScheduleOccurrence? saved;
+        if (rule.id != null) {
+          saved = savedOccurrences.where((o) {
+            final ok = o.id == null || !consumedOccIds.contains(o.id);
+            return ok && o.ruleId == rule.id;
+          }).firstOrNull;
+        }
+        saved ??= savedOccurrences.where((o) {
+          final ok = o.id == null || !consumedOccIds.contains(o.id);
+          return ok &&
+              o.ruleId == null &&
+              o.subjectId == rule.subjectId &&
+              normalizeTimeSlotPart(o.startTime) == normStart &&
+              normalizeTimeSlotPart(o.endTime) == normEnd &&
+              o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE;
+        }).firstOrNull;
+
+        matchedByRuleIndex[i] = saved;
+        if (saved != null) {
+          if (saved.id != null) consumedOccIds.add(saved.id!);
+        } else {
+          unmaterializedCountBySubject[rule.subjectId] =
+              (unmaterializedCountBySubject[rule.subjectId] ?? 0) + 1;
+        }
+      }
+
+      final recordsCache = <int, List<AttendanceRecord>>{};
+      for (var i = 0; i < todayRules.length; i++) {
+        final rule = todayRules[i];
         final subName = subjectMap[rule.subjectId] ?? 'Subject';
-        final saved = savedOccurrences.where((o) =>
-            o.subjectId == rule.subjectId &&
-            o.startTime == rule.startTime &&
-            o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE).firstOrNull;
+        final saved = matchedByRuleIndex[i];
 
         String statusStr = 'UPCOMING';
         if (saved != null) {
           statusStr = _statusToString(saved.status);
         } else if (cancelledSubjectIds.contains(rule.subjectId)) {
           statusStr = 'CANCELLED';
-        } else {
-          final records = await attendanceRepo.getAttendanceForSubject(rule.subjectId);
-          final record = records.where((r) =>
-              r.markedAt.year == todayUtc.year &&
-              r.markedAt.month == todayUtc.month &&
-              r.markedAt.day == todayUtc.day).firstOrNull;
+        } else if ((unmaterializedCountBySubject[rule.subjectId] ?? 0) == 1) {
+          final records = recordsCache[rule.subjectId] ??=
+              await attendanceRepo.getAttendanceForSubject(rule.subjectId);
+          final unlinkedOnToday = records.where((r) {
+            if (!normalizeUtcDate(r.markedAt).isAtSameMomentAs(todayUtc)) {
+              return false;
+            }
+            final linkedOccId = r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
+            return linkedOccId == null || !savedOccIds.contains(linkedOccId);
+          }).toList();
 
-          if (record != null) {
-            if (record.status == AttendanceStatus.PRESENT || record.status == AttendanceStatus.EXTRA_PRESENT) {
+          if (unlinkedOnToday.length == 1) {
+            final record = unlinkedOnToday.first;
+            if (record.status == AttendanceStatus.PRESENT ||
+                record.status == AttendanceStatus.EXTRA_PRESENT) {
               statusStr = 'PRESENT';
-            } else if (record.status == AttendanceStatus.ABSENT || record.status == AttendanceStatus.EXTRA_ABSENT) {
+            } else if (record.status == AttendanceStatus.ABSENT ||
+                record.status == AttendanceStatus.EXTRA_ABSENT) {
               statusStr = 'ABSENT';
             } else if (record.status == AttendanceStatus.CANCELLED) {
               statusStr = 'CANCELLED';
@@ -145,21 +190,24 @@ class WidgetDataService {
           subjectName: subName,
           startTime: rule.startTime,
           endTime: rule.endTime,
-          room: rule.room,
+          room: saved?.room ?? rule.room,
           status: statusStr,
         ));
       }
 
-      // Add extra / manual occurrences
-      final manualSaved = savedOccurrences.where((o) => o.createdFrom == OccurrenceCreatedFrom.MANUAL);
-      for (final extra in manualSaved) {
-        items.add(TodayWidgetItem(
-          subjectName: extra.title,
-          startTime: extra.startTime,
-          endTime: extra.endTime,
-          room: extra.room,
-          status: _statusToString(extra.status),
-        ));
+      // Add extra / unconsumed manual occurrences
+      for (final extra in savedOccurrences) {
+        if (extra.id != null && consumedOccIds.contains(extra.id)) continue;
+        if (extra.createdFrom == OccurrenceCreatedFrom.MANUAL ||
+            extra.type == OccurrenceType.EXTRA_CLASS) {
+          items.add(TodayWidgetItem(
+            subjectName: extra.title,
+            startTime: extra.startTime,
+            endTime: extra.endTime,
+            room: extra.room,
+            status: _statusToString(extra.status),
+          ));
+        }
       }
     }
 

@@ -13,7 +13,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     return AttendanceRecord(
       id: local.id,
       serverId: local.serverId,
-      eventId: local.eventId,
+      occurrenceId: local.occurrenceId,
+      legacyEventId: local.legacyEventId,
+      eventId: local.occurrenceId ?? local.eventId,
       subjectId: local.subjectId,
       status: AttendanceStatus.values.firstWhere(
         (e) => e.name == local.status,
@@ -27,10 +29,16 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }
 
   AttendanceRecordLocal _toLocal(AttendanceRecord entity) {
+    final resolvedOccurrenceId = entity.occurrenceId ??
+        (entity.eventId > 0 && entity.legacyEventId == null
+            ? entity.eventId
+            : null);
     return AttendanceRecordLocal()
       ..id = entity.id ?? 0
       ..serverId = entity.serverId
-      ..eventId = entity.eventId
+      ..occurrenceId = resolvedOccurrenceId
+      ..legacyEventId = entity.legacyEventId
+      ..eventId = resolvedOccurrenceId ?? entity.eventId
       ..subjectId = entity.subjectId
       ..status = entity.status.name
       ..markedAt = entity.markedAt
@@ -46,8 +54,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }
 
   @override
-  Future<AttendanceRecord?> getAttendanceForEvent(int eventId) async {
-    final local = await _localDataSource.getAttendanceForEvent(eventId);
+  Future<AttendanceRecord?> getAttendanceForOccurrence(int occurrenceId) async {
+    final local = await _localDataSource.getAttendanceForOccurrence(occurrenceId);
     if (local != null) {
       return _toEntity(local);
     }
@@ -55,18 +63,32 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }
 
   @override
-  Future<AttendanceRecord?> getAttendanceForEventAnyStatus(int eventId) async {
-    final local = await _localDataSource.getAttendanceForEventAnyStatus(eventId);
+  Future<AttendanceRecord?> getAttendanceForOccurrenceAnyStatus(
+      int occurrenceId) async {
+    final local =
+        await _localDataSource.getAttendanceForOccurrenceAnyStatus(occurrenceId);
     if (local != null) {
       return _toEntity(local);
     }
     return null;
   }
+
+  @override
+  Future<AttendanceRecord?> getAttendanceForEvent(int eventId) =>
+      getAttendanceForOccurrence(eventId);
+
+  @override
+  Future<AttendanceRecord?> getAttendanceForEventAnyStatus(int eventId) =>
+      getAttendanceForOccurrenceAnyStatus(eventId);
 
   @override
   Future<void> saveAttendanceRecord(AttendanceRecord record) async {
-    final existing = record.eventId > 0
-        ? await _localDataSource.getAttendanceForEventAnyStatus(record.eventId)
+    final targetOccId = record.occurrenceId ??
+        (record.eventId > 0 && record.legacyEventId == null
+            ? record.eventId
+            : null);
+    final existing = (targetOccId != null && targetOccId > 0)
+        ? await _localDataSource.getAttendanceForOccurrenceAnyStatus(targetOccId)
         : null;
     final serverId = record.serverId ?? existing?.serverId ?? generateUuid();
     final now = DateTime.now().toUtc();

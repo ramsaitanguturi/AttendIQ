@@ -5,6 +5,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../semester/domain/entities/semester.dart';
 import '../../../semester/domain/validators/semester_validator.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
+import '../../../semester/presentation/widgets/semester_management_sheet.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -170,6 +171,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final savedSemesters =
+        ref.watch(allSemestersProvider).valueOrNull ?? const <Semester>[];
 
     return Scaffold(
       backgroundColor:
@@ -178,6 +181,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         title: const Text('Welcome to AttendIQ'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: savedSemesters.isNotEmpty
+            ? [
+                TextButton.icon(
+                  key: const ValueKey<String>(
+                    'onboarding_manage_semesters_button',
+                  ),
+                  onPressed: () => SemesterManagementSheet.show(context),
+                  icon: const Icon(Icons.history_outlined, size: 18),
+                  label: Text('Saved (${savedSemesters.length})'),
+                ),
+              ]
+            : null,
       ),
       body: SafeArea(
         child: Column(

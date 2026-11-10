@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/attendance_engine/bunk_analyzer.dart';
-import '../../../../core/event_generator/data/models/event_local.dart';
+import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
 import '../controllers/subject_attendance_stats_provider.dart';
 import '../controllers/attendance_controller.dart';
 import '../../../subject/domain/entities/subject.dart';
@@ -19,7 +19,7 @@ class SubjectDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(subjectAttendanceStatsProvider(subjectId));
-    final eventsAsync = ref.watch(subjectEventsProvider(subjectId));
+    final occurrencesAsync = ref.watch(subjectOccurrencesProvider(subjectId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -111,10 +111,10 @@ class SubjectDetailsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Event list
-                  eventsAsync.when(
-                    data: (events) {
-                      if (events.isEmpty) {
+                  // Occurrence history list
+                  occurrencesAsync.when(
+                    data: (occurrences) {
+                      if (occurrences.isEmpty) {
                         return Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(32.0),
@@ -141,16 +141,16 @@ class SubjectDetailsPage extends ConsumerWidget {
                       return ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: events.length,
+                        itemCount: occurrences.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
-                          final event = events[index];
-                          return _buildEventItem(context, ref, event, subjectColor, isDark);
+                          final occurrence = occurrences[index];
+                          return _buildOccurrenceItem(context, ref, occurrence, subjectColor, isDark);
                         },
                       );
                     },
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Center(child: Text('Error loading events: $err')),
+                    error: (err, _) => Center(child: Text('Error loading classes: $err')),
                   ),
                 ],
               ),
@@ -456,34 +456,38 @@ class SubjectDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEventItem(
+  Widget _buildOccurrenceItem(
     BuildContext context,
     WidgetRef ref,
-    EventLocal event,
+    DailyScheduleOccurrence occurrence,
     Color subjectColor,
     bool isDark,
   ) {
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.help_outline;
 
-    switch (event.status) {
-      case 'PRESENT':
+    switch (occurrence.status) {
+      case OccurrenceStatus.PRESENT:
         statusColor = AppColors.primary;
         statusIcon = Icons.check_circle_outline;
         break;
-      case 'ABSENT':
+      case OccurrenceStatus.ABSENT:
         statusColor = AppColors.attendanceLow;
         statusIcon = Icons.cancel_outlined;
         break;
-      case 'CANCELLED':
+      case OccurrenceStatus.CANCELLED:
         statusColor = Colors.grey.shade600;
         statusIcon = Icons.block_outlined;
         break;
-      case 'UNMARKED':
+      case OccurrenceStatus.UPCOMING:
         statusColor = AppColors.attendanceMid;
         statusIcon = Icons.radio_button_unchecked;
         break;
     }
+
+    final subtitleText = occurrence.type == OccurrenceType.EXTRA_CLASS
+        ? '${occurrence.startTime} - ${occurrence.endTime} • Extra Class'
+        : '${occurrence.startTime} - ${occurrence.endTime}';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -510,7 +514,7 @@ class SubjectDetailsPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _formatDate(event.date),
+                  _formatDate(occurrence.date),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14.0,
@@ -518,7 +522,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${event.startTime} - ${event.endTime}',
+                  subtitleText,
                   style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 12.0,
@@ -531,16 +535,14 @@ class SubjectDetailsPage extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.grey),
             onSelected: (value) {
-              final statusMap = {
-                'present': AttendanceStatus.PRESENT,
-                'absent': AttendanceStatus.ABSENT,
-                'cancelled': AttendanceStatus.CANCELLED,
-              };
-              ref.read(attendanceControllerProvider.notifier).markAttendance(
-                    eventId: event.id,
-                    subjectId: event.subjectId,
-                    status: statusMap[value]!,
-                  );
+              final notifier = ref.read(attendanceControllerProvider.notifier);
+              if (value == 'present') {
+                notifier.markOccurrencePresent(occurrence);
+              } else if (value == 'absent') {
+                notifier.markOccurrenceAbsent(occurrence);
+              } else if (value == 'cancelled') {
+                notifier.markOccurrenceCancelled(occurrence);
+              }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(

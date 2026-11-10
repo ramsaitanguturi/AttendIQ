@@ -10,6 +10,12 @@ class AttendanceRecordLocal {
   String? serverId;
 
   @Index()
+  int? occurrenceId;
+
+  @Index()
+  int? legacyEventId;
+
+  @Index()
   late int eventId;
 
   @Index()

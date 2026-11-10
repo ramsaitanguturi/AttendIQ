@@ -6,7 +6,7 @@ part of 'ai_context_builder.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$aiContextHash() => r'f6b7c15904b4233f0bc3fd88f8999f69e0abc88b';
+String _$aiContextHash() => r'5c235153e70c8c468e1719712420684f7089e14f';
 
 /// See also [aiContext].
 @ProviderFor(aiContext)

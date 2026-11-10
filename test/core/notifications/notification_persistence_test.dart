@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:attend_iq/core/constants/app_constants.dart';
 import 'package:attend_iq/core/database/isar_provider.dart';
-import 'package:attend_iq/core/event_generator/data/models/event_local.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_database.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_scheduler.dart';
@@ -15,7 +14,9 @@ import 'package:attend_iq/features/attendance/data/models/attendance_record_loca
 import 'package:attend_iq/features/semester/data/models/semester_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
-import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
+import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
+import 'package:attend_iq/features/timetable/data/utils/occurrence_identity.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -488,49 +489,56 @@ void main() {
             ..updatedAt = now.toUtc();
           db.subjectLocals.put(subject);
 
-          final template = TimetableTemplateLocal()
-            ..id = db.timetableTemplateLocals.autoIncrement()
+          final rule = WeeklyScheduleRuleLocal()
+            ..id = db.weeklyScheduleRuleLocals.autoIncrement()
             ..subjectId = subject.id
-            ..weekday = class1Start.weekday
+            ..dayOfWeek = class1Start.weekday
             ..startTime = formatHm(class1Start)
             ..endTime = formatHm(class1Start.add(const Duration(hours: 1)))
             ..room = 'Room 501'
             ..createdAt = now.toUtc()
             ..updatedAt = now.toUtc();
-          db.timetableTemplateLocals.put(template);
+          db.weeklyScheduleRuleLocals.put(rule);
 
-          final e1 = EventLocal()
-            ..id = db.eventLocals.autoIncrement()
+          final e1 = DailyScheduleOccurrenceLocal()
+            ..id = db.dailyScheduleOccurrenceLocals.autoIncrement()
             ..subjectId = subject.id
+            ..ruleId = rule.id
             ..date = DateTime.utc(
               class1Start.year,
               class1Start.month,
               class1Start.day,
             )
+            ..title = subject.name
             ..startTime = formatHm(class1Start)
             ..endTime = formatHm(class1Start.add(const Duration(hours: 1)))
-            ..eventType = 'REGULAR_CLASS'
-            ..status = 'UNMARKED'
+            ..type = 'REGULAR_CLASS'
+            ..status = 'UPCOMING'
+            ..createdFrom = 'WEEKLY_RULE'
             ..createdAt = now.toUtc()
             ..updatedAt = now.toUtc();
-          db.eventLocals.put(e1);
+          e1.slotKey = computeSlotKeyForLocal(e1);
+          db.dailyScheduleOccurrenceLocals.put(e1);
           event1Id = e1.id;
 
-          final e2 = EventLocal()
-            ..id = db.eventLocals.autoIncrement()
+          final e2 = DailyScheduleOccurrenceLocal()
+            ..id = db.dailyScheduleOccurrenceLocals.autoIncrement()
             ..subjectId = subject.id
             ..date = DateTime.utc(
               class2Start.year,
               class2Start.month,
               class2Start.day,
             )
+            ..title = subject.name
             ..startTime = formatHm(class2Start)
             ..endTime = formatHm(class2Start.add(const Duration(hours: 1)))
-            ..eventType = 'REGULAR_CLASS'
-            ..status = 'UNMARKED'
+            ..type = 'REGULAR_CLASS'
+            ..status = 'UPCOMING'
+            ..createdFrom = 'WEEKLY_RULE'
             ..createdAt = now.toUtc()
             ..updatedAt = now.toUtc();
-          db.eventLocals.put(e2);
+          e2.slotKey = computeSlotKeyForLocal(e2);
+          db.dailyScheduleOccurrenceLocals.put(e2);
           event2Id = e2.id;
         });
 
@@ -552,17 +560,20 @@ void main() {
         expect(spy.scheduledIds, hasLength(3));
         expect(spy.scheduledIds.toSet(), hasLength(3));
 
-        final event1Item =
-            allNotifs.firstWhere((n) => n.relatedId == event1Id.toString());
-        final event2Item =
-            allNotifs.firstWhere((n) => n.relatedId == event2Id.toString());
+        final occ1 = isar.dailyScheduleOccurrenceLocals.get(event1Id)!;
+        final occ2 = isar.dailyScheduleOccurrenceLocals.get(event2Id)!;
+        final key1 = NotificationRelatedKeys.forSlotKey(occ1.slotKey!);
+        final key2 = NotificationRelatedKeys.forSlotKey(occ2.slotKey!);
 
-        // Cancel event1 in Isar and re-run rolling window.
+        final event1Item = allNotifs.firstWhere((n) => n.relatedId == key1);
+        final event2Item = allNotifs.firstWhere((n) => n.relatedId == key2);
+
+        // Cancel occ1 in Isar and re-run rolling window.
         spy.clearRecorded();
         isar.write((dbWrite) {
-          final e1 = dbWrite.eventLocals.get(event1Id)!;
+          final e1 = dbWrite.dailyScheduleOccurrenceLocals.get(event1Id)!;
           e1.status = 'CANCELLED';
-          dbWrite.eventLocals.put(e1);
+          dbWrite.dailyScheduleOccurrenceLocals.put(e1);
         });
 
         await scheduler.rescheduleRollingWindow(
@@ -633,22 +644,25 @@ void main() {
             ..updatedAt = now.toUtc();
           dbWrite.subjectLocals.put(sub);
 
-          final ev = EventLocal()
-            ..id = dbWrite.eventLocals.autoIncrement()
+          final occ = DailyScheduleOccurrenceLocal()
+            ..id = dbWrite.dailyScheduleOccurrenceLocals.autoIncrement()
             ..subjectId = sub.id
             ..date = DateTime.utc(
               classStart.year,
               classStart.month,
               classStart.day,
             )
+            ..title = sub.name
             ..startTime = startHm
             ..endTime = endHm
-            ..eventType = 'REGULAR_CLASS'
-            ..status = 'UNMARKED'
+            ..type = 'REGULAR_CLASS'
+            ..status = 'UPCOMING'
+            ..createdFrom = 'WEEKLY_RULE'
             ..createdAt = now.toUtc()
             ..updatedAt = now.toUtc();
-          dbWrite.eventLocals.put(ev);
-          eventId = ev.id;
+          occ.slotKey = computeSlotKeyForLocal(occ);
+          dbWrite.dailyScheduleOccurrenceLocals.put(occ);
+          eventId = occ.id;
         });
 
         final service = LocalNotificationServiceImpl();
@@ -708,11 +722,11 @@ void main() {
         expect(spy.scheduledIds, isEmpty);
         expect(spy.cancelledIds, isEmpty);
 
-        // Cancelling the event post-restart cancels both persisted Android IDs.
+        // Cancelling the occurrence post-restart cancels both persisted Android IDs.
         isar.write((dbWrite) {
-          final ev = dbWrite.eventLocals.get(eventId)!;
-          ev.status = 'CANCELLED';
-          dbWrite.eventLocals.put(ev);
+          final occ = dbWrite.dailyScheduleOccurrenceLocals.get(eventId)!;
+          occ.status = 'CANCELLED';
+          dbWrite.dailyScheduleOccurrenceLocals.put(occ);
         });
         await schedulerAfter.rescheduleRollingWindow(
           offsets: const [15, 30],
@@ -1149,22 +1163,24 @@ void main() {
           dbWrite.subjectLocals.put(sub);
           subjectId = sub.id;
 
-          dbWrite.eventLocals.put(
-            EventLocal()
-              ..id = dbWrite.eventLocals.autoIncrement()
-              ..subjectId = subjectId
-              ..date = DateTime.utc(
-                classStart.year,
-                classStart.month,
-                classStart.day,
-              )
-              ..startTime = startHm
-              ..endTime = endHm
-              ..eventType = 'REGULAR_CLASS'
-              ..status = 'UNMARKED'
-              ..createdAt = now.toUtc()
-              ..updatedAt = now.toUtc(),
-          );
+          final occ = DailyScheduleOccurrenceLocal()
+            ..id = dbWrite.dailyScheduleOccurrenceLocals.autoIncrement()
+            ..subjectId = subjectId
+            ..date = DateTime.utc(
+              classStart.year,
+              classStart.month,
+              classStart.day,
+            )
+            ..title = sub.name
+            ..startTime = startHm
+            ..endTime = endHm
+            ..type = 'REGULAR_CLASS'
+            ..status = 'UPCOMING'
+            ..createdFrom = 'WEEKLY_RULE'
+            ..createdAt = now.toUtc()
+            ..updatedAt = now.toUtc();
+          occ.slotKey = computeSlotKeyForLocal(occ);
+          dbWrite.dailyScheduleOccurrenceLocals.put(occ);
         });
 
         final db = IsarNotificationDatabaseImpl(isar);
@@ -1179,14 +1195,14 @@ void main() {
         final initial = (await db.getAllNotifications()).single;
         expect(initial.body, isNot(contains('Hall B')));
 
-        // Add room info via TimetableTemplateLocal and reschedule.
+        // Add room info via WeeklyScheduleRuleLocal and reschedule.
         spy.clearRecorded();
         isar.write((dbWrite) {
-          dbWrite.timetableTemplateLocals.put(
-            TimetableTemplateLocal()
-              ..id = dbWrite.timetableTemplateLocals.autoIncrement()
+          dbWrite.weeklyScheduleRuleLocals.put(
+            WeeklyScheduleRuleLocal()
+              ..id = dbWrite.weeklyScheduleRuleLocals.autoIncrement()
               ..subjectId = subjectId
-              ..weekday = classStart.weekday
+              ..dayOfWeek = classStart.weekday
               ..startTime = startHm
               ..endTime = endHm
               ..room = 'Hall B'

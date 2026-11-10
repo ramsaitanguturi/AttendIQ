@@ -2,6 +2,7 @@ import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../../domain/repositories/daily_schedule_occurrence_repository.dart';
 import '../datasources/daily_schedule_occurrence_local_data_source.dart';
 import '../models/daily_schedule_occurrence_local.dart';
+import '../utils/occurrence_identity.dart';
 import '../../../../core/utils/uuid_generator.dart';
 
 class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRepository {
@@ -17,6 +18,9 @@ class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRe
       serverId: local.serverId,
       date: local.date,
       subjectId: local.subjectId,
+      ruleId: local.ruleId,
+      legacyEventId: local.legacyEventId,
+      slotKey: local.slotKey,
       title: local.title,
       startTime: local.startTime,
       endTime: local.endTime,
@@ -34,14 +38,20 @@ class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRe
   }
 
   DailyScheduleOccurrenceLocal _toLocal(DailyScheduleOccurrence occurrence) {
+    final normalizedDate = normalizeUtcDate(occurrence.date);
+    final normalizedStart = normalizeTimeSlotPart(occurrence.startTime);
+    final normalizedEnd = normalizeTimeSlotPart(occurrence.endTime);
     final local = DailyScheduleOccurrenceLocal()
       ..id = occurrence.id ?? 0
       ..serverId = occurrence.serverId
-      ..date = occurrence.date
+      ..date = normalizedDate
       ..subjectId = occurrence.subjectId
+      ..ruleId = occurrence.ruleId
+      ..legacyEventId = occurrence.legacyEventId
+      ..slotKey = occurrence.slotKey ?? computeSlotKeyForEntity(occurrence)
       ..title = occurrence.title
-      ..startTime = occurrence.startTime
-      ..endTime = occurrence.endTime
+      ..startTime = normalizedStart
+      ..endTime = normalizedEnd
       ..type = occurrence.type.toShortString()
       ..status = occurrence.status.toShortString()
       ..createdFrom = occurrence.createdFrom.toShortString()
@@ -64,6 +74,12 @@ class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRe
   @override
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(DateTime start, DateTime end) async {
     final list = await _localDataSource.getOccurrencesForDateRange(start, end);
+    return list.map(_toEntity).toList();
+  }
+
+  @override
+  Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(int subjectId) async {
+    final list = await _localDataSource.getOccurrencesForSubject(subjectId);
     return list.map(_toEntity).toList();
   }
 

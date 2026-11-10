@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:isar/isar.dart';
-import '../../event_generator/data/models/event_local.dart';
 import '../../../features/semester/data/models/semester_local.dart';
 import '../../../features/semester/data/repositories/semester_repository_impl.dart';
 import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
-import '../../../features/timetable/data/models/timetable_template_local.dart';
+import '../../../features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import '../../../features/timetable/data/models/schedule_exception_local.dart';
+import '../../../features/timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../../features/timetable/data/models/academic_event_local.dart';
 import '../models/notification_item.dart';
 
@@ -160,11 +161,14 @@ int _allocateAndroidIdFromUsedSet({
 }
 
 abstract class NotificationDatabase {
-  Future<List<EventLocal>> getEvents(DateTime start, DateTime end);
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
+      DateTime start, DateTime end);
+  Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules();
+  Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
+      DateTime start, DateTime end);
   Future<List<AcademicEventLocal>> getAcademicEvents(
       DateTime start, DateTime end);
   Future<List<SubjectLocal>> getSubjects();
-  Future<List<TimetableTemplateLocal>> getTemplates();
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
       int subjectId);
   Future<List<AttendanceRecordLocal>> getAllAttendanceRecords();
@@ -236,10 +240,33 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
   }
 
   @override
-  Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async {
-    return _isar.eventLocals
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
+      DateTime start, DateTime end) async {
+    final startUtc = DateTime.utc(start.year, start.month, start.day);
+    final endUtc = DateTime.utc(end.year, end.month, end.day, 23, 59, 59);
+    return _isar.dailyScheduleOccurrenceLocals
         .where()
-        .dateBetween(start, end)
+        .dateBetween(startUtc, endUtc)
+        .isDeletedEqualTo(false)
+        .findAll();
+  }
+
+  @override
+  Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules() async {
+    return _isar.weeklyScheduleRuleLocals
+        .where()
+        .isDeletedEqualTo(false)
+        .findAll();
+  }
+
+  @override
+  Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
+      DateTime start, DateTime end) async {
+    final startUtc = DateTime.utc(start.year, start.month, start.day);
+    final endUtc = DateTime.utc(end.year, end.month, end.day, 23, 59, 59);
+    return _isar.scheduleExceptionLocals
+        .where()
+        .dateBetween(startUtc, endUtc)
         .isDeletedEqualTo(false)
         .findAll();
   }
@@ -247,9 +274,11 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
   @override
   Future<List<AcademicEventLocal>> getAcademicEvents(
       DateTime start, DateTime end) async {
+    final startUtc = DateTime.utc(start.year, start.month, start.day);
+    final endUtc = DateTime.utc(end.year, end.month, end.day, 23, 59, 59);
     return _isar.academicEventLocals
         .where()
-        .dateBetween(start, end)
+        .dateBetween(startUtc, endUtc)
         .isDeletedEqualTo(false)
         .findAll();
   }
@@ -257,14 +286,6 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
   @override
   Future<List<SubjectLocal>> getSubjects() async {
     return _isar.subjectLocals.where().isDeletedEqualTo(false).findAll();
-  }
-
-  @override
-  Future<List<TimetableTemplateLocal>> getTemplates() async {
-    return _isar.timetableTemplateLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
   }
 
   @override

@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import '../models/weekly_schedule_rule_local.dart';
 import '../models/timetable_template_local.dart';
 import '../../../subject/data/models/subject_local.dart';
+import '../../../../core/database/timetable_migration.dart';
 
 abstract class WeeklyScheduleRuleLocalDataSource {
   Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(int subjectId);
@@ -16,49 +17,26 @@ abstract class WeeklyScheduleRuleLocalDataSource {
 
 class WeeklyScheduleRuleLocalDataSourceImpl implements WeeklyScheduleRuleLocalDataSource {
   final Isar _isar;
+  bool _migrationChecked = false;
 
-  WeeklyScheduleRuleLocalDataSourceImpl(this._isar) {
-    _migrateLegacyDataIfNeeded();
-  }
+  WeeklyScheduleRuleLocalDataSourceImpl(this._isar);
 
-  Future<void> _migrateLegacyDataIfNeeded() async {
+  Future<void> _ensureLegacyTemplatesMigratedIfNeeded() async {
+    if (_migrationChecked) return;
+    _migrationChecked = true;
     try {
-      final existingRulesCount = _isar.weeklyScheduleRuleLocals.count();
-      if (existingRulesCount == 0) {
-        final legacyTemplates = _isar.timetableTemplateLocals
-            .where()
-            .isDeletedEqualTo(false)
-            .findAll();
-        if (legacyTemplates.isNotEmpty) {
-          await _isar.writeAsync((isar) {
-            for (final t in legacyTemplates) {
-              final rule = WeeklyScheduleRuleLocal()
-                ..id = isar.weeklyScheduleRuleLocals.autoIncrement()
-                ..serverId = t.serverId
-                ..subjectId = t.subjectId
-                ..dayOfWeek = t.weekday
-                ..startTime = t.startTime
-                ..endTime = t.endTime
-                ..room = t.room
-                ..faculty = t.faculty
-                ..isActive = true
-                ..createdAt = t.createdAt
-                ..updatedAt = t.updatedAt
-                ..isDirty = t.isDirty
-                ..isDeleted = false;
-              isar.weeklyScheduleRuleLocals.put(rule);
-            }
-          });
-        }
+      if (_isar.weeklyScheduleRuleLocals.count() == 0 &&
+          _isar.timetableTemplateLocals.count() > 0) {
+        await migrateLegacyTimetableAndEvents(_isar);
       }
     } catch (_) {
-      // Ignore migration errors if collection is newly created
+      // Non-fatal guard when collection is unavailable in unit tests
     }
   }
 
   @override
   Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(int subjectId) async {
-    await _migrateLegacyDataIfNeeded();
+    await _ensureLegacyTemplatesMigratedIfNeeded();
     return _isar.weeklyScheduleRuleLocals
         .where()
         .subjectIdEqualTo(subjectId)
@@ -68,7 +46,7 @@ class WeeklyScheduleRuleLocalDataSourceImpl implements WeeklyScheduleRuleLocalDa
 
   @override
   Future<List<WeeklyScheduleRuleLocal>> getRulesForSemester(int semesterId) async {
-    await _migrateLegacyDataIfNeeded();
+    await _ensureLegacyTemplatesMigratedIfNeeded();
     final subjects = _isar.subjectLocals
         .where()
         .semesterIdEqualTo(semesterId)
@@ -114,33 +92,35 @@ class WeeklyScheduleRuleLocalDataSourceImpl implements WeeklyScheduleRuleLocalDa
 
   @override
   Future<void> deleteRule(int id) async {
-    final rule = await _isar.weeklyScheduleRuleLocals.get(id);
-    if (rule != null) {
-      await _isar.writeAsync((isar) {
-        rule.isDeleted = true;
-        rule.updatedAt = DateTime.now().toUtc();
+    await _isar.writeAsync((isar) {
+      final rule = isar.weeklyScheduleRuleLocals.get(id);
+      if (rule != null) {
+        rule
+          ..isDeleted = true
+          ..updatedAt = DateTime.now().toUtc();
         isar.weeklyScheduleRuleLocals.put(rule);
-      });
-    }
+      }
+    });
   }
 
   @override
   Future<void> deleteRulesForSubject(int subjectId) async {
-    final rules = _isar.weeklyScheduleRuleLocals
-        .where()
-        .subjectIdEqualTo(subjectId)
-        .findAll();
+    await _isar.writeAsync((isar) {
+      final rules = isar.weeklyScheduleRuleLocals
+          .where()
+          .subjectIdEqualTo(subjectId)
+          .findAll();
 
-    if (rules.isNotEmpty) {
-      await _isar.writeAsync((isar) {
+      if (rules.isNotEmpty) {
         final now = DateTime.now().toUtc();
         for (final rule in rules) {
-          rule.isDeleted = true;
-          rule.updatedAt = now;
+          rule
+            ..isDeleted = true
+            ..updatedAt = now;
           isar.weeklyScheduleRuleLocals.put(rule);
         }
-      });
-    }
+      }
+    });
   }
 
   @override

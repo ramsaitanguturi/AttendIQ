@@ -18,6 +18,8 @@ enum AttendanceStatus {
 class AttendanceRecord {
   final int? id;
   final String? serverId;
+  final int? occurrenceId;
+  final int? legacyEventId;
   final int eventId;
   final int subjectId;
   final AttendanceStatus status;
@@ -31,18 +33,24 @@ class AttendanceRecord {
   const AttendanceRecord({
     this.id,
     this.serverId,
-    required this.eventId,
+    this.occurrenceId,
+    this.legacyEventId,
+    int? eventId,
     required this.subjectId,
     required this.status,
     required this.markedAt,
     required this.updatedAt,
     this.isDirty = true,
     this.isDeleted = false,
-  });
+  }) : eventId = eventId ?? occurrenceId ?? 0;
+
+  int get effectiveOccurrenceId => occurrenceId ?? eventId;
 
   AttendanceRecord copyWith({
     int? id,
     String? serverId,
+    int? occurrenceId,
+    int? legacyEventId,
     int? eventId,
     int? subjectId,
     AttendanceStatus? status,
@@ -51,10 +59,13 @@ class AttendanceRecord {
     bool? isDirty,
     bool? isDeleted,
   }) {
+    final nextOccurrenceId = occurrenceId ?? this.occurrenceId;
     return AttendanceRecord(
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
-      eventId: eventId ?? this.eventId,
+      occurrenceId: nextOccurrenceId,
+      legacyEventId: legacyEventId ?? this.legacyEventId,
+      eventId: eventId ?? (occurrenceId ?? this.eventId),
       subjectId: subjectId ?? this.subjectId,
       status: status ?? this.status,
       markedAt: markedAt ?? this.markedAt,
@@ -71,6 +82,8 @@ class AttendanceRecord {
           runtimeType == other.runtimeType &&
           id == other.id &&
           serverId == other.serverId &&
+          occurrenceId == other.occurrenceId &&
+          legacyEventId == other.legacyEventId &&
           eventId == other.eventId &&
           subjectId == other.subjectId &&
           status == other.status &&
@@ -83,6 +96,8 @@ class AttendanceRecord {
   int get hashCode =>
       id.hashCode ^
       serverId.hashCode ^
+      occurrenceId.hashCode ^
+      legacyEventId.hashCode ^
       eventId.hashCode ^
       subjectId.hashCode ^
       status.hashCode ^
@@ -93,6 +108,6 @@ class AttendanceRecord {
 
   @override
   String toString() {
-    return 'AttendanceRecord(id: $id, serverId: $serverId, eventId: $eventId, subjectId: $subjectId, status: $status, markedAt: $markedAt, updatedAt: $updatedAt, isDirty: $isDirty, isDeleted: $isDeleted)';
+    return 'AttendanceRecord(id: $id, serverId: $serverId, occurrenceId: $occurrenceId, legacyEventId: $legacyEventId, eventId: $eventId, subjectId: $subjectId, status: $status, markedAt: $markedAt, updatedAt: $updatedAt, isDirty: $isDirty, isDeleted: $isDeleted)';
   }
 }

@@ -27,24 +27,39 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
   }
 
   @override
-  Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId) async {
-    if (eventId <= 0) return null;
+  Future<AttendanceRecordLocal?> getAttendanceForOccurrence(
+      int occurrenceId) async {
+    if (occurrenceId <= 0) return null;
     try {
-      return records.values.firstWhere((r) => r.eventId == eventId && !r.isDeleted);
+      return records.values.firstWhere(
+        (r) =>
+            (r.occurrenceId ?? r.eventId) == occurrenceId && !r.isDeleted,
+      );
     } catch (_) {
       return null;
     }
   }
 
   @override
-  Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId) async {
-    if (eventId <= 0) return null;
+  Future<AttendanceRecordLocal?> getAttendanceForOccurrenceAnyStatus(
+      int occurrenceId) async {
+    if (occurrenceId <= 0) return null;
     try {
-      return records.values.firstWhere((r) => r.eventId == eventId);
+      return records.values.firstWhere(
+        (r) => (r.occurrenceId ?? r.eventId) == occurrenceId,
+      );
     } catch (_) {
       return null;
     }
   }
+
+  @override
+  Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId) =>
+      getAttendanceForOccurrence(eventId);
+
+  @override
+  Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId) =>
+      getAttendanceForOccurrenceAnyStatus(eventId);
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceRecordById(int id) async {
@@ -53,9 +68,12 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
 
   @override
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
+    final targetId = record.occurrenceId ?? record.eventId;
     if (record.id == 0) {
-      if (record.eventId > 0) {
-        final existing = records.values.where((r) => r.eventId == record.eventId).firstOrNull;
+      if (targetId > 0) {
+        final existing = records.values
+            .where((r) => (r.occurrenceId ?? r.eventId) == targetId)
+            .firstOrNull;
         if (existing != null) {
           record.id = existing.id;
         } else {

@@ -49,6 +49,9 @@ class DailyScheduleOccurrence {
   final String? serverId;
   final DateTime date;
   final int? subjectId;
+  final int? ruleId;
+  final int? legacyEventId;
+  final String? slotKey;
   final String title;
   final String startTime; // "HH:mm"
   final String endTime;   // "HH:mm"
@@ -70,6 +73,9 @@ class DailyScheduleOccurrence {
     this.serverId,
     required this.date,
     this.subjectId,
+    this.ruleId,
+    this.legacyEventId,
+    this.slotKey,
     required this.title,
     required this.startTime,
     required this.endTime,
@@ -90,6 +96,9 @@ class DailyScheduleOccurrence {
     String? serverId,
     DateTime? date,
     int? subjectId,
+    int? ruleId,
+    int? legacyEventId,
+    String? slotKey,
     String? title,
     String? startTime,
     String? endTime,
@@ -109,6 +118,9 @@ class DailyScheduleOccurrence {
       serverId: serverId ?? this.serverId,
       date: date ?? this.date,
       subjectId: subjectId ?? this.subjectId,
+      ruleId: ruleId ?? this.ruleId,
+      legacyEventId: legacyEventId ?? this.legacyEventId,
+      slotKey: slotKey ?? this.slotKey,
       title: title ?? this.title,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
@@ -134,6 +146,9 @@ class DailyScheduleOccurrence {
           serverId == other.serverId &&
           date == other.date &&
           subjectId == other.subjectId &&
+          ruleId == other.ruleId &&
+          legacyEventId == other.legacyEventId &&
+          slotKey == other.slotKey &&
           title == other.title &&
           startTime == other.startTime &&
           endTime == other.endTime &&
@@ -154,6 +169,9 @@ class DailyScheduleOccurrence {
       serverId.hashCode ^
       date.hashCode ^
       subjectId.hashCode ^
+      ruleId.hashCode ^
+      legacyEventId.hashCode ^
+      slotKey.hashCode ^
       title.hashCode ^
       startTime.hashCode ^
       endTime.hashCode ^

@@ -22,6 +22,15 @@ import '../errors/app_exception.dart';
 import '../event_generator/data/models/event_local.dart';
 import '../notifications/models/notification_item.dart';
 import '../notifications/scheduler/notification_database.dart';
+import 'timetable_migration.dart';
+
+export 'timetable_migration.dart'
+    show
+        MigrationAuditEntry,
+        MigrationAuditKind,
+        MigrationAuditReport,
+        migrateLegacyTimetableAndEvents,
+        runTimetableUnificationInWriteTx;
 
 part 'isar_provider.g.dart';
 
@@ -374,49 +383,19 @@ Future<void> migrateLegacyDatabaseRecords(Isar isar) async {
   }
 }
 
-/// Idempotently migrates legacy [TimetableTemplateLocal] records into
-/// [WeeklyScheduleRuleLocal] records without modifying existing data.
-Future<void> migrateLegacyTimetableTemplates(Isar isar) async {
+/// Idempotently migrates legacy [TimetableTemplateLocal], [EventLocal],
+/// [DailyScheduleOccurrenceLocal], and [AttendanceRecordLocal] records into
+/// the canonical BUG-004 architecture without modifying unrelated data.
+Future<MigrationAuditReport> migrateLegacyTimetableTemplates(Isar isar) async {
   try {
-    final templates = isar.timetableTemplateLocals.where().findAll();
-    if (templates.isEmpty) return;
-
-    final existingRules = isar.weeklyScheduleRuleLocals.where().findAll();
-
-    await isar.writeAsync((isarDb) {
-      for (final template in templates) {
-        if (template.isDeleted) continue;
-        final alreadyExists = existingRules.any(
-          (r) =>
-              r.subjectId == template.subjectId &&
-              r.dayOfWeek == template.weekday &&
-              r.startTime == template.startTime &&
-              r.endTime == template.endTime &&
-              !r.isDeleted,
-        );
-        if (!alreadyExists) {
-          final rule = WeeklyScheduleRuleLocal()
-            ..id = isarDb.weeklyScheduleRuleLocals.autoIncrement()
-            ..serverId = template.serverId
-            ..subjectId = template.subjectId
-            ..dayOfWeek = template.weekday
-            ..startTime = template.startTime
-            ..endTime = template.endTime
-            ..room = template.room
-            ..faculty = template.faculty
-            ..isActive = true
-            ..createdAt = template.createdAt
-            ..updatedAt = DateTime.now().toUtc();
-          isarDb.weeklyScheduleRuleLocals.put(rule);
-        }
-      }
-    });
+    return await migrateLegacyTimetableAndEvents(isar);
   } catch (error, stackTrace) {
     developer.log(
-      'Error migrating legacy timetable templates: $error',
+      'Error migrating legacy timetable and event records: $error',
       name: 'IsarDatabase',
       error: error,
       stackTrace: stackTrace,
     );
+    return const MigrationAuditReport();
   }
 }

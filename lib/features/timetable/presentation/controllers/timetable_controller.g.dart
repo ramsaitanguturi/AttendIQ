@@ -205,7 +205,7 @@ final scheduleExceptionControllerProvider = AutoDisposeAsyncNotifierProvider<
 typedef _$ScheduleExceptionController
     = AutoDisposeAsyncNotifier<List<ScheduleException>>;
 String _$timetableListControllerHash() =>
-    r'796f1867541b03272751ada13bba0f263e78053c';
+    r'03605862443e78a80446820ca7629d5608fd50b5';
 
 /// See also [TimetableListController].
 @ProviderFor(TimetableListController)

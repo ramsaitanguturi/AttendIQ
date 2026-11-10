@@ -510,6 +510,12 @@ class _FakeDailyScheduleOccurrenceRepository
       _occurrences;
 
   @override
+  Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(
+    int subjectId,
+  ) async =>
+      _occurrences.where((o) => o.subjectId == subjectId).toList();
+
+  @override
   Future<DailyScheduleOccurrence?> getOccurrenceById(int id) async =>
       _occurrences.where((o) => o.id == id).firstOrNull;
 
@@ -579,12 +585,28 @@ class _FakeAttendanceRepository implements AttendanceRepository {
       _records.where((r) => r.subjectId == subjectId).toList();
 
   @override
-  Future<AttendanceRecord?> getAttendanceForEvent(int eventId) async =>
-      _records.where((r) => r.eventId == eventId).firstOrNull;
+  Future<AttendanceRecord?> getAttendanceForOccurrence(
+    int occurrenceId,
+  ) async =>
+      _records
+          .where((r) => (r.occurrenceId ?? r.eventId) == occurrenceId)
+          .firstOrNull;
 
   @override
-  Future<AttendanceRecord?> getAttendanceForEventAnyStatus(int eventId) async =>
-      _records.where((r) => r.eventId == eventId).firstOrNull;
+  Future<AttendanceRecord?> getAttendanceForOccurrenceAnyStatus(
+    int occurrenceId,
+  ) async =>
+      _records
+          .where((r) => (r.occurrenceId ?? r.eventId) == occurrenceId)
+          .firstOrNull;
+
+  @override
+  Future<AttendanceRecord?> getAttendanceForEvent(int eventId) =>
+      getAttendanceForOccurrence(eventId);
+
+  @override
+  Future<AttendanceRecord?> getAttendanceForEventAnyStatus(int eventId) =>
+      getAttendanceForOccurrenceAnyStatus(eventId);
 
   @override
   Future<void> saveAttendanceRecord(AttendanceRecord record) async {}

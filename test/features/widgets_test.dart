@@ -54,6 +54,9 @@ class FakeDailyScheduleOccurrenceRepository implements DailyScheduleOccurrenceRe
   @override
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(DateTime start, DateTime end) async => occurrences;
   @override
+  Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(int subjectId) async =>
+      occurrences.where((o) => o.subjectId == subjectId).toList();
+  @override
   Future<DailyScheduleOccurrence?> getOccurrenceById(int id) async => null;
   @override
   Future<DailyScheduleOccurrence> saveOccurrence(DailyScheduleOccurrence occurrence) async => occurrence;
@@ -165,6 +168,10 @@ class FakeAttendanceRepository implements AttendanceRepository {
   @override
   Future<List<AttendanceRecord>> getAttendanceForSubject(int subjectId) async =>
       records.where((r) => r.subjectId == subjectId).toList();
+  @override
+  Future<AttendanceRecord?> getAttendanceForOccurrence(int occurrenceId) async => null;
+  @override
+  Future<AttendanceRecord?> getAttendanceForOccurrenceAnyStatus(int occurrenceId) async => null;
   @override
   Future<AttendanceRecord?> getAttendanceForEvent(int eventId) async => null;
   @override

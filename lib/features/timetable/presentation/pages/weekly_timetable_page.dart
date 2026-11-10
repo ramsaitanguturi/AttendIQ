@@ -167,12 +167,17 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                   title: const Text('Delete Class Slot', style: TextStyle(color: AppColors.attendanceLow)),
                   onTap: () async {
                     Navigator.pop(context);
-                    if (slot.id != 0) {
-                      await ref.read(weeklyScheduleRuleListControllerProvider.notifier).removeRule(slot.id);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Class slot deleted.')),
-                        );
+                    if (slot.type == ScheduleSlotType.classSlot) {
+                      final targetRuleId = slot.ruleId ?? slot.id;
+                      if (targetRuleId > 0) {
+                        await ref
+                            .read(weeklyScheduleRuleListControllerProvider.notifier)
+                            .removeRule(targetRuleId);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Class slot deleted.')),
+                          );
+                        }
                       }
                     }
                   },

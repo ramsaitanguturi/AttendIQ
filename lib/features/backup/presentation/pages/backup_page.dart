@@ -12,7 +12,6 @@ import '../../../../core/widgets/export_success_dialog.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 
-
 class BackupPage extends ConsumerStatefulWidget {
   const BackupPage({super.key});
 
@@ -49,7 +48,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     try {
       final service = ref.read(backupServiceProvider);
       final files = await service.listBackups();
-      final folderPath = await BackupPathHelper.getDisplayFolderPath(subFolder: 'Backups');
+      final folderPath =
+          await BackupPathHelper.getDisplayFolderPath(subFolder: 'Backups');
       if (mounted) {
         setState(() {
           _backupFiles = files;
@@ -74,13 +74,17 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
     try {
       final service = ref.read(backupServiceProvider);
-      final activeSemester = await ref.read(semesterRepositoryProvider).getActiveSemester();
-      final path = await service.exportToFile(semesterName: activeSemester?.name);
+      final activeSemester =
+          await ref.read(semesterRepositoryProvider).getActiveSemester();
+      final path =
+          await service.exportToFile(semesterName: activeSemester?.name);
       final fileName = path.split(Platform.pathSeparator).last;
       final now = DateTime.now();
 
       // Update last backup date in settings
-      await ref.read(settingsControllerProvider.notifier).updateLastBackupDate(now);
+      await ref
+          .read(settingsControllerProvider.notifier)
+          .updateLastBackupDate(now);
 
       await _refreshBackupList();
 
@@ -126,8 +130,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
     try {
       final service = ref.read(backupServiceProvider);
-      final activeSemester = await ref.read(semesterRepositoryProvider).getActiveSemester();
-      final path = await service.exportDataJsonFile(semesterName: activeSemester?.name);
+      final activeSemester =
+          await ref.read(semesterRepositoryProvider).getActiveSemester();
+      final path =
+          await service.exportDataJsonFile(semesterName: activeSemester?.name);
       final fileName = path.split(Platform.pathSeparator).last;
 
       setState(() {
@@ -224,8 +230,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 Navigator.pop(ctx);
                 _performFileImport(fileItem.filePath, ImportStrategy.replace);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.attendanceLow),
-              child: const Text('Replace Data', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.attendanceLow),
+              child: const Text('Replace Data',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -233,7 +242,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
   }
 
-  Future<void> _performFileImport(String filePath, ImportStrategy strategy) async {
+  Future<void> _performFileImport(
+      String filePath, ImportStrategy strategy) async {
     setState(() {
       _isImporting = true;
       _statusMessage = null;
@@ -242,8 +252,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     try {
       final service = ref.read(backupServiceProvider);
       await service.importFromFile(filePath, strategy: strategy);
+      ref.invalidate(hasActiveSemesterProvider);
+      ref.invalidate(activeSemesterProvider);
+      ref.invalidate(allSemestersProvider);
       setState(() {
-        _statusMessage = 'Import completed successfully (${strategy == ImportStrategy.replace ? "Replaced" : "Merged"})!';
+        _statusMessage =
+            'Import completed successfully (${strategy == ImportStrategy.replace ? "Replaced" : "Merged"})!';
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -295,7 +309,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Backup'),
-        content: Text('Are you sure you want to delete "${fileItem.fileName}"? This action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "${fileItem.fileName}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -303,8 +318,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.attendanceLow),
-            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.attendanceLow),
+            child: const Text('Delete',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -345,7 +363,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   controller: _importJsonController,
                   maxLines: 8,
                   decoration: const InputDecoration(
-                    hintText: '{\n  "metadata": {...},\n  "semesters": [...]\n}',
+                    hintText:
+                        '{\n  "metadata": {...},\n  "semesters": [...]\n}',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -362,8 +381,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 Navigator.pop(ctx);
                 _showImportStrategyDialog(_importJsonController.text.trim());
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Continue', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Continue',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -413,8 +435,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 Navigator.pop(ctx);
                 _performImportString(jsonString, ImportStrategy.replace);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.attendanceLow),
-              child: const Text('Replace Existing Data', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.attendanceLow),
+              child: const Text('Replace Existing Data',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -422,7 +447,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
   }
 
-  Future<void> _performImportString(String jsonString, ImportStrategy strategy) async {
+  Future<void> _performImportString(
+      String jsonString, ImportStrategy strategy) async {
     setState(() {
       _isImporting = true;
       _statusMessage = null;
@@ -431,9 +457,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     try {
       final service = ref.read(backupServiceProvider);
       await service.importFromBackupString(jsonString, strategy: strategy);
+      ref.invalidate(hasActiveSemesterProvider);
+      ref.invalidate(activeSemesterProvider);
+      ref.invalidate(allSemestersProvider);
       await _refreshBackupList();
       setState(() {
-        _statusMessage = 'Import completed successfully (${strategy == ImportStrategy.replace ? "Replaced" : "Merged"})!';
+        _statusMessage =
+            'Import completed successfully (${strategy == ImportStrategy.replace ? "Replaced" : "Merged"})!';
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -470,7 +500,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     final settingsAsync = ref.watch(settingsControllerProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         title: const Text('Backup & Restore'),
         backgroundColor: Colors.transparent,
@@ -500,10 +531,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                    color:
+                        isDark ? AppColors.darkSurface : AppColors.lightSurface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color:
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -511,25 +544,30 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.folder_special_outlined, color: AppColors.primary, size: 28),
+                          Icon(Icons.folder_special_outlined,
+                              color: AppColors.primary, size: 28),
                           SizedBox(width: 12),
                           Text(
                             'Backup Export Location',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                          border: Border.all(
+                              color: AppColors.primary.withOpacity(0.3)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.sd_storage, size: 18, color: AppColors.primary),
+                            const Icon(Icons.sd_storage,
+                                size: 18, color: AppColors.primary),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -560,7 +598,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -568,10 +608,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                    color:
+                        isDark ? AppColors.darkSurface : AppColors.lightSurface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color:
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -580,7 +622,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         contentPadding: EdgeInsets.zero,
                         title: const Text(
                           'Enable Automatic Backup',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                         subtitle: const Text(
                           'Runs automatically once every week (Sunday at 2:00 AM)',
@@ -589,7 +632,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         value: isAutoBackupEnabled,
                         activeColor: AppColors.primary,
                         onChanged: (enabled) {
-                          ref.read(settingsControllerProvider.notifier).updateEnableAutoBackup(enabled);
+                          ref
+                              .read(settingsControllerProvider.notifier)
+                              .updateEnableAutoBackup(enabled);
                           BackupScheduler.scheduleOrCancelAutoBackup(enabled);
                         },
                       ),
@@ -602,8 +647,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             style: TextStyle(fontSize: 13, color: Colors.grey),
                           ),
                           Text(
-                            lastBackup != null ? dateFormat.format(lastBackup) : 'Never',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            lastBackup != null
+                                ? dateFormat.format(lastBackup)
+                                : 'Never',
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -616,11 +664,15 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             style: TextStyle(fontSize: 13, color: Colors.grey),
                           ),
                           Text(
-                            nextScheduled != null ? dateFormat.format(nextScheduled) : 'Disabled',
+                            nextScheduled != null
+                                ? dateFormat.format(nextScheduled)
+                                : 'Disabled',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: isAutoBackupEnabled ? AppColors.primary : Colors.grey,
+                              color: isAutoBackupEnabled
+                                  ? AppColors.primary
+                                  : Colors.grey,
                             ),
                           ),
                         ],
@@ -636,7 +688,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -646,7 +700,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: _isExporting ? null : _handleExportBackup,
+                            onPressed:
+                                _isExporting ? null : _handleExportBackup,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.black,
@@ -659,19 +714,22 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   )
                                 : const Icon(Icons.download),
                             label: const Text(
                               'Export Backup (.attendiq)',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: _isExporting ? null : _handleExportJsonData,
+                            onPressed:
+                                _isExporting ? null : _handleExportJsonData,
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               side: const BorderSide(color: AppColors.primary),
@@ -679,10 +737,14 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            icon: const Icon(Icons.code, color: AppColors.primary),
+                            icon: const Icon(Icons.code,
+                                color: AppColors.primary),
                             label: const Text(
                               'Export Data (.json)',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: AppColors.primary),
                             ),
                           ),
                         ),
@@ -694,10 +756,14 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       child: ElevatedButton.icon(
                         onPressed: _isImporting ? null : _handlePickImportFile,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-                          foregroundColor: isDark ? Colors.white : Colors.black87,
-
-                          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                          backgroundColor:
+                              isDark ? AppColors.darkSurface : Colors.white,
+                          foregroundColor:
+                              isDark ? Colors.white : Colors.black87,
+                          side: BorderSide(
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -707,12 +773,15 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Icon(Icons.folder_open_outlined, color: AppColors.primary),
+                            : const Icon(Icons.folder_open_outlined,
+                                color: AppColors.primary),
                         label: const Text(
                           'Import Backup / Data File (Drive, Downloads, Documents)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ),
                     ),
@@ -721,7 +790,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: _showImportTextDialog,
-                        icon: const Icon(Icons.paste_outlined, size: 14, color: Colors.grey),
+                        icon: const Icon(Icons.paste_outlined,
+                            size: 14, color: Colors.grey),
                         label: const Text(
                           'Paste raw JSON string instead',
                           style: TextStyle(fontSize: 12, color: Colors.grey),
@@ -741,7 +811,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
                       ),
                     ),
                     IconButton(
@@ -755,10 +827,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                    color:
+                        isDark ? AppColors.darkSurface : AppColors.lightSurface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color:
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
                   ),
                   child: _isLoadingFileList
@@ -773,7 +847,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 child: Text(
                                   'No backup files (.attendiq) found in $_displayFolderPath',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 13),
                                 ),
                               ),
                             )
@@ -783,25 +858,33 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                               itemCount: _backupFiles.length,
                               separatorBuilder: (ctx, idx) => Divider(
                                 height: 1,
-                                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                                color: isDark
+                                    ? AppColors.darkBorder
+                                    : AppColors.lightBorder,
                               ),
                               itemBuilder: (ctx, idx) {
                                 final fileItem = _backupFiles[idx];
                                 return ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
                                   leading: CircleAvatar(
-                                    backgroundColor: AppColors.primary.withOpacity(0.15),
-                                    child: const Icon(Icons.insert_drive_file, color: AppColors.primary, size: 22),
+                                    backgroundColor:
+                                        AppColors.primary.withOpacity(0.15),
+                                    child: const Icon(Icons.insert_drive_file,
+                                        color: AppColors.primary, size: 22),
                                   ),
                                   title: Text(
                                     fileItem.fileName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14),
                                   ),
                                   subtitle: Text(
                                     '${dateFormat.format(fileItem.modifiedDate)} • ${fileItem.formattedSize}',
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
                                   ),
                                   trailing: PopupMenuButton<String>(
                                     icon: const Icon(Icons.more_vert),
@@ -819,7 +902,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         value: 'restore',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.restore, size: 18, color: AppColors.primary),
+                                            Icon(Icons.restore,
+                                                size: 18,
+                                                color: AppColors.primary),
                                             SizedBox(width: 8),
                                             Text('Restore'),
                                           ],
@@ -829,7 +914,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         value: 'share',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.share, size: 18, color: Colors.blue),
+                                            Icon(Icons.share,
+                                                size: 18, color: Colors.blue),
                                             SizedBox(width: 8),
                                             Text('Share'),
                                           ],
@@ -839,7 +925,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         value: 'delete',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.delete_outline, size: 18, color: AppColors.attendanceLow),
+                                            Icon(Icons.delete_outline,
+                                                size: 18,
+                                                color: AppColors.attendanceLow),
                                             SizedBox(width: 8),
                                             Text('Delete'),
                                           ],
@@ -860,11 +948,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                      border:
+                          Border.all(color: AppColors.primary.withOpacity(0.3)),
                     ),
                     child: Text(
                       _statusMessage!,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                   ),
                 ],

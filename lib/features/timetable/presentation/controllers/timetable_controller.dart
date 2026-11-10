@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/timetable_template.dart';
 import '../../domain/entities/weekly_schedule_rule.dart';
@@ -22,7 +20,6 @@ import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../../core/database/isar_provider.dart';
 import '../../../widgets/services/widget_refresh_service.dart';
 import 'today_schedule_provider.dart';
-import 'academic_calendar_controller.dart';
 import '../../../../core/notifications/providers/notification_providers.dart';
 
 part 'timetable_controller.g.dart';
@@ -47,16 +44,21 @@ class AcademicEventController extends _$AcademicEventController {
     final repo = ref.watch(academicEventRepositoryProvider);
     final events = await repo.getAllEvents();
 
+    var isDisposed = false;
+    ref.onDispose(() => isDisposed = true);
+
     final stream = repo.watchEvents();
     final sub = stream.listen((_) async {
+      if (isDisposed) return;
       final updated = await repo.getAllEvents();
+      if (isDisposed) return;
       state = AsyncValue.data(updated);
       try {
         ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
       } catch (_) {}
     });
 
-    ref.onDispose(() => sub.cancel());
+    ref.onDispose(() => sub.cancel().catchError((Object _) {}));
     return events;
   }
 
@@ -83,7 +85,6 @@ class AcademicEventController extends _$AcademicEventController {
     await repo.saveEvent(event);
     ref.invalidateSelf();
     ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -98,7 +99,6 @@ class AcademicEventController extends _$AcademicEventController {
     await repo.deleteEvent(id);
     ref.invalidateSelf();
     ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -163,18 +163,21 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     final localSemId = semester.localId!;
     final rules = await repo.getRulesForSemester(localSemId);
 
+    var isDisposed = false;
+    ref.onDispose(() => isDisposed = true);
+
     final stream = repo.watchRules(localSemId);
     final sub = stream.listen((_) async {
+      if (isDisposed) return;
       final updatedRules = await repo.getRulesForSemester(localSemId);
+      if (isDisposed) return;
       state = AsyncValue.data(updatedRules);
       try {
         ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
       } catch (_) {}
     });
 
-    ref.onDispose(() {
-      sub.cancel();
-    });
+    ref.onDispose(() => sub.cancel().catchError((Object _) {}));
 
     return rules;
   }
@@ -238,7 +241,6 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     await repo.saveRules(newRules);
     ref.invalidateSelf();
     ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -252,7 +254,6 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     await repo.saveRule(rule);
     ref.invalidateSelf();
     ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -263,7 +264,6 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     await repo.deleteRule(id);
     ref.invalidateSelf();
     ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -274,7 +274,6 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     await repo.deleteRulesForSubject(subjectId);
     ref.invalidateSelf();
     ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -291,16 +290,21 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     final end = now.add(const Duration(days: 90));
     final exceptions = await repo.getExceptionsForRange(start, end);
 
+    var isDisposed = false;
+    ref.onDispose(() => isDisposed = true);
+
     final stream = repo.watchExceptions();
     final sub = stream.listen((_) async {
+      if (isDisposed) return;
       final updated = await repo.getExceptionsForRange(start, end);
+      if (isDisposed) return;
       state = AsyncValue.data(updated);
       try {
         ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
       } catch (_) {}
     });
 
-    ref.onDispose(() => sub.cancel());
+    ref.onDispose(() => sub.cancel().catchError((Object _) {}));
     return exceptions;
   }
 
@@ -324,8 +328,6 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     );
     await repo.saveException(exception);
     ref.invalidateSelf();
-    ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -339,8 +341,6 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     final repo = ref.read(scheduleExceptionRepositoryProvider);
     await repo.deleteException(id);
     ref.invalidateSelf();
-    ref.invalidate(todayScheduleProvider);
-    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -355,45 +355,23 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
 class TimetableListController extends _$TimetableListController {
   @override
   FutureOr<List<TimetableTemplate>> build() async {
-    final rulesAsync = ref.watch(weeklyScheduleRuleListControllerProvider);
-    final rules = rulesAsync.valueOrNull ?? [];
-
-    if (rules.isNotEmpty) {
-      return rules.where((r) => r.isActive).map((r) => TimetableTemplate(
-        id: r.id,
-        serverId: r.serverId,
-        subjectId: r.subjectId,
-        weekday: r.dayOfWeek,
-        startTime: r.startTime,
-        endTime: r.endTime,
-        room: r.room,
-        faculty: r.faculty,
-        updatedAt: r.updatedAt,
-      )).toList();
-    }
-
-    final semesterAsync = ref.watch(activeSemesterProvider);
-    final semester = semesterAsync.valueOrNull;
-
-    if (semester == null || semester.localId == null) {
-      return const [];
-    }
-
-    final repo = ref.watch(timetableRepositoryProvider);
-    final localSemId = semester.localId!;
-    final templates = await repo.getTemplatesForSemester(localSemId);
-
-    final stream = repo.watchTemplates(localSemId);
-    final sub = stream.listen((_) async {
-      final updatedList = await repo.getTemplatesForSemester(localSemId);
-      state = AsyncValue.data(updatedList);
-    });
-
-    ref.onDispose(() {
-      sub.cancel();
-    });
-
-    return templates;
+    final rules = await ref.watch(weeklyScheduleRuleListControllerProvider.future);
+    return rules
+        .where((r) => r.isActive && !r.isDeleted)
+        .map(
+          (r) => TimetableTemplate(
+            id: r.id,
+            serverId: r.serverId,
+            subjectId: r.subjectId,
+            weekday: r.dayOfWeek,
+            startTime: r.startTime,
+            endTime: r.endTime,
+            room: r.room,
+            faculty: r.faculty,
+            updatedAt: r.updatedAt,
+          ),
+        )
+        .toList();
   }
 
   int _timeToMinutes(String timeStr) {

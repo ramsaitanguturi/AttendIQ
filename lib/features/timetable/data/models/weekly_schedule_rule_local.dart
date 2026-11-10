@@ -13,6 +13,9 @@ class WeeklyScheduleRuleLocal {
   late int subjectId;
 
   @Index()
+  int? legacyTemplateId;
+
+  @Index()
   late int dayOfWeek; // 1 = Monday, 7 = Sunday
 
   late String startTime; // "HH:mm"

@@ -4,6 +4,7 @@ class WeeklyScheduleRule {
   final int? id;
   final String? serverId;
   final int subjectId;
+  final int? legacyTemplateId;
   final int dayOfWeek; // 1 = Monday, 7 = Sunday
   final String startTime; // "HH:mm"
   final String endTime; // "HH:mm"
@@ -22,6 +23,7 @@ class WeeklyScheduleRule {
     this.id,
     this.serverId,
     required this.subjectId,
+    this.legacyTemplateId,
     required this.dayOfWeek,
     required this.startTime,
     required this.endTime,
@@ -39,6 +41,7 @@ class WeeklyScheduleRule {
     int? id,
     String? serverId,
     int? subjectId,
+    int? legacyTemplateId,
     int? dayOfWeek,
     String? startTime,
     String? endTime,
@@ -55,6 +58,7 @@ class WeeklyScheduleRule {
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
       subjectId: subjectId ?? this.subjectId,
+      legacyTemplateId: legacyTemplateId ?? this.legacyTemplateId,
       dayOfWeek: dayOfWeek ?? this.dayOfWeek,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
@@ -77,6 +81,7 @@ class WeeklyScheduleRule {
           id == other.id &&
           serverId == other.serverId &&
           subjectId == other.subjectId &&
+          legacyTemplateId == other.legacyTemplateId &&
           dayOfWeek == other.dayOfWeek &&
           startTime == other.startTime &&
           endTime == other.endTime &&
@@ -94,6 +99,7 @@ class WeeklyScheduleRule {
       id.hashCode ^
       serverId.hashCode ^
       subjectId.hashCode ^
+      legacyTemplateId.hashCode ^
       dayOfWeek.hashCode ^
       startTime.hashCode ^
       endTime.hashCode ^

@@ -31,7 +31,8 @@ SemesterLocal? resolveActiveSemesterLocal(Isar isar) {
       .where((s) => !SemesterLocal.validStatuses.contains(s.status))
       .toList();
   if (legacyRows.isNotEmpty) {
-    return legacyRows.last;
+    final flaggedActive = legacyRows.where((s) => s.isActive).toList();
+    return flaggedActive.isNotEmpty ? flaggedActive.last : legacyRows.last;
   }
 
   return null;
@@ -76,7 +77,25 @@ Future<int> migrateLegacySemesters(Isar isar) async {
 
   if (!needsMigration) return 0;
 
-  return isar.writeAsync<int>(_normalizeSemestersInWriteTx);
+  return isar.writeAsync<int>(normalizeSemestersInWriteTx);
+}
+
+SemesterStatus _resolveEntityStatus(
+  SemesterLocal cached,
+  SemesterLocal? activeLocal,
+) {
+  final parsed = SemesterStatus.tryParse(cached.status);
+  if (parsed == SemesterStatus.active) {
+    return (activeLocal != null && activeLocal.id == cached.id)
+        ? SemesterStatus.active
+        : SemesterStatus.archived;
+  }
+  if (parsed != null) {
+    return parsed;
+  }
+  return (activeLocal != null && activeLocal.id == cached.id)
+      ? SemesterStatus.active
+      : SemesterStatus.archived;
 }
 
 Semester _mapSemesterToEntity(
@@ -129,7 +148,7 @@ void _demoteOtherActiveSemestersInTx(
   }
 }
 
-int _normalizeSemestersInWriteTx(Isar isar) {
+int normalizeSemestersInWriteTx(Isar isar) {
   final all = isar.semesterLocals.where().findAll();
   if (all.isEmpty) return 0;
 
@@ -168,7 +187,9 @@ int _normalizeSemestersInWriteTx(Isar isar) {
   if (explicitActive.isNotEmpty) {
     targetActive = explicitActive.last;
   } else if (legacyRows.isNotEmpty) {
-    targetActive = legacyRows.last;
+    final flaggedActive = legacyRows.where((s) => s.isActive).toList();
+    targetActive =
+        flaggedActive.isNotEmpty ? flaggedActive.last : legacyRows.last;
   } else {
     targetActive = null;
   }
@@ -231,7 +252,7 @@ class SemesterRepositoryImpl implements SemesterRepository {
     final now = DateTime.now().toUtc();
 
     await _isar.writeAsync((isar) {
-      _normalizeSemestersInWriteTx(isar);
+      normalizeSemestersInWriteTx(isar);
 
       final existing = _readNonDeletedSemestersInTx(isar);
       SemesterValidator.validateForSave(
@@ -293,7 +314,7 @@ class SemesterRepositoryImpl implements SemesterRepository {
     final now = DateTime.now().toUtc();
 
     await _isar.writeAsync((isar) {
-      _normalizeSemestersInWriteTx(isar);
+      normalizeSemestersInWriteTx(isar);
 
       final existingLocal = isar.semesterLocals.get(localId);
       if (existingLocal == null || existingLocal.isDeleted) {
@@ -338,7 +359,7 @@ class SemesterRepositoryImpl implements SemesterRepository {
   Future<void> setActiveSemester(int localId) async {
     final now = DateTime.now().toUtc();
     await _isar.writeAsync((isar) {
-      _normalizeSemestersInWriteTx(isar);
+      normalizeSemestersInWriteTx(isar);
 
       final target = isar.semesterLocals.get(localId);
       if (target == null || target.isDeleted) {
@@ -363,7 +384,7 @@ class SemesterRepositoryImpl implements SemesterRepository {
   Future<void> archiveSemester(int localId) async {
     final now = DateTime.now().toUtc();
     await _isar.writeAsync((isar) {
-      _normalizeSemestersInWriteTx(isar);
+      normalizeSemestersInWriteTx(isar);
 
       final target = isar.semesterLocals.get(localId);
       if (target == null || target.isDeleted) {
@@ -391,11 +412,10 @@ class SemesterRepositoryImpl implements SemesterRepository {
     final cached = _isar.semesterLocals.get(localId);
     if (cached == null || cached.isDeleted) return null;
     final activeLocal = resolveActiveSemesterLocal(_isar);
-    final statusOverride = SemesterStatus.tryParse(cached.status) ??
-        (activeLocal != null && activeLocal.id == cached.id
-            ? SemesterStatus.active
-            : SemesterStatus.archived);
-    return _mapSemesterToEntity(cached, statusOverride: statusOverride);
+    return _mapSemesterToEntity(
+      cached,
+      statusOverride: _resolveEntityStatus(cached, activeLocal),
+    );
   }
 
   @override
@@ -418,14 +438,14 @@ class SemesterRepositoryImpl implements SemesterRepository {
     final list = _isar.semesterLocals.where().isDeletedEqualTo(false).findAll();
     final activeLocal = resolveActiveSemesterLocal(_isar);
 
-    final mapped = list.map((cached) {
-      final parsedStatus = SemesterStatus.tryParse(cached.status);
-      final resolvedStatus = parsedStatus ??
-          (activeLocal != null && activeLocal.id == cached.id
-              ? SemesterStatus.active
-              : SemesterStatus.archived);
-      return _mapSemesterToEntity(cached, statusOverride: resolvedStatus);
-    }).toList();
+    final mapped = list
+        .map(
+          (cached) => _mapSemesterToEntity(
+            cached,
+            statusOverride: _resolveEntityStatus(cached, activeLocal),
+          ),
+        )
+        .toList();
 
     mapped.sort((a, b) {
       final dateCmp = SemesterValidator.normalizeDate(b.startDate).compareTo(

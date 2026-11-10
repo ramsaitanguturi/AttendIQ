@@ -26,6 +26,14 @@ const AttendanceRecordLocalSchema = IsarGeneratedSchema(
         type: IsarType.string,
       ),
       IsarPropertySchema(
+        name: 'occurrenceId',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
+        name: 'legacyEventId',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
         name: 'eventId',
         type: IsarType.long,
       ),
@@ -68,6 +76,22 @@ const AttendanceRecordLocalSchema = IsarGeneratedSchema(
         hash: false,
       ),
       IsarIndexSchema(
+        name: 'occurrenceId',
+        properties: [
+          "occurrenceId",
+        ],
+        unique: false,
+        hash: false,
+      ),
+      IsarIndexSchema(
+        name: 'legacyEventId',
+        properties: [
+          "legacyEventId",
+        ],
+        unique: false,
+        hash: false,
+      ),
+      IsarIndexSchema(
         name: 'eventId',
         properties: [
           "eventId",
@@ -104,16 +128,18 @@ int serializeAttendanceRecordLocal(
       IsarCore.writeString(writer, 1, value);
     }
   }
-  IsarCore.writeLong(writer, 2, object.eventId);
-  IsarCore.writeLong(writer, 3, object.subjectId);
-  IsarCore.writeString(writer, 4, object.status);
-  IsarCore.writeLong(writer, 5, object.markedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeLong(writer, 2, object.occurrenceId ?? -9223372036854775808);
+  IsarCore.writeLong(writer, 3, object.legacyEventId ?? -9223372036854775808);
+  IsarCore.writeLong(writer, 4, object.eventId);
+  IsarCore.writeLong(writer, 5, object.subjectId);
+  IsarCore.writeString(writer, 6, object.status);
+  IsarCore.writeLong(writer, 7, object.markedAt.toUtc().microsecondsSinceEpoch);
   IsarCore.writeLong(
-      writer, 6, object.createdAt.toUtc().microsecondsSinceEpoch);
+      writer, 8, object.createdAt.toUtc().microsecondsSinceEpoch);
   IsarCore.writeLong(
-      writer, 7, object.updatedAt.toUtc().microsecondsSinceEpoch);
-  IsarCore.writeBool(writer, 8, object.isDirty);
-  IsarCore.writeBool(writer, 9, object.isDeleted);
+      writer, 9, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeBool(writer, 10, object.isDirty);
+  IsarCore.writeBool(writer, 11, object.isDeleted);
   return object.id;
 }
 
@@ -122,32 +148,48 @@ AttendanceRecordLocal deserializeAttendanceRecordLocal(IsarReader reader) {
   final object = AttendanceRecordLocal();
   object.id = IsarCore.readId(reader);
   object.serverId = IsarCore.readString(reader, 1);
-  object.eventId = IsarCore.readLong(reader, 2);
-  object.subjectId = IsarCore.readLong(reader, 3);
-  object.status = IsarCore.readString(reader, 4) ?? '';
   {
-    final value = IsarCore.readLong(reader, 5);
+    final value = IsarCore.readLong(reader, 2);
     if (value == -9223372036854775808) {
-      object.markedAt =
-          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+      object.occurrenceId = null;
     } else {
-      object.markedAt =
-          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+      object.occurrenceId = value;
     }
   }
   {
-    final value = IsarCore.readLong(reader, 6);
+    final value = IsarCore.readLong(reader, 3);
     if (value == -9223372036854775808) {
-      object.createdAt =
-          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+      object.legacyEventId = null;
     } else {
-      object.createdAt =
-          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+      object.legacyEventId = value;
     }
   }
+  object.eventId = IsarCore.readLong(reader, 4);
+  object.subjectId = IsarCore.readLong(reader, 5);
+  object.status = IsarCore.readString(reader, 6) ?? '';
   {
     final value = IsarCore.readLong(reader, 7);
     if (value == -9223372036854775808) {
+      object.markedAt =
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+    } else {
+      object.markedAt =
+          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
+  }
+  {
+    final value = IsarCore.readLong(reader, 8);
+    if (value == -9223372036854775808) {
+      object.createdAt =
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+    } else {
+      object.createdAt =
+          DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
+  }
+  {
+    final value = IsarCore.readLong(reader, 9);
+    if (value == -9223372036854775808) {
       object.updatedAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
     } else {
@@ -155,8 +197,8 @@ AttendanceRecordLocal deserializeAttendanceRecordLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.isDirty = IsarCore.readBool(reader, 8);
-  object.isDeleted = IsarCore.readBool(reader, 9);
+  object.isDirty = IsarCore.readBool(reader, 10);
+  object.isDeleted = IsarCore.readBool(reader, 11);
   return object;
 }
 
@@ -168,31 +210,29 @@ dynamic deserializeAttendanceRecordLocalProp(IsarReader reader, int property) {
     case 1:
       return IsarCore.readString(reader, 1);
     case 2:
-      return IsarCore.readLong(reader, 2);
+      {
+        final value = IsarCore.readLong(reader, 2);
+        if (value == -9223372036854775808) {
+          return null;
+        } else {
+          return value;
+        }
+      }
     case 3:
-      return IsarCore.readLong(reader, 3);
+      {
+        final value = IsarCore.readLong(reader, 3);
+        if (value == -9223372036854775808) {
+          return null;
+        } else {
+          return value;
+        }
+      }
     case 4:
-      return IsarCore.readString(reader, 4) ?? '';
+      return IsarCore.readLong(reader, 4);
     case 5:
-      {
-        final value = IsarCore.readLong(reader, 5);
-        if (value == -9223372036854775808) {
-          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
-        } else {
-          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
-              .toLocal();
-        }
-      }
+      return IsarCore.readLong(reader, 5);
     case 6:
-      {
-        final value = IsarCore.readLong(reader, 6);
-        if (value == -9223372036854775808) {
-          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
-        } else {
-          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
-              .toLocal();
-        }
-      }
+      return IsarCore.readString(reader, 6) ?? '';
     case 7:
       {
         final value = IsarCore.readLong(reader, 7);
@@ -204,9 +244,29 @@ dynamic deserializeAttendanceRecordLocalProp(IsarReader reader, int property) {
         }
       }
     case 8:
-      return IsarCore.readBool(reader, 8);
+      {
+        final value = IsarCore.readLong(reader, 8);
+        if (value == -9223372036854775808) {
+          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+        } else {
+          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
+              .toLocal();
+        }
+      }
     case 9:
-      return IsarCore.readBool(reader, 9);
+      {
+        final value = IsarCore.readLong(reader, 9);
+        if (value == -9223372036854775808) {
+          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+        } else {
+          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
+              .toLocal();
+        }
+      }
+    case 10:
+      return IsarCore.readBool(reader, 10);
+    case 11:
+      return IsarCore.readBool(reader, 11);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -216,6 +276,8 @@ sealed class _AttendanceRecordLocalUpdate {
   bool call({
     required int id,
     String? serverId,
+    int? occurrenceId,
+    int? legacyEventId,
     int? eventId,
     int? subjectId,
     String? status,
@@ -236,6 +298,8 @@ class _AttendanceRecordLocalUpdateImpl implements _AttendanceRecordLocalUpdate {
   bool call({
     required int id,
     Object? serverId = ignore,
+    Object? occurrenceId = ignore,
+    Object? legacyEventId = ignore,
     Object? eventId = ignore,
     Object? subjectId = ignore,
     Object? status = ignore,
@@ -249,14 +313,16 @@ class _AttendanceRecordLocalUpdateImpl implements _AttendanceRecordLocalUpdate {
           id
         ], {
           if (serverId != ignore) 1: serverId as String?,
-          if (eventId != ignore) 2: eventId as int?,
-          if (subjectId != ignore) 3: subjectId as int?,
-          if (status != ignore) 4: status as String?,
-          if (markedAt != ignore) 5: markedAt as DateTime?,
-          if (createdAt != ignore) 6: createdAt as DateTime?,
-          if (updatedAt != ignore) 7: updatedAt as DateTime?,
-          if (isDirty != ignore) 8: isDirty as bool?,
-          if (isDeleted != ignore) 9: isDeleted as bool?,
+          if (occurrenceId != ignore) 2: occurrenceId as int?,
+          if (legacyEventId != ignore) 3: legacyEventId as int?,
+          if (eventId != ignore) 4: eventId as int?,
+          if (subjectId != ignore) 5: subjectId as int?,
+          if (status != ignore) 6: status as String?,
+          if (markedAt != ignore) 7: markedAt as DateTime?,
+          if (createdAt != ignore) 8: createdAt as DateTime?,
+          if (updatedAt != ignore) 9: updatedAt as DateTime?,
+          if (isDirty != ignore) 10: isDirty as bool?,
+          if (isDeleted != ignore) 11: isDeleted as bool?,
         }) >
         0;
   }
@@ -266,6 +332,8 @@ sealed class _AttendanceRecordLocalUpdateAll {
   int call({
     required List<int> id,
     String? serverId,
+    int? occurrenceId,
+    int? legacyEventId,
     int? eventId,
     int? subjectId,
     String? status,
@@ -287,6 +355,8 @@ class _AttendanceRecordLocalUpdateAllImpl
   int call({
     required List<int> id,
     Object? serverId = ignore,
+    Object? occurrenceId = ignore,
+    Object? legacyEventId = ignore,
     Object? eventId = ignore,
     Object? subjectId = ignore,
     Object? status = ignore,
@@ -298,14 +368,16 @@ class _AttendanceRecordLocalUpdateAllImpl
   }) {
     return collection.updateProperties(id, {
       if (serverId != ignore) 1: serverId as String?,
-      if (eventId != ignore) 2: eventId as int?,
-      if (subjectId != ignore) 3: subjectId as int?,
-      if (status != ignore) 4: status as String?,
-      if (markedAt != ignore) 5: markedAt as DateTime?,
-      if (createdAt != ignore) 6: createdAt as DateTime?,
-      if (updatedAt != ignore) 7: updatedAt as DateTime?,
-      if (isDirty != ignore) 8: isDirty as bool?,
-      if (isDeleted != ignore) 9: isDeleted as bool?,
+      if (occurrenceId != ignore) 2: occurrenceId as int?,
+      if (legacyEventId != ignore) 3: legacyEventId as int?,
+      if (eventId != ignore) 4: eventId as int?,
+      if (subjectId != ignore) 5: subjectId as int?,
+      if (status != ignore) 6: status as String?,
+      if (markedAt != ignore) 7: markedAt as DateTime?,
+      if (createdAt != ignore) 8: createdAt as DateTime?,
+      if (updatedAt != ignore) 9: updatedAt as DateTime?,
+      if (isDirty != ignore) 10: isDirty as bool?,
+      if (isDeleted != ignore) 11: isDeleted as bool?,
     });
   }
 }
@@ -322,6 +394,8 @@ extension AttendanceRecordLocalUpdate
 sealed class _AttendanceRecordLocalQueryUpdate {
   int call({
     String? serverId,
+    int? occurrenceId,
+    int? legacyEventId,
     int? eventId,
     int? subjectId,
     String? status,
@@ -343,6 +417,8 @@ class _AttendanceRecordLocalQueryUpdateImpl
   @override
   int call({
     Object? serverId = ignore,
+    Object? occurrenceId = ignore,
+    Object? legacyEventId = ignore,
     Object? eventId = ignore,
     Object? subjectId = ignore,
     Object? status = ignore,
@@ -354,14 +430,16 @@ class _AttendanceRecordLocalQueryUpdateImpl
   }) {
     return query.updateProperties(limit: limit, {
       if (serverId != ignore) 1: serverId as String?,
-      if (eventId != ignore) 2: eventId as int?,
-      if (subjectId != ignore) 3: subjectId as int?,
-      if (status != ignore) 4: status as String?,
-      if (markedAt != ignore) 5: markedAt as DateTime?,
-      if (createdAt != ignore) 6: createdAt as DateTime?,
-      if (updatedAt != ignore) 7: updatedAt as DateTime?,
-      if (isDirty != ignore) 8: isDirty as bool?,
-      if (isDeleted != ignore) 9: isDeleted as bool?,
+      if (occurrenceId != ignore) 2: occurrenceId as int?,
+      if (legacyEventId != ignore) 3: legacyEventId as int?,
+      if (eventId != ignore) 4: eventId as int?,
+      if (subjectId != ignore) 5: subjectId as int?,
+      if (status != ignore) 6: status as String?,
+      if (markedAt != ignore) 7: markedAt as DateTime?,
+      if (createdAt != ignore) 8: createdAt as DateTime?,
+      if (updatedAt != ignore) 9: updatedAt as DateTime?,
+      if (isDirty != ignore) 10: isDirty as bool?,
+      if (isDeleted != ignore) 11: isDeleted as bool?,
     });
   }
 }
@@ -385,6 +463,8 @@ class _AttendanceRecordLocalQueryBuilderUpdateImpl
   @override
   int call({
     Object? serverId = ignore,
+    Object? occurrenceId = ignore,
+    Object? legacyEventId = ignore,
     Object? eventId = ignore,
     Object? subjectId = ignore,
     Object? status = ignore,
@@ -398,14 +478,16 @@ class _AttendanceRecordLocalQueryBuilderUpdateImpl
     try {
       return q.updateProperties(limit: limit, {
         if (serverId != ignore) 1: serverId as String?,
-        if (eventId != ignore) 2: eventId as int?,
-        if (subjectId != ignore) 3: subjectId as int?,
-        if (status != ignore) 4: status as String?,
-        if (markedAt != ignore) 5: markedAt as DateTime?,
-        if (createdAt != ignore) 6: createdAt as DateTime?,
-        if (updatedAt != ignore) 7: updatedAt as DateTime?,
-        if (isDirty != ignore) 8: isDirty as bool?,
-        if (isDeleted != ignore) 9: isDeleted as bool?,
+        if (occurrenceId != ignore) 2: occurrenceId as int?,
+        if (legacyEventId != ignore) 3: legacyEventId as int?,
+        if (eventId != ignore) 4: eventId as int?,
+        if (subjectId != ignore) 5: subjectId as int?,
+        if (status != ignore) 6: status as String?,
+        if (markedAt != ignore) 7: markedAt as DateTime?,
+        if (createdAt != ignore) 8: createdAt as DateTime?,
+        if (updatedAt != ignore) 9: updatedAt as DateTime?,
+        if (isDirty != ignore) 10: isDirty as bool?,
+        if (isDeleted != ignore) 11: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -707,13 +789,213 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 2));
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 2));
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdGreaterThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdGreaterThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdLessThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdLessThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> occurrenceIdBetween(
+    int? lower,
+    int? upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 2,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 3));
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 3));
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdGreaterThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdGreaterThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdLessThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdLessThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
+      QAfterFilterCondition> legacyEventIdBetween(
+    int? lower,
+    int? upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 3,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal,
       QAfterFilterCondition> eventIdEqualTo(
     int value,
   ) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 2,
+          property: 4,
           value: value,
         ),
       );
@@ -727,7 +1009,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 2,
+          property: 4,
           value: value,
         ),
       );
@@ -741,7 +1023,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 2,
+          property: 4,
           value: value,
         ),
       );
@@ -755,7 +1037,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 2,
+          property: 4,
           value: value,
         ),
       );
@@ -769,7 +1051,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 2,
+          property: 4,
           value: value,
         ),
       );
@@ -784,7 +1066,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 2,
+          property: 4,
           lower: lower,
           upper: upper,
         ),
@@ -799,7 +1081,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 3,
+          property: 5,
           value: value,
         ),
       );
@@ -813,7 +1095,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 3,
+          property: 5,
           value: value,
         ),
       );
@@ -827,7 +1109,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 3,
+          property: 5,
           value: value,
         ),
       );
@@ -841,7 +1123,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 3,
+          property: 5,
           value: value,
         ),
       );
@@ -855,7 +1137,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 3,
+          property: 5,
           value: value,
         ),
       );
@@ -870,7 +1152,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 3,
+          property: 5,
           lower: lower,
           upper: upper,
         ),
@@ -886,7 +1168,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -902,7 +1184,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -918,7 +1200,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -934,7 +1216,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -950,7 +1232,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -967,7 +1249,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 4,
+          property: 6,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -984,7 +1266,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1000,7 +1282,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1014,7 +1296,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 4,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1028,7 +1310,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 4,
+          property: 6,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1041,7 +1323,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 4,
+          property: 6,
           value: '',
         ),
       );
@@ -1053,7 +1335,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 4,
+          property: 6,
           value: '',
         ),
       );
@@ -1067,7 +1349,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 5,
+          property: 7,
           value: value,
         ),
       );
@@ -1081,7 +1363,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 5,
+          property: 7,
           value: value,
         ),
       );
@@ -1095,7 +1377,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 5,
+          property: 7,
           value: value,
         ),
       );
@@ -1109,7 +1391,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 5,
+          property: 7,
           value: value,
         ),
       );
@@ -1123,7 +1405,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 5,
+          property: 7,
           value: value,
         ),
       );
@@ -1138,7 +1420,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 5,
+          property: 7,
           lower: lower,
           upper: upper,
         ),
@@ -1153,7 +1435,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 6,
+          property: 8,
           value: value,
         ),
       );
@@ -1167,7 +1449,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 6,
+          property: 8,
           value: value,
         ),
       );
@@ -1181,7 +1463,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 6,
+          property: 8,
           value: value,
         ),
       );
@@ -1195,7 +1477,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 6,
+          property: 8,
           value: value,
         ),
       );
@@ -1209,7 +1491,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 6,
+          property: 8,
           value: value,
         ),
       );
@@ -1224,7 +1506,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 6,
+          property: 8,
           lower: lower,
           upper: upper,
         ),
@@ -1239,7 +1521,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 7,
+          property: 9,
           value: value,
         ),
       );
@@ -1253,7 +1535,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 7,
+          property: 9,
           value: value,
         ),
       );
@@ -1267,7 +1549,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 7,
+          property: 9,
           value: value,
         ),
       );
@@ -1281,7 +1563,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 7,
+          property: 9,
           value: value,
         ),
       );
@@ -1295,7 +1577,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 7,
+          property: 9,
           value: value,
         ),
       );
@@ -1310,7 +1592,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 7,
+          property: 9,
           lower: lower,
           upper: upper,
         ),
@@ -1325,7 +1607,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 8,
+          property: 10,
           value: value,
         ),
       );
@@ -1339,7 +1621,7 @@ extension AttendanceRecordLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 9,
+          property: 11,
           value: value,
         ),
       );
@@ -1388,30 +1670,58 @@ extension AttendanceRecordLocalQuerySortBy
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByEventId() {
+      sortByOccurrenceId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(2);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortByEventIdDesc() {
+      sortByOccurrenceIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(2, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortBySubjectId() {
+      sortByLegacyEventId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(3);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      sortBySubjectIdDesc() {
+      sortByLegacyEventIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(3, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      sortByEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      sortByEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      sortBySubjectId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      sortBySubjectIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5, sort: Sort.desc);
     });
   }
 
@@ -1419,7 +1729,7 @@ extension AttendanceRecordLocalQuerySortBy
       sortByStatus({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        4,
+        6,
         caseSensitive: caseSensitive,
       );
     });
@@ -1429,7 +1739,7 @@ extension AttendanceRecordLocalQuerySortBy
       sortByStatusDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        4,
+        6,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -1439,70 +1749,70 @@ extension AttendanceRecordLocalQuerySortBy
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByMarkedAt() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(5);
+      return query.addSortBy(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByMarkedAtDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(5, sort: Sort.desc);
+      return query.addSortBy(7, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6);
+      return query.addSortBy(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6, sort: Sort.desc);
+      return query.addSortBy(8, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(7);
+      return query.addSortBy(9);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(7, sort: Sort.desc);
+      return query.addSortBy(9, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByIsDirty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(8);
+      return query.addSortBy(10);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByIsDirtyDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(8, sort: Sort.desc);
+      return query.addSortBy(10, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(9);
+      return query.addSortBy(11);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
       sortByIsDeletedDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(9, sort: Sort.desc);
+      return query.addSortBy(11, sort: Sort.desc);
     });
   }
 }
@@ -1538,114 +1848,142 @@ extension AttendanceRecordLocalQuerySortThenBy
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByEventId() {
+      thenByOccurrenceId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(2);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByEventIdDesc() {
+      thenByOccurrenceIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(2, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenBySubjectId() {
+      thenByLegacyEventId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(3);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenBySubjectIdDesc() {
+      thenByLegacyEventIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(3, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByStatus({bool caseSensitive = true}) {
+      thenByEventId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4, caseSensitive: caseSensitive);
+      return query.addSortBy(4);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByStatusDesc({bool caseSensitive = true}) {
+      thenByEventIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4, sort: Sort.desc, caseSensitive: caseSensitive);
+      return query.addSortBy(4, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByMarkedAt() {
+      thenBySubjectId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(5);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByMarkedAtDesc() {
+      thenBySubjectIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(5, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByCreatedAt() {
+      thenByStatus({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6);
+      return query.addSortBy(6, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByCreatedAtDesc() {
+      thenByStatusDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6, sort: Sort.desc);
+      return query.addSortBy(6, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByUpdatedAt() {
+      thenByMarkedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByUpdatedAtDesc() {
+      thenByMarkedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDirty() {
+      thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDirtyDesc() {
+      thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8, sort: Sort.desc);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDeleted() {
+      thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
-      thenByIsDeletedDesc() {
+      thenByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      thenByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(10);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      thenByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(10, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(11);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(11, sort: Sort.desc);
     });
   }
 }
@@ -1660,58 +1998,72 @@ extension AttendanceRecordLocalQueryWhereDistinct
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByEventId() {
+      distinctByOccurrenceId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(2);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctBySubjectId() {
+      distinctByLegacyEventId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(3);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByStatus({bool caseSensitive = true}) {
+      distinctByEventId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(4, caseSensitive: caseSensitive);
+      return query.addDistinctBy(4);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByMarkedAt() {
+      distinctBySubjectId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(5);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByCreatedAt() {
+      distinctByStatus({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(6);
+      return query.addDistinctBy(6, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByUpdatedAt() {
+      distinctByMarkedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByIsDirty() {
+      distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
-      distinctByIsDeleted() {
+      distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(9);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
+      distinctByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(10);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, AttendanceRecordLocal, QAfterDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(11);
     });
   }
 }
@@ -1731,55 +2083,69 @@ extension AttendanceRecordLocalQueryProperty1
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, int, QAfterProperty> eventIdProperty() {
+  QueryBuilder<AttendanceRecordLocal, int?, QAfterProperty>
+      occurrenceIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(2);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, int, QAfterProperty> subjectIdProperty() {
+  QueryBuilder<AttendanceRecordLocal, int?, QAfterProperty>
+      legacyEventIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(3);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, String, QAfterProperty> statusProperty() {
+  QueryBuilder<AttendanceRecordLocal, int, QAfterProperty> eventIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(4);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, DateTime, QAfterProperty>
-      markedAtProperty() {
+  QueryBuilder<AttendanceRecordLocal, int, QAfterProperty> subjectIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(5);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, DateTime, QAfterProperty>
-      createdAtProperty() {
+  QueryBuilder<AttendanceRecordLocal, String, QAfterProperty> statusProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, DateTime, QAfterProperty>
-      updatedAtProperty() {
+      markedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
-  QueryBuilder<AttendanceRecordLocal, bool, QAfterProperty> isDirtyProperty() {
+  QueryBuilder<AttendanceRecordLocal, DateTime, QAfterProperty>
+      createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, DateTime, QAfterProperty>
+      updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, bool, QAfterProperty> isDirtyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(10);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, bool, QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(11);
     });
   }
 }
@@ -1799,59 +2165,73 @@ extension AttendanceRecordLocalQueryProperty2<R>
     });
   }
 
+  QueryBuilder<AttendanceRecordLocal, (R, int?), QAfterProperty>
+      occurrenceIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(2);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, (R, int?), QAfterProperty>
+      legacyEventIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(3);
+    });
+  }
+
   QueryBuilder<AttendanceRecordLocal, (R, int), QAfterProperty>
       eventIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(2);
+      return query.addProperty(4);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, int), QAfterProperty>
       subjectIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(3);
+      return query.addProperty(5);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, String), QAfterProperty>
       statusProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(4);
+      return query.addProperty(6);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, DateTime), QAfterProperty>
       markedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(5);
+      return query.addProperty(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, DateTime), QAfterProperty>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(6);
+      return query.addProperty(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, DateTime), QAfterProperty>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(7);
+      return query.addProperty(9);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, bool), QAfterProperty>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(8);
+      return query.addProperty(10);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R, bool), QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(11);
     });
   }
 }
@@ -1871,59 +2251,73 @@ extension AttendanceRecordLocalQueryProperty3<R1, R2>
     });
   }
 
+  QueryBuilder<AttendanceRecordLocal, (R1, R2, int?), QOperations>
+      occurrenceIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(2);
+    });
+  }
+
+  QueryBuilder<AttendanceRecordLocal, (R1, R2, int?), QOperations>
+      legacyEventIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(3);
+    });
+  }
+
   QueryBuilder<AttendanceRecordLocal, (R1, R2, int), QOperations>
       eventIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(2);
+      return query.addProperty(4);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, int), QOperations>
       subjectIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(3);
+      return query.addProperty(5);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, String), QOperations>
       statusProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(4);
+      return query.addProperty(6);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, DateTime), QOperations>
       markedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(5);
+      return query.addProperty(7);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, DateTime), QOperations>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(6);
+      return query.addProperty(8);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, DateTime), QOperations>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(7);
+      return query.addProperty(9);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, bool), QOperations>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(8);
+      return query.addProperty(10);
     });
   }
 
   QueryBuilder<AttendanceRecordLocal, (R1, R2, bool), QOperations>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(11);
     });
   }
 }

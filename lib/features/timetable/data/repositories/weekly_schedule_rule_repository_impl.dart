@@ -17,6 +17,7 @@ class WeeklyScheduleRuleRepositoryImpl implements WeeklyScheduleRuleRepository {
       id: local.id,
       serverId: local.serverId,
       subjectId: local.subjectId,
+      legacyTemplateId: local.legacyTemplateId,
       dayOfWeek: local.dayOfWeek,
       startTime: local.startTime,
       endTime: local.endTime,
@@ -36,6 +37,7 @@ class WeeklyScheduleRuleRepositoryImpl implements WeeklyScheduleRuleRepository {
       ..id = rule.id ?? 0
       ..serverId = rule.serverId
       ..subjectId = rule.subjectId
+      ..legacyTemplateId = rule.legacyTemplateId
       ..dayOfWeek = rule.dayOfWeek
       ..startTime = rule.startTime
       ..endTime = rule.endTime

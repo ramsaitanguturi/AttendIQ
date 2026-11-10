@@ -3,10 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 // App imports
 import 'package:attend_iq/features/semester/data/models/semester_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
-import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
+import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
+import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
 import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
-import 'package:attend_iq/core/event_generator/data/models/event_local.dart';
 import 'package:attend_iq/core/ai/services/local_advisor_service.dart';
 import 'package:attend_iq/core/ai/context/attendance_ai_context.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_scheduler.dart';
@@ -28,13 +29,18 @@ class FakeNotificationDatabase implements NotificationDatabase {
   Future<List<SubjectLocal>> getSubjects() async => [];
 
   @override
-  Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async => [];
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
+      DateTime start, DateTime end) async => [];
 
   @override
   Future<List<AcademicEventLocal>> getAcademicEvents(DateTime start, DateTime end) async => [];
 
   @override
-  Future<List<TimetableTemplateLocal>> getTemplates() async => [];
+  Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules() async => [];
+
+  @override
+  Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
+      DateTime start, DateTime end) async => [];
 
   @override
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(int subjectId) async => [];

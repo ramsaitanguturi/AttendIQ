@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:attend_iq/app/app.dart';
 import 'package:attend_iq/core/database/isar_provider.dart';
 import 'package:attend_iq/core/errors/app_exception.dart';
-import 'package:attend_iq/core/event_generator/data/models/event_local.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
 import 'package:attend_iq/core/notifications/providers/notification_providers.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_database.dart';
@@ -28,8 +27,10 @@ import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/domain/repositories/subject_repository.dart';
 import 'package:attend_iq/features/subject/presentation/controllers/subject_controller.dart';
 import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
+import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
 import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
-import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
+import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
+import 'package:attend_iq/features/timetable/data/utils/occurrence_identity.dart';
 import 'package:attend_iq/features/widgets/services/widget_refresh_service.dart';
 import 'package:attend_iq/main.dart';
 import 'package:flutter/material.dart';
@@ -100,10 +101,13 @@ class _SpyNotificationService implements NotificationService {
 }
 
 class _SpyNotificationDatabase implements NotificationDatabase {
-  final List<EventLocal> events = <EventLocal>[];
+  final List<DailyScheduleOccurrenceLocal> occurrences =
+      <DailyScheduleOccurrenceLocal>[];
   final List<AcademicEventLocal> academicEvents = <AcademicEventLocal>[];
   final List<SubjectLocal> subjects = <SubjectLocal>[];
-  final List<TimetableTemplateLocal> templates = <TimetableTemplateLocal>[];
+  final List<WeeklyScheduleRuleLocal> weeklyRules = <WeeklyScheduleRuleLocal>[];
+  final List<ScheduleExceptionLocal> scheduleExceptions =
+      <ScheduleExceptionLocal>[];
   final List<AttendanceRecordLocal> attendanceRecords =
       <AttendanceRecordLocal>[];
   final List<NotificationItem> notifications = <NotificationItem>[];
@@ -116,7 +120,8 @@ class _SpyNotificationDatabase implements NotificationDatabase {
   int _nextNotificationId = 1;
 
   @override
-  Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async {
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
+      DateTime start, DateTime end) async {
     getEventsCalls++;
     activeConcurrentRescheduleReads++;
     if (activeConcurrentRescheduleReads > maxConcurrentRescheduleReads) {
@@ -126,14 +131,27 @@ class _SpyNotificationDatabase implements NotificationDatabase {
       if (getEventsBlocker != null && !getEventsBlocker!.isCompleted) {
         await getEventsBlocker!.future;
       }
-      return events.where((e) {
+      return occurrences.where((o) {
         final dateStripped =
-            DateTime.utc(e.date.year, e.date.month, e.date.day);
+            DateTime.utc(o.date.year, o.date.month, o.date.day);
         return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
       }).toList();
     } finally {
       activeConcurrentRescheduleReads--;
     }
+  }
+
+  @override
+  Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules() async => weeklyRules;
+
+  @override
+  Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
+      DateTime start, DateTime end) async {
+    return scheduleExceptions.where((e) {
+      final dateStripped =
+          DateTime.utc(e.date.year, e.date.month, e.date.day);
+      return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
+    }).toList();
   }
 
   @override
@@ -149,9 +167,6 @@ class _SpyNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<SubjectLocal>> getSubjects() async => subjects;
-
-  @override
-  Future<List<TimetableTemplateLocal>> getTemplates() async => templates;
 
   @override
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
@@ -436,17 +451,20 @@ Future<void> _writeRealEvent(
   DateTime now,
 ) async {
   await isar.writeAsync((db) {
-    final event = EventLocal()
-      ..id = db.eventLocals.autoIncrement()
+    final occ = DailyScheduleOccurrenceLocal()
+      ..id = db.dailyScheduleOccurrenceLocals.autoIncrement()
       ..subjectId = subjectId
       ..date = DateTime.utc(tomorrow.year, tomorrow.month, tomorrow.day)
+      ..title = 'Distributed Systems'
       ..startTime = '10:00'
       ..endTime = '11:00'
-      ..eventType = 'REGULAR_CLASS'
-      ..status = 'UNMARKED'
+      ..type = 'REGULAR_CLASS'
+      ..status = 'UPCOMING'
+      ..createdFrom = 'WEEKLY_RULE'
       ..createdAt = now.toUtc()
       ..updatedAt = now.toUtc();
-    db.eventLocals.put(event);
+    occ.slotKey = computeSlotKeyForLocal(occ);
+    db.dailyScheduleOccurrenceLocals.put(occ);
   });
 }
 
@@ -495,16 +513,18 @@ Future<void> _writeRealTimetableTemplate(
   DateTime now,
 ) async {
   await isar.writeAsync((db) {
-    final template = TimetableTemplateLocal()
-      ..id = db.timetableTemplateLocals.autoIncrement()
+    final rule = WeeklyScheduleRuleLocal()
+      ..id = db.weeklyScheduleRuleLocals.autoIncrement()
       ..subjectId = subjectId
-      ..weekday = weekday
+      ..dayOfWeek = weekday
       ..startTime = '10:00'
       ..endTime = '11:00'
       ..room = 'Hall A'
+      ..type = 'THEORY'
+      ..isActive = true
       ..createdAt = now.toUtc()
       ..updatedAt = now.toUtc();
-    db.timetableTemplateLocals.put(template);
+    db.weeklyScheduleRuleLocals.put(rule);
   });
 }
 
@@ -1239,15 +1259,17 @@ void main() {
           ..updatedAt = now,
       );
 
-      spyDb.events.add(
-        EventLocal()
+      spyDb.occurrences.add(
+        DailyScheduleOccurrenceLocal()
           ..id = 101
           ..subjectId = 1
           ..date = DateTime.utc(2026, 7, 17)
+          ..title = 'Compilers'
           ..startTime = '10:00'
           ..endTime = '11:00'
-          ..eventType = 'REGULAR_CLASS'
-          ..status = 'UNMARKED'
+          ..type = 'REGULAR_CLASS'
+          ..status = 'UPCOMING'
+          ..createdFrom = 'WEEKLY_RULE'
           ..createdAt = now
           ..updatedAt = now,
       );

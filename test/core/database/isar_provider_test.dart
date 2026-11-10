@@ -6,7 +6,6 @@ import 'package:attend_iq/app/app.dart';
 import 'package:attend_iq/core/constants/app_constants.dart';
 import 'package:attend_iq/core/database/isar_provider.dart';
 import 'package:attend_iq/core/errors/app_exception.dart';
-import 'package:attend_iq/core/event_generator/data/models/event_local.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
 import 'package:attend_iq/core/notifications/providers/notification_providers.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_database.dart';
@@ -29,6 +28,8 @@ import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/domain/repositories/subject_repository.dart';
 import 'package:attend_iq/features/subject/presentation/controllers/subject_controller.dart';
 import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
+import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
 import 'package:attend_iq/features/timetable/data/models/timetable_template_local.dart';
 import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
 import 'package:attend_iq/features/widgets/services/widget_refresh_service.dart';
@@ -97,7 +98,20 @@ class _FakeNotificationDatabase implements NotificationDatabase {
       const [];
 
   @override
-  Future<List<EventLocal>> getEvents(DateTime start, DateTime end) async =>
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
+    DateTime start,
+    DateTime end,
+  ) async =>
+      const [];
+
+  @override
+  Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules() async => const [];
+
+  @override
+  Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
+    DateTime start,
+    DateTime end,
+  ) async =>
       const [];
 
   @override
@@ -120,9 +134,6 @@ class _FakeNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<SubjectLocal>> getSubjects() async => const [];
-
-  @override
-  Future<List<TimetableTemplateLocal>> getTemplates() async => const [];
 
   @override
   Future<void> saveNotification(NotificationItem item) async {}

@@ -7,11 +7,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../features/attendance/data/models/attendance_record_local.dart';
 import '../../../features/timetable/data/models/academic_event_local.dart';
+import '../../../features/timetable/data/models/daily_schedule_occurrence_local.dart';
 import '../../../features/timetable/data/models/schedule_exception_local.dart';
-import '../../../features/timetable/data/models/timetable_template_local.dart';
+import '../../../features/timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../database/isar_provider.dart';
 import '../../errors/app_exception.dart';
-import '../../event_generator/data/models/event_local.dart';
 import '../scheduler/notification_database.dart';
 import '../scheduler/notification_scheduler.dart';
 import '../services/notification_service.dart';
@@ -21,8 +21,8 @@ part 'notification_providers.g.dart';
 /// Canonical list of the five Isar collections monitored for notification
 /// rescheduling.
 const List<String> watchedNotificationCollections = <String>[
-  'timetableTemplateLocals',
-  'eventLocals',
+  'weeklyScheduleRuleLocals',
+  'dailyScheduleOccurrenceLocals',
   'attendanceRecordLocals',
   'scheduleExceptionLocals',
   'academicEventLocals',
@@ -37,8 +37,10 @@ Map<String, Stream<void>> defaultNotificationCollectionStreamsBuilder(
   Isar isar,
 ) {
   return <String, Stream<void>>{
-    'timetableTemplateLocals': isar.timetableTemplateLocals.where().watchLazy(),
-    'eventLocals': isar.eventLocals.where().watchLazy(),
+    'weeklyScheduleRuleLocals':
+        isar.weeklyScheduleRuleLocals.where().watchLazy(),
+    'dailyScheduleOccurrenceLocals':
+        isar.dailyScheduleOccurrenceLocals.where().watchLazy(),
     'attendanceRecordLocals': isar.attendanceRecordLocals.where().watchLazy(),
     'scheduleExceptionLocals': isar.scheduleExceptionLocals.where().watchLazy(),
     'academicEventLocals': isar.academicEventLocals.where().watchLazy(),

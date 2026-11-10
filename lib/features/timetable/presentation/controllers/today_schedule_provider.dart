@@ -5,6 +5,7 @@ import '../../domain/entities/schedule_exception.dart';
 import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../../domain/entities/weekly_schedule_rule.dart';
 import '../../domain/repositories/daily_schedule_occurrence_repository.dart';
+import '../../data/utils/occurrence_identity.dart';
 import 'timetable_controller.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
@@ -112,8 +113,12 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
 
     final attendanceRepo = ref.watch(attendanceRepositoryProvider);
     final Map<String, DailyScheduleOccurrence> ruleOccurrences = {};
+    final Set<int> consumedSavedIds = <int>{};
+    final List<({WeeklyScheduleRule rule, String key})> unmaterializedRules = [];
+    final Map<int, int> unmaterializedCountBySubject = {};
 
-    // Process rules into occurrences
+    // First pass: bind each rule to any materialized occurrence via ruleId or
+    // canonical (subjectId, startTime, endTime, WEEKLY_RULE) slot.
     for (final rule in todayRules) {
       final sub = subjectMap[rule.subjectId];
       if (sub == null) continue;
@@ -122,59 +127,129 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
           ? '${rule.subjectId}_${rule.id}'
           : '${rule.subjectId}_${rule.startTime}_${rule.endTime}';
 
-      // Check if saved occurrence exists for this rule slot
-      final saved = savedOccurrences.where((o) =>
-          o.subjectId == rule.subjectId &&
-          o.startTime == rule.startTime &&
-          o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE).firstOrNull;
+      final normRuleStart = normalizeTimeSlotPart(rule.startTime);
+      final normRuleEnd = normalizeTimeSlotPart(rule.endTime);
+
+      DailyScheduleOccurrence? saved;
+      if (rule.id != null) {
+        saved = savedOccurrences.where((o) {
+          final idNotConsumed = o.id == null || !consumedSavedIds.contains(o.id);
+          return idNotConsumed && o.ruleId == rule.id;
+        }).firstOrNull;
+      }
+      saved ??= savedOccurrences.where((o) {
+        final idNotConsumed = o.id == null || !consumedSavedIds.contains(o.id);
+        return idNotConsumed &&
+            o.ruleId == null &&
+            o.subjectId == rule.subjectId &&
+            normalizeTimeSlotPart(o.startTime) == normRuleStart &&
+            normalizeTimeSlotPart(o.endTime) == normRuleEnd &&
+            o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE;
+      }).firstOrNull;
 
       if (saved != null) {
-        ruleOccurrences[key] = saved;
+        if (saved.id != null) {
+          consumedSavedIds.add(saved.id!);
+        }
+        ruleOccurrences[key] = (saved.ruleId == null && rule.id != null)
+            ? saved.copyWith(
+                ruleId: rule.id,
+                slotKey: saved.slotKey ??
+                    computeCanonicalSlotKey(
+                      date: todayUtc,
+                      subjectId: rule.subjectId,
+                      ruleId: rule.id,
+                      startTime: rule.startTime,
+                      endTime: rule.endTime,
+                      type: OccurrenceType.REGULAR_CLASS.toShortString(),
+                      title: sub.name,
+                    ),
+              )
+            : saved;
       } else {
-        // Check if cancelled by exception
-        final isCancelled = cancelledSubjectIds.contains(rule.subjectId);
+        unmaterializedRules.add((rule: rule, key: key));
+        unmaterializedCountBySubject[rule.subjectId] =
+            (unmaterializedCountBySubject[rule.subjectId] ?? 0) + 1;
+      }
+    }
 
-        // Check legacy AttendanceRecord for this date/subject
-        final records = await attendanceRepo.getAttendanceForSubject(rule.subjectId);
-        final record = records.where((r) =>
-            r.markedAt.year == todayUtc.year &&
-            r.markedAt.month == todayUtc.month &&
-            r.markedAt.day == todayUtc.day).firstOrNull;
+    // Second pass: materialize unconsumed rules with conservative unlinked
+    // attendance fallback (only when a single unmaterialized slot exists for
+    // that subject+date so multi-slot subjects never collide on date-only records).
+    final savedOccIds = <int>{
+      for (final o in savedOccurrences)
+        if (o.id != null) o.id!,
+    };
+    final Map<int, List<AttendanceRecord>> recordsCache = {};
 
-        OccurrenceStatus status = isCancelled ? OccurrenceStatus.CANCELLED : OccurrenceStatus.UPCOMING;
-        if (record != null) {
-          if (record.status == AttendanceStatus.PRESENT || record.status == AttendanceStatus.EXTRA_PRESENT) {
+    for (final item in unmaterializedRules) {
+      final rule = item.rule;
+      final sub = subjectMap[rule.subjectId]!;
+      final isCancelled = cancelledSubjectIds.contains(rule.subjectId);
+
+      OccurrenceStatus status =
+          isCancelled ? OccurrenceStatus.CANCELLED : OccurrenceStatus.UPCOMING;
+
+      final unmaterializedForSubject =
+          unmaterializedCountBySubject[rule.subjectId] ?? 0;
+      if (unmaterializedForSubject == 1) {
+        final records = recordsCache[rule.subjectId] ??=
+            await attendanceRepo.getAttendanceForSubject(rule.subjectId);
+        final unlinkedOnToday = records.where((r) {
+          final markedDay = normalizeUtcDate(r.markedAt);
+          if (!markedDay.isAtSameMomentAs(todayUtc)) return false;
+          final linkedOccId = r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
+          return linkedOccId == null || !savedOccIds.contains(linkedOccId);
+        }).toList();
+
+        if (unlinkedOnToday.length == 1) {
+          final record = unlinkedOnToday.first;
+          if (record.status == AttendanceStatus.PRESENT ||
+              record.status == AttendanceStatus.EXTRA_PRESENT) {
             status = OccurrenceStatus.PRESENT;
-          } else if (record.status == AttendanceStatus.ABSENT || record.status == AttendanceStatus.EXTRA_ABSENT) {
+          } else if (record.status == AttendanceStatus.ABSENT ||
+              record.status == AttendanceStatus.EXTRA_ABSENT) {
             status = OccurrenceStatus.ABSENT;
           } else if (record.status == AttendanceStatus.CANCELLED) {
             status = OccurrenceStatus.CANCELLED;
           }
         }
+      }
 
-        ruleOccurrences[key] = DailyScheduleOccurrence(
+      ruleOccurrences[item.key] = DailyScheduleOccurrence(
+        date: todayUtc,
+        subjectId: rule.subjectId,
+        ruleId: rule.id,
+        slotKey: computeCanonicalSlotKey(
           date: todayUtc,
           subjectId: rule.subjectId,
-          title: sub.name,
+          ruleId: rule.id,
           startTime: rule.startTime,
           endTime: rule.endTime,
-          type: OccurrenceType.REGULAR_CLASS,
-          status: status,
-          createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
-          room: rule.room,
-          faculty: rule.faculty ?? sub.faculty,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-      }
+          type: OccurrenceType.REGULAR_CLASS.toShortString(),
+          title: sub.name,
+        ),
+        title: sub.name,
+        startTime: normalizeTimeSlotPart(rule.startTime),
+        endTime: normalizeTimeSlotPart(rule.endTime),
+        type: OccurrenceType.REGULAR_CLASS,
+        status: status,
+        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+        room: rule.room,
+        faculty: rule.faculty ?? sub.faculty,
+        createdAt: DateTime.now().toUtc(),
+        updatedAt: DateTime.now().toUtc(),
+      );
     }
 
     final resultList = <DailyScheduleOccurrence>[...ruleOccurrences.values];
 
-    // 4. Add Manual / Extra Class Occurrences from saved occurrences
-    final manualSaved = savedOccurrences.where((o) => o.createdFrom == OccurrenceCreatedFrom.MANUAL);
-    for (final extra in manualSaved) {
-      if (!resultList.any((e) => e.id == extra.id && e.id != null)) {
+    // 4. Add Manual / Extra Class / unconsumed saved Occurrences for today
+    for (final extra in savedOccurrences) {
+      final alreadyIncluded = (extra.id != null &&
+              consumedSavedIds.contains(extra.id!)) ||
+          (extra.id != null && resultList.any((e) => e.id == extra.id));
+      if (!alreadyIncluded) {
         resultList.add(extra);
       }
     }
@@ -183,13 +258,26 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
     for (final exam in examExceptions) {
       final sub = exam.subjectId != null ? subjectMap[exam.subjectId] : null;
       final title = sub != null ? '${sub.name} Exam' : exam.title;
+      final examSlotKey = computeCanonicalSlotKey(
+        date: todayUtc,
+        subjectId: exam.subjectId,
+        startTime: '09:00',
+        endTime: '12:00',
+        type: OccurrenceType.EXAM.toShortString(),
+        title: title,
+      );
 
-      final existing = resultList.where((o) => o.type == OccurrenceType.EXAM && o.title == title).firstOrNull;
+      final existing = resultList
+          .where((o) =>
+              o.type == OccurrenceType.EXAM &&
+              (o.slotKey == examSlotKey || o.title == title))
+          .firstOrNull;
       if (existing == null) {
         resultList.add(
           DailyScheduleOccurrence(
             date: todayUtc,
             subjectId: exam.subjectId,
+            slotKey: examSlotKey,
             title: title,
             startTime: '09:00',
             endTime: '12:00',
@@ -197,8 +285,8 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
             status: OccurrenceStatus.UPCOMING,
             createdFrom: OccurrenceCreatedFrom.MANUAL,
             reason: exam.description ?? 'Exam Event',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
+            createdAt: DateTime.now().toUtc(),
+            updatedAt: DateTime.now().toUtc(),
           ),
         );
       }

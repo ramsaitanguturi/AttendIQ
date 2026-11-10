@@ -15,10 +15,9 @@
 
 ### Phase 5.2 — Core Data Model Unification & Database Consistency
 5. **BUG-017** *(Completed & Verified)* (`semester_local.dart`, `semester_validator.dart`, `semester_repository_impl.dart`, `semester_repository.dart`, `semester_management_sheet.dart`, `settings_page.dart`, consumer services): Added explicit `draft`/`active`/`archived` lifecycle state, `startDate < endDate` & non-overlap validation, idempotent startup migration (`migrateLegacySemesters`), unified active semester lookup (`resolveActiveSemesterLocal` / `SemesterRepository.getActiveSemester()`) across all services, and Settings semester management UI.
-6. **BUG-004 & BUG-005** (`attendance_controller.dart`, `attendance_local_data_source.dart`, `today_schedule_provider.dart`, `weekly_schedule_view_controller.dart`, `subject_details_page.dart`):
-   - Eliminate the split-brain `TimetableTemplateLocal`/`EventLocal` vs `WeeklyScheduleRuleLocal`/`DailyScheduleOccurrenceLocal` architecture.
-   - Route all attendance marking and extra-class logging through `DailyScheduleOccurrenceLocal` (removing broken `createExtraClassEvent` / `EventLocal` double-ID collision) and resolve multi-slot same-day attendance cleanly by slot/occurrence key rather than date-only `.firstOrNull`.
-   - Consolidate startup legacy migration into one idempotent step (`isar_provider.dart`), ensuring `subject.type` is preserved and removing constructor side-effects from `WeeklyScheduleRuleLocalDataSourceImpl`.
+6. **BUG-004** *(Completed & Verified)* & **BUG-005** *(Next)* (`attendance_controller.dart`, `attendance_local_data_source.dart`, `today_schedule_provider.dart`, `weekly_schedule_view_controller.dart`, `subject_details_page.dart`, `timetable_migration.dart`, `occurrence_identity.dart`, `backup_importer.dart`):
+   - **Completed in BUG-004**: Unified canonical `WeeklyScheduleRuleLocal`, `DailyScheduleOccurrenceLocal` (`ruleId`, `legacyEventId`, type-scoped `slotKey`), and `AttendanceRecordLocal.occurrenceId` (`legacyEventId`), added isolate-safe atomic upsert (`upsertCanonicalOccurrenceInWriteTx`), consolidated idempotent legacy migration (`migrateLegacyTimetableAndEvents`) with conservative collision recovery & audit reporting, unified all consumers (UI, `AnalyticsService`, `AiContextBuilder`, `WidgetDataService`, `NotificationScheduler` + `NotificationProviders`), and added parent->child `BackupImporter` FK/`serverId`/notification `relatedId` remapping (legacy `TimetableTemplateLocal`/`EventLocal` retained read-only).
+   - **Remaining in BUG-005**: Complete any extra-class dialog/UX/validation follow-up and retire remaining legacy helper call sites if safe.
 7. **BUG-020** (`subject_repository_impl.dart`, `add_edit_subject_dialog.dart`, `task_repository_impl.dart`, `academic_event_repository_impl.dart` + **SUSP-004**):
    - Return created `Subject` ID directly from `createSubject`, enforce intra-dialog and semester-wide timetable slot collision checks, prefill target from user settings, ensure `serverId` UUIDs are generated on all entities, and cascade soft-delete active rules/future occurrences when soft-deleting a subject (preserving `AttendanceRecordLocal`).
 
@@ -52,7 +51,7 @@
 
 ## 2. Recommended Next Target
 
-*(Completed to date: `BUG-001`, `BUG-002`, `BUG-003`, `BUG-009`, `BUG-017`.)*
+*(Completed to date: `BUG-001`, `BUG-002`, `BUG-003`, `BUG-009`, `BUG-017`, `BUG-004`.)*
 
-**Next Recommended Target:** **`BUG-004` & `BUG-005`** (Timetable/Event architecture unification & Extra Class logging fix — now unblocked after `BUG-001`, `BUG-002`, and `BUG-017`).
+**Next Recommended Target:** **`BUG-005`** / **`BUG-010`** / **`BUG-020`** (Extra-class UI validation, Subject Details remaining-class forecasting, and Subject delete cascades — now unblocked on top of the canonical `BUG-004` model).
 

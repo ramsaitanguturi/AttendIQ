@@ -12,9 +12,13 @@ import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/subject/domain/entities/subject.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
 import '../../../features/attendance/domain/entities/attendance_record.dart';
+import '../../../features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import '../../../features/timetable/data/models/weekly_schedule_rule_local.dart';
+import '../../../features/timetable/data/utils/occurrence_identity.dart';
 
 class DesiredReminder {
-  final int eventId;
+  final String relatedKey;
+  final String? legacyRelatedKey;
   final int subjectId;
   final String title;
   final String body;
@@ -22,7 +26,8 @@ class DesiredReminder {
   final int offsetMinutes;
 
   const DesiredReminder({
-    required this.eventId,
+    required this.relatedKey,
+    this.legacyRelatedKey,
     required this.subjectId,
     required this.title,
     required this.body,
@@ -79,7 +84,9 @@ class NotificationScheduler {
     return AttendanceRecord(
       id: r.id,
       serverId: r.serverId,
-      eventId: r.eventId,
+      occurrenceId: r.occurrenceId,
+      legacyEventId: r.legacyEventId,
+      eventId: r.occurrenceId ?? r.eventId,
       subjectId: r.subjectId,
       status: r.status == 'PRESENT'
           ? AttendanceStatus.PRESENT
@@ -214,58 +221,60 @@ class NotificationScheduler {
 
     final startUtc = DateTime.utc(now.year, now.month, now.day);
     final endUtc =
-        DateTime.utc(rollingEnd.year, rollingEnd.month, rollingEnd.day);
+        DateTime.utc(rollingEnd.year, rollingEnd.month, rollingEnd.day, 23, 59, 59);
 
-    // 1. Fetch events in the next 7 days
-    final events = await _db.getEvents(startUtc, endUtc);
+    // 1. Fetch canonical occurrences, weekly rules, exceptions, and subjects
+    final occurrences = await _db.getOccurrences(startUtc, endUtc);
+    final rules = (await _db.getWeeklyRules())
+        .where((r) => r.isActive && !r.isDeleted)
+        .toList();
+    final exceptions = await _db.getScheduleExceptions(startUtc, endUtc);
 
-    // 2. Fetch subjects and templates
     final subjects = await _db.getSubjects();
     final subjectMap = {for (final s in subjects) s.id: s};
+    final ruleById = {for (final r in rules) r.id: r};
 
-    final templates = await _db.getTemplates();
+    final holidayDates = <String>{};
+    final cancelledSubjectsByDate = <String, Set<int>>{};
+    for (final ex in exceptions) {
+      final exDateKey = formatUtcDateKey(ex.date);
+      final exType = ex.type.trim().toUpperCase();
+      if (exType == 'HOLIDAY') {
+        holidayDates.add(exDateKey);
+      } else if (exType == 'CANCELLED_CLASS' && ex.subjectId != null) {
+        cancelledSubjectsByDate
+            .putIfAbsent(exDateKey, () => <int>{})
+            .add(ex.subjectId!);
+      }
+    }
 
     final List<DesiredReminder> desiredReminders = [];
+    final Set<String> consumedSlotKeys = <String>{};
+    final Set<String> consumedRuleDates = <String>{};
 
-    for (final event in events) {
-      if (event.status == 'CANCELLED') continue;
-
-      final subject = subjectMap[event.subjectId];
-      if (subject == null || subject.isDeleted) continue;
-
-      final timeParts = event.startTime.split(':');
-      if (timeParts.length < 2) continue;
-      final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1]);
-
-      final localClassTime = DateTime(
-        event.date.year,
-        event.date.month,
-        event.date.day,
-        hour,
-        minute,
-      );
-
-      final template = templates.firstWhereOrNull((t) =>
-          t.subjectId == event.subjectId &&
-          t.weekday == event.date.weekday &&
-          t.startTime == event.startTime);
-      final room = template?.room;
-
-      final isExtra = event.eventType == 'EXTRA_CLASS';
-
+    void appendClassReminders({
+      required String relatedKey,
+      String? legacyRelatedKey,
+      required int subjectId,
+      required String displayName,
+      required String startTime,
+      required String? room,
+      required DateTime localClassTime,
+      required bool isExtra,
+    }) {
       for (final offset in offsets) {
         final triggerTime = localClassTime.subtract(Duration(minutes: offset));
-        if (triggerTime.isAfter(now)) {
+        if (triggerTime.isAfter(now) && !triggerTime.isAfter(rollingEnd)) {
           desiredReminders.add(DesiredReminder(
-            eventId: event.id,
-            subjectId: event.subjectId,
+            relatedKey: relatedKey,
+            legacyRelatedKey: legacyRelatedKey,
+            subjectId: subjectId,
             title: isExtra
-                ? 'Extra ${subject.name} class starts in $offset minutes'
-                : '${subject.name} class starts in $offset minutes',
+                ? 'Extra $displayName class starts in $offset minutes'
+                : '$displayName class starts in $offset minutes',
             body: isExtra
-                ? 'Extra ${subject.name} class today at ${event.startTime}'
-                : 'Starts at ${event.startTime}${room != null ? " in $room" : ""}',
+                ? 'Extra $displayName class today at $startTime'
+                : 'Starts at $startTime${room != null ? " in $room" : ""}',
             scheduledTime: triggerTime,
             offsetMinutes: offset,
           ));
@@ -273,16 +282,148 @@ class NotificationScheduler {
       }
     }
 
-    // 1b. Fetch academic events for next 14 days and schedule 1-day-before & 30-min-before reminders
+    // 1a. Materialized canonical DailyScheduleOccurrenceLocal rows
+    for (final occ in occurrences) {
+      if (occ.isDeleted) continue;
+
+      final occDate = normalizeUtcDate(occ.date);
+      final occDateKey = formatUtcDateKey(occDate);
+      final matchingRule = _findRuleForOccurrence(occ, rules, ruleById);
+
+      final canonicalSlotKey = (occ.slotKey != null && occ.slotKey!.isNotEmpty)
+          ? occ.slotKey!
+          : computeCanonicalSlotKey(
+              date: occDate,
+              subjectId: occ.subjectId,
+              ruleId: occ.ruleId ?? matchingRule?.id,
+              startTime: occ.startTime,
+              endTime: occ.endTime,
+              type: occ.type,
+              title: occ.title,
+              legacyEventId: occ.legacyEventId,
+            );
+      consumedSlotKeys.add(canonicalSlotKey);
+      final effectiveRuleId = occ.ruleId ?? matchingRule?.id;
+      if (effectiveRuleId != null) {
+        consumedRuleDates.add('${effectiveRuleId}_$occDateKey');
+      }
+
+      if (occ.status.toUpperCase() == 'CANCELLED') continue;
+      if (holidayDates.contains(occDateKey)) continue;
+      if (occ.subjectId != null &&
+          (cancelledSubjectsByDate[occDateKey]?.contains(occ.subjectId!) ??
+              false)) {
+        continue;
+      }
+
+      final subject =
+          occ.subjectId != null ? subjectMap[occ.subjectId!] : null;
+      if (occ.subjectId != null && (subject == null || subject.isDeleted)) {
+        continue;
+      }
+
+      final timeParts = normalizeTimeSlotPart(occ.startTime).split(':');
+      if (timeParts.length < 2) continue;
+      final hour = int.tryParse(timeParts[0]);
+      final minute = int.tryParse(timeParts[1]);
+      if (hour == null || minute == null) continue;
+
+      final localClassTime = DateTime(
+        occDate.year,
+        occDate.month,
+        occDate.day,
+        hour,
+        minute,
+      );
+
+      final room = occ.room ?? matchingRule?.room;
+      final isExtra = occ.type.toUpperCase() == 'EXTRA_CLASS';
+      final displayName = subject?.name ?? occ.title;
+      final relatedKey = NotificationRelatedKeys.forSlotKey(canonicalSlotKey);
+      final legacyKey = (occ.legacyEventId ?? occ.id) > 0
+          ? (occ.legacyEventId ?? occ.id).toString()
+          : null;
+
+      appendClassReminders(
+        relatedKey: relatedKey,
+        legacyRelatedKey: legacyKey,
+        subjectId: occ.subjectId ?? 0,
+        displayName: displayName,
+        startTime: occ.startTime,
+        room: room,
+        localClassTime: localClassTime,
+        isExtra: isExtra,
+      );
+    }
+
+    // 1b. Unmaterialized active WeeklyScheduleRuleLocal slots across the 7-day rolling window
+    for (var dayOffset = 0; dayOffset <= 7; dayOffset++) {
+      final localDay = now.add(Duration(days: dayOffset));
+      final dayUtc = DateTime.utc(localDay.year, localDay.month, localDay.day);
+      final dayDateKey = formatUtcDateKey(dayUtc);
+
+      if (holidayDates.contains(dayDateKey)) continue;
+
+      for (final rule in rules) {
+        if (rule.dayOfWeek != dayUtc.weekday) continue;
+        if (cancelledSubjectsByDate[dayDateKey]?.contains(rule.subjectId) ??
+            false) {
+          continue;
+        }
+        if (consumedRuleDates.contains('${rule.id}_$dayDateKey')) continue;
+
+        final subject = subjectMap[rule.subjectId];
+        if (subject == null || subject.isDeleted) continue;
+
+        final canonicalSlotKey = computeCanonicalSlotKey(
+          date: dayUtc,
+          subjectId: rule.subjectId,
+          ruleId: rule.id,
+          startTime: rule.startTime,
+          endTime: rule.endTime,
+          type: 'REGULAR_CLASS',
+          title: subject.name,
+        );
+        if (consumedSlotKeys.contains(canonicalSlotKey)) continue;
+
+        final timeParts = normalizeTimeSlotPart(rule.startTime).split(':');
+        if (timeParts.length < 2) continue;
+        final hour = int.tryParse(timeParts[0]);
+        final minute = int.tryParse(timeParts[1]);
+        if (hour == null || minute == null) continue;
+
+        final localClassTime = DateTime(
+          dayUtc.year,
+          dayUtc.month,
+          dayUtc.day,
+          hour,
+          minute,
+        );
+
+        final relatedKey = NotificationRelatedKeys.forSlotKey(canonicalSlotKey);
+        appendClassReminders(
+          relatedKey: relatedKey,
+          subjectId: rule.subjectId,
+          displayName: subject.name,
+          startTime: rule.startTime,
+          room: rule.room,
+          localClassTime: localClassTime,
+          isExtra: false,
+        );
+      }
+    }
+
+    // 1c. Fetch academic events for next 14 days (namespaced keys cannot collide with occurrences)
     final academicEvents = await _db.getAcademicEvents(
         startUtc, now.add(const Duration(days: 14)));
     for (final ae in academicEvents) {
-      final eventDate =
-          DateTime(ae.date.year, ae.date.month, ae.date.day, 9, 0);
+      final aeDate = normalizeUtcDate(ae.date);
+      final eventDate = DateTime(aeDate.year, aeDate.month, aeDate.day, 9, 0);
       final oneDayBefore = eventDate.subtract(const Duration(days: 1));
       if (oneDayBefore.isAfter(now)) {
         desiredReminders.add(DesiredReminder(
-          eventId: ae.id + 100000,
+          relatedKey: NotificationRelatedKeys.forAcademicEventOneDay(ae.id),
+          legacyRelatedKey: (ae.id + 100000).toString(),
           subjectId: 0,
           title: 'Tomorrow:',
           body: '${ae.title}',
@@ -296,12 +437,14 @@ class NotificationScheduler {
         final hour = int.tryParse(parts[0]) ?? 9;
         final minute = int.tryParse(parts[1]) ?? 0;
         final startTimeDate =
-            DateTime(ae.date.year, ae.date.month, ae.date.day, hour, minute);
+            DateTime(aeDate.year, aeDate.month, aeDate.day, hour, minute);
         final thirtyMinBefore =
             startTimeDate.subtract(const Duration(minutes: 30));
         if (thirtyMinBefore.isAfter(now)) {
           desiredReminders.add(DesiredReminder(
-            eventId: ae.id + 200000,
+            relatedKey:
+                NotificationRelatedKeys.forAcademicEventThirtyMin(ae.id),
+            legacyRelatedKey: (ae.id + 200000).toString(),
             subjectId: 0,
             title: '${ae.title} starts at ${ae.startTime}',
             body: ae.description ?? ae.title,
@@ -325,20 +468,25 @@ class NotificationScheduler {
 
     for (final desired in desiredReminders) {
       final key =
-          '${desired.eventId}_${desired.scheduledTime.toUtc().microsecondsSinceEpoch}';
+          '${desired.relatedKey}_${desired.scheduledTime.toUtc().microsecondsSinceEpoch}';
       if (!seenKeys.add(key)) {
         continue;
       }
 
       final existing = futureNotifications.firstWhereOrNull((n) =>
-          n.relatedId == desired.eventId.toString() &&
+          (n.relatedId == desired.relatedKey ||
+              (desired.legacyRelatedKey != null &&
+                  n.relatedId == desired.legacyRelatedKey)) &&
           n.scheduledTime.isAtSameMomentAs(desired.scheduledTime));
       if (existing != null) {
         keptIds.add(existing.id);
-        if (existing.title != desired.title || existing.body != desired.body) {
+        if (existing.title != desired.title ||
+            existing.body != desired.body ||
+            existing.relatedId != desired.relatedKey) {
           existing
             ..title = desired.title
-            ..body = desired.body;
+            ..body = desired.body
+            ..relatedId = desired.relatedKey;
           toUpdate.add(existing);
         }
       } else {
@@ -369,12 +517,28 @@ class NotificationScheduler {
         ..body = desired.body
         ..type = NotificationType.CLASS_REMINDER.toShortString()
         ..scheduledTime = desired.scheduledTime
-        ..relatedId = desired.eventId.toString()
+        ..relatedId = desired.relatedKey
         ..isRead = false;
 
       await _db.saveNotification(item);
       await _notificationService.scheduleNotification(item);
     }
+  }
+
+  WeeklyScheduleRuleLocal? _findRuleForOccurrence(
+    DailyScheduleOccurrenceLocal occ,
+    List<WeeklyScheduleRuleLocal> rules,
+    Map<int, WeeklyScheduleRuleLocal> ruleById,
+  ) {
+    if (occ.ruleId != null && ruleById.containsKey(occ.ruleId)) {
+      return ruleById[occ.ruleId];
+    }
+    final occDate = normalizeUtcDate(occ.date);
+    final normStart = normalizeTimeSlotPart(occ.startTime);
+    return rules.firstWhereOrNull((r) =>
+        r.subjectId == occ.subjectId &&
+        r.dayOfWeek == occDate.weekday &&
+        normalizeTimeSlotPart(r.startTime) == normStart);
   }
 
   Future<void> checkAttendanceRisks({DateTime? customNow}) async {
@@ -426,11 +590,21 @@ class NotificationScheduler {
           ..sort((a, b) => b.markedAt.compareTo(a.markedAt));
         final latestRecord = sortedRecords.first;
 
-        // Fetch last notification of this type for this subject
-        final lastNotification = await _db.getLastNotification(
+        // Fetch last notification of this type for this subject (namespaced + legacy fallback)
+        final subjectKey = NotificationRelatedKeys.forSubjectRisk(subject.id);
+        final lastTyped = await _db.getLastNotification(
+          alertType.toShortString(),
+          subjectKey,
+        );
+        final lastLegacy = await _db.getLastNotification(
           alertType.toShortString(),
           subject.id.toString(),
         );
+        final lastNotification = (lastTyped != null && lastLegacy != null)
+            ? (lastTyped.scheduledTime.isAfter(lastLegacy.scheduledTime)
+                ? lastTyped
+                : lastLegacy)
+            : (lastTyped ?? lastLegacy);
 
         // If no notification was sent, or the latest log occurred after the last warning notification
         if (lastNotification == null ||
@@ -440,7 +614,7 @@ class NotificationScheduler {
             ..body = body
             ..type = alertType.toShortString()
             ..scheduledTime = now
-            ..relatedId = subject.id.toString()
+            ..relatedId = subjectKey
             ..isRead = false;
 
           await _db.saveNotification(item);
@@ -480,24 +654,28 @@ class NotificationScheduler {
         allRecordsLocal.where((r) => subjectIds.contains(r.subjectId)).toList();
     final semesterRecords = semesterRecordsLocal.map(_mapRecord).toList();
 
-    // Fetch events
+    // Fetch canonical occurrences
     final startUtc = DateTime.utc(semesterLocal.startDate.year,
         semesterLocal.startDate.month, semesterLocal.startDate.day);
     final endUtc = DateTime.utc(semesterLocal.endDate.year,
         semesterLocal.endDate.month, semesterLocal.endDate.day);
-    final allEvents = await _db.getEvents(startUtc, endUtc);
-    final semesterEvents =
-        allEvents.where((e) => subjectIds.contains(e.subjectId)).toList();
+    final allOccurrences = await _db.getOccurrences(startUtc, endUtc);
+    final semesterOccurrences = allOccurrences
+        .where((o) => o.subjectId != null && subjectIds.contains(o.subjectId))
+        .toList();
 
-    // Build occurrences
+    // Build occurrences using canonical occurrenceId (or markedAt fallback for unlinked records)
     final occurrences = <LoggedOccurrence>[];
-    final eventMap = {for (final e in semesterEvents) e.id: e};
+    final occurrenceMap = <int, DailyScheduleOccurrenceLocal>{
+      for (final o in semesterOccurrences) o.id: o,
+    };
     for (final rec in semesterRecords) {
-      final event = eventMap[rec.eventId];
-      if (event != null) {
+      final occId = rec.occurrenceId;
+      final occ = (occId != null && occId > 0) ? occurrenceMap[occId] : null;
+      if (occ != null) {
         occurrences.add(LoggedOccurrence(
-          date: event.date,
-          startTime: event.startTime,
+          date: occ.date,
+          startTime: occ.startTime,
           status: rec.status,
         ));
       } else {

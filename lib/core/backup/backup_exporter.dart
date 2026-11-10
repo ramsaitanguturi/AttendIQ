@@ -23,18 +23,18 @@ class BackupExporter {
   BackupExporter(this._isar);
 
   Future<BackupData> exportData({String appVersion = '1.1.0'}) async {
-    final preferencesList = await _isar.userPreferencesLocals.where().findAll();
-    final semesterList = await _isar.semesterLocals.where().findAll();
-    final subjectList = await _isar.subjectLocals.where().findAll();
-    final timetableList = await _isar.timetableTemplateLocals.where().findAll();
-    final eventList = await _isar.eventLocals.where().findAll();
-    final attendanceList = await _isar.attendanceRecordLocals.where().findAll();
-    final notificationList = await _isar.notificationItems.where().findAll();
-    final exceptionList = await _isar.scheduleExceptionLocals.where().findAll();
-    final ruleList = await _isar.weeklyScheduleRuleLocals.where().findAll();
-    final occurrenceList = await _isar.dailyScheduleOccurrenceLocals.where().findAll();
-    final academicEventList = await _isar.academicEventLocals.where().findAll();
-    final taskList = await _isar.academicTaskLocals.where().findAll();
+    final preferencesList = _isar.userPreferencesLocals.where().findAll();
+    final semesterList = _isar.semesterLocals.where().findAll();
+    final subjectList = _isar.subjectLocals.where().findAll();
+    final timetableList = _isar.timetableTemplateLocals.where().findAll();
+    final eventList = _isar.eventLocals.where().findAll();
+    final attendanceList = _isar.attendanceRecordLocals.where().findAll();
+    final notificationList = _isar.notificationItems.where().findAll();
+    final exceptionList = _isar.scheduleExceptionLocals.where().findAll();
+    final ruleList = _isar.weeklyScheduleRuleLocals.where().findAll();
+    final occurrenceList = _isar.dailyScheduleOccurrenceLocals.where().findAll();
+    final academicEventList = _isar.academicEventLocals.where().findAll();
+    final taskList = _isar.academicTaskLocals.where().findAll();
 
     final metadata = BackupMetadata(
       appVersion: appVersion,
@@ -79,7 +79,9 @@ class BackupExporter {
       attendance: attendanceList.map((a) => {
         'id': a.id,
         'serverId': a.serverId,
-        'eventId': a.eventId,
+        'occurrenceId': a.occurrenceId,
+        'legacyEventId': a.legacyEventId,
+        'eventId': a.occurrenceId ?? a.eventId,
         'subjectId': a.subjectId,
         'status': a.status,
         'markedAt': a.markedAt.toIso8601String(),
@@ -143,11 +145,13 @@ class BackupExporter {
         'id': r.id,
         'serverId': r.serverId,
         'subjectId': r.subjectId,
+        'legacyTemplateId': r.legacyTemplateId,
         'dayOfWeek': r.dayOfWeek,
         'startTime': r.startTime,
         'endTime': r.endTime,
         'room': r.room,
         'faculty': r.faculty,
+        'type': r.type,
         'isActive': r.isActive,
         'createdAt': r.createdAt.toIso8601String(),
         'updatedAt': r.updatedAt.toIso8601String(),
@@ -159,6 +163,9 @@ class BackupExporter {
         'serverId': o.serverId,
         'date': o.date.toIso8601String(),
         'subjectId': o.subjectId,
+        'ruleId': o.ruleId,
+        'legacyEventId': o.legacyEventId,
+        'slotKey': o.slotKey,
         'title': o.title,
         'startTime': o.startTime,
         'endTime': o.endTime,

@@ -9,8 +9,13 @@ import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/attendance_record.dart';
 import 'attendance_controller.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
+import '../../../timetable/data/models/daily_schedule_occurrence_local.dart';
+import '../../../timetable/data/models/weekly_schedule_rule_local.dart';
+import '../../../timetable/data/utils/occurrence_identity.dart';
+import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
+import '../../../timetable/domain/repositories/daily_schedule_occurrence_repository.dart';
 import '../../../timetable/presentation/controllers/timetable_controller.dart';
-import '../../../../core/event_generator/data/models/event_local.dart';
+import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
 
 part 'subject_attendance_stats_provider.g.dart';
 
@@ -45,14 +50,30 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 ) async {
   final repo = ref.watch(subjectRepositoryProvider);
   final attendanceRepo = ref.watch(attendanceRepositoryProvider);
-  final timetableRepo = ref.watch(timetableRepositoryProvider);
+  final ruleRepo = ref.watch(weeklyScheduleRuleRepositoryProvider);
+
+  var isDisposed = false;
+  ref.onDispose(() => isDisposed = true);
 
   // Watch attendance changes using repository stream
   final stream = attendanceRepo.watchAttendance(subjectId);
   final sub = stream.listen((_) {
-    ref.invalidateSelf();
+    if (!isDisposed) {
+      ref.invalidateSelf();
+    }
   });
-  ref.onDispose(() => sub.cancel());
+  ref.onDispose(() => sub.cancel().catchError((Object _) {}));
+
+  // Watch canonical weekly schedule rules if database is open
+  final isar = ref.watch(isarProvider).valueOrNull;
+  if (isar != null && isar.isOpen) {
+    final ruleSub = isar.weeklyScheduleRuleLocals.where().watchLazy().listen((_) {
+      if (!isDisposed) {
+        ref.invalidateSelf();
+      }
+    });
+    ref.onDispose(() => ruleSub.cancel().catchError((Object _) {}));
+  }
 
   // 1. Fetch Subject
   final subject = await repo.getSubjectById(subjectId);
@@ -88,20 +109,22 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   final requiredClasses = AttendanceCalculator.calculateRequiredClasses(
       attended: present, total: total, target: target);
 
-  // 6. Calculate remaining classes using repository
-  final templates = await timetableRepo.getTemplatesForSubject(subjectId);
-  final templateWeekdays = templates.map((t) => t.weekday).toList();
+  // 6. Calculate remaining classes using canonical WeeklyScheduleRuleRepository
+  final rules = await ruleRepo.getRulesForSubject(subjectId);
+  final activeRuleWeekdays = rules
+      .where((r) => r.isActive && !r.isDeleted)
+      .map((r) => r.dayOfWeek)
+      .toList();
 
   int remaining = 0;
   final today = DateTime.now();
   if (today.isBefore(semester.endDate)) {
     // Count remaining scheduled classes starting from today
-    DateTime current = DateTime.utc(today.year, today.month, today.day);
-    final end = DateTime.utc(
-        semester.endDate.year, semester.endDate.month, semester.endDate.day);
+    DateTime current = normalizeUtcDate(today);
+    final end = normalizeUtcDate(semester.endDate);
     while (!current.isAfter(end)) {
       remaining +=
-          templateWeekdays.where((int w) => w == current.weekday).length;
+          activeRuleWeekdays.where((int w) => w == current.weekday).length;
       current = current.add(const Duration(days: 1));
     }
   }
@@ -198,44 +221,36 @@ Future<double> overallAttendancePercentage(
 }
 
 @riverpod
-Future<List<EventLocal>> subjectEvents(
-    SubjectEventsRef ref, int subjectId) async {
-  final isar = ref.watch(isarProvider).requireValue;
+Future<List<DailyScheduleOccurrence>> subjectOccurrences(
+    SubjectOccurrencesRef ref, int subjectId) async {
+  var isDisposed = false;
+  ref.onDispose(() => isDisposed = true);
 
-  final stream = isar.eventLocals.where().subjectIdEqualTo(subjectId).watch();
-  final sub = stream.listen((_) {
-    ref.invalidateSelf();
+  final isar = ref.watch(isarProvider).valueOrNull;
+  if (isar != null && isar.isOpen) {
+    final stream =
+        isar.dailyScheduleOccurrenceLocals.where().subjectIdEqualTo(subjectId).watch();
+    final sub = stream.listen((_) {
+      if (!isDisposed) {
+        ref.invalidateSelf();
+      }
+    });
+    ref.onDispose(() => sub.cancel().catchError((Object _) {}));
+  }
+
+  final repo = ref.watch(dailyScheduleOccurrenceRepositoryProvider);
+  final list = await repo.getOccurrencesForSubject(subjectId);
+  list.sort((a, b) {
+    final dateCmp = b.date.compareTo(a.date);
+    if (dateCmp != 0) return dateCmp;
+    return b.startTime.compareTo(a.startTime);
   });
-  ref.onDispose(() => sub.cancel());
-
-  final list = isar.eventLocals
-      .where()
-      .subjectIdEqualTo(subjectId)
-      .isDeletedEqualTo(false)
-      .findAll();
-
-  list.sort((EventLocal a, EventLocal b) => b.date.compareTo(a.date));
   return list;
 }
 
 @riverpod
-Future<List<EventLocal>> todayEvents(TodayEventsRef ref) async {
-  final isar = ref.watch(isarProvider).requireValue;
-  final now = DateTime.now();
-  final todayUtc = DateTime.utc(now.year, now.month, now.day);
-
-  final stream = isar.eventLocals.where().dateEqualTo(todayUtc).watch();
-  final sub = stream.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => sub.cancel());
-
-  final list = isar.eventLocals
-      .where()
-      .dateEqualTo(todayUtc)
-      .isDeletedEqualTo(false)
-      .findAll();
-
-  list.sort((EventLocal a, EventLocal b) => a.startTime.compareTo(b.startTime));
-  return list;
+Future<List<DailyScheduleOccurrence>> todayOccurrences(
+    TodayOccurrencesRef ref) async {
+  final scheduleState = await ref.watch(todayScheduleProvider().future);
+  return scheduleState.occurrences;
 }

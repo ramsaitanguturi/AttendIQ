@@ -34,6 +34,18 @@ const DailyScheduleOccurrenceLocalSchema = IsarGeneratedSchema(
         type: IsarType.long,
       ),
       IsarPropertySchema(
+        name: 'ruleId',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
+        name: 'legacyEventId',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
+        name: 'slotKey',
+        type: IsarType.string,
+      ),
+      IsarPropertySchema(
         name: 'title',
         type: IsarType.string,
       ),
@@ -111,6 +123,30 @@ const DailyScheduleOccurrenceLocalSchema = IsarGeneratedSchema(
         unique: false,
         hash: false,
       ),
+      IsarIndexSchema(
+        name: 'ruleId',
+        properties: [
+          "ruleId",
+        ],
+        unique: false,
+        hash: false,
+      ),
+      IsarIndexSchema(
+        name: 'legacyEventId',
+        properties: [
+          "legacyEventId",
+        ],
+        unique: false,
+        hash: false,
+      ),
+      IsarIndexSchema(
+        name: 'slotKey',
+        properties: [
+          "slotKey",
+        ],
+        unique: false,
+        hash: false,
+      ),
     ],
   ),
   converter: IsarObjectConverter<int, DailyScheduleOccurrenceLocal>(
@@ -134,42 +170,52 @@ int serializeDailyScheduleOccurrenceLocal(
   }
   IsarCore.writeLong(writer, 2, object.date.toUtc().microsecondsSinceEpoch);
   IsarCore.writeLong(writer, 3, object.subjectId ?? -9223372036854775808);
-  IsarCore.writeString(writer, 4, object.title);
-  IsarCore.writeString(writer, 5, object.startTime);
-  IsarCore.writeString(writer, 6, object.endTime);
-  IsarCore.writeString(writer, 7, object.type);
-  IsarCore.writeString(writer, 8, object.status);
-  IsarCore.writeString(writer, 9, object.createdFrom);
+  IsarCore.writeLong(writer, 4, object.ruleId ?? -9223372036854775808);
+  IsarCore.writeLong(writer, 5, object.legacyEventId ?? -9223372036854775808);
+  {
+    final value = object.slotKey;
+    if (value == null) {
+      IsarCore.writeNull(writer, 6);
+    } else {
+      IsarCore.writeString(writer, 6, value);
+    }
+  }
+  IsarCore.writeString(writer, 7, object.title);
+  IsarCore.writeString(writer, 8, object.startTime);
+  IsarCore.writeString(writer, 9, object.endTime);
+  IsarCore.writeString(writer, 10, object.type);
+  IsarCore.writeString(writer, 11, object.status);
+  IsarCore.writeString(writer, 12, object.createdFrom);
   {
     final value = object.room;
     if (value == null) {
-      IsarCore.writeNull(writer, 10);
+      IsarCore.writeNull(writer, 13);
     } else {
-      IsarCore.writeString(writer, 10, value);
+      IsarCore.writeString(writer, 13, value);
     }
   }
   {
     final value = object.faculty;
     if (value == null) {
-      IsarCore.writeNull(writer, 11);
+      IsarCore.writeNull(writer, 14);
     } else {
-      IsarCore.writeString(writer, 11, value);
+      IsarCore.writeString(writer, 14, value);
     }
   }
   {
     final value = object.reason;
     if (value == null) {
-      IsarCore.writeNull(writer, 12);
+      IsarCore.writeNull(writer, 15);
     } else {
-      IsarCore.writeString(writer, 12, value);
+      IsarCore.writeString(writer, 15, value);
     }
   }
   IsarCore.writeLong(
-      writer, 13, object.createdAt.toUtc().microsecondsSinceEpoch);
+      writer, 16, object.createdAt.toUtc().microsecondsSinceEpoch);
   IsarCore.writeLong(
-      writer, 14, object.updatedAt.toUtc().microsecondsSinceEpoch);
-  IsarCore.writeBool(writer, 15, object.isDirty);
-  IsarCore.writeBool(writer, 16, object.isDeleted);
+      writer, 17, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeBool(writer, 18, object.isDirty);
+  IsarCore.writeBool(writer, 19, object.isDeleted);
   return object.id;
 }
 
@@ -197,17 +243,34 @@ DailyScheduleOccurrenceLocal deserializeDailyScheduleOccurrenceLocal(
       object.subjectId = value;
     }
   }
-  object.title = IsarCore.readString(reader, 4) ?? '';
-  object.startTime = IsarCore.readString(reader, 5) ?? '';
-  object.endTime = IsarCore.readString(reader, 6) ?? '';
-  object.type = IsarCore.readString(reader, 7) ?? '';
-  object.status = IsarCore.readString(reader, 8) ?? '';
-  object.createdFrom = IsarCore.readString(reader, 9) ?? '';
-  object.room = IsarCore.readString(reader, 10);
-  object.faculty = IsarCore.readString(reader, 11);
-  object.reason = IsarCore.readString(reader, 12);
   {
-    final value = IsarCore.readLong(reader, 13);
+    final value = IsarCore.readLong(reader, 4);
+    if (value == -9223372036854775808) {
+      object.ruleId = null;
+    } else {
+      object.ruleId = value;
+    }
+  }
+  {
+    final value = IsarCore.readLong(reader, 5);
+    if (value == -9223372036854775808) {
+      object.legacyEventId = null;
+    } else {
+      object.legacyEventId = value;
+    }
+  }
+  object.slotKey = IsarCore.readString(reader, 6);
+  object.title = IsarCore.readString(reader, 7) ?? '';
+  object.startTime = IsarCore.readString(reader, 8) ?? '';
+  object.endTime = IsarCore.readString(reader, 9) ?? '';
+  object.type = IsarCore.readString(reader, 10) ?? '';
+  object.status = IsarCore.readString(reader, 11) ?? '';
+  object.createdFrom = IsarCore.readString(reader, 12) ?? '';
+  object.room = IsarCore.readString(reader, 13);
+  object.faculty = IsarCore.readString(reader, 14);
+  object.reason = IsarCore.readString(reader, 15);
+  {
+    final value = IsarCore.readLong(reader, 16);
     if (value == -9223372036854775808) {
       object.createdAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
@@ -217,7 +280,7 @@ DailyScheduleOccurrenceLocal deserializeDailyScheduleOccurrenceLocal(
     }
   }
   {
-    final value = IsarCore.readLong(reader, 14);
+    final value = IsarCore.readLong(reader, 17);
     if (value == -9223372036854775808) {
       object.updatedAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
@@ -226,8 +289,8 @@ DailyScheduleOccurrenceLocal deserializeDailyScheduleOccurrenceLocal(
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.isDirty = IsarCore.readBool(reader, 15);
-  object.isDeleted = IsarCore.readBool(reader, 16);
+  object.isDirty = IsarCore.readBool(reader, 18);
+  object.isDeleted = IsarCore.readBool(reader, 19);
   return object;
 }
 
@@ -259,11 +322,25 @@ dynamic deserializeDailyScheduleOccurrenceLocalProp(
         }
       }
     case 4:
-      return IsarCore.readString(reader, 4) ?? '';
+      {
+        final value = IsarCore.readLong(reader, 4);
+        if (value == -9223372036854775808) {
+          return null;
+        } else {
+          return value;
+        }
+      }
     case 5:
-      return IsarCore.readString(reader, 5) ?? '';
+      {
+        final value = IsarCore.readLong(reader, 5);
+        if (value == -9223372036854775808) {
+          return null;
+        } else {
+          return value;
+        }
+      }
     case 6:
-      return IsarCore.readString(reader, 6) ?? '';
+      return IsarCore.readString(reader, 6);
     case 7:
       return IsarCore.readString(reader, 7) ?? '';
     case 8:
@@ -271,24 +348,20 @@ dynamic deserializeDailyScheduleOccurrenceLocalProp(
     case 9:
       return IsarCore.readString(reader, 9) ?? '';
     case 10:
-      return IsarCore.readString(reader, 10);
+      return IsarCore.readString(reader, 10) ?? '';
     case 11:
-      return IsarCore.readString(reader, 11);
+      return IsarCore.readString(reader, 11) ?? '';
     case 12:
-      return IsarCore.readString(reader, 12);
+      return IsarCore.readString(reader, 12) ?? '';
     case 13:
-      {
-        final value = IsarCore.readLong(reader, 13);
-        if (value == -9223372036854775808) {
-          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
-        } else {
-          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
-              .toLocal();
-        }
-      }
+      return IsarCore.readString(reader, 13);
     case 14:
+      return IsarCore.readString(reader, 14);
+    case 15:
+      return IsarCore.readString(reader, 15);
+    case 16:
       {
-        final value = IsarCore.readLong(reader, 14);
+        final value = IsarCore.readLong(reader, 16);
         if (value == -9223372036854775808) {
           return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
         } else {
@@ -296,10 +369,20 @@ dynamic deserializeDailyScheduleOccurrenceLocalProp(
               .toLocal();
         }
       }
-    case 15:
-      return IsarCore.readBool(reader, 15);
-    case 16:
-      return IsarCore.readBool(reader, 16);
+    case 17:
+      {
+        final value = IsarCore.readLong(reader, 17);
+        if (value == -9223372036854775808) {
+          return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
+        } else {
+          return DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true)
+              .toLocal();
+        }
+      }
+    case 18:
+      return IsarCore.readBool(reader, 18);
+    case 19:
+      return IsarCore.readBool(reader, 19);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -311,6 +394,9 @@ sealed class _DailyScheduleOccurrenceLocalUpdate {
     String? serverId,
     DateTime? date,
     int? subjectId,
+    int? ruleId,
+    int? legacyEventId,
+    String? slotKey,
     String? title,
     String? startTime,
     String? endTime,
@@ -339,6 +425,9 @@ class _DailyScheduleOccurrenceLocalUpdateImpl
     Object? serverId = ignore,
     Object? date = ignore,
     Object? subjectId = ignore,
+    Object? ruleId = ignore,
+    Object? legacyEventId = ignore,
+    Object? slotKey = ignore,
     Object? title = ignore,
     Object? startTime = ignore,
     Object? endTime = ignore,
@@ -359,19 +448,22 @@ class _DailyScheduleOccurrenceLocalUpdateImpl
           if (serverId != ignore) 1: serverId as String?,
           if (date != ignore) 2: date as DateTime?,
           if (subjectId != ignore) 3: subjectId as int?,
-          if (title != ignore) 4: title as String?,
-          if (startTime != ignore) 5: startTime as String?,
-          if (endTime != ignore) 6: endTime as String?,
-          if (type != ignore) 7: type as String?,
-          if (status != ignore) 8: status as String?,
-          if (createdFrom != ignore) 9: createdFrom as String?,
-          if (room != ignore) 10: room as String?,
-          if (faculty != ignore) 11: faculty as String?,
-          if (reason != ignore) 12: reason as String?,
-          if (createdAt != ignore) 13: createdAt as DateTime?,
-          if (updatedAt != ignore) 14: updatedAt as DateTime?,
-          if (isDirty != ignore) 15: isDirty as bool?,
-          if (isDeleted != ignore) 16: isDeleted as bool?,
+          if (ruleId != ignore) 4: ruleId as int?,
+          if (legacyEventId != ignore) 5: legacyEventId as int?,
+          if (slotKey != ignore) 6: slotKey as String?,
+          if (title != ignore) 7: title as String?,
+          if (startTime != ignore) 8: startTime as String?,
+          if (endTime != ignore) 9: endTime as String?,
+          if (type != ignore) 10: type as String?,
+          if (status != ignore) 11: status as String?,
+          if (createdFrom != ignore) 12: createdFrom as String?,
+          if (room != ignore) 13: room as String?,
+          if (faculty != ignore) 14: faculty as String?,
+          if (reason != ignore) 15: reason as String?,
+          if (createdAt != ignore) 16: createdAt as DateTime?,
+          if (updatedAt != ignore) 17: updatedAt as DateTime?,
+          if (isDirty != ignore) 18: isDirty as bool?,
+          if (isDeleted != ignore) 19: isDeleted as bool?,
         }) >
         0;
   }
@@ -383,6 +475,9 @@ sealed class _DailyScheduleOccurrenceLocalUpdateAll {
     String? serverId,
     DateTime? date,
     int? subjectId,
+    int? ruleId,
+    int? legacyEventId,
+    String? slotKey,
     String? title,
     String? startTime,
     String? endTime,
@@ -411,6 +506,9 @@ class _DailyScheduleOccurrenceLocalUpdateAllImpl
     Object? serverId = ignore,
     Object? date = ignore,
     Object? subjectId = ignore,
+    Object? ruleId = ignore,
+    Object? legacyEventId = ignore,
+    Object? slotKey = ignore,
     Object? title = ignore,
     Object? startTime = ignore,
     Object? endTime = ignore,
@@ -429,19 +527,22 @@ class _DailyScheduleOccurrenceLocalUpdateAllImpl
       if (serverId != ignore) 1: serverId as String?,
       if (date != ignore) 2: date as DateTime?,
       if (subjectId != ignore) 3: subjectId as int?,
-      if (title != ignore) 4: title as String?,
-      if (startTime != ignore) 5: startTime as String?,
-      if (endTime != ignore) 6: endTime as String?,
-      if (type != ignore) 7: type as String?,
-      if (status != ignore) 8: status as String?,
-      if (createdFrom != ignore) 9: createdFrom as String?,
-      if (room != ignore) 10: room as String?,
-      if (faculty != ignore) 11: faculty as String?,
-      if (reason != ignore) 12: reason as String?,
-      if (createdAt != ignore) 13: createdAt as DateTime?,
-      if (updatedAt != ignore) 14: updatedAt as DateTime?,
-      if (isDirty != ignore) 15: isDirty as bool?,
-      if (isDeleted != ignore) 16: isDeleted as bool?,
+      if (ruleId != ignore) 4: ruleId as int?,
+      if (legacyEventId != ignore) 5: legacyEventId as int?,
+      if (slotKey != ignore) 6: slotKey as String?,
+      if (title != ignore) 7: title as String?,
+      if (startTime != ignore) 8: startTime as String?,
+      if (endTime != ignore) 9: endTime as String?,
+      if (type != ignore) 10: type as String?,
+      if (status != ignore) 11: status as String?,
+      if (createdFrom != ignore) 12: createdFrom as String?,
+      if (room != ignore) 13: room as String?,
+      if (faculty != ignore) 14: faculty as String?,
+      if (reason != ignore) 15: reason as String?,
+      if (createdAt != ignore) 16: createdAt as DateTime?,
+      if (updatedAt != ignore) 17: updatedAt as DateTime?,
+      if (isDirty != ignore) 18: isDirty as bool?,
+      if (isDeleted != ignore) 19: isDeleted as bool?,
     });
   }
 }
@@ -460,6 +561,9 @@ sealed class _DailyScheduleOccurrenceLocalQueryUpdate {
     String? serverId,
     DateTime? date,
     int? subjectId,
+    int? ruleId,
+    int? legacyEventId,
+    String? slotKey,
     String? title,
     String? startTime,
     String? endTime,
@@ -488,6 +592,9 @@ class _DailyScheduleOccurrenceLocalQueryUpdateImpl
     Object? serverId = ignore,
     Object? date = ignore,
     Object? subjectId = ignore,
+    Object? ruleId = ignore,
+    Object? legacyEventId = ignore,
+    Object? slotKey = ignore,
     Object? title = ignore,
     Object? startTime = ignore,
     Object? endTime = ignore,
@@ -506,19 +613,22 @@ class _DailyScheduleOccurrenceLocalQueryUpdateImpl
       if (serverId != ignore) 1: serverId as String?,
       if (date != ignore) 2: date as DateTime?,
       if (subjectId != ignore) 3: subjectId as int?,
-      if (title != ignore) 4: title as String?,
-      if (startTime != ignore) 5: startTime as String?,
-      if (endTime != ignore) 6: endTime as String?,
-      if (type != ignore) 7: type as String?,
-      if (status != ignore) 8: status as String?,
-      if (createdFrom != ignore) 9: createdFrom as String?,
-      if (room != ignore) 10: room as String?,
-      if (faculty != ignore) 11: faculty as String?,
-      if (reason != ignore) 12: reason as String?,
-      if (createdAt != ignore) 13: createdAt as DateTime?,
-      if (updatedAt != ignore) 14: updatedAt as DateTime?,
-      if (isDirty != ignore) 15: isDirty as bool?,
-      if (isDeleted != ignore) 16: isDeleted as bool?,
+      if (ruleId != ignore) 4: ruleId as int?,
+      if (legacyEventId != ignore) 5: legacyEventId as int?,
+      if (slotKey != ignore) 6: slotKey as String?,
+      if (title != ignore) 7: title as String?,
+      if (startTime != ignore) 8: startTime as String?,
+      if (endTime != ignore) 9: endTime as String?,
+      if (type != ignore) 10: type as String?,
+      if (status != ignore) 11: status as String?,
+      if (createdFrom != ignore) 12: createdFrom as String?,
+      if (room != ignore) 13: room as String?,
+      if (faculty != ignore) 14: faculty as String?,
+      if (reason != ignore) 15: reason as String?,
+      if (createdAt != ignore) 16: createdAt as DateTime?,
+      if (updatedAt != ignore) 17: updatedAt as DateTime?,
+      if (isDirty != ignore) 18: isDirty as bool?,
+      if (isDeleted != ignore) 19: isDeleted as bool?,
     });
   }
 }
@@ -546,6 +656,9 @@ class _DailyScheduleOccurrenceLocalQueryBuilderUpdateImpl
     Object? serverId = ignore,
     Object? date = ignore,
     Object? subjectId = ignore,
+    Object? ruleId = ignore,
+    Object? legacyEventId = ignore,
+    Object? slotKey = ignore,
     Object? title = ignore,
     Object? startTime = ignore,
     Object? endTime = ignore,
@@ -566,19 +679,22 @@ class _DailyScheduleOccurrenceLocalQueryBuilderUpdateImpl
         if (serverId != ignore) 1: serverId as String?,
         if (date != ignore) 2: date as DateTime?,
         if (subjectId != ignore) 3: subjectId as int?,
-        if (title != ignore) 4: title as String?,
-        if (startTime != ignore) 5: startTime as String?,
-        if (endTime != ignore) 6: endTime as String?,
-        if (type != ignore) 7: type as String?,
-        if (status != ignore) 8: status as String?,
-        if (createdFrom != ignore) 9: createdFrom as String?,
-        if (room != ignore) 10: room as String?,
-        if (faculty != ignore) 11: faculty as String?,
-        if (reason != ignore) 12: reason as String?,
-        if (createdAt != ignore) 13: createdAt as DateTime?,
-        if (updatedAt != ignore) 14: updatedAt as DateTime?,
-        if (isDirty != ignore) 15: isDirty as bool?,
-        if (isDeleted != ignore) 16: isDeleted as bool?,
+        if (ruleId != ignore) 4: ruleId as int?,
+        if (legacyEventId != ignore) 5: legacyEventId as int?,
+        if (slotKey != ignore) 6: slotKey as String?,
+        if (title != ignore) 7: title as String?,
+        if (startTime != ignore) 8: startTime as String?,
+        if (endTime != ignore) 9: endTime as String?,
+        if (type != ignore) 10: type as String?,
+        if (status != ignore) 11: status as String?,
+        if (createdFrom != ignore) 12: createdFrom as String?,
+        if (room != ignore) 13: room as String?,
+        if (faculty != ignore) 14: faculty as String?,
+        if (reason != ignore) 15: reason as String?,
+        if (createdAt != ignore) 16: createdAt as DateTime?,
+        if (updatedAt != ignore) 17: updatedAt as DateTime?,
+        if (isDirty != ignore) 18: isDirty as bool?,
+        if (isDeleted != ignore) 19: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -1068,6 +1184,402 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 4));
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 4));
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 4,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdGreaterThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 4,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdGreaterThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 4,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdLessThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 4,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdLessThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 4,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> ruleIdBetween(
+    int? lower,
+    int? upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 4,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 5,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdGreaterThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 5,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdGreaterThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 5,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdLessThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 5,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdLessThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 5,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> legacyEventIdBetween(
+    int? lower,
+    int? upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 5,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 6));
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 6));
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyGreaterThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyGreaterThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyLessThan(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyLessThanOrEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyBetween(
+    String? lower,
+    String? upper, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 6,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        StartsWithCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EndsWithCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+          QAfterFilterCondition>
+      slotKeyContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        ContainsCondition(
+          property: 6,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+          QAfterFilterCondition>
+      slotKeyMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        MatchesCondition(
+          property: 6,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const EqualCondition(
+          property: 6,
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterFilterCondition> slotKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const GreaterCondition(
+          property: 6,
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterFilterCondition> titleEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1075,7 +1587,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1091,7 +1603,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1107,7 +1619,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1123,7 +1635,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1139,7 +1651,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1156,7 +1668,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 4,
+          property: 7,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -1173,7 +1685,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1189,7 +1701,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1203,7 +1715,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 4,
+          property: 7,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1217,7 +1729,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 4,
+          property: 7,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1230,7 +1742,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 4,
+          property: 7,
           value: '',
         ),
       );
@@ -1242,7 +1754,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 4,
+          property: 7,
           value: '',
         ),
       );
@@ -1257,7 +1769,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1273,7 +1785,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1289,7 +1801,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1305,7 +1817,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1321,7 +1833,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1338,7 +1850,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 5,
+          property: 8,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -1355,7 +1867,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1371,7 +1883,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1385,7 +1897,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 5,
+          property: 8,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1399,7 +1911,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 5,
+          property: 8,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1412,7 +1924,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 5,
+          property: 8,
           value: '',
         ),
       );
@@ -1424,7 +1936,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 5,
+          property: 8,
           value: '',
         ),
       );
@@ -1439,7 +1951,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1455,7 +1967,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1471,7 +1983,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1487,7 +1999,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1503,7 +2015,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1520,7 +2032,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 6,
+          property: 9,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -1537,7 +2049,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1553,7 +2065,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1567,7 +2079,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 6,
+          property: 9,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1581,7 +2093,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 6,
+          property: 9,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1594,7 +2106,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 6,
+          property: 9,
           value: '',
         ),
       );
@@ -1606,7 +2118,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 6,
+          property: 9,
           value: '',
         ),
       );
@@ -1621,7 +2133,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1637,7 +2149,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1653,7 +2165,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1669,7 +2181,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1685,7 +2197,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1702,7 +2214,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 7,
+          property: 10,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -1719,7 +2231,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1735,7 +2247,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1749,7 +2261,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 7,
+          property: 10,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1763,7 +2275,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 7,
+          property: 10,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1776,7 +2288,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 7,
+          property: 10,
           value: '',
         ),
       );
@@ -1788,7 +2300,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 7,
+          property: 10,
           value: '',
         ),
       );
@@ -1803,7 +2315,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1819,7 +2331,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1835,7 +2347,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1851,7 +2363,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1867,7 +2379,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1884,7 +2396,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 8,
+          property: 11,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -1901,7 +2413,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1917,7 +2429,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1931,7 +2443,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 8,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1945,7 +2457,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 8,
+          property: 11,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1958,7 +2470,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 8,
+          property: 11,
           value: '',
         ),
       );
@@ -1970,7 +2482,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 8,
+          property: 11,
           value: '',
         ),
       );
@@ -1985,7 +2497,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2001,7 +2513,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2017,7 +2529,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2033,7 +2545,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2049,7 +2561,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2066,7 +2578,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 9,
+          property: 12,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -2083,7 +2595,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2099,7 +2611,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2113,7 +2625,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 9,
+          property: 12,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2127,7 +2639,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 9,
+          property: 12,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -2140,7 +2652,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 9,
+          property: 12,
           value: '',
         ),
       );
@@ -2152,7 +2664,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 9,
+          property: 12,
           value: '',
         ),
       );
@@ -2162,14 +2674,14 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterFilterCondition> roomIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 10));
+      return query.addFilterCondition(const IsNullCondition(property: 13));
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterFilterCondition> roomIsNotNull() {
     return QueryBuilder.apply(not(), (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 10));
+      return query.addFilterCondition(const IsNullCondition(property: 13));
     });
   }
 
@@ -2181,7 +2693,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2197,7 +2709,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2213,7 +2725,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2229,7 +2741,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2245,7 +2757,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2262,7 +2774,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 10,
+          property: 13,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -2279,7 +2791,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2295,7 +2807,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2309,7 +2821,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 10,
+          property: 13,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2323,7 +2835,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 10,
+          property: 13,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -2336,7 +2848,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 10,
+          property: 13,
           value: '',
         ),
       );
@@ -2348,7 +2860,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 10,
+          property: 13,
           value: '',
         ),
       );
@@ -2358,14 +2870,14 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterFilterCondition> facultyIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 11));
+      return query.addFilterCondition(const IsNullCondition(property: 14));
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterFilterCondition> facultyIsNotNull() {
     return QueryBuilder.apply(not(), (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 11));
+      return query.addFilterCondition(const IsNullCondition(property: 14));
     });
   }
 
@@ -2377,7 +2889,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2393,7 +2905,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2409,7 +2921,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2425,7 +2937,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2441,7 +2953,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2458,7 +2970,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 11,
+          property: 14,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -2475,7 +2987,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2491,7 +3003,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2505,7 +3017,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 11,
+          property: 14,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2519,7 +3031,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 11,
+          property: 14,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -2532,7 +3044,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 11,
+          property: 14,
           value: '',
         ),
       );
@@ -2544,7 +3056,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 11,
+          property: 14,
           value: '',
         ),
       );
@@ -2554,14 +3066,14 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterFilterCondition> reasonIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 12));
+      return query.addFilterCondition(const IsNullCondition(property: 15));
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterFilterCondition> reasonIsNotNull() {
     return QueryBuilder.apply(not(), (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 12));
+      return query.addFilterCondition(const IsNullCondition(property: 15));
     });
   }
 
@@ -2573,7 +3085,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2589,7 +3101,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2605,7 +3117,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2621,7 +3133,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2637,7 +3149,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2654,7 +3166,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 12,
+          property: 15,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -2671,7 +3183,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2687,7 +3199,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2701,7 +3213,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 12,
+          property: 15,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -2715,7 +3227,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 12,
+          property: 15,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -2728,7 +3240,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 12,
+          property: 15,
           value: '',
         ),
       );
@@ -2740,7 +3252,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 12,
+          property: 15,
           value: '',
         ),
       );
@@ -2754,7 +3266,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -2768,7 +3280,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -2782,7 +3294,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -2796,7 +3308,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -2810,7 +3322,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -2825,7 +3337,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 13,
+          property: 16,
           lower: lower,
           upper: upper,
         ),
@@ -2840,7 +3352,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 14,
+          property: 17,
           value: value,
         ),
       );
@@ -2854,7 +3366,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 14,
+          property: 17,
           value: value,
         ),
       );
@@ -2868,7 +3380,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 14,
+          property: 17,
           value: value,
         ),
       );
@@ -2882,7 +3394,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 14,
+          property: 17,
           value: value,
         ),
       );
@@ -2896,7 +3408,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 14,
+          property: 17,
           value: value,
         ),
       );
@@ -2911,7 +3423,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 14,
+          property: 17,
           lower: lower,
           upper: upper,
         ),
@@ -2926,7 +3438,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 15,
+          property: 18,
           value: value,
         ),
       );
@@ -2940,7 +3452,7 @@ extension DailyScheduleOccurrenceLocalQueryFilter on QueryBuilder<
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 16,
+          property: 19,
           value: value,
         ),
       );
@@ -3019,10 +3531,59 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> sortByRuleId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> sortByRuleIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> sortByLegacyEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> sortByLegacyEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(5, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> sortBySlotKey({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        6,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> sortBySlotKeyDesc({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(
+        6,
+        sort: Sort.desc,
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        4,
+        7,
         caseSensitive: caseSensitive,
       );
     });
@@ -3032,7 +3593,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByTitleDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        4,
+        7,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3043,7 +3604,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByStartTime({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        5,
+        8,
         caseSensitive: caseSensitive,
       );
     });
@@ -3053,7 +3614,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByStartTimeDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        5,
+        8,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3064,7 +3625,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByEndTime({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        6,
+        9,
         caseSensitive: caseSensitive,
       );
     });
@@ -3074,7 +3635,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByEndTimeDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        6,
+        9,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3085,7 +3646,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByType({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        7,
+        10,
         caseSensitive: caseSensitive,
       );
     });
@@ -3095,7 +3656,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByTypeDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        7,
+        10,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3106,7 +3667,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByStatus({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        8,
+        11,
         caseSensitive: caseSensitive,
       );
     });
@@ -3116,7 +3677,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByStatusDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        8,
+        11,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3127,7 +3688,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByCreatedFrom({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        9,
+        12,
         caseSensitive: caseSensitive,
       );
     });
@@ -3137,7 +3698,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByCreatedFromDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        9,
+        12,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3148,7 +3709,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByRoom({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        10,
+        13,
         caseSensitive: caseSensitive,
       );
     });
@@ -3158,7 +3719,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByRoomDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        10,
+        13,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3169,7 +3730,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByFaculty({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        11,
+        14,
         caseSensitive: caseSensitive,
       );
     });
@@ -3179,7 +3740,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByFacultyDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        11,
+        14,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3190,7 +3751,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByReason({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        12,
+        15,
         caseSensitive: caseSensitive,
       );
     });
@@ -3200,7 +3761,7 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByReasonDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        12,
+        15,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -3210,56 +3771,56 @@ extension DailyScheduleOccurrenceLocalQuerySortBy on QueryBuilder<
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(13);
+      return query.addSortBy(16);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(13, sort: Sort.desc);
+      return query.addSortBy(16, sort: Sort.desc);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(14);
+      return query.addSortBy(17);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(14, sort: Sort.desc);
+      return query.addSortBy(17, sort: Sort.desc);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByIsDirty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(15);
+      return query.addSortBy(18);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByIsDirtyDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(15, sort: Sort.desc);
+      return query.addSortBy(18, sort: Sort.desc);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(16);
+      return query.addSortBy(19);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> sortByIsDeletedDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(16, sort: Sort.desc);
+      return query.addSortBy(19, sort: Sort.desc);
     });
   }
 }
@@ -3323,184 +3884,226 @@ extension DailyScheduleOccurrenceLocalQuerySortThenBy on QueryBuilder<
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByTitle({bool caseSensitive = true}) {
+      QAfterSortBy> thenByRuleId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4, caseSensitive: caseSensitive);
+      return query.addSortBy(4);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByTitleDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByRuleIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4, sort: Sort.desc, caseSensitive: caseSensitive);
+      return query.addSortBy(4, sort: Sort.desc);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByStartTime({bool caseSensitive = true}) {
+      QAfterSortBy> thenByLegacyEventId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(5, caseSensitive: caseSensitive);
+      return query.addSortBy(5);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByStartTimeDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByLegacyEventIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(5, sort: Sort.desc, caseSensitive: caseSensitive);
+      return query.addSortBy(5, sort: Sort.desc);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByEndTime({bool caseSensitive = true}) {
+      QAfterSortBy> thenBySlotKey({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByEndTimeDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenBySlotKeyDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(6, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByType({bool caseSensitive = true}) {
+      QAfterSortBy> thenByTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByTypeDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByTitleDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(7, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByStatus({bool caseSensitive = true}) {
+      QAfterSortBy> thenByStartTime({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByStatusDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByStartTimeDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(8, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByCreatedFrom({bool caseSensitive = true}) {
+      QAfterSortBy> thenByEndTime({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByCreatedFromDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByEndTimeDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByRoom({bool caseSensitive = true}) {
+      QAfterSortBy> thenByType({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByRoomDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByTypeDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(10, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByFaculty({bool caseSensitive = true}) {
+      QAfterSortBy> thenByStatus({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByFacultyDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByStatusDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(11, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByReason({bool caseSensitive = true}) {
+      QAfterSortBy> thenByCreatedFrom({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(12, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByReasonDesc({bool caseSensitive = true}) {
+      QAfterSortBy> thenByCreatedFromDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(12, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByRoom({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(13, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByRoomDesc({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(13, sort: Sort.desc, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByFaculty({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(14, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByFacultyDesc({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(14, sort: Sort.desc, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByReason({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(15, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByReasonDesc({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(15, sort: Sort.desc, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterSortBy> thenByCreatedAt() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(13);
-    });
-  }
-
-  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByCreatedAtDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(13, sort: Sort.desc);
-    });
-  }
-
-  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByUpdatedAt() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(14);
-    });
-  }
-
-  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByUpdatedAtDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(14, sort: Sort.desc);
-    });
-  }
-
-  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByIsDirty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(15);
-    });
-  }
-
-  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByIsDirtyDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(15, sort: Sort.desc);
-    });
-  }
-
-  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(16);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterSortBy> thenByIsDeletedDesc() {
+      QAfterSortBy> thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(16, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(17);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(17, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(18);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(18, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(19);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterSortBy> thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(19, sort: Sort.desc);
     });
   }
 }
@@ -3529,93 +4132,114 @@ extension DailyScheduleOccurrenceLocalQueryWhereDistinct on QueryBuilder<
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByTitle({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByRuleId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(4, caseSensitive: caseSensitive);
+      return query.addDistinctBy(4);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByStartTime({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByLegacyEventId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(5, caseSensitive: caseSensitive);
+      return query.addDistinctBy(5);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByEndTime({bool caseSensitive = true}) {
+      QAfterDistinct> distinctBySlotKey({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(6, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByType({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(7, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByStatus({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByStartTime({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(8, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByCreatedFrom({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByEndTime({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(9, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByRoom({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByType({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(10, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByFaculty({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByStatus({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(11, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
-      QAfterDistinct> distinctByReason({bool caseSensitive = true}) {
+      QAfterDistinct> distinctByCreatedFrom({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(12, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterDistinct> distinctByRoom({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(13, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterDistinct> distinctByFaculty({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(14, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
+      QAfterDistinct> distinctByReason({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(15, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(13);
+      return query.addDistinctBy(16);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterDistinct> distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(14);
+      return query.addDistinctBy(17);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterDistinct> distinctByIsDirty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(15);
+      return query.addDistinctBy(18);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DailyScheduleOccurrenceLocal,
       QAfterDistinct> distinctByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(16);
+      return query.addDistinctBy(19);
     });
   }
 }
@@ -3649,94 +4273,115 @@ extension DailyScheduleOccurrenceLocalQueryProperty1 on QueryBuilder<
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
-      titleProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, int?, QAfterProperty>
+      ruleIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(4);
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
-      startTimeProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, int?, QAfterProperty>
+      legacyEventIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(5);
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
-      endTimeProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, String?, QAfterProperty>
+      slotKeyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
-      typeProperty() {
+      titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
-      statusProperty() {
+      startTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
-      createdFromProperty() {
+      endTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(9);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
+      typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(10);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
+      statusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, String, QAfterProperty>
+      createdFromProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, String?, QAfterProperty>
       roomProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
+      return query.addProperty(13);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, String?, QAfterProperty>
       facultyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(11);
+      return query.addProperty(14);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, String?, QAfterProperty>
       reasonProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(12);
+      return query.addProperty(15);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DateTime, QAfterProperty>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(13);
+      return query.addProperty(16);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, DateTime, QAfterProperty>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(14);
+      return query.addProperty(17);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, bool, QAfterProperty>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(15);
+      return query.addProperty(18);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, bool, QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(16);
+      return query.addProperty(19);
     });
   }
 }
@@ -3771,94 +4416,115 @@ extension DailyScheduleOccurrenceLocalQueryProperty2<R>
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
-      titleProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R, int?), QAfterProperty>
+      ruleIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(4);
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
-      startTimeProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R, int?), QAfterProperty>
+      legacyEventIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(5);
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
-      endTimeProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R, String?), QAfterProperty>
+      slotKeyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
-      typeProperty() {
+      titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
-      statusProperty() {
+      startTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
-      createdFromProperty() {
+      endTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(9);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
+      typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(10);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
+      statusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R, String), QAfterProperty>
+      createdFromProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, String?), QAfterProperty>
       roomProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
+      return query.addProperty(13);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, String?), QAfterProperty>
       facultyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(11);
+      return query.addProperty(14);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, String?), QAfterProperty>
       reasonProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(12);
+      return query.addProperty(15);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, DateTime), QAfterProperty>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(13);
+      return query.addProperty(16);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, DateTime), QAfterProperty>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(14);
+      return query.addProperty(17);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, bool), QAfterProperty>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(15);
+      return query.addProperty(18);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R, bool), QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(16);
+      return query.addProperty(19);
     });
   }
 }
@@ -3893,94 +4559,115 @@ extension DailyScheduleOccurrenceLocalQueryProperty3<R1, R2>
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
-      titleProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, int?), QOperations>
+      ruleIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(4);
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
-      startTimeProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, int?), QOperations>
+      legacyEventIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(5);
     });
   }
 
-  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
-      endTimeProperty() {
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String?), QOperations>
+      slotKeyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(6);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
-      typeProperty() {
+      titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(7);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
-      statusProperty() {
+      startTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(8);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
-      createdFromProperty() {
+      endTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(9);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
+      typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(10);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
+      statusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(11);
+    });
+  }
+
+  QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String), QOperations>
+      createdFromProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(12);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String?), QOperations>
       roomProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
+      return query.addProperty(13);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String?), QOperations>
       facultyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(11);
+      return query.addProperty(14);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, String?), QOperations>
       reasonProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(12);
+      return query.addProperty(15);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, DateTime), QOperations>
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(13);
+      return query.addProperty(16);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, DateTime), QOperations>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(14);
+      return query.addProperty(17);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, bool), QOperations>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(15);
+      return query.addProperty(18);
     });
   }
 
   QueryBuilder<DailyScheduleOccurrenceLocal, (R1, R2, bool), QOperations>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(16);
+      return query.addProperty(19);
     });
   }
 }

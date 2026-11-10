@@ -22,7 +22,7 @@ final analyticsServiceProvider = AutoDisposeProvider<AnalyticsService>.internal(
 
 typedef AnalyticsServiceRef = AutoDisposeProviderRef<AnalyticsService>;
 String _$attendanceAnalyticsHash() =>
-    r'ca58fbafdb48ca282490b483cfdd9edd452a22b1';
+    r'09a94a343553c6764d456d26d64020b76c5f1a97';
 
 /// See also [attendanceAnalytics].
 @ProviderFor(attendanceAnalytics)

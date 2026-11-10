@@ -15,6 +15,15 @@ class DailyScheduleOccurrenceLocal {
   @Index()
   int? subjectId;
 
+  @Index()
+  int? ruleId;
+
+  @Index()
+  int? legacyEventId;
+
+  @Index()
+  String? slotKey;
+
   late String title;
   late String startTime; // "HH:mm"
   late String endTime;   // "HH:mm"

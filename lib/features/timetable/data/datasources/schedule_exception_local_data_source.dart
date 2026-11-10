@@ -53,25 +53,26 @@ class ScheduleExceptionLocalDataSourceImpl implements ScheduleExceptionLocalData
 
   @override
   Future<void> saveException(ScheduleExceptionLocal exception) async {
+    exception.date = _cleanDate(exception.date);
     await _isar.writeAsync((isar) {
       if (exception.id == 0) {
         exception.id = isar.scheduleExceptionLocals.autoIncrement();
       }
-      exception.date = _cleanDate(exception.date);
       isar.scheduleExceptionLocals.put(exception);
     });
   }
 
   @override
   Future<void> deleteException(int id) async {
-    final exception = await _isar.scheduleExceptionLocals.get(id);
-    if (exception != null) {
-      await _isar.writeAsync((isar) {
-        exception.isDeleted = true;
-        exception.updatedAt = DateTime.now().toUtc();
+    await _isar.writeAsync((isar) {
+      final exception = isar.scheduleExceptionLocals.get(id);
+      if (exception != null) {
+        exception
+          ..isDeleted = true
+          ..updatedAt = DateTime.now().toUtc();
         isar.scheduleExceptionLocals.put(exception);
-      });
-    }
+      }
+    });
   }
 
   @override

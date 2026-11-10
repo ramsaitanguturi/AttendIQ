@@ -1,12 +1,14 @@
 import 'package:isar/isar.dart';
 
 import '../models/daily_schedule_occurrence_local.dart';
+import '../utils/occurrence_identity.dart';
 
 abstract class DailyScheduleOccurrenceLocalDataSource {
   Future<DailyScheduleOccurrenceLocal> saveOccurrence(DailyScheduleOccurrenceLocal occurrence);
   Future<List<DailyScheduleOccurrenceLocal>> saveOccurrences(List<DailyScheduleOccurrenceLocal> occurrences);
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForDate(DateTime date);
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForDateRange(DateTime start, DateTime end);
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForSubject(int subjectId);
   Future<DailyScheduleOccurrenceLocal?> getOccurrenceById(int id);
   Future<void> deleteOccurrence(int id);
   Future<List<DailyScheduleOccurrenceLocal>> getAllOccurrences();
@@ -20,26 +22,20 @@ class DailyScheduleOccurrenceLocalDataSourceImpl implements DailyScheduleOccurre
 
   @override
   Future<DailyScheduleOccurrenceLocal> saveOccurrence(DailyScheduleOccurrenceLocal occurrence) async {
-    await _isar.writeAsync((isar) {
-      if (occurrence.id == 0) {
-        occurrence.id = isar.dailyScheduleOccurrenceLocals.autoIncrement();
-      }
-      isar.dailyScheduleOccurrenceLocals.put(occurrence);
+    return _isar.writeAsync<DailyScheduleOccurrenceLocal>((isar) {
+      return upsertCanonicalOccurrenceInWriteTx(isar, occurrence);
     });
-    return occurrence;
   }
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> saveOccurrences(List<DailyScheduleOccurrenceLocal> occurrences) async {
-    await _isar.writeAsync((isar) {
+    return _isar.writeAsync<List<DailyScheduleOccurrenceLocal>>((isar) {
+      final saved = <DailyScheduleOccurrenceLocal>[];
       for (final occurrence in occurrences) {
-        if (occurrence.id == 0) {
-          occurrence.id = isar.dailyScheduleOccurrenceLocals.autoIncrement();
-        }
-        isar.dailyScheduleOccurrenceLocals.put(occurrence);
+        saved.add(upsertCanonicalOccurrenceInWriteTx(isar, occurrence));
       }
+      return saved;
     });
-    return occurrences;
   }
 
   @override
@@ -66,21 +62,31 @@ class DailyScheduleOccurrenceLocalDataSourceImpl implements DailyScheduleOccurre
   }
 
   @override
+  Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForSubject(int subjectId) async {
+    return _isar.dailyScheduleOccurrenceLocals
+        .where()
+        .subjectIdEqualTo(subjectId)
+        .isDeletedEqualTo(false)
+        .findAll();
+  }
+
+  @override
   Future<DailyScheduleOccurrenceLocal?> getOccurrenceById(int id) async {
     return _isar.dailyScheduleOccurrenceLocals.get(id);
   }
 
   @override
   Future<void> deleteOccurrence(int id) async {
-    final occurrence = await _isar.dailyScheduleOccurrenceLocals.get(id);
-    if (occurrence != null) {
-      await _isar.writeAsync((isar) {
-        occurrence.isDeleted = true;
-        occurrence.isDirty = true;
-        occurrence.updatedAt = DateTime.now().toUtc();
+    await _isar.writeAsync((isar) {
+      final occurrence = isar.dailyScheduleOccurrenceLocals.get(id);
+      if (occurrence != null) {
+        occurrence
+          ..isDeleted = true
+          ..isDirty = true
+          ..updatedAt = DateTime.now().toUtc();
         isar.dailyScheduleOccurrenceLocals.put(occurrence);
-      });
-    }
+      }
+    });
   }
 
   @override

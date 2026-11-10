@@ -4,7 +4,8 @@ import '../../database/isar_provider.dart';
 import '../../../features/attendance/presentation/controllers/subject_attendance_stats_provider.dart';
 import '../../../features/semester/presentation/controllers/semester_controller.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
-import '../../event_generator/data/models/event_local.dart';
+import '../../../features/timetable/data/utils/occurrence_identity.dart';
+import '../../../features/timetable/presentation/controllers/today_schedule_provider.dart';
 import 'attendance_ai_context.dart';
 
 part 'ai_context_builder.g.dart';
@@ -25,18 +26,12 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
   // All subject statistics
   final statsList = await ref.watch(allSubjectAttendanceStatsProvider.future);
 
-  // Today's events
-  final todayEvents = await ref.watch(todayEventsProvider.future);
-
-  // Tomorrow's events
+  // Today's & Tomorrow's canonical schedules (Unified Schedule + Rules + Exceptions)
   final now = DateTime.now();
-  final tomorrow = now.add(const Duration(days: 1));
-  final tomorrowUtc = DateTime.utc(tomorrow.year, tomorrow.month, tomorrow.day);
-  final tomorrowEventsLocal = isar.eventLocals
-      .where()
-      .dateEqualTo(tomorrowUtc)
-      .isDeletedEqualTo(false)
-      .findAll();
+  final tomorrow = normalizeUtcDate(now.add(const Duration(days: 1)));
+  final todaySchedule = await ref.watch(todayScheduleProvider().future);
+  final tomorrowSchedule =
+      await ref.watch(todayScheduleProvider(customDate: tomorrow).future);
 
   // 1. Student info
   final studentInfo = {
@@ -116,28 +111,34 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
     }
   }
 
-  // 5. Upcoming Classes (Today & Tomorrow)
+  // 5. Upcoming Classes (Today & Tomorrow) from canonical schedule
   final List<Map<String, dynamic>> upcomingClasses = [];
   final subjectNames = {for (var s in statsList) s.subject.id: s.subject.name};
 
-  for (final e in todayEvents) {
-    upcomingClasses.add({
-      'day': 'Today',
-      'subjectId': e.subjectId,
-      'subjectName': subjectNames[e.subjectId] ?? 'Subject',
-      'time': '${e.startTime}-${e.endTime}',
-      'status': e.status,
-    });
+  if (!todaySchedule.isHoliday) {
+    for (final occ in todaySchedule.occurrences) {
+      upcomingClasses.add({
+        'day': 'Today',
+        'subjectId': occ.subjectId,
+        'subjectName':
+            occ.subjectId != null ? (subjectNames[occ.subjectId] ?? occ.title) : occ.title,
+        'time': '${occ.startTime}-${occ.endTime}',
+        'status': occ.status.toShortString(),
+      });
+    }
   }
 
-  for (final e in tomorrowEventsLocal) {
-    upcomingClasses.add({
-      'day': 'Tomorrow',
-      'subjectId': e.subjectId,
-      'subjectName': subjectNames[e.subjectId] ?? 'Subject',
-      'time': '${e.startTime}-${e.endTime}',
-      'status': e.status,
-    });
+  if (!tomorrowSchedule.isHoliday) {
+    for (final occ in tomorrowSchedule.occurrences) {
+      upcomingClasses.add({
+        'day': 'Tomorrow',
+        'subjectId': occ.subjectId,
+        'subjectName':
+            occ.subjectId != null ? (subjectNames[occ.subjectId] ?? occ.title) : occ.title,
+        'time': '${occ.startTime}-${occ.endTime}',
+        'status': occ.status.toShortString(),
+      });
+    }
   }
 
   // 6. Recent Trends

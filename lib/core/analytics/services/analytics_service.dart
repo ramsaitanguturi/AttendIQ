@@ -13,7 +13,8 @@ import '../../../features/semester/data/repositories/semester_repository_impl.da
 import '../../../features/semester/presentation/controllers/semester_controller.dart';
 import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
-import '../../event_generator/data/models/event_local.dart';
+import '../../../features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import '../../../features/timetable/data/models/weekly_schedule_rule_local.dart';
 
 part 'analytics_service.g.dart';
 
@@ -63,22 +64,28 @@ class AnalyticsService {
       }
     }
 
-    // 4. Fetch events
+    // 4. Fetch canonical schedule occurrences for semester subjects
     final subjectIds = subjects.map((s) => s.id!).toSet();
-    final allEvents =
-        _isar.eventLocals.where().isDeletedEqualTo(false).findAll();
-    final semesterEvents =
-        allEvents.where((e) => subjectIds.contains(e.subjectId)).toList();
+    final allOccurrences = _isar.dailyScheduleOccurrenceLocals
+        .where()
+        .isDeletedEqualTo(false)
+        .findAll();
+    final semesterOccurrences = allOccurrences
+        .where((o) => o.subjectId != null && subjectIds.contains(o.subjectId))
+        .toList();
 
-    // 5. Build logged occurrences
+    // 5. Build logged occurrences using canonical occurrenceId (no legacy eventId collision)
     final occurrences = <LoggedOccurrence>[];
-    final eventMap = {for (var e in semesterEvents) e.id: e};
+    final occurrenceMap = <int, DailyScheduleOccurrenceLocal>{
+      for (final o in semesterOccurrences) o.id: o,
+    };
     for (final rec in records) {
-      final event = eventMap[rec.eventId];
-      if (event != null) {
+      final occId = rec.occurrenceId;
+      final occ = (occId != null && occId > 0) ? occurrenceMap[occId] : null;
+      if (occ != null) {
         occurrences.add(LoggedOccurrence(
-          date: event.date,
-          startTime: event.startTime,
+          date: occ.date,
+          startTime: occ.startTime,
           status: rec.status,
         ));
       } else {
@@ -112,32 +119,26 @@ Future<AttendanceAnalytics?> attendanceAnalytics(
   ref.watch(activeSemesterProvider);
   final service = ref.watch(analyticsServiceProvider);
 
-  // We want to re-run analytics whenever semester, subject, attendance record or event locals change
+  // Re-run analytics whenever semester, subject, attendance, occurrence, or rule tables change.
+  var isDisposed = false;
+  ref.onDispose(() => isDisposed = true);
+
   final isar = ref.watch(isarProvider).requireValue;
-
-  final semStream = isar.semesterLocals.where().watchLazy();
-  final semSub = semStream.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => semSub.cancel());
-
-  final recStream = isar.attendanceRecordLocals.where().watchLazy();
-  final recSub = recStream.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => recSub.cancel());
-
-  final subStream = isar.subjectLocals.where().watchLazy();
-  final subSub = subStream.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => subSub.cancel());
-
-  final eventStream = isar.eventLocals.where().watchLazy();
-  final eventSub = eventStream.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => eventSub.cancel());
+  final watchStreams = <Stream<void>>[
+    isar.semesterLocals.where().watchLazy(),
+    isar.attendanceRecordLocals.where().watchLazy(),
+    isar.subjectLocals.where().watchLazy(),
+    isar.dailyScheduleOccurrenceLocals.where().watchLazy(),
+    isar.weeklyScheduleRuleLocals.where().watchLazy(),
+  ];
+  for (final stream in watchStreams) {
+    final sub = stream.listen((_) {
+      if (!isDisposed) {
+        ref.invalidateSelf();
+      }
+    });
+    ref.onDispose(() => sub.cancel().catchError((Object _) {}));
+  }
 
   return service.getAnalytics();
 }

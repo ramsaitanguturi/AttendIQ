@@ -35,7 +35,7 @@ class AcademicEventLocalDataSourceImpl implements AcademicEventLocalDataSource {
     final start = _cleanDate(startDate);
     final end = _cleanDate(endDate);
 
-    final all = await _isar.academicEventLocals
+    final all = _isar.academicEventLocals
         .where()
         .isDeletedEqualTo(false)
         .findAll();
@@ -62,25 +62,26 @@ class AcademicEventLocalDataSourceImpl implements AcademicEventLocalDataSource {
 
   @override
   Future<void> saveEvent(AcademicEventLocal event) async {
+    event.date = _cleanDate(event.date);
     await _isar.writeAsync((isar) {
       if (event.id == 0) {
         event.id = isar.academicEventLocals.autoIncrement();
       }
-      event.date = _cleanDate(event.date);
       isar.academicEventLocals.put(event);
     });
   }
 
   @override
   Future<void> deleteEvent(int id) async {
-    final event = await _isar.academicEventLocals.get(id);
-    if (event != null) {
-      await _isar.writeAsync((isar) {
-        event.isDeleted = true;
-        event.updatedAt = DateTime.now().toUtc();
+    await _isar.writeAsync((isar) {
+      final event = isar.academicEventLocals.get(id);
+      if (event != null) {
+        event
+          ..isDeleted = true
+          ..updatedAt = DateTime.now().toUtc();
         isar.academicEventLocals.put(event);
-      });
-    }
+      }
+    });
   }
 
   @override

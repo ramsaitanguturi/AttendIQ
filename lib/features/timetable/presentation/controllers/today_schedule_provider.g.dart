@@ -6,7 +6,7 @@ part of 'today_schedule_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$todayScheduleHash() => r'4851539c72483e0c749ca90365a16acffeb80c50';
+String _$todayScheduleHash() => r'8de58188f94720b59e98a1675b1cd742d7d4ba24';
 
 /// Copied from Dart SDK
 class _SystemHash {

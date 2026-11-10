@@ -6,6 +6,7 @@ import '../../data/repositories/attendance_repository_impl.dart';
 import '../../../../core/database/isar_provider.dart';
 import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
 import '../../../timetable/domain/repositories/daily_schedule_occurrence_repository.dart';
+import '../../../timetable/data/utils/occurrence_identity.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
 import '../../../timetable/presentation/controllers/academic_calendar_controller.dart';
 import 'subject_attendance_stats_provider.dart';
@@ -41,14 +42,14 @@ class AttendanceController extends _$AttendanceController {
 
     final updatedOccurrence = occurrence.copyWith(
       status: OccurrenceStatus.PRESENT,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
     );
 
     final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
     if (savedOccurrence.subjectId != null && savedOccurrence.id != null && savedOccurrence.id! > 0) {
-      final eventId = savedOccurrence.id!;
-      final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(eventId);
+      final occId = savedOccurrence.id!;
+      final existingRecord = await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_PRESENT
           : AttendanceStatus.PRESENT;
@@ -56,11 +57,12 @@ class AttendanceController extends _$AttendanceController {
       final record = AttendanceRecord(
         id: existingRecord?.id,
         serverId: existingRecord?.serverId,
-        eventId: eventId,
+        occurrenceId: occId,
+        eventId: occId,
         subjectId: savedOccurrence.subjectId!,
         status: status,
         markedAt: savedOccurrence.date,
-        updatedAt: DateTime.now(),
+        updatedAt: DateTime.now().toUtc(),
         isDirty: false,
         isDeleted: false,
       );
@@ -77,14 +79,14 @@ class AttendanceController extends _$AttendanceController {
 
     final updatedOccurrence = occurrence.copyWith(
       status: OccurrenceStatus.ABSENT,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
     );
 
     final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
     if (savedOccurrence.subjectId != null && savedOccurrence.id != null && savedOccurrence.id! > 0) {
-      final eventId = savedOccurrence.id!;
-      final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(eventId);
+      final occId = savedOccurrence.id!;
+      final existingRecord = await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_ABSENT
           : AttendanceStatus.ABSENT;
@@ -92,11 +94,12 @@ class AttendanceController extends _$AttendanceController {
       final record = AttendanceRecord(
         id: existingRecord?.id,
         serverId: existingRecord?.serverId,
-        eventId: eventId,
+        occurrenceId: occId,
+        eventId: occId,
         subjectId: savedOccurrence.subjectId!,
         status: status,
         markedAt: savedOccurrence.date,
-        updatedAt: DateTime.now(),
+        updatedAt: DateTime.now().toUtc(),
         isDirty: false,
         isDeleted: false,
       );
@@ -113,13 +116,14 @@ class AttendanceController extends _$AttendanceController {
 
     final updatedOccurrence = occurrence.copyWith(
       status: OccurrenceStatus.CANCELLED,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
     );
 
     final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
     if (savedOccurrence.id != null && savedOccurrence.id! > 0) {
-      final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(savedOccurrence.id!);
+      final existingRecord =
+          await attendanceRepo.getAttendanceForOccurrenceAnyStatus(savedOccurrence.id!);
       if (existingRecord?.id != null) {
         await attendanceRepo.deleteAttendanceRecord(existingRecord!.id!);
       }
@@ -138,20 +142,21 @@ class AttendanceController extends _$AttendanceController {
     String? reason,
   }) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
-    final dateUtc = DateTime.utc(date.year, date.month, date.day);
+    final dateUtc = normalizeUtcDate(date);
+    final now = DateTime.now().toUtc();
 
     final occurrence = DailyScheduleOccurrence(
       date: dateUtc,
       subjectId: subjectId,
       title: subjectTitle,
-      startTime: startTime,
-      endTime: endTime,
+      startTime: normalizeTimeSlotPart(startTime),
+      endTime: normalizeTimeSlotPart(endTime),
       type: OccurrenceType.EXTRA_CLASS,
       status: OccurrenceStatus.UPCOMING,
       createdFrom: OccurrenceCreatedFrom.MANUAL,
       reason: reason,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: now,
+      updatedAt: now,
     );
 
     final saved = await occurrenceRepo.saveOccurrence(occurrence);
@@ -165,16 +170,30 @@ class AttendanceController extends _$AttendanceController {
     required AttendanceStatus status,
   }) async {
     final repo = ref.read(attendanceRepositoryProvider);
+    final occRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
 
-    final existing = await repo.getAttendanceForEventAnyStatus(eventId);
+    final occ = await occRepo.getOccurrenceById(eventId);
+    final existing = await repo.getAttendanceForOccurrenceAnyStatus(eventId);
+    final now = DateTime.now().toUtc();
+
+    if (status == AttendanceStatus.CANCELLED) {
+      if (existing?.id != null) {
+        await repo.deleteAttendanceRecord(existing!.id!);
+      }
+      await repo.updateEventStatus(eventId, _mapToEventStatus(status));
+      _invalidateProviders();
+      return;
+    }
+
     final record = AttendanceRecord(
       id: existing?.id,
       serverId: existing?.serverId,
+      occurrenceId: eventId,
       eventId: eventId,
       subjectId: subjectId,
       status: status,
-      markedAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      markedAt: occ != null ? occ.date : now,
+      updatedAt: now,
       isDirty: false,
       isDeleted: false,
     );
@@ -190,19 +209,22 @@ class AttendanceController extends _$AttendanceController {
     required AttendanceStatus status,
   }) async {
     final repo = ref.read(attendanceRepositoryProvider);
+    final dateUtc = normalizeUtcDate(date);
+    final now = DateTime.now().toUtc();
 
-    final eventId = await repo.createExtraClassEvent(
+    final occId = await repo.createExtraClassEvent(
       subjectId,
-      date,
+      dateUtc,
       _mapToEventStatus(status),
     );
 
     final record = AttendanceRecord(
-      eventId: eventId,
+      occurrenceId: occId,
+      eventId: occId,
       subjectId: subjectId,
       status: status,
-      markedAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      markedAt: dateUtc,
+      updatedAt: now,
       isDirty: false,
       isDeleted: false,
     );
@@ -213,6 +235,7 @@ class AttendanceController extends _$AttendanceController {
 
   void _invalidateProviders() {
     ref.invalidate(todayScheduleProvider);
+    ref.invalidate(todayOccurrencesProvider);
     ref.invalidate(allSubjectAttendanceStatsProvider);
     ref.invalidate(overallAttendancePercentageProvider);
     ref.invalidate(analyticsControllerProvider);

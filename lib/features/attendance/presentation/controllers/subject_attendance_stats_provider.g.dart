@@ -7,7 +7,7 @@ part of 'subject_attendance_stats_provider.dart';
 // **************************************************************************
 
 String _$subjectAttendanceStatsHash() =>
-    r'8305f7c8296f438599049f2888db5f7864295ee9';
+    r'12198143888c0b13e311941fc149ac3c257ef264';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -198,29 +198,31 @@ final overallAttendancePercentageProvider =
 );
 
 typedef OverallAttendancePercentageRef = AutoDisposeFutureProviderRef<double>;
-String _$subjectEventsHash() => r'ae6d0b1d920ea5c4bddc0a102f50cfdcde2f2f73';
+String _$subjectOccurrencesHash() =>
+    r'cba62b864af7bff03298dae3e3f3223ba4a6d1f4';
 
-/// See also [subjectEvents].
-@ProviderFor(subjectEvents)
-const subjectEventsProvider = SubjectEventsFamily();
+/// See also [subjectOccurrences].
+@ProviderFor(subjectOccurrences)
+const subjectOccurrencesProvider = SubjectOccurrencesFamily();
 
-/// See also [subjectEvents].
-class SubjectEventsFamily extends Family<AsyncValue<List<EventLocal>>> {
-  /// See also [subjectEvents].
-  const SubjectEventsFamily();
+/// See also [subjectOccurrences].
+class SubjectOccurrencesFamily
+    extends Family<AsyncValue<List<DailyScheduleOccurrence>>> {
+  /// See also [subjectOccurrences].
+  const SubjectOccurrencesFamily();
 
-  /// See also [subjectEvents].
-  SubjectEventsProvider call(
+  /// See also [subjectOccurrences].
+  SubjectOccurrencesProvider call(
     int subjectId,
   ) {
-    return SubjectEventsProvider(
+    return SubjectOccurrencesProvider(
       subjectId,
     );
   }
 
   @override
-  SubjectEventsProvider getProviderOverride(
-    covariant SubjectEventsProvider provider,
+  SubjectOccurrencesProvider getProviderOverride(
+    covariant SubjectOccurrencesProvider provider,
   ) {
     return call(
       provider.subjectId,
@@ -239,33 +241,33 @@ class SubjectEventsFamily extends Family<AsyncValue<List<EventLocal>>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'subjectEventsProvider';
+  String? get name => r'subjectOccurrencesProvider';
 }
 
-/// See also [subjectEvents].
-class SubjectEventsProvider
-    extends AutoDisposeFutureProvider<List<EventLocal>> {
-  /// See also [subjectEvents].
-  SubjectEventsProvider(
+/// See also [subjectOccurrences].
+class SubjectOccurrencesProvider
+    extends AutoDisposeFutureProvider<List<DailyScheduleOccurrence>> {
+  /// See also [subjectOccurrences].
+  SubjectOccurrencesProvider(
     int subjectId,
   ) : this._internal(
-          (ref) => subjectEvents(
-            ref as SubjectEventsRef,
+          (ref) => subjectOccurrences(
+            ref as SubjectOccurrencesRef,
             subjectId,
           ),
-          from: subjectEventsProvider,
-          name: r'subjectEventsProvider',
+          from: subjectOccurrencesProvider,
+          name: r'subjectOccurrencesProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$subjectEventsHash,
-          dependencies: SubjectEventsFamily._dependencies,
+                  : _$subjectOccurrencesHash,
+          dependencies: SubjectOccurrencesFamily._dependencies,
           allTransitiveDependencies:
-              SubjectEventsFamily._allTransitiveDependencies,
+              SubjectOccurrencesFamily._allTransitiveDependencies,
           subjectId: subjectId,
         );
 
-  SubjectEventsProvider._internal(
+  SubjectOccurrencesProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -279,12 +281,14 @@ class SubjectEventsProvider
 
   @override
   Override overrideWith(
-    FutureOr<List<EventLocal>> Function(SubjectEventsRef provider) create,
+    FutureOr<List<DailyScheduleOccurrence>> Function(
+            SubjectOccurrencesRef provider)
+        create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: SubjectEventsProvider._internal(
-        (ref) => create(ref as SubjectEventsRef),
+      override: SubjectOccurrencesProvider._internal(
+        (ref) => create(ref as SubjectOccurrencesRef),
         from: from,
         name: null,
         dependencies: null,
@@ -296,13 +300,14 @@ class SubjectEventsProvider
   }
 
   @override
-  AutoDisposeFutureProviderElement<List<EventLocal>> createElement() {
-    return _SubjectEventsProviderElement(this);
+  AutoDisposeFutureProviderElement<List<DailyScheduleOccurrence>>
+      createElement() {
+    return _SubjectOccurrencesProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SubjectEventsProvider && other.subjectId == subjectId;
+    return other is SubjectOccurrencesProvider && other.subjectId == subjectId;
   }
 
   @override
@@ -314,34 +319,37 @@ class SubjectEventsProvider
   }
 }
 
-mixin SubjectEventsRef on AutoDisposeFutureProviderRef<List<EventLocal>> {
+mixin SubjectOccurrencesRef
+    on AutoDisposeFutureProviderRef<List<DailyScheduleOccurrence>> {
   /// The parameter `subjectId` of this provider.
   int get subjectId;
 }
 
-class _SubjectEventsProviderElement
-    extends AutoDisposeFutureProviderElement<List<EventLocal>>
-    with SubjectEventsRef {
-  _SubjectEventsProviderElement(super.provider);
+class _SubjectOccurrencesProviderElement
+    extends AutoDisposeFutureProviderElement<List<DailyScheduleOccurrence>>
+    with SubjectOccurrencesRef {
+  _SubjectOccurrencesProviderElement(super.provider);
 
   @override
-  int get subjectId => (origin as SubjectEventsProvider).subjectId;
+  int get subjectId => (origin as SubjectOccurrencesProvider).subjectId;
 }
 
-String _$todayEventsHash() => r'de426b24fbf4bbc03826391a566eff85a273c4db';
+String _$todayOccurrencesHash() => r'0c9d1390184bcbd16d03d15e7841aa950122465e';
 
-/// See also [todayEvents].
-@ProviderFor(todayEvents)
-final todayEventsProvider =
-    AutoDisposeFutureProvider<List<EventLocal>>.internal(
-  todayEvents,
-  name: r'todayEventsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$todayEventsHash,
+/// See also [todayOccurrences].
+@ProviderFor(todayOccurrences)
+final todayOccurrencesProvider =
+    AutoDisposeFutureProvider<List<DailyScheduleOccurrence>>.internal(
+  todayOccurrences,
+  name: r'todayOccurrencesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$todayOccurrencesHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef TodayEventsRef = AutoDisposeFutureProviderRef<List<EventLocal>>;
+typedef TodayOccurrencesRef
+    = AutoDisposeFutureProviderRef<List<DailyScheduleOccurrence>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

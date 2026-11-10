@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:attend_iq/app/app_router.dart';
 import 'package:attend_iq/core/ai/context/ai_context_builder.dart';
 import 'package:attend_iq/core/analytics/services/analytics_service.dart';
+import 'package:attend_iq/core/backup/backup_importer.dart';
+import 'package:attend_iq/core/backup/backup_service.dart';
 import 'package:attend_iq/core/constants/app_constants.dart';
 import 'package:attend_iq/core/database/isar_provider.dart';
 import 'package:attend_iq/core/errors/app_exception.dart';
@@ -28,6 +31,7 @@ import 'package:attend_iq/features/timetable/data/models/timetable_template_loca
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:isar/isar.dart';
 
 class _LegacySemesterLocal {
@@ -1185,6 +1189,880 @@ void main() {
       expect(created, isNotNull);
       expect(created!.name, equals('Fall 2026'));
       expect(created.status, equals(SemesterStatus.active));
+    });
+  });
+
+  group('BUG-017 Edge Case 1: Active semester archiving & zero-active flow',
+      () {
+    test(
+        'archiving the currently active semester leaves zero active semesters cleanly without auto-promoting draft/archived siblings',
+        () async {
+      if (nativeLibPath == null) return;
+
+      final tempDir =
+          await Directory.systemTemp.createTemp('attendiq_bug017_ec1_');
+      Isar? isar;
+      try {
+        isar = openTempIsar(tempDir);
+        final repo = SemesterRepositoryImpl(isar);
+
+        await repo.createSemester(
+          Semester(
+            name: 'Fall 2026',
+            startDate: DateTime(2026, 8, 1),
+            endDate: DateTime(2026, 12, 15),
+            requiredAttendanceRate: 75.0,
+            status: SemesterStatus.active,
+          ),
+        );
+        await repo.createSemester(
+          Semester(
+            name: 'Spring 2027 (Draft)',
+            startDate: DateTime(2027, 1, 10),
+            endDate: DateTime(2027, 5, 20),
+            requiredAttendanceRate: 80.0,
+            status: SemesterStatus.draft,
+          ),
+        );
+
+        final activeBefore = await repo.getActiveSemester();
+        expect(activeBefore, isNotNull);
+        expect(activeBefore!.name, equals('Fall 2026'));
+
+        // Archive the currently active semester
+        await repo.archiveSemester(activeBefore.localId!);
+
+        // Zero active semesters remain; draft sibling stays draft (not auto-activated)
+        expect(await repo.getActiveSemester(), isNull);
+        expect(await repo.hasActiveSemester(), isFalse);
+        final activeRows = isar.semesterLocals
+            .where()
+            .isActiveEqualTo(true)
+            .isDeletedEqualTo(false)
+            .findAll();
+        expect(activeRows, isEmpty);
+
+        final allAfter = await repo.getAllSemesters();
+        expect(allAfter, hasLength(2));
+        expect(
+          allAfter.firstWhere((s) => s.name == 'Fall 2026').status,
+          equals(SemesterStatus.archived),
+        );
+        expect(
+          allAfter.firstWhere((s) => s.name == 'Spring 2027 (Draft)').status,
+          equals(SemesterStatus.draft),
+        );
+
+        // Archiving again is idempotent
+        await repo.archiveSemester(activeBefore.localId!);
+        expect(await repo.getActiveSemester(), isNull);
+
+        // Downstream consumers handle zero active semesters safely
+        final container = ProviderContainer(
+          overrides: [
+            isarProvider.overrideWith((ref) async => isar!),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(isarProvider.future);
+
+        final reportService = container.read(reportServiceProvider);
+        expect(await reportService.getActiveSemesterLocalId(), isNull);
+        expect(await reportService.generateSemesterReport(), isNull);
+
+        final analytics =
+            await container.read(analyticsServiceProvider).getAnalytics();
+        expect(analytics, isNull);
+
+        final notifDb = IsarNotificationDatabaseImpl(isar);
+        expect(await notifDb.getActiveSemester(), isNull);
+      } finally {
+        isar?.close();
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
+    });
+
+    testWidgets(
+        'when zero active semesters exist due to archiving, OnboardingPage offers Saved sheet access and reactivation redirects cleanly',
+        (tester) async {
+      final fakeRepo = _InMemorySemesterRepository()
+        ..seed([
+          Semester(
+            localId: 1,
+            id: 'sem-1',
+            name: 'Fall 2026',
+            startDate: DateTime(2026, 8, 1),
+            endDate: DateTime(2026, 12, 15),
+            requiredAttendanceRate: 75.0,
+            status: SemesterStatus.active,
+          ),
+        ]);
+
+      // Archive the sole active semester so 0 active semesters remain.
+      await fakeRepo.archiveSemester(1);
+      expect(await fakeRepo.hasActiveSemester(), isFalse);
+
+      late GoRouter capturedRouter;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            semesterRepositoryProvider.overrideWithValue(fakeRepo),
+            settingsRepositoryProvider
+                .overrideWithValue(_FakeSettingsRepository()),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              final router = ref.watch(appRouterProvider);
+              capturedRouter = router;
+              return MaterialApp.router(routerConfig: router);
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // App starts at /splash -> redirects to /onboarding when 0 active semesters exist.
+      expect(
+        capturedRouter.routerDelegate.currentConfiguration.uri.path,
+        equals('/onboarding'),
+      );
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('onboarding_manage_semesters_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Saved (1)'), findsOneWidget);
+
+      // User can open Manage Semesters from Onboarding and reactivate Fall 2026.
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('onboarding_manage_semesters_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Manage Semesters'), findsOneWidget);
+      expect(find.text('Fall 2026'), findsOneWidget);
+      expect(find.text('Archived'), findsOneWidget);
+
+      await tester.tap(find.text('Activate'));
+      await tester.pumpAndSettle();
+
+      final reactivated = await fakeRepo.getActiveSemester();
+      expect(reactivated, isNotNull);
+      expect(reactivated!.name, equals('Fall 2026'));
+      expect(reactivated.status, equals(SemesterStatus.active));
+      expect(
+        capturedRouter.routerDelegate.currentConfiguration.uri.path,
+        equals('/dashboard'),
+      );
+      expect(find.byType(OnboardingPage), findsNothing);
+      expect(find.text('Manage Semesters'), findsNothing);
+    });
+  });
+
+  group('BUG-017 Edge Case 2: Legacy, multi-active, and partial migrations',
+      () {
+    test(
+        'migrates multiple pre-BUG-017 legacy semesters with soft-deleted rows cleanly and remains idempotent across repeated restarts',
+        () async {
+      if (nativeLibPath == null) return;
+
+      final tempDir =
+          await Directory.systemTemp.createTemp('attendiq_bug017_ec2_multi_');
+      Isar? isar;
+      try {
+        // Seed 3 non-deleted + 1 soft-deleted pre-BUG-017 legacy records
+        final legacyIsar = Isar.open(
+          schemas: <IsarGeneratedSchema>[_legacySemesterSchema],
+          name: AppConstants.isarDbName,
+          directory: tempDir.path,
+        );
+        legacyIsar.write((db) {
+          final col = db.collection<int, _LegacySemesterLocal>();
+          col.putAll([
+            _LegacySemesterLocal()
+              ..id = col.autoIncrement()
+              ..serverId = 'leg-1'
+              ..name = 'Fall 2024'
+              ..startDate = DateTime(2024, 8, 1)
+              ..endDate = DateTime(2024, 12, 15)
+              ..requiredAttendanceRate = 75.0
+              ..createdAt = DateTime.utc(2024, 8, 1)
+              ..updatedAt = DateTime.utc(2024, 8, 1),
+            _LegacySemesterLocal()
+              ..id = col.autoIncrement()
+              ..serverId = 'leg-2'
+              ..name = 'Spring 2025'
+              ..startDate = DateTime(2025, 1, 10)
+              ..endDate = DateTime(2025, 5, 20)
+              ..requiredAttendanceRate = 80.0
+              ..createdAt = DateTime.utc(2025, 1, 10)
+              ..updatedAt = DateTime.utc(2025, 1, 10),
+            _LegacySemesterLocal()
+              ..id = col.autoIncrement()
+              ..serverId = 'leg-3'
+              ..name = 'Fall 2025'
+              ..startDate = DateTime(2025, 8, 1)
+              ..endDate = DateTime(2025, 12, 15)
+              ..requiredAttendanceRate = 85.0
+              ..createdAt = DateTime.utc(2025, 8, 1)
+              ..updatedAt = DateTime.utc(2025, 8, 1),
+            _LegacySemesterLocal()
+              ..id = col.autoIncrement()
+              ..serverId = 'leg-del'
+              ..name = 'Deleted Sem'
+              ..startDate = DateTime(2026, 1, 10)
+              ..endDate = DateTime(2026, 5, 20)
+              ..requiredAttendanceRate = 75.0
+              ..createdAt = DateTime.utc(2026, 1, 10)
+              ..updatedAt = DateTime.utc(2026, 1, 10)
+              ..isDeleted = true,
+          ]);
+        });
+        legacyIsar.close();
+
+        // Startup #1 via isarProvider
+        final container1 = ProviderContainer(
+          overrides: [
+            databaseDirectoryResolverProvider.overrideWithValue(
+              () async => tempDir.path,
+            ),
+          ],
+        );
+        final isar1 = await container1.read(isarProvider.future);
+        isar = isar1;
+
+        final allRows1 = isar1.semesterLocals.where().findAll();
+        expect(allRows1, hasLength(4));
+
+        final activeRow =
+            allRows1.where((s) => s.isActive && !s.isDeleted).toList();
+        expect(activeRow, hasLength(1));
+        expect(activeRow.single.name, equals('Fall 2025'));
+        expect(activeRow.single.status, equals(SemesterLocal.statusActive));
+        expect(activeRow.single.requiredAttendanceRate, equals(85.0));
+
+        final deletedRow = allRows1.firstWhere((s) => s.serverId == 'leg-del');
+        expect(deletedRow.isDeleted, isTrue);
+        expect(deletedRow.isActive, isFalse);
+        expect(deletedRow.status, equals(SemesterLocal.statusArchived));
+
+        final timestampsAfterFirst = <int, DateTime>{
+          for (final row in allRows1) row.id: row.updatedAt,
+        };
+
+        isar1.close();
+        container1.dispose();
+        isar = null;
+
+        // Startup #2 via fresh isarProvider (idempotent no-op)
+        final container2 = ProviderContainer(
+          overrides: [
+            databaseDirectoryResolverProvider.overrideWithValue(
+              () async => tempDir.path,
+            ),
+          ],
+        );
+        addTearDown(container2.dispose);
+        final isar2 = await container2.read(isarProvider.future);
+        isar = isar2;
+
+        expect(await migrateLegacySemesters(isar2), equals(0));
+        final allRows2 = isar2.semesterLocals.where().findAll();
+        expect(allRows2, hasLength(4));
+        for (final row in allRows2) {
+          expect(row.updatedAt, equals(timestampsAfterFirst[row.id]));
+        }
+        final repo2 = SemesterRepositoryImpl(isar2);
+        final active2 = await repo2.getActiveSemester();
+        expect(active2!.name, equals('Fall 2025'));
+      } finally {
+        if (isar != null && isar.isOpen) {
+          isar.close();
+        }
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
+    });
+
+    test(
+        'normalizes multiple active records, preserves draft/archived semantics, and handles partially migrated records safely without reactivation',
+        () async {
+      if (nativeLibPath == null) return;
+
+      final tempDir =
+          await Directory.systemTemp.createTemp('attendiq_bug017_ec2_partial_');
+      Isar? isar;
+      try {
+        isar = openTempIsar(tempDir);
+        final repo = SemesterRepositoryImpl(isar);
+        final now = DateTime.utc(2026, 1, 1);
+
+        // Scenario A: Multiple active rows + draft + soft-deleted falsely marked active
+        isar.write((db) {
+          db.semesterLocals.putAll([
+            SemesterLocal()
+              ..id = db.semesterLocals.autoIncrement()
+              ..serverId = 'act-1'
+              ..name = 'Active 1'
+              ..startDate = DateTime(2025, 1, 1)
+              ..endDate = DateTime(2025, 5, 1)
+              ..requiredAttendanceRate = 75.0
+              ..status = SemesterLocal.statusActive
+              ..isActive = true
+              ..createdAt = now
+              ..updatedAt = now,
+            SemesterLocal()
+              ..id = db.semesterLocals.autoIncrement()
+              ..serverId = 'act-2'
+              ..name = 'Active 2'
+              ..startDate = DateTime(2025, 8, 1)
+              ..endDate = DateTime(2025, 12, 1)
+              ..requiredAttendanceRate = 75.0
+              ..status = SemesterLocal.statusActive
+              ..isActive = true
+              ..createdAt = now
+              ..updatedAt = now,
+            SemesterLocal()
+              ..id = db.semesterLocals.autoIncrement()
+              ..serverId = 'act-3'
+              ..name = 'Active 3 (Latest)'
+              ..startDate = DateTime(2026, 1, 10)
+              ..endDate = DateTime(2026, 5, 20)
+              ..requiredAttendanceRate = 80.0
+              ..status = SemesterLocal.statusActive
+              ..isActive = true
+              ..createdAt = now
+              ..updatedAt = now,
+            SemesterLocal()
+              ..id = db.semesterLocals.autoIncrement()
+              ..serverId = 'draft-1'
+              ..name = 'Planned Future'
+              ..startDate = DateTime(2026, 8, 1)
+              ..endDate = DateTime(2026, 12, 15)
+              ..requiredAttendanceRate = 75.0
+              ..status = SemesterLocal.statusDraft
+              ..isActive = false
+              ..createdAt = now
+              ..updatedAt = now,
+            SemesterLocal()
+              ..id = db.semesterLocals.autoIncrement()
+              ..serverId = 'del-active'
+              ..name = 'Deleted Active'
+              ..startDate = DateTime(2024, 1, 1)
+              ..endDate = DateTime(2024, 5, 1)
+              ..requiredAttendanceRate = 75.0
+              ..status = SemesterLocal.statusActive
+              ..isActive = true
+              ..isDeleted = true
+              ..createdAt = now
+              ..updatedAt = now,
+          ]);
+        });
+
+        // Even before migration runs, getAllSemesters must never present 2 active rows
+        final preMigrationList = await repo.getAllSemesters();
+        expect(
+          preMigrationList.where((s) => s.status == SemesterStatus.active),
+          hasLength(1),
+        );
+
+        // act-1, act-2 archived; del-active fixed
+        final fixedCountA = await migrateLegacySemesters(isar);
+        expect(fixedCountA, equals(3));
+        expect(await migrateLegacySemesters(isar), equals(0));
+
+        final afterA = await repo.getAllSemesters();
+        expect(afterA, hasLength(4));
+        expect(
+          afterA.singleWhere((s) => s.isActive).name,
+          equals('Active 3 (Latest)'),
+        );
+        expect(
+          afterA.firstWhere((s) => s.name == 'Planned Future').status,
+          equals(SemesterStatus.draft),
+        );
+
+        // Scenario B: Partially migrated rows where status is empty (''),
+        // one legacy row carries isActive=true and a newer unmigrated row has isActive=false,
+        // plus a mismatched archived row (status='archived', isActive=true).
+        isar.write((db) {
+          db.semesterLocals.clear();
+          db.semesterLocals.putAll([
+            SemesterLocal()
+              ..id = 1
+              ..serverId = 'p-intended-active'
+              ..name = 'Intended Active'
+              ..startDate = DateTime(2025, 8, 1)
+              ..endDate = DateTime(2025, 12, 15)
+              ..requiredAttendanceRate = 75.0
+              ..status = ''
+              ..isActive = true
+              ..createdAt = now
+              ..updatedAt = now,
+            SemesterLocal()
+              ..id = 2
+              ..serverId = 'p-old-unflagged'
+              ..name = 'Unflagged Legacy'
+              ..startDate = DateTime(2026, 1, 10)
+              ..endDate = DateTime(2026, 5, 20)
+              ..requiredAttendanceRate = 75.0
+              ..status = ''
+              ..isActive = false
+              ..createdAt = now
+              ..updatedAt = now,
+            SemesterLocal()
+              ..id = 3
+              ..serverId = 'p-mismatched-archived'
+              ..name = 'Archived Mismatched'
+              ..startDate = DateTime(2024, 8, 1)
+              ..endDate = DateTime(2024, 12, 15)
+              ..requiredAttendanceRate = 75.0
+              ..status = SemesterLocal.statusArchived
+              ..isActive = true
+              ..createdAt = now
+              ..updatedAt = now,
+          ]);
+        });
+
+        await migrateLegacySemesters(isar);
+        expect(await migrateLegacySemesters(isar), equals(0));
+
+        final activeAfterB = await repo.getActiveSemester();
+        expect(activeAfterB, isNotNull);
+        expect(activeAfterB!.name, equals('Intended Active'));
+        expect(
+          (await repo.getAllSemesters())
+              .firstWhere((s) => s.name == 'Unflagged Legacy')
+              .status,
+          equals(SemesterStatus.archived),
+        );
+        expect(
+          (await repo.getAllSemesters())
+              .firstWhere((s) => s.name == 'Archived Mismatched')
+              .status,
+          equals(SemesterStatus.archived),
+        );
+
+        // Scenario C: Partially migrated DB where ONLY archived/draft rows exist
+        // with stale isActive=true flags -> must fix isActive=false without reactivating!
+        isar.write((db) {
+          db.semesterLocals.clear();
+          db.semesterLocals.putAll([
+            SemesterLocal()
+              ..id = 1
+              ..serverId = 'c-arch'
+              ..name = 'Archived Stale Flag'
+              ..startDate = DateTime(2025, 8, 1)
+              ..endDate = DateTime(2025, 12, 15)
+              ..requiredAttendanceRate = 75.0
+              ..status = SemesterLocal.statusArchived
+              ..isActive = true
+              ..createdAt = now
+              ..updatedAt = now,
+            SemesterLocal()
+              ..id = 2
+              ..serverId = 'c-draft'
+              ..name = 'Draft Stale Flag'
+              ..startDate = DateTime(2026, 1, 10)
+              ..endDate = DateTime(2026, 5, 20)
+              ..requiredAttendanceRate = 80.0
+              ..status = SemesterLocal.statusDraft
+              ..isActive = true
+              ..createdAt = now
+              ..updatedAt = now,
+          ]);
+        });
+
+        await migrateLegacySemesters(isar);
+        expect(await migrateLegacySemesters(isar), equals(0));
+        expect(await repo.getActiveSemester(), isNull);
+        expect(await repo.hasActiveSemester(), isFalse);
+        final rowsC = isar.semesterLocals.where().findAll();
+        expect(rowsC.every((r) => !r.isActive), isTrue);
+        expect(
+          rowsC.firstWhere((r) => r.name == 'Draft Stale Flag').status,
+          equals(SemesterLocal.statusDraft),
+        );
+      } finally {
+        isar?.close();
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
+    });
+  });
+
+  group('BUG-017 Edge Case 3: BackupImporter & BackupService compatibility',
+      () {
+    test(
+        'BackupImporter restores pre-BUG-017 backup missing status/isActive with single active invariant intact',
+        () async {
+      if (nativeLibPath == null) return;
+
+      final tempDir =
+          await Directory.systemTemp.createTemp('attendiq_bug017_ec3_legacy_');
+      Isar? isar;
+      try {
+        isar = openTempIsar(tempDir);
+        final importer = BackupImporter(isar);
+        final repo = SemesterRepositoryImpl(isar);
+
+        // Pre-BUG-017 JSON payload: no status or isActive keys on any semester
+        final preBug017Json = jsonEncode({
+          'metadata': {
+            'appVersion': '1.1.0',
+            'backupVersion': 1,
+            'createdAt': '2026-07-19T00:00:00.000Z',
+            'devicePlatform': 'android',
+          },
+          'userPreferences': <Map<String, dynamic>>[],
+          'semesters': [
+            {
+              'id': 1,
+              'serverId': 'old-sem-1',
+              'name': 'Fall 2025',
+              'startDate': '2025-08-01T00:00:00.000Z',
+              'endDate': '2025-12-15T00:00:00.000Z',
+              'requiredAttendanceRate': 75.0,
+              'createdAt': '2025-08-01T00:00:00.000Z',
+              'updatedAt': '2025-08-01T00:00:00.000Z',
+              'isDirty': false,
+              'isDeleted': false,
+            },
+            {
+              'id': 2,
+              'serverId': 'old-sem-2',
+              'name': 'Spring 2026',
+              'startDate': '2026-01-10T00:00:00.000Z',
+              'endDate': '2026-05-20T00:00:00.000Z',
+              'requiredAttendanceRate': 80.0,
+              'createdAt': '2026-01-10T00:00:00.000Z',
+              'updatedAt': '2026-01-10T00:00:00.000Z',
+              'isDirty': false,
+              'isDeleted': false,
+            },
+            {
+              'id': 3,
+              'serverId': 'old-sem-del',
+              'name': 'Deleted Sem',
+              'startDate': '2024-08-01T00:00:00.000Z',
+              'endDate': '2024-12-15T00:00:00.000Z',
+              'requiredAttendanceRate': 75.0,
+              'createdAt': '2024-08-01T00:00:00.000Z',
+              'updatedAt': '2024-08-01T00:00:00.000Z',
+              'isDirty': false,
+              'isDeleted': true,
+            },
+          ],
+          'subjects': <Map<String, dynamic>>[],
+          'attendance': <Map<String, dynamic>>[],
+          'timetable': <Map<String, dynamic>>[],
+          'events': <Map<String, dynamic>>[],
+          'notifications': <Map<String, dynamic>>[],
+        });
+
+        await importer.importData(
+          preBug017Json,
+          strategy: ImportStrategy.replace,
+        );
+
+        // Immediately after BackupImporter completes (without restarting app):
+        final activeRows =
+            isar.semesterLocals.where().isActiveEqualTo(true).findAll();
+        expect(activeRows, hasLength(1));
+        expect(activeRows.single.name, equals('Spring 2026'));
+        expect(activeRows.single.status, equals(SemesterLocal.statusActive));
+
+        final deletedRow = isar.semesterLocals.get(3);
+        expect(deletedRow, isNotNull);
+        expect(deletedRow!.isDeleted, isTrue);
+        expect(deletedRow.isActive, isFalse);
+        expect(deletedRow.status, equals(SemesterLocal.statusArchived));
+
+        final activeSem = await repo.getActiveSemester();
+        expect(activeSem, isNotNull);
+        expect(activeSem!.name, equals('Spring 2026'));
+
+        final allSemesters = await repo.getAllSemesters();
+        expect(allSemesters, hasLength(2));
+        expect(
+          allSemesters.where((s) => s.status == SemesterStatus.active),
+          hasLength(1),
+        );
+        expect(
+          allSemesters.firstWhere((s) => s.name == 'Fall 2025').status,
+          equals(SemesterStatus.archived),
+        );
+
+        // Startup migration must see an already-clean DB (0 writes)
+        expect(await migrateLegacySemesters(isar), equals(0));
+      } finally {
+        isar?.close();
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
+    });
+
+    test(
+        'BackupImporter honors explicit legacy isActive flag when status is missing, preserves all-archived zero-active backups, and keeps single active on merge',
+        () async {
+      if (nativeLibPath == null) return;
+
+      final tempDir =
+          await Directory.systemTemp.createTemp('attendiq_bug017_ec3_modes_');
+      Isar? isar;
+      try {
+        isar = openTempIsar(tempDir);
+        final importer = BackupImporter(isar);
+        final repo = SemesterRepositoryImpl(isar);
+
+        // 1. Legacy backup missing `status` where `id=1` has `isActive: true`
+        //    and `id=2` has `isActive: false` -> id=1 must be restored as active.
+        final legacyWithIsActiveJson = jsonEncode({
+          'metadata': {
+            'appVersion': '1.1.0',
+            'backupVersion': 1,
+            'createdAt': '2026-07-19T00:00:00.000Z',
+            'devicePlatform': 'android',
+          },
+          'userPreferences': <Map<String, dynamic>>[],
+          'semesters': [
+            {
+              'id': 1,
+              'serverId': 'sem-target',
+              'name': 'Spring 2026 (Intended Active)',
+              'startDate': '2026-01-10T00:00:00.000Z',
+              'endDate': '2026-05-20T00:00:00.000Z',
+              'requiredAttendanceRate': 75.0,
+              'isActive': true,
+              'createdAt': '2026-01-10T00:00:00.000Z',
+              'updatedAt': '2026-01-10T00:00:00.000Z',
+            },
+            {
+              'id': 2,
+              'serverId': 'sem-older',
+              'name': 'Fall 2025 (Inactive)',
+              'startDate': '2025-08-01T00:00:00.000Z',
+              'endDate': '2025-12-15T00:00:00.000Z',
+              'requiredAttendanceRate': 75.0,
+              'isActive': false,
+              'createdAt': '2025-08-01T00:00:00.000Z',
+              'updatedAt': '2025-08-01T00:00:00.000Z',
+            },
+          ],
+          'subjects': <Map<String, dynamic>>[],
+          'attendance': <Map<String, dynamic>>[],
+          'timetable': <Map<String, dynamic>>[],
+          'events': <Map<String, dynamic>>[],
+          'notifications': <Map<String, dynamic>>[],
+        });
+
+        await importer.importData(
+          legacyWithIsActiveJson,
+          strategy: ImportStrategy.replace,
+        );
+
+        final active1 = await repo.getActiveSemester();
+        expect(active1, isNotNull);
+        expect(active1!.name, equals('Spring 2026 (Intended Active)'));
+        expect(active1.status, equals(SemesterStatus.active));
+        expect(
+          (await repo.getAllSemesters())
+              .firstWhere((s) => s.name == 'Fall 2025 (Inactive)')
+              .status,
+          equals(SemesterStatus.archived),
+        );
+
+        // 2. Merge strategy importing another pre-BUG-017 semester must not leave 2 active rows
+        final mergeLegacyJson = jsonEncode({
+          'metadata': {
+            'appVersion': '1.1.0',
+            'backupVersion': 1,
+            'createdAt': '2026-07-19T00:00:00.000Z',
+            'devicePlatform': 'android',
+          },
+          'userPreferences': <Map<String, dynamic>>[],
+          'semesters': [
+            {
+              'id': 1,
+              'serverId': 'sem-merged',
+              'name': 'Fall 2026 (Merged Legacy)',
+              'startDate': '2026-08-01T00:00:00.000Z',
+              'endDate': '2026-12-15T00:00:00.000Z',
+              'requiredAttendanceRate': 80.0,
+              'createdAt': '2026-08-01T00:00:00.000Z',
+              'updatedAt': '2026-08-01T00:00:00.000Z',
+            },
+          ],
+          'subjects': <Map<String, dynamic>>[],
+          'attendance': <Map<String, dynamic>>[],
+          'timetable': <Map<String, dynamic>>[],
+          'events': <Map<String, dynamic>>[],
+          'notifications': <Map<String, dynamic>>[],
+        });
+
+        await importer.importData(
+          mergeLegacyJson,
+          strategy: ImportStrategy.merge,
+        );
+
+        final activeAfterMergeRows =
+            isar.semesterLocals.where().isActiveEqualTo(true).findAll();
+        expect(activeAfterMergeRows, hasLength(1));
+        expect(
+          activeAfterMergeRows.single.name,
+          equals('Fall 2026 (Merged Legacy)'),
+        );
+
+        // 3. Replace with an all-archived / draft backup keeps zero active semesters
+        final zeroActiveJson = jsonEncode({
+          'metadata': {
+            'appVersion': '1.1.0',
+            'backupVersion': 2,
+            'createdAt': '2026-07-19T00:00:00.000Z',
+            'devicePlatform': 'android',
+          },
+          'userPreferences': <Map<String, dynamic>>[],
+          'semesters': [
+            {
+              'id': 1,
+              'serverId': 'z-arch',
+              'name': 'Completed Sem',
+              'startDate': '2025-08-01T00:00:00.000Z',
+              'endDate': '2025-12-15T00:00:00.000Z',
+              'requiredAttendanceRate': 75.0,
+              'status': 'archived',
+              'isActive': false,
+              'createdAt': '2025-08-01T00:00:00.000Z',
+              'updatedAt': '2025-08-01T00:00:00.000Z',
+            },
+            {
+              'id': 2,
+              'serverId': 'z-draft',
+              'name': 'Future Draft Sem',
+              'startDate': '2026-08-01T00:00:00.000Z',
+              'endDate': '2026-12-15T00:00:00.000Z',
+              'requiredAttendanceRate': 75.0,
+              'status': 'draft',
+              'isActive': false,
+              'createdAt': '2026-07-01T00:00:00.000Z',
+              'updatedAt': '2026-07-01T00:00:00.000Z',
+            },
+          ],
+          'subjects': <Map<String, dynamic>>[],
+          'attendance': <Map<String, dynamic>>[],
+          'timetable': <Map<String, dynamic>>[],
+          'events': <Map<String, dynamic>>[],
+          'notifications': <Map<String, dynamic>>[],
+        });
+
+        await importer.importData(
+          zeroActiveJson,
+          strategy: ImportStrategy.replace,
+        );
+
+        expect(await repo.getActiveSemester(), isNull);
+        expect(await repo.hasActiveSemester(), isFalse);
+        expect(
+          (await repo.getAllSemesters())
+              .firstWhere((s) => s.name == 'Completed Sem')
+              .status,
+          equals(SemesterStatus.archived),
+        );
+        expect(
+          (await repo.getAllSemesters())
+              .firstWhere((s) => s.name == 'Future Draft Sem')
+              .status,
+          equals(SemesterStatus.draft),
+        );
+      } finally {
+        isar?.close();
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
+    });
+
+    test(
+        'BackupService round-trip export and import preserves exact lifecycle states across archived, active, and draft semesters',
+        () async {
+      if (nativeLibPath == null) return;
+
+      final tempDir =
+          await Directory.systemTemp.createTemp('attendiq_bug017_ec3_round_');
+      Isar? isar;
+      try {
+        isar = openTempIsar(tempDir);
+        final repo = SemesterRepositoryImpl(isar);
+        final backupService = BackupService(isar);
+
+        await repo.createSemester(
+          Semester(
+            name: 'Archived Sem',
+            startDate: DateTime(2025, 8, 1),
+            endDate: DateTime(2025, 12, 15),
+            requiredAttendanceRate: 75.0,
+            status: SemesterStatus.archived,
+          ),
+        );
+        await repo.createSemester(
+          Semester(
+            name: 'Current Active Sem',
+            startDate: DateTime(2026, 1, 10),
+            endDate: DateTime(2026, 5, 20),
+            requiredAttendanceRate: 80.0,
+            status: SemesterStatus.active,
+          ),
+        );
+        await repo.createSemester(
+          Semester(
+            name: 'Upcoming Draft Sem',
+            startDate: DateTime(2026, 8, 1),
+            endDate: DateTime(2026, 12, 15),
+            requiredAttendanceRate: 85.0,
+            status: SemesterStatus.draft,
+          ),
+        );
+
+        final exportedJson = await backupService.exportBackupString();
+        isar.write((db) => db.semesterLocals.clear());
+        expect(await repo.getAllSemesters(), isEmpty);
+
+        await backupService.importFromBackupString(
+          exportedJson,
+          strategy: ImportStrategy.replace,
+        );
+
+        final restoredActive = await repo.getActiveSemester();
+        expect(restoredActive, isNotNull);
+        expect(restoredActive!.name, equals('Current Active Sem'));
+        expect(restoredActive.status, equals(SemesterStatus.active));
+
+        final restoredAll = await repo.getAllSemesters();
+        expect(restoredAll, hasLength(3));
+        expect(
+          restoredAll.firstWhere((s) => s.name == 'Archived Sem').status,
+          equals(SemesterStatus.archived),
+        );
+        expect(
+          restoredAll.firstWhere((s) => s.name == 'Upcoming Draft Sem').status,
+          equals(SemesterStatus.draft),
+        );
+        expect(await migrateLegacySemesters(isar), equals(0));
+      } finally {
+        isar?.close();
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
     });
   });
 }
