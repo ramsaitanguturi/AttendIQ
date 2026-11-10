@@ -21,6 +21,9 @@ import '../../data/repositories/academic_event_repository_impl.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../../core/database/isar_provider.dart';
 import '../../../widgets/services/widget_refresh_service.dart';
+import 'today_schedule_provider.dart';
+import 'academic_calendar_controller.dart';
+import '../../../../core/notifications/providers/notification_providers.dart';
 
 part 'timetable_controller.g.dart';
 
@@ -79,8 +82,14 @@ class AcademicEventController extends _$AcademicEventController {
     );
     await repo.saveEvent(event);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
+    try {
+      final scheduler = ref.read(notificationSchedulerProvider);
+      await scheduler.rescheduleAll();
     } catch (_) {}
   }
 
@@ -88,8 +97,14 @@ class AcademicEventController extends _$AcademicEventController {
     final repo = ref.read(academicEventRepositoryProvider);
     await repo.deleteEvent(id);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
+    try {
+      final scheduler = ref.read(notificationSchedulerProvider);
+      await scheduler.rescheduleAll();
     } catch (_) {}
   }
 }
@@ -222,6 +237,8 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
 
     await repo.saveRules(newRules);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -234,6 +251,8 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.saveRule(rule);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -243,6 +262,8 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.deleteRule(id);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -252,6 +273,8 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.deleteRulesForSubject(subjectId);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
@@ -301,8 +324,14 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     );
     await repo.saveException(exception);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
+    try {
+      final scheduler = ref.read(notificationSchedulerProvider);
+      await scheduler.rescheduleAll();
     } catch (_) {}
   }
 
@@ -310,8 +339,14 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     final repo = ref.read(scheduleExceptionRepositoryProvider);
     await repo.deleteException(id);
     ref.invalidateSelf();
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
+    try {
+      final scheduler = ref.read(notificationSchedulerProvider);
+      await scheduler.rescheduleAll();
     } catch (_) {}
   }
 }

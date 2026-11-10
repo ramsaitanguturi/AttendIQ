@@ -30,6 +30,7 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId) async {
+    if (eventId <= 0) return null;
     return _isar.attendanceRecordLocals
         .where()
         .eventIdEqualTo(eventId)
@@ -39,6 +40,7 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId) async {
+    if (eventId <= 0) return null;
     return _isar.attendanceRecordLocals
         .where()
         .eventIdEqualTo(eventId)
@@ -54,12 +56,16 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
     await _isar.writeAsync((isar) {
       if (record.id == 0) {
-        final existing = isar.attendanceRecordLocals
-            .where()
-            .eventIdEqualTo(record.eventId)
-            .findFirst();
-        if (existing != null) {
-          record.id = existing.id;
+        if (record.eventId > 0) {
+          final existing = isar.attendanceRecordLocals
+              .where()
+              .eventIdEqualTo(record.eventId)
+              .findFirst();
+          if (existing != null) {
+            record.id = existing.id;
+          } else {
+            record.id = isar.attendanceRecordLocals.autoIncrement();
+          }
         } else {
           record.id = isar.attendanceRecordLocals.autoIncrement();
         }

@@ -9,6 +9,7 @@ import '../../domain/entities/academic_event.dart';
 import '../../domain/entities/schedule_exception.dart';
 import '../controllers/academic_calendar_controller.dart';
 import '../controllers/timetable_controller.dart';
+import '../../../attendance/presentation/controllers/attendance_controller.dart';
 
 import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart';
 
@@ -549,14 +550,13 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                // Save extra class as an AcademicEvent or ScheduleException for display
-                await ref.read(academicEventControllerProvider.notifier).addEvent(
-                      title: 'Extra ${selectedSubject.name} Class',
-                      description: 'Extra Class for ${selectedSubject.name}',
+                if (selectedSubject.id == null) return;
+                await ref.read(attendanceControllerProvider.notifier).addExtraClass(
                       date: date,
+                      subjectId: selectedSubject.id!,
+                      subjectTitle: selectedSubject.name,
                       startTime: startTimeController.text.trim(),
                       endTime: endTimeController.text.trim(),
-                      type: AcademicEventType.EVENT,
                     );
                 if (context.mounted) {
                   Navigator.of(dialogCtx).pop();

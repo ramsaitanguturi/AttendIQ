@@ -64,6 +64,29 @@ android {
         }
     }
 
+    flavorDimensions "default"
+
+    productFlavors {
+        prod {
+            dimension "default"
+            applicationId "com.ramsa.attendiq.attend_iq"
+            resValue "string", "app_name", "AttendIQ"
+            manifestPlaceholders = [
+                appName: "AttendIQ",
+                deepLinkScheme: "attendiq"
+            ]
+        }
+        beta {
+            dimension "default"
+            applicationId "com.ramsa.attendiq.attend_iq.beta"
+            resValue "string", "app_name", "AttendIQ Beta"
+            manifestPlaceholders = [
+                appName: "AttendIQ Beta",
+                deepLinkScheme: "attendiq-beta"
+            ]
+        }
+    }
+
     buildTypes {
         release {
             // Signing with the release keys if configured, otherwise fallback to debug.
@@ -71,6 +94,18 @@ android {
                 signingConfig = signingConfigs.release
             } else {
                 signingConfig = signingConfigs.debug
+            }
+        }
+    }
+
+    applicationVariants.all { variant ->
+        if (variant.name == 'prodRelease') {
+            variant.assembleProvider.get().doLast {
+                copy {
+                    from "${rootProject.buildDir}/app/outputs/flutter-apk/app-prod-release.apk"
+                    into "${rootProject.buildDir}/app/outputs/flutter-apk/"
+                    rename { 'app-release.apk' }
+                }
             }
         }
     }

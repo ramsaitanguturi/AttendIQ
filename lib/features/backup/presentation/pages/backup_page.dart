@@ -8,7 +8,10 @@ import '../../../../core/backup/backup_path_helper.dart';
 import '../../../../core/backup/backup_providers.dart';
 import '../../../../core/backup/backup_scheduler.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/export_success_dialog.dart';
+import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
+
 
 class BackupPage extends ConsumerStatefulWidget {
   const BackupPage({super.key});
@@ -22,6 +25,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   bool _isImporting = false;
   bool _isLoadingFileList = true;
   List<BackupFileItem> _backupFiles = [];
+  String _displayFolderPath = 'Documents/AttendIQ/Backups';
   String? _statusMessage;
   final TextEditingController _importJsonController = TextEditingController();
 
@@ -45,9 +49,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     try {
       final service = ref.read(backupServiceProvider);
       final files = await service.listBackups();
+      final folderPath = await BackupPathHelper.getDisplayFolderPath(subFolder: 'Backups');
       if (mounted) {
         setState(() {
           _backupFiles = files;
+          _displayFolderPath = folderPath;
           _isLoadingFileList = false;
         });
       }
@@ -60,7 +66,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     }
   }
 
-  Future<void> _handleExport() async {
+  Future<void> _handleExportBackup() async {
     setState(() {
       _isExporting = true;
       _statusMessage = null;
@@ -68,7 +74,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
     try {
       final service = ref.read(backupServiceProvider);
-      final path = await service.exportToFile();
+      final activeSemester = await ref.read(semesterRepositoryProvider).getActiveSemester();
+      final path = await service.exportToFile(semesterName: activeSemester?.name);
+      final fileName = path.split(Platform.pathSeparator).last;
       final now = DateTime.now();
 
       // Update last backup date in settings
@@ -81,11 +89,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Backup saved to ${BackupPathHelper.getDisplayFolderPath()}'),
-            backgroundColor: AppColors.primary,
-          ),
+        await ExportSuccessDialog.show(
+          context: context,
+          title: 'Backup exported successfully',
+          filePath: path,
+          fileName: fileName,
+          mimeType: 'application/octet-stream',
         );
       }
     } catch (e) {
@@ -104,6 +113,85 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       if (mounted) {
         setState(() {
           _isExporting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleExportJsonData() async {
+    setState(() {
+      _isExporting = true;
+      _statusMessage = null;
+    });
+
+    try {
+      final service = ref.read(backupServiceProvider);
+      final activeSemester = await ref.read(semesterRepositoryProvider).getActiveSemester();
+      final path = await service.exportDataJsonFile(semesterName: activeSemester?.name);
+      final fileName = path.split(Platform.pathSeparator).last;
+
+      setState(() {
+        _statusMessage = 'JSON Data exported successfully!\nSaved to: $path';
+      });
+
+      if (mounted) {
+        await ExportSuccessDialog.show(
+          context: context,
+          title: 'JSON Data exported successfully',
+          filePath: path,
+          fileName: fileName,
+          mimeType: 'application/json',
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _statusMessage = 'Export failed: $e';
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: AppColors.attendanceLow,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExporting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handlePickImportFile() async {
+    setState(() {
+      _isImporting = true;
+      _statusMessage = null;
+    });
+
+    try {
+      final service = ref.read(backupServiceProvider);
+      final picked = await service.pickImportFile();
+
+      if (picked != null) {
+        if (mounted) {
+          await _showImportStrategyDialog(picked.content);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to read selected file: $e'),
+            backgroundColor: AppColors.attendanceLow,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isImporting = false;
         });
       }
     }
@@ -242,7 +330,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Import Backup JSON'),
+          title: const Text('Import Backup JSON Text'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -343,6 +431,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     try {
       final service = ref.read(backupServiceProvider);
       await service.importFromBackupString(jsonString, strategy: strategy);
+      await _refreshBackupList();
       setState(() {
         _statusMessage = 'Import completed successfully (${strategy == ImportStrategy.replace ? "Replaced" : "Merged"})!';
       });
@@ -379,8 +468,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final settingsAsync = ref.watch(settingsControllerProvider);
-
-    final displayFolder = BackupPathHelper.getDisplayFolderPath();
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
@@ -446,7 +533,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                displayFolder,
+                                _displayFolderPath,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
@@ -459,7 +546,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Backups are saved to your device\'s public Documents folder and can be easily accessed anytime from the Files app.',
+                        'Exports are saved to user-accessible public storage (Documents folder) with separate subfolders for Backups, Reports, and Data Exports.',
                         style: TextStyle(fontSize: 13, color: Colors.grey),
                       ),
                     ],
@@ -543,9 +630,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Export & Import Actions
+                // Export & Import Quick Actions
                 Text(
-                  'Quick Actions',
+                  'Export & Import Actions',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -553,39 +640,65 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Row(
+                Column(
                   children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _isExporting ? null : _handleExport,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _isExporting ? null : _handleExportBackup,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: _isExporting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.download),
+                            label: const Text(
+                              'Export Backup (.attendiq)',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
                           ),
                         ),
-                        icon: _isExporting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.download),
-                        label: const Text(
-                          'Create Backup Now',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isExporting ? null : _handleExportJsonData,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.code, color: AppColors.primary),
+                            label: const Text(
+                              'Export Data (.json)',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _isImporting ? null : _showImportTextDialog,
-                        style: OutlinedButton.styleFrom(
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isImporting ? null : _handlePickImportFile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+                          foregroundColor: isDark ? Colors.white : Colors.black87,
+
+                          side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: AppColors.primary),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -596,10 +709,22 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 height: 18,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Icon(Icons.upload, color: AppColors.primary),
+                            : const Icon(Icons.folder_open_outlined, color: AppColors.primary),
                         label: const Text(
-                          'Import JSON',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary),
+                          'Import Backup / Data File (Drive, Downloads, Documents)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: _showImportTextDialog,
+                        icon: const Icon(Icons.paste_outlined, size: 14, color: Colors.grey),
+                        label: const Text(
+                          'Paste raw JSON string instead',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ),
                     ),
@@ -642,13 +767,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           child: Center(child: CircularProgressIndicator()),
                         )
                       : _backupFiles.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(24.0),
+                          ? Padding(
+                              padding: const EdgeInsets.all(24.0),
                               child: Center(
                                 child: Text(
-                                  'No backup files (.attendiq) found in Documents/AttendIQ Backups',
+                                  'No backup files (.attendiq) found in $_displayFolderPath',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                                  style: const TextStyle(color: Colors.grey, fontSize: 13),
                                 ),
                               ),
                             )

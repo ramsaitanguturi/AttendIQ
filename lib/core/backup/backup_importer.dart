@@ -8,13 +8,18 @@ import '../event_generator/data/models/event_local.dart';
 import '../../features/attendance/data/models/attendance_record_local.dart';
 import '../notifications/models/notification_item.dart';
 import '../../features/settings/data/models/user_preferences_local.dart';
+import '../../features/timetable/data/models/schedule_exception_local.dart';
+import '../../features/timetable/data/models/weekly_schedule_rule_local.dart';
+import '../../features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import '../../features/timetable/data/models/academic_event_local.dart';
+import '../../features/academic_planner/data/models/academic_task_local.dart';
 import 'backup_models.dart';
 
 enum ImportStrategy { replace, merge }
 
 class BackupImporter {
   final Isar _isar;
-  static const int currentSupportedBackupVersion = 1;
+  static const int currentSupportedBackupVersion = 2;
 
   BackupImporter(this._isar);
 
@@ -56,6 +61,11 @@ class BackupImporter {
         isar.eventLocals.clear();
         isar.attendanceRecordLocals.clear();
         isar.notificationItems.clear();
+        isar.scheduleExceptionLocals.clear();
+        isar.weeklyScheduleRuleLocals.clear();
+        isar.dailyScheduleOccurrenceLocals.clear();
+        isar.academicEventLocals.clear();
+        isar.academicTaskLocals.clear();
       }
 
       // 1. User Preferences
@@ -193,6 +203,124 @@ class BackupImporter {
           notif.id = isar.notificationItems.autoIncrement();
         }
         isar.notificationItems.put(notif);
+      }
+
+      // 8. Schedule Exceptions (Holidays)
+      for (final map in data.scheduleExceptions) {
+        final ex = ScheduleExceptionLocal()
+          ..id = (strategy == ImportStrategy.replace ? (map['id'] as int? ?? 0) : 0)
+          ..serverId = map['serverId'] as String?
+          ..date = DateTime.tryParse(map['date'] as String? ?? '') ?? DateTime.now()
+          ..subjectId = map['subjectId'] as int?
+          ..type = map['type'] as String? ?? 'HOLIDAY'
+          ..title = map['title'] as String? ?? ''
+          ..description = map['description'] as String?
+          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now()
+          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now()
+          ..isDirty = map['isDirty'] as bool? ?? false
+          ..isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (ex.id == 0) {
+          ex.id = isar.scheduleExceptionLocals.autoIncrement();
+        }
+        isar.scheduleExceptionLocals.put(ex);
+      }
+
+      // 9. Weekly Schedule Rules
+      for (final map in data.weeklyRules) {
+        final rule = WeeklyScheduleRuleLocal()
+          ..id = (strategy == ImportStrategy.replace ? (map['id'] as int? ?? 0) : 0)
+          ..serverId = map['serverId'] as String?
+          ..subjectId = map['subjectId'] as int? ?? 0
+          ..dayOfWeek = map['dayOfWeek'] as int? ?? 1
+          ..startTime = map['startTime'] as String? ?? '09:00'
+          ..endTime = map['endTime'] as String? ?? '10:00'
+          ..room = map['room'] as String?
+          ..faculty = map['faculty'] as String?
+          ..isActive = map['isActive'] as bool? ?? true
+          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now()
+          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now()
+          ..isDirty = map['isDirty'] as bool? ?? false
+          ..isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (rule.id == 0) {
+          rule.id = isar.weeklyScheduleRuleLocals.autoIncrement();
+        }
+        isar.weeklyScheduleRuleLocals.put(rule);
+      }
+
+      // 10. Daily Schedule Occurrences
+      for (final map in data.occurrences) {
+        final occ = DailyScheduleOccurrenceLocal()
+          ..id = (strategy == ImportStrategy.replace ? (map['id'] as int? ?? 0) : 0)
+          ..serverId = map['serverId'] as String?
+          ..date = DateTime.tryParse(map['date'] as String? ?? '') ?? DateTime.now()
+          ..subjectId = map['subjectId'] as int?
+          ..title = map['title'] as String? ?? ''
+          ..startTime = map['startTime'] as String? ?? '09:00'
+          ..endTime = map['endTime'] as String? ?? '10:00'
+          ..type = map['type'] as String? ?? 'REGULAR_CLASS'
+          ..status = map['status'] as String? ?? 'UPCOMING'
+          ..createdFrom = map['createdFrom'] as String? ?? 'WEEKLY_RULE'
+          ..room = map['room'] as String?
+          ..faculty = map['faculty'] as String?
+          ..reason = map['reason'] as String?
+          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now()
+          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now()
+          ..isDirty = map['isDirty'] as bool? ?? false
+          ..isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (occ.id == 0) {
+          occ.id = isar.dailyScheduleOccurrenceLocals.autoIncrement();
+        }
+        isar.dailyScheduleOccurrenceLocals.put(occ);
+      }
+
+      // 11. Academic Events
+      for (final map in data.academicEvents) {
+        final ae = AcademicEventLocal()
+          ..id = (strategy == ImportStrategy.replace ? (map['id'] as int? ?? 0) : 0)
+          ..serverId = map['serverId'] as String?
+          ..title = map['title'] as String? ?? ''
+          ..description = map['description'] as String?
+          ..date = DateTime.tryParse(map['date'] as String? ?? '') ?? DateTime.now()
+          ..startTime = map['startTime'] as String?
+          ..endTime = map['endTime'] as String?
+          ..type = map['type'] as String? ?? 'EVENT'
+          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now()
+          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now()
+          ..isDirty = map['isDirty'] as bool? ?? false
+          ..isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (ae.id == 0) {
+          ae.id = isar.academicEventLocals.autoIncrement();
+        }
+        isar.academicEventLocals.put(ae);
+      }
+
+      // 12. Tasks
+      for (final map in data.tasks) {
+        final tk = AcademicTaskLocal()
+          ..id = (strategy == ImportStrategy.replace ? (map['id'] as int? ?? 0) : 0)
+          ..serverId = map['serverId'] as String?
+          ..subjectId = map['subjectId'] as int?
+          ..title = map['title'] as String? ?? ''
+          ..description = map['description'] as String?
+          ..startDate = DateTime.tryParse(map['startDate'] as String? ?? '') ?? DateTime.now()
+          ..dueDate = DateTime.tryParse(map['dueDate'] as String? ?? '') ?? DateTime.now()
+          ..priority = map['priority'] as String? ?? 'MEDIUM'
+          ..taskType = map['taskType'] as String? ?? 'ASSIGNMENT'
+          ..status = map['status'] as String? ?? 'PENDING'
+          ..reminder = map['reminder'] as String? ?? 'NONE'
+          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now()
+          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now()
+          ..isDirty = map['isDirty'] as bool? ?? false
+          ..isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (tk.id == 0) {
+          tk.id = isar.academicTaskLocals.autoIncrement();
+        }
+        isar.academicTaskLocals.put(tk);
       }
     });
   }

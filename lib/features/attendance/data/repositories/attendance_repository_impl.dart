@@ -65,7 +65,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
 
   @override
   Future<void> saveAttendanceRecord(AttendanceRecord record) async {
-    final existing = await _localDataSource.getAttendanceForEventAnyStatus(record.eventId);
+    final existing = record.eventId > 0
+        ? await _localDataSource.getAttendanceForEventAnyStatus(record.eventId)
+        : null;
     final serverId = record.serverId ?? existing?.serverId ?? generateUuid();
     final now = DateTime.now().toUtc();
 

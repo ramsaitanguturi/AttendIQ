@@ -44,6 +44,7 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
     if (kDebugMode) {
       developer.log('Loading exceptions...', name: 'TodayScheduleProvider');
     }
+    ref.watch(scheduleExceptionControllerProvider);
     final exceptionRepo = ref.watch(scheduleExceptionRepositoryProvider);
     final exceptions = await exceptionRepo.getExceptionsForDate(todayUtc);
 

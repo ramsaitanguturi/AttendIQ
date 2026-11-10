@@ -7,6 +7,8 @@ import '../scheduler/notification_scheduler.dart';
 import '../../../features/timetable/data/models/timetable_template_local.dart';
 import '../../event_generator/data/models/event_local.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
+import '../../../features/timetable/data/models/schedule_exception_local.dart';
+import '../../../features/timetable/data/models/academic_event_local.dart';
 
 import '../scheduler/notification_database.dart';
 
@@ -55,6 +57,16 @@ Future<void> notificationInitializer(NotificationInitializerRef ref) async {
     scheduler.rescheduleAll();
   });
   ref.onDispose(() => recordSub.cancel());
+
+  final exceptionSub = isar.scheduleExceptionLocals.where().watchLazy().listen((_) {
+    scheduler.rescheduleAll();
+  });
+  ref.onDispose(() => exceptionSub.cancel());
+
+  final academicEventSub = isar.academicEventLocals.where().watchLazy().listen((_) {
+    scheduler.rescheduleAll();
+  });
+  ref.onDispose(() => academicEventSub.cancel());
 
   // 3. Initial scheduling run
   await scheduler.rescheduleAll();

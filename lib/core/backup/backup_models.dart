@@ -40,6 +40,11 @@ class BackupData {
   final List<Map<String, dynamic>> timetable;
   final List<Map<String, dynamic>> events;
   final List<Map<String, dynamic>> notifications;
+  final List<Map<String, dynamic>> scheduleExceptions;
+  final List<Map<String, dynamic>> weeklyRules;
+  final List<Map<String, dynamic>> occurrences;
+  final List<Map<String, dynamic>> academicEvents;
+  final List<Map<String, dynamic>> tasks;
   final Map<String, dynamic> reportsMetadata;
 
   BackupData({
@@ -51,6 +56,11 @@ class BackupData {
     required this.timetable,
     required this.events,
     required this.notifications,
+    this.scheduleExceptions = const [],
+    this.weeklyRules = const [],
+    this.occurrences = const [],
+    this.academicEvents = const [],
+    this.tasks = const [],
     this.reportsMetadata = const {},
   });
 
@@ -63,6 +73,11 @@ class BackupData {
         'timetable': timetable,
         'events': events,
         'notifications': notifications,
+        'scheduleExceptions': scheduleExceptions,
+        'weeklyRules': weeklyRules,
+        'occurrences': occurrences,
+        'academicEvents': academicEvents,
+        'tasks': tasks,
         'reportsMetadata': reportsMetadata,
       };
 
@@ -90,6 +105,21 @@ class BackupData {
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
       notifications: (json['notifications'] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      scheduleExceptions: (json['scheduleExceptions'] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      weeklyRules: (json['weeklyRules'] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      occurrences: (json['occurrences'] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      academicEvents: (json['academicEvents'] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      tasks: (json['tasks'] as List? ?? [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
       reportsMetadata: Map<String, dynamic>.from(json['reportsMetadata'] as Map? ?? {}),

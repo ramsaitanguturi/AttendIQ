@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
 
+import '../../../../core/backup/backup_path_helper.dart';
+import '../../../../core/widgets/export_success_dialog.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/analytics/models/risk_status.dart';
@@ -12,6 +14,7 @@ import '../../../../core/reports/models/subject_report.dart';
 import '../../../../core/reports/generators/pdf_report_generator.dart';
 import '../../../../core/reports/exporters/csv_report_exporter.dart';
 import '../controllers/reports_controller.dart';
+
 
 class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
@@ -410,18 +413,26 @@ class ReportsPage extends ConsumerWidget {
   Future<void> _exportPdf(BuildContext context, AttendanceReport report) async {
     try {
       final bytes = await PdfReportGenerator.generatePdf(report);
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'attendance_report_${report.semesterName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsBytes(bytes);
-      
+      final fileName = await BackupPathHelper.generateFileName(
+        type: 'Attendance_Report',
+        extension: 'pdf',
+        semesterName: report.semesterName,
+      );
+
+      final path = await BackupPathHelper.saveExportFile(
+        fileName: fileName,
+        bytes: bytes,
+        subFolder: 'Reports',
+        mimeType: 'application/pdf',
+      );
+
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('PDF exported successfully to: ${file.path}'),
-            backgroundColor: AppColors.primary,
-            duration: const Duration(seconds: 4),
-          ),
+        await ExportSuccessDialog.show(
+          context: context,
+          title: 'PDF Report exported successfully',
+          filePath: path,
+          fileName: fileName,
+          mimeType: 'application/pdf',
         );
       }
     } catch (e) {
@@ -439,18 +450,26 @@ class ReportsPage extends ConsumerWidget {
   Future<void> _exportCsv(BuildContext context, AttendanceReport report) async {
     try {
       final csvString = CsvReportExporter.exportToCsv(report);
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'attendance_report_${report.semesterName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.csv';
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsString(csvString);
-      
+      final fileName = await BackupPathHelper.generateFileName(
+        type: 'Attendance_Report',
+        extension: 'csv',
+        semesterName: report.semesterName,
+      );
+
+      final path = await BackupPathHelper.saveExportFile(
+        fileName: fileName,
+        bytes: utf8.encode(csvString),
+        subFolder: 'Reports',
+        mimeType: 'text/csv',
+      );
+
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('CSV exported successfully to: ${file.path}'),
-            backgroundColor: AppColors.primary,
-            duration: const Duration(seconds: 4),
-          ),
+        await ExportSuccessDialog.show(
+          context: context,
+          title: 'CSV Report exported successfully',
+          filePath: path,
+          fileName: fileName,
+          mimeType: 'text/csv',
         );
       }
     } catch (e) {
@@ -465,3 +484,4 @@ class ReportsPage extends ConsumerWidget {
     }
   }
 }
+

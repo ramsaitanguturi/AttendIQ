@@ -52,10 +52,11 @@ void main() {
   });
 
   group('BackupPathHelper Unit Tests', () {
-    test('getDisplayFolderPath returns valid display string', () {
-      final pathStr = BackupPathHelper.getDisplayFolderPath();
-      expect(pathStr, contains('Documents/AttendIQ Backups'));
+    test('getDisplayFolderPath returns valid display string', () async {
+      final pathStr = await BackupPathHelper.getDisplayFolderPath();
+      expect(pathStr, contains('Documents/AttendIQ'));
     });
+
 
     test('BackupFileItem formattedSize formats bytes correctly', () {
       final itemBytes = BackupFileItem(

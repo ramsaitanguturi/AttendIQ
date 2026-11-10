@@ -1,10 +1,24 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:isar/isar.dart';
 import 'package:share_plus/share_plus.dart';
 import 'backup_exporter.dart';
 import 'backup_importer.dart';
 import 'backup_models.dart';
 import 'backup_path_helper.dart';
+
+class PickedBackupResult {
+  final String filePath;
+  final String fileName;
+  final String content;
+
+  PickedBackupResult({
+    required this.filePath,
+    required this.fileName,
+    required this.content,
+  });
+}
 
 class BackupService {
   final Isar _isar;
@@ -17,7 +31,7 @@ class BackupService {
 
   /// Extensible encoding hook (AES encryption can be plugged in here in future)
   Future<String> encodeBackupPayload(BackupData data, {String? encryptionKey}) async {
-    final rawJson = _exporter.exportToJsonString();
+    final rawJson = await _exporter.exportToJsonString();
     if (encryptionKey != null && encryptionKey.isNotEmpty) {
       // Future extension: return aesEncrypt(rawJson, encryptionKey);
     }
@@ -37,19 +51,47 @@ class BackupService {
     return _exporter.exportToJsonString(appVersion: appVersion);
   }
 
-  /// Exports backup to `Documents/AttendIQ Backups/` and returns the exported file path
-  Future<String> exportToFile({String? customFileName}) async {
+  /// Exports backup (.attendiq) to user-accessible `Documents/AttendIQ (Beta)/Backups/`
+  Future<String> exportToFile({String? semesterName, String? customFileName}) async {
     final jsonContent = await exportBackupString();
     final fileName = customFileName ??
-        'attendiq_backup_${DateTime.now().millisecondsSinceEpoch}.attendiq';
+        await BackupPathHelper.generateFileName(
+          type: 'Backup',
+          extension: 'attendiq',
+          semesterName: semesterName,
+        );
 
-    final Directory dir = await BackupPathHelper.getBackupDirectory();
-    final File file = File('${dir.path}/$fileName');
-    await file.writeAsString(jsonContent);
-    return file.path;
+    final path = await BackupPathHelper.saveExportFile(
+      fileName: fileName,
+      bytes: utf8.encode(jsonContent),
+      subFolder: 'Backups',
+      mimeType: 'application/octet-stream',
+    );
+
+    return path;
   }
 
-  /// Lists all backup files from the public `Documents/AttendIQ Backups` directory
+  /// Exports JSON data export file (.json) to `Documents/AttendIQ (Beta)/Exports/`
+  Future<String> exportDataJsonFile({String? semesterName, String? customFileName}) async {
+    final jsonContent = await exportBackupString();
+    final fileName = customFileName ??
+        await BackupPathHelper.generateFileName(
+          type: 'Data',
+          extension: 'json',
+          semesterName: semesterName,
+        );
+
+    final path = await BackupPathHelper.saveExportFile(
+      fileName: fileName,
+      bytes: utf8.encode(jsonContent),
+      subFolder: 'Exports',
+      mimeType: 'application/json',
+    );
+
+    return path;
+  }
+
+  /// Lists all backup files from the public `Documents/AttendIQ (Beta)/Backups` directory
   Future<List<BackupFileItem>> listBackups() async {
     return BackupPathHelper.listBackupFiles();
   }
@@ -66,18 +108,56 @@ class BackupService {
     return false;
   }
 
-  /// Shares a backup file using system share dialog
+  /// Shares a backup file using system share dialog (WhatsApp, Drive, Telegram, Email, etc.)
   Future<void> shareBackupFile(String filePath, {String? text}) async {
     final file = File(filePath);
     if (await file.exists()) {
+      final isBeta = await BackupPathHelper.isBetaApp();
+      final appName = isBeta ? 'AttendIQ Beta' : 'AttendIQ';
       await Share.shareXFiles(
         [XFile(filePath)],
-        text: text ?? 'AttendIQ Backup File (.attendiq)',
-        subject: 'AttendIQ Backup',
+        text: text ?? '$appName File Export',
+        subject: '$appName Export',
       );
     } else {
-      throw FileSystemException('Backup file not found at path: $filePath');
+      throw FileSystemException('File not found at path: $filePath');
     }
+  }
+
+  /// Opens target file picker dialog allowing user to select `.attendiq` or `.json` files
+  /// from Downloads, Documents, File Manager, or Google Drive.
+  Future<PickedBackupResult?> pickImportFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['attendiq', 'json'],
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        String content = '';
+        String filePath = file.path ?? file.name;
+
+        if (file.bytes != null) {
+          content = utf8.decode(file.bytes!);
+        } else if (file.path != null) {
+          final fileOnDisk = File(file.path!);
+          if (await fileOnDisk.exists()) {
+            content = await fileOnDisk.readAsString();
+          }
+        }
+
+        if (content.isNotEmpty) {
+          return PickedBackupResult(
+            filePath: filePath,
+            fileName: file.name,
+            content: content,
+          );
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// Validates a raw backup JSON string

@@ -10,6 +10,11 @@ import '../event_generator/data/models/event_local.dart';
 import '../../features/attendance/data/models/attendance_record_local.dart';
 import '../notifications/models/notification_item.dart';
 import '../../features/settings/data/models/user_preferences_local.dart';
+import '../../features/timetable/data/models/schedule_exception_local.dart';
+import '../../features/timetable/data/models/weekly_schedule_rule_local.dart';
+import '../../features/timetable/data/models/daily_schedule_occurrence_local.dart';
+import '../../features/timetable/data/models/academic_event_local.dart';
+import '../../features/academic_planner/data/models/academic_task_local.dart';
 import 'backup_models.dart';
 
 class BackupExporter {
@@ -25,10 +30,15 @@ class BackupExporter {
     final eventList = await _isar.eventLocals.where().findAll();
     final attendanceList = await _isar.attendanceRecordLocals.where().findAll();
     final notificationList = await _isar.notificationItems.where().findAll();
+    final exceptionList = await _isar.scheduleExceptionLocals.where().findAll();
+    final ruleList = await _isar.weeklyScheduleRuleLocals.where().findAll();
+    final occurrenceList = await _isar.dailyScheduleOccurrenceLocals.where().findAll();
+    final academicEventList = await _isar.academicEventLocals.where().findAll();
+    final taskList = await _isar.academicTaskLocals.where().findAll();
 
     final metadata = BackupMetadata(
       appVersion: appVersion,
-      backupVersion: 1,
+      backupVersion: 2,
       createdAt: DateTime.now().toUtc(),
       devicePlatform: kIsWeb ? 'web' : Platform.operatingSystem,
     );
@@ -115,6 +125,84 @@ class BackupExporter {
         'scheduledTime': n.scheduledTime.toIso8601String(),
         'relatedId': n.relatedId,
         'isRead': n.isRead,
+      }).toList(),
+      scheduleExceptions: exceptionList.map((e) => {
+        'id': e.id,
+        'serverId': e.serverId,
+        'date': e.date.toIso8601String(),
+        'subjectId': e.subjectId,
+        'type': e.type,
+        'title': e.title,
+        'description': e.description,
+        'createdAt': e.createdAt.toIso8601String(),
+        'updatedAt': e.updatedAt.toIso8601String(),
+        'isDirty': e.isDirty,
+        'isDeleted': e.isDeleted,
+      }).toList(),
+      weeklyRules: ruleList.map((r) => {
+        'id': r.id,
+        'serverId': r.serverId,
+        'subjectId': r.subjectId,
+        'dayOfWeek': r.dayOfWeek,
+        'startTime': r.startTime,
+        'endTime': r.endTime,
+        'room': r.room,
+        'faculty': r.faculty,
+        'isActive': r.isActive,
+        'createdAt': r.createdAt.toIso8601String(),
+        'updatedAt': r.updatedAt.toIso8601String(),
+        'isDirty': r.isDirty,
+        'isDeleted': r.isDeleted,
+      }).toList(),
+      occurrences: occurrenceList.map((o) => {
+        'id': o.id,
+        'serverId': o.serverId,
+        'date': o.date.toIso8601String(),
+        'subjectId': o.subjectId,
+        'title': o.title,
+        'startTime': o.startTime,
+        'endTime': o.endTime,
+        'type': o.type,
+        'status': o.status,
+        'createdFrom': o.createdFrom,
+        'room': o.room,
+        'faculty': o.faculty,
+        'reason': o.reason,
+        'createdAt': o.createdAt.toIso8601String(),
+        'updatedAt': o.updatedAt.toIso8601String(),
+        'isDirty': o.isDirty,
+        'isDeleted': o.isDeleted,
+      }).toList(),
+      academicEvents: academicEventList.map((a) => {
+        'id': a.id,
+        'serverId': a.serverId,
+        'title': a.title,
+        'description': a.description,
+        'date': a.date.toIso8601String(),
+        'startTime': a.startTime,
+        'endTime': a.endTime,
+        'type': a.type,
+        'createdAt': a.createdAt.toIso8601String(),
+        'updatedAt': a.updatedAt.toIso8601String(),
+        'isDirty': a.isDirty,
+        'isDeleted': a.isDeleted,
+      }).toList(),
+      tasks: taskList.map((tk) => {
+        'id': tk.id,
+        'serverId': tk.serverId,
+        'subjectId': tk.subjectId,
+        'title': tk.title,
+        'description': tk.description,
+        'startDate': tk.startDate.toIso8601String(),
+        'dueDate': tk.dueDate.toIso8601String(),
+        'priority': tk.priority,
+        'taskType': tk.taskType,
+        'status': tk.status,
+        'reminder': tk.reminder,
+        'createdAt': tk.createdAt.toIso8601String(),
+        'updatedAt': tk.updatedAt.toIso8601String(),
+        'isDirty': tk.isDirty,
+        'isDeleted': tk.isDeleted,
       }).toList(),
       reportsMetadata: {},
     );

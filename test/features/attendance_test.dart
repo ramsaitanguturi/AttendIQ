@@ -17,6 +17,7 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId) async {
+    if (eventId <= 0) return null;
     try {
       return records.values.firstWhere((r) => r.eventId == eventId && !r.isDeleted);
     } catch (_) {
@@ -26,6 +27,7 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId) async {
+    if (eventId <= 0) return null;
     try {
       return records.values.firstWhere((r) => r.eventId == eventId);
     } catch (_) {
@@ -41,9 +43,13 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
   @override
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
     if (record.id == 0) {
-      final existing = records.values.where((r) => r.eventId == record.eventId).firstOrNull;
-      if (existing != null) {
-        record.id = existing.id;
+      if (record.eventId > 0) {
+        final existing = records.values.where((r) => r.eventId == record.eventId).firstOrNull;
+        if (existing != null) {
+          record.id = existing.id;
+        } else {
+          record.id = _nextId++;
+        }
       } else {
         record.id = _nextId++;
       }

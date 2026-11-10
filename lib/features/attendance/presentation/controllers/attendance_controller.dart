@@ -7,6 +7,7 @@ import '../../../../core/database/isar_provider.dart';
 import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
 import '../../../timetable/domain/repositories/daily_schedule_occurrence_repository.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
+import '../../../timetable/presentation/controllers/academic_calendar_controller.dart';
 import 'subject_attendance_stats_provider.dart';
 import '../../../analytics/presentation/controllers/analytics_controller.dart';
 import '../../../analytics/presentation/controllers/reports_controller.dart';
@@ -45,8 +46,8 @@ class AttendanceController extends _$AttendanceController {
 
     final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
-    if (savedOccurrence.subjectId != null) {
-      final eventId = savedOccurrence.id ?? 0;
+    if (savedOccurrence.subjectId != null && savedOccurrence.id != null && savedOccurrence.id! > 0) {
+      final eventId = savedOccurrence.id!;
       final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(eventId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_PRESENT
@@ -81,8 +82,8 @@ class AttendanceController extends _$AttendanceController {
 
     final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
-    if (savedOccurrence.subjectId != null) {
-      final eventId = savedOccurrence.id ?? 0;
+    if (savedOccurrence.subjectId != null && savedOccurrence.id != null && savedOccurrence.id! > 0) {
+      final eventId = savedOccurrence.id!;
       final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(eventId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_ABSENT
@@ -117,7 +118,7 @@ class AttendanceController extends _$AttendanceController {
 
     final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
-    if (savedOccurrence.id != null) {
+    if (savedOccurrence.id != null && savedOccurrence.id! > 0) {
       final existingRecord = await attendanceRepo.getAttendanceForEventAnyStatus(savedOccurrence.id!);
       if (existingRecord?.id != null) {
         await attendanceRepo.deleteAttendanceRecord(existingRecord!.id!);
@@ -216,6 +217,7 @@ class AttendanceController extends _$AttendanceController {
     ref.invalidate(overallAttendancePercentageProvider);
     ref.invalidate(analyticsControllerProvider);
     ref.invalidate(reportsControllerProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
     } catch (_) {}
