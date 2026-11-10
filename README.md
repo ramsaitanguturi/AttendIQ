@@ -1,5 +1,6 @@
 # AttendIQ - Smart Academic Management System
 
+ 
 > A privacy-focused offline-first student productivity application for managing attendance, timetable, academic calendar, tasks, and semester planning.
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.22+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
@@ -152,22 +153,6 @@ lib/
       └── timetable/        # Weekly slot rules & schedule generation
 ```
 
----
-
-## Screenshots
-
-> *Note: Visual screenshots can be added here as the UI design evolves.*
-
-| Dashboard | Timetable | Attendance |
-| :---: | :---: | :---: |
-| *(Placeholder)* | *(Placeholder)* | *(Placeholder)* |
-
-| Calendar | Tasks | Reports |
-| :---: | :---: | :---: |
-| *(Placeholder)* | *(Placeholder)* | *(Placeholder)* |
-
----
-
 ## Installation Guide
 
 ### Prerequisites
@@ -271,7 +256,3 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more details.
 
 ---
-
-<p align="center">
-  Built with ❤️ for students worldwide.
-</p>
