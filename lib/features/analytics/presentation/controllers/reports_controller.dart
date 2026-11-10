@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/reports/models/attendance_report.dart';
 import '../../../../core/reports/services/report_service.dart';
+import '../../../semester/presentation/controllers/semester_controller.dart';
 
 part 'reports_controller.g.dart';
 
@@ -8,6 +9,7 @@ part 'reports_controller.g.dart';
 class ReportsController extends _$ReportsController {
   @override
   FutureOr<AttendanceReport?> build() async {
+    ref.watch(activeSemesterProvider);
     final service = ref.watch(reportServiceProvider);
     return await service.generateSemesterReport();
   }

@@ -12,7 +12,7 @@ import '../../analytics/models/risk_status.dart';
 import '../../attendance_engine/calculator.dart';
 import '../models/attendance_report.dart';
 import '../models/subject_report.dart';
-import '../../../features/semester/data/models/semester_local.dart';
+import '../../../features/semester/data/repositories/semester_repository_impl.dart';
 
 part 'report_service.g.dart';
 
@@ -33,7 +33,7 @@ class ReportService {
         _attendanceRepository = attendanceRepository;
 
   Future<int?> getActiveSemesterLocalId() async {
-    final semesterLocal = _isar.semesterLocals.where().isDeletedEqualTo(false).findFirst();
+    final semesterLocal = resolveActiveSemesterLocal(_isar);
     return semesterLocal?.id;
   }
 
@@ -41,7 +41,7 @@ class ReportService {
     final semester = await _semesterRepository.getActiveSemester();
     if (semester == null) return null;
 
-    final semesterId = await getActiveSemesterLocalId();
+    final semesterId = semester.localId ?? await getActiveSemesterLocalId();
     if (semesterId == null) return null;
 
     const studentName = 'Student';
@@ -54,17 +54,20 @@ class ReportService {
 
     for (final subject in subjects) {
       if (subject.id == null) continue;
-      final records = await _attendanceRepository.getAttendanceForSubject(subject.id!);
+      final records =
+          await _attendanceRepository.getAttendanceForSubject(subject.id!);
 
       int attended = 0;
       int total = 0;
 
       for (final record in records) {
         if (record.isDeleted) continue;
-        if (record.status == AttendanceStatus.PRESENT || record.status == AttendanceStatus.EXTRA_PRESENT) {
+        if (record.status == AttendanceStatus.PRESENT ||
+            record.status == AttendanceStatus.EXTRA_PRESENT) {
           attended++;
           total++;
-        } else if (record.status == AttendanceStatus.ABSENT || record.status == AttendanceStatus.EXTRA_ABSENT) {
+        } else if (record.status == AttendanceStatus.ABSENT ||
+            record.status == AttendanceStatus.EXTRA_ABSENT) {
           total++;
         }
       }
@@ -72,7 +75,8 @@ class ReportService {
       totalClassesOverall += total;
       totalAttendedOverall += attended;
 
-      final currentRate = AttendanceCalculator.calculatePercentage(attended: attended, total: total);
+      final currentRate = AttendanceCalculator.calculatePercentage(
+          attended: attended, total: total);
       final target = subject.attendanceTarget;
 
       RiskStatus risk;

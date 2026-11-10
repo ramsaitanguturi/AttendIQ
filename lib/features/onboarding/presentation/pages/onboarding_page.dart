@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../semester/domain/entities/semester.dart';
+import '../../../semester/domain/validators/semester_validator.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
@@ -23,6 +25,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   // Step 2: Attendance Target
   double _requiredAttendanceRate = 75.0;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -39,7 +42,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
     final selected = await showDatePicker(
       context: context,
-      initialDate: isStart ? (_startDate ?? initialDate) : (_endDate ?? initialDate.add(const Duration(days: 120))),
+      initialDate: isStart
+          ? (_startDate ?? initialDate)
+          : (_endDate ?? initialDate.add(const Duration(days: 120))),
       firstDate: firstDate,
       lastDate: lastDate,
       builder: (context, child) {
@@ -65,7 +70,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       setState(() {
         if (isStart) {
           _startDate = selected;
-          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+          if (_endDate != null &&
+              !SemesterValidator.hasValidDateRange(_startDate!, _endDate!)) {
             _endDate = null;
           }
         } else {
@@ -87,10 +93,14 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         );
         return;
       }
-      if (_endDate!.isBefore(_startDate!)) {
+      final dateRangeError = SemesterValidator.validateDateRangeMessage(
+        _startDate!,
+        _endDate!,
+      );
+      if (dateRangeError != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('End date must be after start date.'),
+          SnackBar(
+            content: Text(dateRangeError),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
@@ -119,7 +129,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     }
   }
 
-  void _finishSetup() async {
+  Future<void> _finishSetup() async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
     try {
       final createSemester = ref.read(createSemesterUseCaseProvider);
       final semester = Semester(
@@ -131,14 +143,20 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       await createSemester(semester);
       ref.invalidate(hasActiveSemesterProvider);
       ref.invalidate(activeSemesterProvider);
+      ref.invalidate(allSemestersProvider);
     } catch (e) {
       if (mounted) {
+        final message = e is ValidationException ? e.message : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Onboarding failed: ${e.toString()}'),
+            content: Text('Onboarding failed: $message'),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
       }
     }
   }
@@ -154,7 +172,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         title: const Text('Welcome to AttendIQ'),
         backgroundColor: Colors.transparent,
@@ -165,7 +184,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           children: [
             // Stepper Indicator
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Row(
                 children: List.generate(3, (index) {
                   final isActive = index <= _currentStep;
@@ -180,9 +200,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             shape: BoxShape.circle,
                             color: isCurrent
                                 ? AppColors.primary
-                                : (isActive ? AppColors.primary.withOpacity(0.4) : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+                                : (isActive
+                                    ? AppColors.primary.withOpacity(0.4)
+                                    : (isDark
+                                        ? AppColors.darkBorder
+                                        : AppColors.lightBorder)),
                             border: Border.all(
-                              color: isActive ? AppColors.primary : Colors.transparent,
+                              color: isActive
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               width: 1.5,
                             ),
                           ),
@@ -190,7 +216,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             child: Text(
                               '${index + 1}',
                               style: TextStyle(
-                                color: isCurrent ? Colors.black : (isDark ? Colors.white : Colors.black),
+                                color: isCurrent
+                                    ? Colors.black
+                                    : (isDark ? Colors.white : Colors.black),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -202,7 +230,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                               height: 2.0,
                               color: index < _currentStep
                                   ? AppColors.primary
-                                  : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                  : (isDark
+                                      ? AppColors.darkBorder
+                                      : AppColors.lightBorder),
                             ),
                           ),
                       ],
@@ -237,7 +267,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       child: Text(
                         'Back',
                         style: TextStyle(
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                           fontSize: 16.0,
                           fontWeight: FontWeight.bold,
                         ),
@@ -246,22 +278,36 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   else
                     const SizedBox.shrink(),
                   ElevatedButton(
-                    onPressed: _currentStep == 2 ? _finishSetup : _nextStep,
+                    onPressed: _isSubmitting
+                        ? null
+                        : (_currentStep == 2 ? _finishSetup : _nextStep),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32.0,
+                        vertical: 16.0,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16.0),
                       ),
                     ),
-                    child: Text(
-                      _currentStep == 2 ? 'Get Started' : 'Continue',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.0,
-                      ),
-                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20.0,
+                            height: 20.0,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Text(
+                            _currentStep == 2 ? 'Get Started' : 'Continue',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -280,7 +326,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.calendar_month_outlined, size: 48.0, color: AppColors.primary),
+            const Icon(Icons.calendar_month_outlined,
+                size: 48.0, color: AppColors.primary),
             const SizedBox(height: 16.0),
             Text(
               'Create Semester',
@@ -290,7 +337,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             Text(
               'Define the date parameters of your active semester.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 32.0),
@@ -299,11 +348,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               style: theme.textTheme.bodyMedium,
               decoration: InputDecoration(
                 labelText: 'Semester Name (e.g. Fall 2026)',
-                prefixIcon: const Icon(Icons.school_outlined, color: AppColors.primary),
+                prefixIcon:
+                    const Icon(Icons.school_outlined, color: AppColors.primary),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16.0),
                   borderSide: BorderSide(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -334,10 +385,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         onTap: () => _selectDate(context, true),
                         borderRadius: BorderRadius.circular(16.0),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 16.0),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
                             ),
                             borderRadius: BorderRadius.circular(16.0),
                           ),
@@ -345,7 +399,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(_formatDate(_startDate)),
-                              const Icon(Icons.calendar_today, size: 18.0, color: AppColors.primary),
+                              const Icon(Icons.calendar_today,
+                                  size: 18.0, color: AppColors.primary),
                             ],
                           ),
                         ),
@@ -367,10 +422,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         onTap: () => _selectDate(context, false),
                         borderRadius: BorderRadius.circular(16.0),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 16.0),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
                             ),
                             borderRadius: BorderRadius.circular(16.0),
                           ),
@@ -378,7 +436,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(_formatDate(_endDate)),
-                              const Icon(Icons.calendar_today, size: 18.0, color: AppColors.primary),
+                              const Icon(Icons.calendar_today,
+                                  size: 18.0, color: AppColors.primary),
                             ],
                           ),
                         ),
@@ -400,7 +459,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.track_changes_outlined, size: 48.0, color: AppColors.primary),
+          const Icon(Icons.track_changes_outlined,
+              size: 48.0, color: AppColors.primary),
           const SizedBox(height: 16.0),
           Text(
             'Attendance Target',
@@ -410,7 +470,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           Text(
             'Set your minimum required attendance percentage.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
           ),
           const SizedBox(height: 48.0),
@@ -427,7 +489,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 ),
                 const SizedBox(height: 16.0),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   decoration: BoxDecoration(
                     color: _requiredAttendanceRate >= 75.0
                         ? AppColors.attendanceHigh.withOpacity(0.1)
@@ -435,9 +498,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     borderRadius: BorderRadius.circular(20.0),
                   ),
                   child: Text(
-                    _requiredAttendanceRate >= 75.0 ? 'Safe Baseline' : 'Warning: Below standard threshold',
+                    _requiredAttendanceRate >= 75.0
+                        ? 'Safe Baseline'
+                        : 'Warning: Below standard threshold',
                     style: TextStyle(
-                      color: _requiredAttendanceRate >= 75.0 ? AppColors.primary : AppColors.attendanceLow,
+                      color: _requiredAttendanceRate >= 75.0
+                          ? AppColors.primary
+                          : AppColors.attendanceLow,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -449,11 +516,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           SliderTheme(
             data: SliderThemeData(
               activeTrackColor: AppColors.primary,
-              inactiveTrackColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              inactiveTrackColor:
+                  isDark ? AppColors.darkBorder : AppColors.lightBorder,
               thumbColor: AppColors.primary,
               overlayColor: AppColors.primary.withOpacity(0.2),
               valueIndicatorColor: AppColors.primary,
-              valueIndicatorTextStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              valueIndicatorTextStyle: const TextStyle(
+                  color: Colors.black, fontWeight: FontWeight.bold),
             ),
             child: Slider(
               value: _requiredAttendanceRate,
@@ -488,7 +557,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_outline, size: 48.0, color: AppColors.primary),
+          const Icon(Icons.check_circle_outline,
+              size: 48.0, color: AppColors.primary),
           const SizedBox(height: 16.0),
           Text(
             'Confirm Setup',
@@ -498,7 +568,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           Text(
             'Review your configurations before finalizing setup.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
             ),
           ),
           const SizedBox(height: 32.0),
@@ -517,11 +589,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  _buildSummaryItem('Semester', _semesterNameController.text, Icons.school_outlined),
+                  _buildSummaryItem('Semester', _semesterNameController.text,
+                      Icons.school_outlined),
                   const Divider(),
-                  _buildSummaryItem('Timeline', '${_formatDate(_startDate)} to ${_formatDate(_endDate)}', Icons.date_range_outlined),
+                  _buildSummaryItem(
+                      'Timeline',
+                      '${_formatDate(_startDate)} to ${_formatDate(_endDate)}',
+                      Icons.date_range_outlined),
                   const Divider(),
-                  _buildSummaryItem('Target Attendance', '${_requiredAttendanceRate.round()}%', Icons.track_changes_outlined),
+                  _buildSummaryItem(
+                      'Target Attendance',
+                      '${_requiredAttendanceRate.round()}%',
+                      Icons.track_changes_outlined),
                 ],
               ),
             ),
@@ -546,7 +625,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           ),
           Text(
             value,
-            style: const TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: AppColors.secondary, fontWeight: FontWeight.bold),
           ),
         ],
       ),

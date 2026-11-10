@@ -31,7 +31,8 @@ class MockNotificationDatabase implements NotificationDatabase {
   }
 
   @override
-  Future<List<AcademicEventLocal>> getAcademicEvents(DateTime start, DateTime end) async {
+  Future<List<AcademicEventLocal>> getAcademicEvents(
+      DateTime start, DateTime end) async {
     return academicEvents.where((e) {
       final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
@@ -45,12 +46,14 @@ class MockNotificationDatabase implements NotificationDatabase {
   Future<List<TimetableTemplateLocal>> getTemplates() async => templates;
 
   @override
-  Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(int subjectId) async {
+  Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
+      int subjectId) async {
     return attendanceRecords.where((r) => r.subjectId == subjectId).toList();
   }
 
   @override
-  Future<List<AttendanceRecordLocal>> getAllAttendanceRecords() async => attendanceRecords;
+  Future<List<AttendanceRecordLocal>> getAllAttendanceRecords() async =>
+      attendanceRecords;
 
   @override
   Future<SemesterLocal?> getActiveSemester() async => activeSemester;
@@ -61,13 +64,19 @@ class MockNotificationDatabase implements NotificationDatabase {
   }
 
   @override
-  Future<List<NotificationItem>> getFutureNotificationsByType(String type, DateTime now) async {
-    return notifications.where((n) => n.type == type && n.scheduledTime.isAfter(now)).toList();
+  Future<List<NotificationItem>> getFutureNotificationsByType(
+      String type, DateTime now) async {
+    return notifications
+        .where((n) => n.type == type && n.scheduledTime.isAfter(now))
+        .toList();
   }
 
   @override
-  Future<NotificationItem?> getLastNotification(String type, String relatedId) async {
-    final list = notifications.where((n) => n.type == type && n.relatedId == relatedId).toList();
+  Future<NotificationItem?> getLastNotification(
+      String type, String relatedId) async {
+    final list = notifications
+        .where((n) => n.type == type && n.relatedId == relatedId)
+        .toList();
     if (list.isEmpty) return null;
     list.sort((a, b) => b.scheduledTime.compareTo(a.scheduledTime));
     return list.first;
@@ -80,11 +89,13 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<void> saveNotification(NotificationItem item) async {
-    if (item.id == 0) {
+    if (item.id <= 0) {
       item.id = _nextNotificationId++;
     } else {
       notifications.removeWhere((n) => n.id == item.id);
     }
+    item.androidNotificationId ??=
+        NotificationItem.deriveAndroidNotificationId(item.id);
     notifications.add(item);
   }
 }
@@ -108,7 +119,7 @@ class MockNotificationService implements NotificationService {
   @override
   Future<void> cancelNotification(int id) async {
     cancelled.add(id);
-    scheduled.removeWhere((item) => item.id == id);
+    scheduled.removeWhere((item) => item.effectiveAndroidNotificationId == id);
   }
 
   @override
@@ -130,7 +141,8 @@ void main() {
   });
 
   group('NotificationScheduler Tests', () {
-    test('rescheduleRollingWindow schedules class reminders correctly', () async {
+    test('rescheduleRollingWindow schedules class reminders correctly',
+        () async {
       final now = DateTime(2026, 7, 17, 9, 0); // Friday 9:00 AM
 
       // Insert Semester
@@ -232,7 +244,8 @@ void main() {
       mockDb.events.add(eventCancelled);
 
       // Run rolling scheduler
-      await scheduler.rescheduleRollingWindow(offsets: [15, 30], customNow: now);
+      await scheduler
+          .rescheduleRollingWindow(offsets: [15, 30], customNow: now);
 
       // Verify that reminders were scheduled:
       // event 1 (starts 10:00 AM today):
@@ -253,11 +266,13 @@ void main() {
       expect(mockService.scheduled.length, 4);
 
       // Verify body text includes room info
-      final testReminder = mockService.scheduled.firstWhere((n) => n.relatedId == '101' && n.body.contains('Room 302'));
+      final testReminder = mockService.scheduled.firstWhere(
+          (n) => n.relatedId == '101' && n.body.contains('Room 302'));
       expect(testReminder, isNotNull);
 
       // Try running scheduler again: should not schedule duplicates or double-register
-      await scheduler.rescheduleRollingWindow(offsets: [15, 30], customNow: now);
+      await scheduler
+          .rescheduleRollingWindow(offsets: [15, 30], customNow: now);
       expect(mockDb.notifications.length, 4);
       expect(mockService.scheduled.length, 4);
     });
@@ -324,7 +339,8 @@ void main() {
       // Since rate is 50% (target 75%), a LOW_ATTENDANCE_ALERT should be triggered
       final warnings = mockDb.notifications;
       expect(warnings.length, 1);
-      expect(warnings.first.type, NotificationType.LOW_ATTENDANCE_ALERT.toShortString());
+      expect(warnings.first.type,
+          NotificationType.LOW_ATTENDANCE_ALERT.toShortString());
       expect(warnings.first.title, contains('Low Attendance Alert'));
       expect(warnings.first.body, contains('Database Management Systems'));
 
@@ -396,7 +412,8 @@ void main() {
       await scheduler.scheduleWeeklyReport(customNow: now);
 
       final reports = mockDb.notifications
-          .where((n) => n.type == NotificationType.WEEKLY_REPORT.toShortString())
+          .where(
+              (n) => n.type == NotificationType.WEEKLY_REPORT.toShortString())
           .toList();
 
       expect(reports.length, 1);
@@ -407,6 +424,84 @@ void main() {
       // Check scheduled date is the upcoming Sunday (July 19, 2026) at 6:00 PM
       final expectedSunday = DateTime(2026, 7, 19, 18, 0);
       expect(reports.first.scheduledTime, expectedSunday);
+    });
+
+    test(
+        'rescheduleRollingWindow deduplicates repeated offsets and cancels exact Android ID on event removal',
+        () async {
+      final now = DateTime(2026, 7, 17, 9, 0);
+      mockDb.subjects.add(
+        SubjectLocal()
+          ..id = 1
+          ..semesterId = 1
+          ..name = 'Algorithms'
+          ..code = 'CS301'
+          ..credits = 4
+          ..attendanceTarget = 75.0
+          ..color = '#2563EB'
+          ..type = 'THEORY'
+          ..createdAt = now
+          ..updatedAt = now,
+      );
+
+      final event1 = EventLocal()
+        ..id = 201
+        ..subjectId = 1
+        ..date = DateTime.utc(2026, 7, 17)
+        ..startTime = '11:00'
+        ..endTime = '12:00'
+        ..eventType = 'REGULAR_CLASS'
+        ..status = 'UNMARKED'
+        ..createdAt = now
+        ..updatedAt = now;
+      final event2 = EventLocal()
+        ..id = 202
+        ..subjectId = 1
+        ..date = DateTime.utc(2026, 7, 17)
+        ..startTime = '15:00'
+        ..endTime = '16:00'
+        ..eventType = 'REGULAR_CLASS'
+        ..status = 'UNMARKED'
+        ..createdAt = now
+        ..updatedAt = now;
+      mockDb.events.addAll([event1, event2]);
+
+      await scheduler.rescheduleRollingWindow(
+        offsets: [15, 15],
+        customNow: now,
+      );
+
+      expect(mockDb.notifications, hasLength(2));
+      expect(mockService.scheduled, hasLength(2));
+      expect(
+        mockDb.notifications.map((n) => n.id).toSet(),
+        hasLength(2),
+      );
+      expect(
+        mockDb.notifications
+            .map((n) => n.effectiveAndroidNotificationId)
+            .toSet(),
+        hasLength(2),
+      );
+
+      // Cancel event1 and verify only event1's Android ID is cancelled.
+      final event1Notif =
+          mockDb.notifications.firstWhere((n) => n.relatedId == '201');
+      final event2Notif =
+          mockDb.notifications.firstWhere((n) => n.relatedId == '202');
+      event1.status = 'CANCELLED';
+
+      await scheduler.rescheduleRollingWindow(
+        offsets: [15],
+        customNow: now,
+      );
+
+      expect(
+        mockService.cancelled,
+        equals([event1Notif.effectiveAndroidNotificationId]),
+      );
+      expect(mockDb.notifications.map((n) => n.id), equals([event2Notif.id]));
+      expect(mockService.scheduled.map((n) => n.id), equals([event2Notif.id]));
     });
   });
 }

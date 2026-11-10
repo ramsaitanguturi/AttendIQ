@@ -14,12 +14,35 @@ abstract class NotificationService {
 
 class LocalNotificationServiceImpl implements NotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
+  bool _isInitialized = false;
+  Future<void>? _inFlightInit;
 
   LocalNotificationServiceImpl([FlutterLocalNotificationsPlugin? plugin])
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
+  bool get isInitialized => _isInitialized;
+
   @override
-  Future<void> initialize() async {
+  Future<void> initialize() {
+    if (_isInitialized) {
+      return Future<void>.value();
+    }
+    final inFlight = _inFlightInit;
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    late final Future<void> future;
+    future = _performInitialize().whenComplete(() {
+      if (identical(_inFlightInit, future)) {
+        _inFlightInit = null;
+      }
+    });
+    _inFlightInit = future;
+    return future;
+  }
+
+  Future<void> _performInitialize() async {
     tz.initializeTimeZones();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -32,7 +55,8 @@ class LocalNotificationServiceImpl implements NotificationService {
       requestSoundPermission: false,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
@@ -47,7 +71,8 @@ class LocalNotificationServiceImpl implements NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidImplementation != null) {
-      const AndroidNotificationChannel classRemindersChannel = AndroidNotificationChannel(
+      const AndroidNotificationChannel classRemindersChannel =
+          AndroidNotificationChannel(
         'class_reminders',
         'Class Reminders',
         description: 'Notifications sent before scheduled classes start.',
@@ -56,16 +81,19 @@ class LocalNotificationServiceImpl implements NotificationService {
         enableVibration: true,
       );
 
-      const AndroidNotificationChannel attendanceWarningsChannel = AndroidNotificationChannel(
+      const AndroidNotificationChannel attendanceWarningsChannel =
+          AndroidNotificationChannel(
         'attendance_warnings',
         'Attendance Warnings',
-        description: 'Notifications sent when attendance falls near or below target threshold.',
+        description:
+            'Notifications sent when attendance falls near or below target threshold.',
         importance: Importance.max,
         playSound: true,
         enableVibration: true,
       );
 
-      const AndroidNotificationChannel weeklyReportsChannel = AndroidNotificationChannel(
+      const AndroidNotificationChannel weeklyReportsChannel =
+          AndroidNotificationChannel(
         'weekly_reports',
         'Weekly Reports',
         description: 'Weekly summaries of class attendance.',
@@ -74,10 +102,15 @@ class LocalNotificationServiceImpl implements NotificationService {
         enableVibration: false,
       );
 
-      await androidImplementation.createNotificationChannel(classRemindersChannel);
-      await androidImplementation.createNotificationChannel(attendanceWarningsChannel);
-      await androidImplementation.createNotificationChannel(weeklyReportsChannel);
+      await androidImplementation
+          .createNotificationChannel(classRemindersChannel);
+      await androidImplementation
+          .createNotificationChannel(attendanceWarningsChannel);
+      await androidImplementation
+          .createNotificationChannel(weeklyReportsChannel);
     }
+
+    _isInitialized = true;
   }
 
   @override
@@ -101,6 +134,7 @@ class LocalNotificationServiceImpl implements NotificationService {
 
   @override
   Future<void> scheduleNotification(NotificationItem item) async {
+    final int notificationId = item.effectiveAndroidNotificationId;
     final tz.TZDateTime scheduledTZDateTime = tz.TZDateTime.from(
       item.scheduledTime.toLocal(),
       tz.local,
@@ -118,7 +152,8 @@ class LocalNotificationServiceImpl implements NotificationService {
       case NotificationType.CLASS_REMINDER:
         channelId = 'class_reminders';
         channelName = 'Class Reminders';
-        channelDescription = 'Notifications sent before scheduled classes start.';
+        channelDescription =
+            'Notifications sent before scheduled classes start.';
         importance = Importance.max;
         playSound = true;
         enableVibrate = true;
@@ -127,7 +162,8 @@ class LocalNotificationServiceImpl implements NotificationService {
       case NotificationType.LOW_ATTENDANCE_ALERT:
         channelId = 'attendance_warnings';
         channelName = 'Attendance Warnings';
-        channelDescription = 'Notifications sent when attendance falls near or below target threshold.';
+        channelDescription =
+            'Notifications sent when attendance falls near or below target threshold.';
         importance = Importance.max;
         playSound = true;
         enableVibrate = true;
@@ -149,7 +185,8 @@ class LocalNotificationServiceImpl implements NotificationService {
         enableVibrate = false;
     }
 
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       channelId,
       channelName,
       channelDescription: channelDescription,
@@ -172,7 +209,7 @@ class LocalNotificationServiceImpl implements NotificationService {
 
     try {
       await _plugin.zonedSchedule(
-        item.id,
+        notificationId,
         item.title,
         item.body,
         scheduledTZDateTime,
@@ -183,11 +220,12 @@ class LocalNotificationServiceImpl implements NotificationService {
         payload: item.relatedId,
       );
     } catch (e) {
-      debugPrint('Exact notification scheduling failed (e.g., SecurityException on Android 14+): $e');
+      debugPrint(
+          'Exact notification scheduling failed (e.g., SecurityException on Android 14+): $e');
       debugPrint('Attempting fallback to inexact notification scheduling...');
       try {
         await _plugin.zonedSchedule(
-          item.id,
+          notificationId,
           item.title,
           item.body,
           scheduledTZDateTime,
@@ -199,14 +237,15 @@ class LocalNotificationServiceImpl implements NotificationService {
         );
         debugPrint('Inexact notification scheduling fallback succeeded.');
       } catch (fallbackError) {
-        debugPrint('Fallback notification scheduling also failed: $fallbackError');
+        debugPrint(
+            'Fallback notification scheduling also failed: $fallbackError');
       }
     }
   }
 
   @override
   Future<void> cancelNotification(int id) async {
-    await _plugin.cancel(id);
+    await _plugin.cancel(NotificationItem.normalizeAndroidId(id));
   }
 
   @override

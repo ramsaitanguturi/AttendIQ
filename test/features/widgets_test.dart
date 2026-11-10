@@ -132,6 +132,14 @@ class FakeSemesterRepository implements SemesterRepository {
   Future<List<Semester>> getAllSemesters() async => activeSemester != null ? [activeSemester!] : [];
   @override
   Future<void> createSemester(Semester semester) async {}
+  @override
+  Future<void> updateSemester(Semester semester) async {}
+  @override
+  Future<void> setActiveSemester(int localId) async {}
+  @override
+  Future<void> archiveSemester(int localId) async {}
+  @override
+  Future<Semester?> getSemesterById(int localId) async => activeSemester;
 }
 
 class FakeSubjectRepository implements SubjectRepository {

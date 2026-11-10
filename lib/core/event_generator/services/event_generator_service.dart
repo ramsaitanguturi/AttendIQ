@@ -6,7 +6,7 @@ import '../domain/usecases/event_generator.dart';
 import '../../database/isar_provider.dart';
 import '../../../features/timetable/data/models/timetable_template_local.dart';
 import '../../../features/timetable/domain/entities/timetable_template.dart';
-import '../../../features/semester/data/models/semester_local.dart';
+import '../../../features/semester/data/repositories/semester_repository_impl.dart';
 import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/subject/domain/entities/subject.dart';
 
@@ -68,7 +68,7 @@ class EventGeneratorService {
   }
 
   Future<void> generateEventsForWholeSemester() async {
-    final semester = _isar.semesterLocals.where().isDeletedEqualTo(false).findFirst();
+    final semester = resolveActiveSemesterLocal(_isar);
     if (semester == null) return;
 
     final subjects = _isar.subjectLocals
@@ -79,16 +79,13 @@ class EventGeneratorService {
     final subjectIds = subjects.map((s) => s.id).toSet();
     if (subjectIds.isEmpty) return;
 
-    final templates = _isar.timetableTemplateLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
-    final activeTemplates = templates.where((t) => subjectIds.contains(t.subjectId)).toList();
+    final templates =
+        _isar.timetableTemplateLocals.where().isDeletedEqualTo(false).findAll();
+    final activeTemplates =
+        templates.where((t) => subjectIds.contains(t.subjectId)).toList();
 
-    final existingEvents = _isar.eventLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final existingEvents =
+        _isar.eventLocals.where().isDeletedEqualTo(false).findAll();
 
     final subjectEntities = subjects.map(_mapSubject).toList();
     final templateEntities = activeTemplates.map(_mapTemplate).toList();
@@ -122,7 +119,7 @@ class EventGeneratorService {
   }
 
   Future<void> generateEventsRollingWindow({DateTime? customToday}) async {
-    final semester = _isar.semesterLocals.where().isDeletedEqualTo(false).findFirst();
+    final semester = resolveActiveSemesterLocal(_isar);
     if (semester == null) return;
 
     final subjects = _isar.subjectLocals
@@ -133,16 +130,13 @@ class EventGeneratorService {
     final subjectIds = subjects.map((s) => s.id).toSet();
     if (subjectIds.isEmpty) return;
 
-    final templates = _isar.timetableTemplateLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
-    final activeTemplates = templates.where((t) => subjectIds.contains(t.subjectId)).toList();
+    final templates =
+        _isar.timetableTemplateLocals.where().isDeletedEqualTo(false).findAll();
+    final activeTemplates =
+        templates.where((t) => subjectIds.contains(t.subjectId)).toList();
 
-    final existingEvents = _isar.eventLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final existingEvents =
+        _isar.eventLocals.where().isDeletedEqualTo(false).findAll();
 
     final subjectEntities = subjects.map(_mapSubject).toList();
     final templateEntities = activeTemplates.map(_mapTemplate).toList();

@@ -14,7 +14,7 @@
 4. **BUG-028** (`app_router.dart`, `onboarding_page.dart`): Surface async semester error state instead of redirecting to `/onboarding`, guard all non-onboarding routes pre-setup, gate `debugLogDiagnostics` to `kDebugMode`, and add onboarding submit lock.
 
 ### Phase 5.2 — Core Data Model Unification & Database Consistency
-5. **BUG-017** (`semester_local.dart`, `semester_repository_impl.dart`, `semester_repository.dart`): Add explicit active/archived lifecycle state, `startDate < endDate` & non-overlap validation, unify active semester lookup across all services (eliminating `list.last` vs `findFirst()` split), and prepare Settings semester management APIs.
+5. **BUG-017** *(Completed & Verified)* (`semester_local.dart`, `semester_validator.dart`, `semester_repository_impl.dart`, `semester_repository.dart`, `semester_management_sheet.dart`, `settings_page.dart`, consumer services): Added explicit `draft`/`active`/`archived` lifecycle state, `startDate < endDate` & non-overlap validation, idempotent startup migration (`migrateLegacySemesters`), unified active semester lookup (`resolveActiveSemesterLocal` / `SemesterRepository.getActiveSemester()`) across all services, and Settings semester management UI.
 6. **BUG-004 & BUG-005** (`attendance_controller.dart`, `attendance_local_data_source.dart`, `today_schedule_provider.dart`, `weekly_schedule_view_controller.dart`, `subject_details_page.dart`):
    - Eliminate the split-brain `TimetableTemplateLocal`/`EventLocal` vs `WeeklyScheduleRuleLocal`/`DailyScheduleOccurrenceLocal` architecture.
    - Route all attendance marking and extra-class logging through `DailyScheduleOccurrenceLocal` (removing broken `createExtraClassEvent` / `EventLocal` double-ID collision) and resolve multi-slot same-day attendance cleanly by slot/occurrence key rather than date-only `.firstOrNull`.
@@ -50,12 +50,9 @@
 
 ---
 
-## 2. Recommended First Bug to Fix
+## 2. Recommended Next Target
 
-**Recommended First Target:** **`BUG-001`** (`today_schedule_provider.dart:93,157,164` — `subjectMap` `<int, dynamic>` strict-cast compile errors).
+*(Completed to date: `BUG-001`, `BUG-002`, `BUG-003`, `BUG-009`, `BUG-017`.)*
 
-**Rationale:**
-1. **Zero Dependencies:** It has no upstream dependencies.
-2. **Immediate Signal Restoration:** Currently `flutter analyze` exits with code `1` due to `2` compile errors in `today_schedule_provider.dart`, blocking the CI analyzer gate and obscuring static feedback during all downstream refactors.
-3. **Surgical Scope:** Typing `subjectMap` as `<int, Subject>{}` takes a single minimal diff, immediately unblocking `flutter analyze` and clearing the path to fix `BUG-002` (startup/`isarProvider` `keepAlive`) and `BUG-003` (`notificationInitializerProvider` `keepAlive`) cleanly right afterward.
+**Next Recommended Target:** **`BUG-004` & `BUG-005`** (Timetable/Event architecture unification & Extra Class logging fix — now unblocked after `BUG-001`, `BUG-002`, and `BUG-017`).
 

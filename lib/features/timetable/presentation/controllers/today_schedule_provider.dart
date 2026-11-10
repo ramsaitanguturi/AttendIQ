@@ -8,6 +8,7 @@ import '../../domain/repositories/daily_schedule_occurrence_repository.dart';
 import 'timetable_controller.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
+import '../../../subject/domain/entities/subject.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 
@@ -90,7 +91,7 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
     final semId = activeSemester?.localId;
 
     List<WeeklyScheduleRule> todayRules = [];
-    final subjectMap = <int, dynamic>{};
+    final subjectMap = <int, Subject>{};
 
     if (semId != null) {
       final ruleRepo = ref.watch(weeklyScheduleRuleRepositoryProvider);

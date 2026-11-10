@@ -22,6 +22,10 @@ const NotificationItemSchema = IsarGeneratedSchema(
     embedded: false,
     properties: [
       IsarPropertySchema(
+        name: 'androidNotificationId',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
         name: 'title',
         type: IsarType.string,
       ),
@@ -48,6 +52,14 @@ const NotificationItemSchema = IsarGeneratedSchema(
     ],
     indexes: [
       IsarIndexSchema(
+        name: 'androidNotificationId',
+        properties: [
+          "androidNotificationId",
+        ],
+        unique: false,
+        hash: false,
+      ),
+      IsarIndexSchema(
         name: 'type',
         properties: [
           "type",
@@ -67,20 +79,22 @@ const NotificationItemSchema = IsarGeneratedSchema(
 
 @isarProtected
 int serializeNotificationItem(IsarWriter writer, NotificationItem object) {
-  IsarCore.writeString(writer, 1, object.title);
-  IsarCore.writeString(writer, 2, object.body);
-  IsarCore.writeString(writer, 3, object.type);
   IsarCore.writeLong(
-      writer, 4, object.scheduledTime.toUtc().microsecondsSinceEpoch);
+      writer, 1, object.androidNotificationId ?? -9223372036854775808);
+  IsarCore.writeString(writer, 2, object.title);
+  IsarCore.writeString(writer, 3, object.body);
+  IsarCore.writeString(writer, 4, object.type);
+  IsarCore.writeLong(
+      writer, 5, object.scheduledTime.toUtc().microsecondsSinceEpoch);
   {
     final value = object.relatedId;
     if (value == null) {
-      IsarCore.writeNull(writer, 5);
+      IsarCore.writeNull(writer, 6);
     } else {
-      IsarCore.writeString(writer, 5, value);
+      IsarCore.writeString(writer, 6, value);
     }
   }
-  IsarCore.writeBool(writer, 6, object.isRead);
+  IsarCore.writeBool(writer, 7, object.isRead);
   return object.id;
 }
 
@@ -88,11 +102,19 @@ int serializeNotificationItem(IsarWriter writer, NotificationItem object) {
 NotificationItem deserializeNotificationItem(IsarReader reader) {
   final object = NotificationItem();
   object.id = IsarCore.readId(reader);
-  object.title = IsarCore.readString(reader, 1) ?? '';
-  object.body = IsarCore.readString(reader, 2) ?? '';
-  object.type = IsarCore.readString(reader, 3) ?? '';
   {
-    final value = IsarCore.readLong(reader, 4);
+    final value = IsarCore.readLong(reader, 1);
+    if (value == -9223372036854775808) {
+      object.androidNotificationId = null;
+    } else {
+      object.androidNotificationId = value;
+    }
+  }
+  object.title = IsarCore.readString(reader, 2) ?? '';
+  object.body = IsarCore.readString(reader, 3) ?? '';
+  object.type = IsarCore.readString(reader, 4) ?? '';
+  {
+    final value = IsarCore.readLong(reader, 5);
     if (value == -9223372036854775808) {
       object.scheduledTime =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
@@ -101,8 +123,8 @@ NotificationItem deserializeNotificationItem(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.relatedId = IsarCore.readString(reader, 5);
-  object.isRead = IsarCore.readBool(reader, 6);
+  object.relatedId = IsarCore.readString(reader, 6);
+  object.isRead = IsarCore.readBool(reader, 7);
   return object;
 }
 
@@ -112,14 +134,23 @@ dynamic deserializeNotificationItemProp(IsarReader reader, int property) {
     case 0:
       return IsarCore.readId(reader);
     case 1:
-      return IsarCore.readString(reader, 1) ?? '';
+      {
+        final value = IsarCore.readLong(reader, 1);
+        if (value == -9223372036854775808) {
+          return null;
+        } else {
+          return value;
+        }
+      }
     case 2:
       return IsarCore.readString(reader, 2) ?? '';
     case 3:
       return IsarCore.readString(reader, 3) ?? '';
     case 4:
+      return IsarCore.readString(reader, 4) ?? '';
+    case 5:
       {
-        final value = IsarCore.readLong(reader, 4);
+        final value = IsarCore.readLong(reader, 5);
         if (value == -9223372036854775808) {
           return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
         } else {
@@ -127,10 +158,10 @@ dynamic deserializeNotificationItemProp(IsarReader reader, int property) {
               .toLocal();
         }
       }
-    case 5:
-      return IsarCore.readString(reader, 5);
     case 6:
-      return IsarCore.readBool(reader, 6);
+      return IsarCore.readString(reader, 6);
+    case 7:
+      return IsarCore.readBool(reader, 7);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -139,6 +170,7 @@ dynamic deserializeNotificationItemProp(IsarReader reader, int property) {
 sealed class _NotificationItemUpdate {
   bool call({
     required int id,
+    int? androidNotificationId,
     String? title,
     String? body,
     String? type,
@@ -156,6 +188,7 @@ class _NotificationItemUpdateImpl implements _NotificationItemUpdate {
   @override
   bool call({
     required int id,
+    Object? androidNotificationId = ignore,
     Object? title = ignore,
     Object? body = ignore,
     Object? type = ignore,
@@ -166,12 +199,13 @@ class _NotificationItemUpdateImpl implements _NotificationItemUpdate {
     return collection.updateProperties([
           id
         ], {
-          if (title != ignore) 1: title as String?,
-          if (body != ignore) 2: body as String?,
-          if (type != ignore) 3: type as String?,
-          if (scheduledTime != ignore) 4: scheduledTime as DateTime?,
-          if (relatedId != ignore) 5: relatedId as String?,
-          if (isRead != ignore) 6: isRead as bool?,
+          if (androidNotificationId != ignore) 1: androidNotificationId as int?,
+          if (title != ignore) 2: title as String?,
+          if (body != ignore) 3: body as String?,
+          if (type != ignore) 4: type as String?,
+          if (scheduledTime != ignore) 5: scheduledTime as DateTime?,
+          if (relatedId != ignore) 6: relatedId as String?,
+          if (isRead != ignore) 7: isRead as bool?,
         }) >
         0;
   }
@@ -180,6 +214,7 @@ class _NotificationItemUpdateImpl implements _NotificationItemUpdate {
 sealed class _NotificationItemUpdateAll {
   int call({
     required List<int> id,
+    int? androidNotificationId,
     String? title,
     String? body,
     String? type,
@@ -197,6 +232,7 @@ class _NotificationItemUpdateAllImpl implements _NotificationItemUpdateAll {
   @override
   int call({
     required List<int> id,
+    Object? androidNotificationId = ignore,
     Object? title = ignore,
     Object? body = ignore,
     Object? type = ignore,
@@ -205,12 +241,13 @@ class _NotificationItemUpdateAllImpl implements _NotificationItemUpdateAll {
     Object? isRead = ignore,
   }) {
     return collection.updateProperties(id, {
-      if (title != ignore) 1: title as String?,
-      if (body != ignore) 2: body as String?,
-      if (type != ignore) 3: type as String?,
-      if (scheduledTime != ignore) 4: scheduledTime as DateTime?,
-      if (relatedId != ignore) 5: relatedId as String?,
-      if (isRead != ignore) 6: isRead as bool?,
+      if (androidNotificationId != ignore) 1: androidNotificationId as int?,
+      if (title != ignore) 2: title as String?,
+      if (body != ignore) 3: body as String?,
+      if (type != ignore) 4: type as String?,
+      if (scheduledTime != ignore) 5: scheduledTime as DateTime?,
+      if (relatedId != ignore) 6: relatedId as String?,
+      if (isRead != ignore) 7: isRead as bool?,
     });
   }
 }
@@ -224,6 +261,7 @@ extension NotificationItemUpdate on IsarCollection<int, NotificationItem> {
 
 sealed class _NotificationItemQueryUpdate {
   int call({
+    int? androidNotificationId,
     String? title,
     String? body,
     String? type,
@@ -241,6 +279,7 @@ class _NotificationItemQueryUpdateImpl implements _NotificationItemQueryUpdate {
 
   @override
   int call({
+    Object? androidNotificationId = ignore,
     Object? title = ignore,
     Object? body = ignore,
     Object? type = ignore,
@@ -249,12 +288,13 @@ class _NotificationItemQueryUpdateImpl implements _NotificationItemQueryUpdate {
     Object? isRead = ignore,
   }) {
     return query.updateProperties(limit: limit, {
-      if (title != ignore) 1: title as String?,
-      if (body != ignore) 2: body as String?,
-      if (type != ignore) 3: type as String?,
-      if (scheduledTime != ignore) 4: scheduledTime as DateTime?,
-      if (relatedId != ignore) 5: relatedId as String?,
-      if (isRead != ignore) 6: isRead as bool?,
+      if (androidNotificationId != ignore) 1: androidNotificationId as int?,
+      if (title != ignore) 2: title as String?,
+      if (body != ignore) 3: body as String?,
+      if (type != ignore) 4: type as String?,
+      if (scheduledTime != ignore) 5: scheduledTime as DateTime?,
+      if (relatedId != ignore) 6: relatedId as String?,
+      if (isRead != ignore) 7: isRead as bool?,
     });
   }
 }
@@ -276,6 +316,7 @@ class _NotificationItemQueryBuilderUpdateImpl
 
   @override
   int call({
+    Object? androidNotificationId = ignore,
     Object? title = ignore,
     Object? body = ignore,
     Object? type = ignore,
@@ -286,12 +327,13 @@ class _NotificationItemQueryBuilderUpdateImpl
     final q = query.build();
     try {
       return q.updateProperties(limit: limit, {
-        if (title != ignore) 1: title as String?,
-        if (body != ignore) 2: body as String?,
-        if (type != ignore) 3: type as String?,
-        if (scheduledTime != ignore) 4: scheduledTime as DateTime?,
-        if (relatedId != ignore) 5: relatedId as String?,
-        if (isRead != ignore) 6: isRead as bool?,
+        if (androidNotificationId != ignore) 1: androidNotificationId as int?,
+        if (title != ignore) 2: title as String?,
+        if (body != ignore) 3: body as String?,
+        if (type != ignore) 4: type as String?,
+        if (scheduledTime != ignore) 5: scheduledTime as DateTime?,
+        if (relatedId != ignore) 6: relatedId as String?,
+        if (isRead != ignore) 7: isRead as bool?,
       });
     } finally {
       q.close();
@@ -397,6 +439,106 @@ extension NotificationItemQueryFilter
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 1));
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 1));
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdGreaterThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdGreaterThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdLessThan(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdLessThanOrEqualTo(
+    int? value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
+      androidNotificationIdBetween(
+    int? lower,
+    int? upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 1,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
       titleEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -404,7 +546,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -420,7 +562,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -436,7 +578,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -452,7 +594,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -468,7 +610,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -485,7 +627,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 1,
+          property: 2,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -502,7 +644,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -518,7 +660,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -531,7 +673,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 1,
+          property: 2,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -544,7 +686,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 1,
+          property: 2,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -557,7 +699,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 1,
+          property: 2,
           value: '',
         ),
       );
@@ -569,7 +711,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 1,
+          property: 2,
           value: '',
         ),
       );
@@ -584,7 +726,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -600,7 +742,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -616,7 +758,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -632,7 +774,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -648,7 +790,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -665,7 +807,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 2,
+          property: 3,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -682,7 +824,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -698,7 +840,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -711,7 +853,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 2,
+          property: 3,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -724,7 +866,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 2,
+          property: 3,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -737,7 +879,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 2,
+          property: 3,
           value: '',
         ),
       );
@@ -749,7 +891,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 2,
+          property: 3,
           value: '',
         ),
       );
@@ -764,7 +906,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -780,7 +922,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -796,7 +938,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -812,7 +954,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -828,7 +970,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -845,7 +987,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 3,
+          property: 4,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -862,7 +1004,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -878,7 +1020,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -891,7 +1033,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 3,
+          property: 4,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -904,7 +1046,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 3,
+          property: 4,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -917,7 +1059,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 3,
+          property: 4,
           value: '',
         ),
       );
@@ -929,7 +1071,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 3,
+          property: 4,
           value: '',
         ),
       );
@@ -943,7 +1085,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 4,
+          property: 5,
           value: value,
         ),
       );
@@ -957,7 +1099,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 4,
+          property: 5,
           value: value,
         ),
       );
@@ -971,7 +1113,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 4,
+          property: 5,
           value: value,
         ),
       );
@@ -985,7 +1127,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 4,
+          property: 5,
           value: value,
         ),
       );
@@ -999,7 +1141,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 4,
+          property: 5,
           value: value,
         ),
       );
@@ -1014,7 +1156,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 4,
+          property: 5,
           lower: lower,
           upper: upper,
         ),
@@ -1025,14 +1167,14 @@ extension NotificationItemQueryFilter
   QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
       relatedIdIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 5));
+      return query.addFilterCondition(const IsNullCondition(property: 6));
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterFilterCondition>
       relatedIdIsNotNull() {
     return QueryBuilder.apply(not(), (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 5));
+      return query.addFilterCondition(const IsNullCondition(property: 6));
     });
   }
 
@@ -1044,7 +1186,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1060,7 +1202,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1076,7 +1218,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1092,7 +1234,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1108,7 +1250,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1125,7 +1267,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 5,
+          property: 6,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -1142,7 +1284,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1158,7 +1300,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1171,7 +1313,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 5,
+          property: 6,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1184,7 +1326,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 5,
+          property: 6,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1197,7 +1339,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 5,
+          property: 6,
           value: '',
         ),
       );
@@ -1209,7 +1351,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 5,
+          property: 6,
           value: '',
         ),
       );
@@ -1223,7 +1365,7 @@ extension NotificationItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 6,
+          property: 7,
           value: value,
         ),
       );
@@ -1249,11 +1391,25 @@ extension NotificationItemQuerySortBy
     });
   }
 
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
+      sortByAndroidNotificationId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(1);
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
+      sortByAndroidNotificationIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(1, sort: Sort.desc);
+    });
+  }
+
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> sortByTitle(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        1,
+        2,
         caseSensitive: caseSensitive,
       );
     });
@@ -1263,7 +1419,7 @@ extension NotificationItemQuerySortBy
       sortByTitleDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        1,
+        2,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -1274,7 +1430,7 @@ extension NotificationItemQuerySortBy
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        2,
+        3,
         caseSensitive: caseSensitive,
       );
     });
@@ -1284,7 +1440,7 @@ extension NotificationItemQuerySortBy
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        2,
+        3,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -1295,7 +1451,7 @@ extension NotificationItemQuerySortBy
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        3,
+        4,
         caseSensitive: caseSensitive,
       );
     });
@@ -1305,7 +1461,7 @@ extension NotificationItemQuerySortBy
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        3,
+        4,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -1315,14 +1471,14 @@ extension NotificationItemQuerySortBy
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       sortByScheduledTime() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4);
+      return query.addSortBy(5);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       sortByScheduledTimeDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4, sort: Sort.desc);
+      return query.addSortBy(5, sort: Sort.desc);
     });
   }
 
@@ -1330,7 +1486,7 @@ extension NotificationItemQuerySortBy
       sortByRelatedId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        5,
+        6,
         caseSensitive: caseSensitive,
       );
     });
@@ -1340,7 +1496,7 @@ extension NotificationItemQuerySortBy
       sortByRelatedIdDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        5,
+        6,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -1350,14 +1506,14 @@ extension NotificationItemQuerySortBy
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       sortByIsRead() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6);
+      return query.addSortBy(7);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       sortByIsReadDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6, sort: Sort.desc);
+      return query.addSortBy(7, sort: Sort.desc);
     });
   }
 }
@@ -1377,87 +1533,101 @@ extension NotificationItemQuerySortThenBy
     });
   }
 
-  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByTitle(
-      {bool caseSensitive = true}) {
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
+      thenByAndroidNotificationId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(1, caseSensitive: caseSensitive);
+      return query.addSortBy(1);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
-      thenByTitleDesc({bool caseSensitive = true}) {
+      thenByAndroidNotificationIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(1, sort: Sort.desc, caseSensitive: caseSensitive);
+      return query.addSortBy(1, sort: Sort.desc);
     });
   }
 
-  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByBody(
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByTitle(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(2, caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByBodyDesc(
-      {bool caseSensitive = true}) {
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
+      thenByTitleDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(2, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByType(
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByBody(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(3, caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByTypeDesc(
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByBodyDesc(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(3, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByType(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy> thenByTypeDesc(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(4, sort: Sort.desc, caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       thenByScheduledTime() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4);
+      return query.addSortBy(5);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       thenByScheduledTimeDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(4, sort: Sort.desc);
+      return query.addSortBy(5, sort: Sort.desc);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       thenByRelatedId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(5, caseSensitive: caseSensitive);
+      return query.addSortBy(6, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       thenByRelatedIdDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(5, sort: Sort.desc, caseSensitive: caseSensitive);
+      return query.addSortBy(6, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       thenByIsRead() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6);
+      return query.addSortBy(7);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterSortBy>
       thenByIsReadDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(6, sort: Sort.desc);
+      return query.addSortBy(7, sort: Sort.desc);
     });
   }
 }
@@ -1465,44 +1635,51 @@ extension NotificationItemQuerySortThenBy
 extension NotificationItemQueryWhereDistinct
     on QueryBuilder<NotificationItem, NotificationItem, QDistinct> {
   QueryBuilder<NotificationItem, NotificationItem, QAfterDistinct>
-      distinctByTitle({bool caseSensitive = true}) {
+      distinctByAndroidNotificationId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(1, caseSensitive: caseSensitive);
+      return query.addDistinctBy(1);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterDistinct>
-      distinctByBody({bool caseSensitive = true}) {
+      distinctByTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(2, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterDistinct>
-      distinctByType({bool caseSensitive = true}) {
+      distinctByBody({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(3, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterDistinct>
+      distinctByType({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(4, caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<NotificationItem, NotificationItem, QAfterDistinct>
       distinctByScheduledTime() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(4);
+      return query.addDistinctBy(5);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterDistinct>
       distinctByRelatedId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(5, caseSensitive: caseSensitive);
+      return query.addDistinctBy(6, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<NotificationItem, NotificationItem, QAfterDistinct>
       distinctByIsRead() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(6);
+      return query.addDistinctBy(7);
     });
   }
 }
@@ -1515,40 +1692,47 @@ extension NotificationItemQueryProperty1
     });
   }
 
-  QueryBuilder<NotificationItem, String, QAfterProperty> titleProperty() {
+  QueryBuilder<NotificationItem, int?, QAfterProperty>
+      androidNotificationIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(1);
     });
   }
 
-  QueryBuilder<NotificationItem, String, QAfterProperty> bodyProperty() {
+  QueryBuilder<NotificationItem, String, QAfterProperty> titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(2);
     });
   }
 
-  QueryBuilder<NotificationItem, String, QAfterProperty> typeProperty() {
+  QueryBuilder<NotificationItem, String, QAfterProperty> bodyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(3);
+    });
+  }
+
+  QueryBuilder<NotificationItem, String, QAfterProperty> typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
     });
   }
 
   QueryBuilder<NotificationItem, DateTime, QAfterProperty>
       scheduledTimeProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(4);
+      return query.addProperty(5);
     });
   }
 
   QueryBuilder<NotificationItem, String?, QAfterProperty> relatedIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(5);
+      return query.addProperty(6);
     });
   }
 
   QueryBuilder<NotificationItem, bool, QAfterProperty> isReadProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(6);
+      return query.addProperty(7);
     });
   }
 }
@@ -1561,41 +1745,48 @@ extension NotificationItemQueryProperty2<R>
     });
   }
 
-  QueryBuilder<NotificationItem, (R, String), QAfterProperty> titleProperty() {
+  QueryBuilder<NotificationItem, (R, int?), QAfterProperty>
+      androidNotificationIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(1);
     });
   }
 
-  QueryBuilder<NotificationItem, (R, String), QAfterProperty> bodyProperty() {
+  QueryBuilder<NotificationItem, (R, String), QAfterProperty> titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(2);
     });
   }
 
-  QueryBuilder<NotificationItem, (R, String), QAfterProperty> typeProperty() {
+  QueryBuilder<NotificationItem, (R, String), QAfterProperty> bodyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(3);
+    });
+  }
+
+  QueryBuilder<NotificationItem, (R, String), QAfterProperty> typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
     });
   }
 
   QueryBuilder<NotificationItem, (R, DateTime), QAfterProperty>
       scheduledTimeProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(4);
+      return query.addProperty(5);
     });
   }
 
   QueryBuilder<NotificationItem, (R, String?), QAfterProperty>
       relatedIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(5);
+      return query.addProperty(6);
     });
   }
 
   QueryBuilder<NotificationItem, (R, bool), QAfterProperty> isReadProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(6);
+      return query.addProperty(7);
     });
   }
 }
@@ -1608,42 +1799,49 @@ extension NotificationItemQueryProperty3<R1, R2>
     });
   }
 
-  QueryBuilder<NotificationItem, (R1, R2, String), QOperations>
-      titleProperty() {
+  QueryBuilder<NotificationItem, (R1, R2, int?), QOperations>
+      androidNotificationIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(1);
     });
   }
 
-  QueryBuilder<NotificationItem, (R1, R2, String), QOperations> bodyProperty() {
+  QueryBuilder<NotificationItem, (R1, R2, String), QOperations>
+      titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(2);
     });
   }
 
-  QueryBuilder<NotificationItem, (R1, R2, String), QOperations> typeProperty() {
+  QueryBuilder<NotificationItem, (R1, R2, String), QOperations> bodyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(3);
+    });
+  }
+
+  QueryBuilder<NotificationItem, (R1, R2, String), QOperations> typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
     });
   }
 
   QueryBuilder<NotificationItem, (R1, R2, DateTime), QOperations>
       scheduledTimeProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(4);
+      return query.addProperty(5);
     });
   }
 
   QueryBuilder<NotificationItem, (R1, R2, String?), QOperations>
       relatedIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(5);
+      return query.addProperty(6);
     });
   }
 
   QueryBuilder<NotificationItem, (R1, R2, bool), QOperations> isReadProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(6);
+      return query.addProperty(7);
     });
   }
 }

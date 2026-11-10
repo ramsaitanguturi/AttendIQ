@@ -7,7 +7,7 @@ part of 'subject_attendance_stats_provider.dart';
 // **************************************************************************
 
 String _$subjectAttendanceStatsHash() =>
-    r'41df00a25b71b6daafca4e9621fd2ff493bdb687';
+    r'8305f7c8296f438599049f2888db5f7864295ee9';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -164,7 +164,7 @@ class _SubjectAttendanceStatsProviderElement
 }
 
 String _$allSubjectAttendanceStatsHash() =>
-    r'10314b4f5956ba1199dddd8450f12955e08350ce';
+    r'30a3050268539f18ddfc08ecf026788035971cf6';
 
 /// See also [allSubjectAttendanceStats].
 @ProviderFor(allSubjectAttendanceStats)

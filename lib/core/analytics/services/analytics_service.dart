@@ -5,11 +5,12 @@ import '../../database/isar_provider.dart';
 import '../models/attendance_analytics.dart';
 import '../models/risk_status.dart';
 import '../calculators/analytics_calculator.dart';
-import '../../../features/semester/domain/entities/semester.dart';
 import '../../../features/subject/presentation/controllers/subject_controller.dart';
 import '../../../features/attendance/presentation/controllers/attendance_controller.dart';
 import '../../../features/attendance/domain/entities/attendance_record.dart';
 import '../../../features/semester/data/models/semester_local.dart';
+import '../../../features/semester/data/repositories/semester_repository_impl.dart';
+import '../../../features/semester/presentation/controllers/semester_controller.dart';
 import '../../../features/subject/data/models/subject_local.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
 import '../../event_generator/data/models/event_local.dart';
@@ -23,24 +24,16 @@ class AnalyticsService {
   AnalyticsService(this._isar, this._ref);
 
   Future<AttendanceAnalytics?> getAnalytics() async {
-    // 1. Get active semester
-    final semesterLocal = _isar.semesterLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findFirst();
-    if (semesterLocal == null) return null;
-
-    final semester = Semester(
-      id: semesterLocal.serverId ?? semesterLocal.id.toString(),
-      name: semesterLocal.name,
-      startDate: semesterLocal.startDate,
-      endDate: semesterLocal.endDate,
-      requiredAttendanceRate: semesterLocal.requiredAttendanceRate,
-    );
+    // 1. Get active semester through canonical repository lookup
+    final semester =
+        await _ref.read(semesterRepositoryProvider).getActiveSemester();
+    final semesterId =
+        semester?.localId ?? resolveActiveSemesterLocal(_isar)?.id;
+    if (semester == null || semesterId == null) return null;
 
     // 2. Fetch subjects for semester
     final subjectRepo = _ref.read(subjectRepositoryProvider);
-    final subjects = await subjectRepo.getSubjectsBySemester(semesterLocal.id);
+    final subjects = await subjectRepo.getSubjectsBySemester(semesterId);
     if (subjects.isEmpty) {
       return AttendanceAnalytics(
         overallPercentage: 100.0,
@@ -53,7 +46,8 @@ class AnalyticsService {
           monthly: [TrendPoint(date: semester.startDate, percentage: 100.0)],
         ),
         subjectComparison: const SubjectComparison(),
-        attendanceStreak: const AttendanceStreak(longestPresentStreak: 0, currentStreak: 0),
+        attendanceStreak:
+            const AttendanceStreak(longestPresentStreak: 0, currentStreak: 0),
         riskLevel: RiskStatus.SAFE,
       );
     }
@@ -63,15 +57,18 @@ class AnalyticsService {
     final records = <AttendanceRecord>[];
     for (final subject in subjects) {
       if (subject.id != null) {
-        final subRecords = await attendanceRepo.getAttendanceForSubject(subject.id!);
+        final subRecords =
+            await attendanceRepo.getAttendanceForSubject(subject.id!);
         records.addAll(subRecords);
       }
     }
 
     // 4. Fetch events
     final subjectIds = subjects.map((s) => s.id!).toSet();
-    final allEvents = _isar.eventLocals.where().isDeletedEqualTo(false).findAll();
-    final semesterEvents = allEvents.where((e) => subjectIds.contains(e.subjectId)).toList();
+    final allEvents =
+        _isar.eventLocals.where().isDeletedEqualTo(false).findAll();
+    final semesterEvents =
+        allEvents.where((e) => subjectIds.contains(e.subjectId)).toList();
 
     // 5. Build logged occurrences
     final occurrences = <LoggedOccurrence>[];
@@ -110,12 +107,20 @@ AnalyticsService analyticsService(AnalyticsServiceRef ref) {
 }
 
 @riverpod
-Future<AttendanceAnalytics?> attendanceAnalytics(AttendanceAnalyticsRef ref) async {
+Future<AttendanceAnalytics?> attendanceAnalytics(
+    AttendanceAnalyticsRef ref) async {
+  ref.watch(activeSemesterProvider);
   final service = ref.watch(analyticsServiceProvider);
 
-  // We want to re-run analytics whenever subject locals, attendance record locals or event locals change
+  // We want to re-run analytics whenever semester, subject, attendance record or event locals change
   final isar = ref.watch(isarProvider).requireValue;
-  
+
+  final semStream = isar.semesterLocals.where().watchLazy();
+  final semSub = semStream.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => semSub.cancel());
+
   final recStream = isar.attendanceRecordLocals.where().watchLazy();
   final recSub = recStream.listen((_) {
     ref.invalidateSelf();

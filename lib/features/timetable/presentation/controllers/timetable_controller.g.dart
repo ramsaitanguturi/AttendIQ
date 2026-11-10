@@ -150,7 +150,7 @@ final timetableRepositoryProvider =
 
 typedef TimetableRepositoryRef = AutoDisposeProviderRef<TimetableRepository>;
 String _$academicEventControllerHash() =>
-    r'dfc256ab91d1c1a946918e3bfe48d688e96d02e4';
+    r'6a564582189b0d45960b39f4c49e8baaa225573a';
 
 /// See also [AcademicEventController].
 @ProviderFor(AcademicEventController)
@@ -168,7 +168,7 @@ final academicEventControllerProvider = AutoDisposeAsyncNotifierProvider<
 typedef _$AcademicEventController
     = AutoDisposeAsyncNotifier<List<AcademicEvent>>;
 String _$weeklyScheduleRuleListControllerHash() =>
-    r'e78c1b2af254647aab316642e28df1ce6049fa16';
+    r'0c65d0cc66a73f0b59517ed97cb49ea2abc04a7f';
 
 /// See also [WeeklyScheduleRuleListController].
 @ProviderFor(WeeklyScheduleRuleListController)
@@ -187,7 +187,7 @@ final weeklyScheduleRuleListControllerProvider =
 typedef _$WeeklyScheduleRuleListController
     = AutoDisposeAsyncNotifier<List<WeeklyScheduleRule>>;
 String _$scheduleExceptionControllerHash() =>
-    r'd9f13602caffdf535c0efae7c819319d6dda2a59';
+    r'1cdddd6a3a8930cc5d7e184f3ce6241257fd424e';
 
 /// See also [ScheduleExceptionController].
 @ProviderFor(ScheduleExceptionController)

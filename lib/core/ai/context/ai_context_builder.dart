@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:isar/isar.dart';
 import '../../database/isar_provider.dart';
 import '../../../features/attendance/presentation/controllers/subject_attendance_stats_provider.dart';
-import '../../../features/semester/data/models/semester_local.dart';
+import '../../../features/semester/presentation/controllers/semester_controller.dart';
 import '../../../features/attendance/data/models/attendance_record_local.dart';
 import '../../event_generator/data/models/event_local.dart';
 import 'attendance_ai_context.dart';
@@ -16,9 +16,9 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
 
   final isar = ref.watch(isarProvider).requireValue;
 
-  // Active semester
-  final semesterLocal = isar.semesterLocals.where().isDeletedEqualTo(false).findFirst();
-  if (semesterLocal == null) {
+  // Active semester via unified provider
+  final activeSemester = await ref.watch(activeSemesterProvider.future);
+  if (activeSemester == null) {
     throw Exception('No active semester found.');
   }
 
@@ -45,11 +45,11 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
   };
 
   // 2. Semester info
-  final weeksRemaining = semesterLocal.endDate.difference(now).inDays ~/ 7;
+  final weeksRemaining = activeSemester.endDate.difference(now).inDays ~/ 7;
   final semester = {
-    'name': semesterLocal.name,
-    'startDate': semesterLocal.startDate.toIso8601String(),
-    'endDate': semesterLocal.endDate.toIso8601String(),
+    'name': activeSemester.name,
+    'startDate': activeSemester.startDate.toIso8601String(),
+    'endDate': activeSemester.endDate.toIso8601String(),
     'weeksRemaining': weeksRemaining < 0 ? 0 : weeksRemaining,
   };
 
@@ -62,7 +62,8 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
     totalClasses += s.totalClasses;
     totalAbsent += s.absentCount;
   }
-  final overallPercentage = totalClasses > 0 ? (totalPresent / totalClasses) * 100.0 : 100.0;
+  final overallPercentage =
+      totalClasses > 0 ? (totalPresent / totalClasses) * 100.0 : 100.0;
 
   final attendanceSummary = {
     'overallPercentage': overallPercentage,
@@ -141,10 +142,8 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
 
   // 6. Recent Trends
   final thirtyDaysAgo = now.subtract(const Duration(days: 30));
-  final recentRecords = isar.attendanceRecordLocals
-      .where()
-      .isDeletedEqualTo(false)
-      .findAll();
+  final recentRecords =
+      isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
 
   int recentPresent = 0;
   int recentTotal = 0;
@@ -159,7 +158,9 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
     }
   }
 
-  final recentPercentage = recentTotal > 0 ? (recentPresent / recentTotal) * 100.0 : overallPercentage;
+  final recentPercentage = recentTotal > 0
+      ? (recentPresent / recentTotal) * 100.0
+      : overallPercentage;
   final recentTrends = {
     'recentPercentage': recentPercentage,
     'totalClassesLoggedLast30Days': recentTotal,
@@ -173,7 +174,7 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
     subjectStatistics: subjectStatistics,
     riskSubjects: riskSubjects,
     upcomingClasses: upcomingClasses,
-    attendanceTarget: semesterLocal.requiredAttendanceRate,
+    attendanceTarget: activeSemester.requiredAttendanceRate,
     recentTrends: recentTrends,
   );
 }

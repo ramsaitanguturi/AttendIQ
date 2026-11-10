@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import '../models/notification_item.dart';
 import '../services/notification_service.dart';
 import 'notification_database.dart';
@@ -33,7 +35,30 @@ class NotificationScheduler {
   final NotificationDatabase _db;
   final NotificationService _notificationService;
 
+  Future<void>? _activeReschedule;
+  bool _hasPendingReschedule = false;
+  List<int> _pendingReminderOffsets = const [15];
+  DateTime? _pendingCustomNow;
+  Completer<void>? _pendingCompleter;
+  bool _isDisposed = false;
+
   NotificationScheduler(this._db, this._notificationService);
+
+  bool get isDisposed => _isDisposed;
+
+  /// Marks the scheduler disposed so no subsequent reschedule passes run after
+  /// container shutdown or database closure.
+  void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _hasPendingReschedule = false;
+    _pendingCustomNow = null;
+    final pending = _pendingCompleter;
+    _pendingCompleter = null;
+    if (pending != null && !pending.isCompleted) {
+      pending.complete();
+    }
+  }
 
   Subject _mapSubject(SubjectLocal s) {
     return Subject(
@@ -70,20 +95,110 @@ class NotificationScheduler {
     );
   }
 
-  Future<void> rescheduleAll({List<int> reminderOffsets = const [15], DateTime? customNow}) async {
+  Future<void> rescheduleAll({
+    List<int> reminderOffsets = const [15],
+    DateTime? customNow,
+  }) {
+    if (_isDisposed) {
+      return Future<void>.value();
+    }
+
+    if (_activeReschedule != null) {
+      _hasPendingReschedule = true;
+      _pendingReminderOffsets = reminderOffsets;
+      _pendingCustomNow = customNow;
+      _pendingCompleter ??= Completer<void>();
+      return _pendingCompleter!.future;
+    }
+
+    late final Future<void> runFuture;
+    runFuture = _runRescheduleLoop(
+      initialOffsets: reminderOffsets,
+      initialCustomNow: customNow,
+    ).whenComplete(() {
+      if (identical(_activeReschedule, runFuture)) {
+        _activeReschedule = null;
+      }
+    });
+    _activeReschedule = runFuture;
+    return runFuture;
+  }
+
+  Future<void> _runRescheduleLoop({
+    required List<int> initialOffsets,
+    required DateTime? initialCustomNow,
+  }) async {
+    var offsets = initialOffsets;
+    var customNow = initialCustomNow;
+    Completer<void>? currentBatchCompleter;
+
+    try {
+      while (!_isDisposed) {
+        try {
+          await _executeReschedulePass(
+            reminderOffsets: offsets,
+            customNow: customNow,
+          );
+          if (currentBatchCompleter != null &&
+              !currentBatchCompleter.isCompleted) {
+            currentBatchCompleter.complete();
+          }
+        } catch (error, stackTrace) {
+          if (currentBatchCompleter != null &&
+              !currentBatchCompleter.isCompleted) {
+            currentBatchCompleter.completeError(error, stackTrace);
+          } else {
+            rethrow;
+          }
+        } finally {
+          currentBatchCompleter = null;
+        }
+
+        if (!_hasPendingReschedule || _isDisposed) {
+          break;
+        }
+
+        offsets = _pendingReminderOffsets;
+        customNow = _pendingCustomNow;
+        currentBatchCompleter = _pendingCompleter;
+        _hasPendingReschedule = false;
+        _pendingCompleter = null;
+        _pendingCustomNow = null;
+      }
+    } finally {
+      if (currentBatchCompleter != null && !currentBatchCompleter.isCompleted) {
+        currentBatchCompleter.complete();
+      }
+      final remainingPending = _pendingCompleter;
+      _pendingCompleter = null;
+      _hasPendingReschedule = false;
+      _pendingCustomNow = null;
+      if (remainingPending != null && !remainingPending.isCompleted) {
+        remainingPending.complete();
+      }
+    }
+  }
+
+  Future<void> _executeReschedulePass({
+    required List<int> reminderOffsets,
+    required DateTime? customNow,
+  }) async {
     final now = customNow ?? DateTime.now();
+    if (_isDisposed) return;
     try {
       await rescheduleRollingWindow(offsets: reminderOffsets, customNow: now);
     } catch (e, stack) {
       debugPrint('Failed to reschedule rolling window reminders: $e');
       debugPrint(stack.toString());
     }
+    if (_isDisposed) return;
     try {
       await checkAttendanceRisks(customNow: now);
     } catch (e, stack) {
       debugPrint('Failed to check attendance risks: $e');
       debugPrint(stack.toString());
     }
+    if (_isDisposed) return;
     try {
       await scheduleWeeklyReport(customNow: now);
     } catch (e, stack) {
@@ -92,12 +207,14 @@ class NotificationScheduler {
     }
   }
 
-  Future<void> rescheduleRollingWindow({List<int> offsets = const [15], DateTime? customNow}) async {
+  Future<void> rescheduleRollingWindow(
+      {List<int> offsets = const [15], DateTime? customNow}) async {
     final now = customNow ?? DateTime.now();
     final rollingEnd = now.add(const Duration(days: 7));
 
     final startUtc = DateTime.utc(now.year, now.month, now.day);
-    final endUtc = DateTime.utc(rollingEnd.year, rollingEnd.month, rollingEnd.day);
+    final endUtc =
+        DateTime.utc(rollingEnd.year, rollingEnd.month, rollingEnd.day);
 
     // 1. Fetch events in the next 7 days
     final events = await _db.getEvents(startUtc, endUtc);
@@ -157,9 +274,11 @@ class NotificationScheduler {
     }
 
     // 1b. Fetch academic events for next 14 days and schedule 1-day-before & 30-min-before reminders
-    final academicEvents = await _db.getAcademicEvents(startUtc, now.add(const Duration(days: 14)));
+    final academicEvents = await _db.getAcademicEvents(
+        startUtc, now.add(const Duration(days: 14)));
     for (final ae in academicEvents) {
-      final eventDate = DateTime(ae.date.year, ae.date.month, ae.date.day, 9, 0);
+      final eventDate =
+          DateTime(ae.date.year, ae.date.month, ae.date.day, 9, 0);
       final oneDayBefore = eventDate.subtract(const Duration(days: 1));
       if (oneDayBefore.isAfter(now)) {
         desiredReminders.add(DesiredReminder(
@@ -176,8 +295,10 @@ class NotificationScheduler {
         final parts = ae.startTime!.split(':');
         final hour = int.tryParse(parts[0]) ?? 9;
         final minute = int.tryParse(parts[1]) ?? 0;
-        final startTimeDate = DateTime(ae.date.year, ae.date.month, ae.date.day, hour, minute);
-        final thirtyMinBefore = startTimeDate.subtract(const Duration(minutes: 30));
+        final startTimeDate =
+            DateTime(ae.date.year, ae.date.month, ae.date.day, hour, minute);
+        final thirtyMinBefore =
+            startTimeDate.subtract(const Duration(minutes: 30));
         if (thirtyMinBefore.isAfter(now)) {
           desiredReminders.add(DesiredReminder(
             eventId: ae.id + 200000,
@@ -199,26 +320,49 @@ class NotificationScheduler {
 
     final List<int> keptIds = [];
     final List<DesiredReminder> toCreate = [];
+    final List<NotificationItem> toUpdate = [];
+    final Set<String> seenKeys = <String>{};
 
     for (final desired in desiredReminders) {
+      final key =
+          '${desired.eventId}_${desired.scheduledTime.toUtc().microsecondsSinceEpoch}';
+      if (!seenKeys.add(key)) {
+        continue;
+      }
+
       final existing = futureNotifications.firstWhereOrNull((n) =>
           n.relatedId == desired.eventId.toString() &&
           n.scheduledTime.isAtSameMomentAs(desired.scheduledTime));
       if (existing != null) {
         keptIds.add(existing.id);
+        if (existing.title != desired.title || existing.body != desired.body) {
+          existing
+            ..title = desired.title
+            ..body = desired.body;
+          toUpdate.add(existing);
+        }
       } else {
         toCreate.add(desired);
       }
     }
 
     // 4. Cancel and delete stale notifications
-    final toDelete = futureNotifications.where((n) => !keptIds.contains(n.id)).toList();
+    final toDelete =
+        futureNotifications.where((n) => !keptIds.contains(n.id)).toList();
     for (final n in toDelete) {
-      await _notificationService.cancelNotification(n.id);
+      await _notificationService.cancelNotification(
+        n.effectiveAndroidNotificationId,
+      );
       await _db.deleteNotification(n.id);
     }
 
-    // 5. Create and schedule new ones
+    // 5. Update modified notifications in-place (preserving DB & Android IDs)
+    for (final updated in toUpdate) {
+      await _db.saveNotification(updated);
+      await _notificationService.scheduleNotification(updated);
+    }
+
+    // 6. Create and schedule new ones
     for (final desired in toCreate) {
       final item = NotificationItem()
         ..title = desired.title
@@ -240,7 +384,8 @@ class NotificationScheduler {
     if (semesterLocal == null) return;
 
     final subjects = await _db.getSubjects();
-    final semesterSubjects = subjects.where((s) => s.semesterId == semesterLocal.id).toList();
+    final semesterSubjects =
+        subjects.where((s) => s.semesterId == semesterLocal.id).toList();
 
     for (final subject in semesterSubjects) {
       final recordsLocal = await _db.getAttendanceRecordsForSubject(subject.id);
@@ -265,17 +410,20 @@ class NotificationScheduler {
         alertType = NotificationType.LOW_ATTENDANCE_ALERT;
         title = 'Low Attendance Alert: ${subject.name}';
         final classesNeeded = analytics.classesNeeded;
-        body = 'Your ${subject.name} attendance is below $target% (${analytics.percentage.toStringAsFixed(1)}%). '
+        body =
+            'Your ${subject.name} attendance is below $target% (${analytics.percentage.toStringAsFixed(1)}%). '
             '${classesNeeded != null && classesNeeded > 0 ? "Attend next $classesNeeded classes to recover." : ""}';
       } else if (analytics.riskStatus == RiskStatus.WARNING) {
         alertType = NotificationType.ATTENDANCE_WARNING;
         title = 'Attendance Warning: ${subject.name}';
-        body = 'Your ${subject.name} attendance is close to falling below target. Currently at ${analytics.percentage.toStringAsFixed(1)}% (Target: $target%).';
+        body =
+            'Your ${subject.name} attendance is close to falling below target. Currently at ${analytics.percentage.toStringAsFixed(1)}% (Target: $target%).';
       }
 
       if (alertType != null && title != null && body != null) {
         // Find latest attendance record marked date
-        final sortedRecords = recordsLocal.toList()..sort((a, b) => b.markedAt.compareTo(a.markedAt));
+        final sortedRecords = recordsLocal.toList()
+          ..sort((a, b) => b.markedAt.compareTo(a.markedAt));
         final latestRecord = sortedRecords.first;
 
         // Fetch last notification of this type for this subject
@@ -285,7 +433,8 @@ class NotificationScheduler {
         );
 
         // If no notification was sent, or the latest log occurred after the last warning notification
-        if (lastNotification == null || latestRecord.markedAt.isAfter(lastNotification.scheduledTime)) {
+        if (lastNotification == null ||
+            latestRecord.markedAt.isAfter(lastNotification.scheduledTime)) {
           final item = NotificationItem()
             ..title = title
             ..body = body
@@ -319,21 +468,26 @@ class NotificationScheduler {
     if (semesterLocal == null) return;
 
     final subjects = await _db.getSubjects();
-    final semesterSubjects = subjects.where((s) => s.semesterId == semesterLocal.id).toList();
+    final semesterSubjects =
+        subjects.where((s) => s.semesterId == semesterLocal.id).toList();
     if (semesterSubjects.isEmpty) return;
 
     final subjectEntities = semesterSubjects.map(_mapSubject).toList();
     final subjectIds = semesterSubjects.map((s) => s.id).toSet();
 
     final allRecordsLocal = await _db.getAllAttendanceRecords();
-    final semesterRecordsLocal = allRecordsLocal.where((r) => subjectIds.contains(r.subjectId)).toList();
+    final semesterRecordsLocal =
+        allRecordsLocal.where((r) => subjectIds.contains(r.subjectId)).toList();
     final semesterRecords = semesterRecordsLocal.map(_mapRecord).toList();
 
     // Fetch events
-    final startUtc = DateTime.utc(semesterLocal.startDate.year, semesterLocal.startDate.month, semesterLocal.startDate.day);
-    final endUtc = DateTime.utc(semesterLocal.endDate.year, semesterLocal.endDate.month, semesterLocal.endDate.day);
+    final startUtc = DateTime.utc(semesterLocal.startDate.year,
+        semesterLocal.startDate.month, semesterLocal.startDate.day);
+    final endUtc = DateTime.utc(semesterLocal.endDate.year,
+        semesterLocal.endDate.month, semesterLocal.endDate.day);
     final allEvents = await _db.getEvents(startUtc, endUtc);
-    final semesterEvents = allEvents.where((e) => subjectIds.contains(e.subjectId)).toList();
+    final semesterEvents =
+        allEvents.where((e) => subjectIds.contains(e.subjectId)).toList();
 
     // Build occurrences
     final occurrences = <LoggedOccurrence>[];
@@ -372,7 +526,9 @@ class NotificationScheduler {
 
     // Calculate classes logged in last 7 days
     final startOfWeek = now.subtract(const Duration(days: 7));
-    final recordsThisWeek = semesterRecordsLocal.where((r) => r.markedAt.isAfter(startOfWeek)).toList();
+    final recordsThisWeek = semesterRecordsLocal
+        .where((r) => r.markedAt.isAfter(startOfWeek))
+        .toList();
     final classesAttendedThisWeek = recordsThisWeek
         .where((r) => r.status == 'PRESENT' || r.status == 'EXTRA_PRESENT')
         .length;
@@ -380,7 +536,8 @@ class NotificationScheduler {
 
     // Calculate subject stats
     final subjectAnalyticsList = semesterSubjects.map((sub) {
-      final subRecs = semesterRecords.where((r) => r.subjectId == sub.id).toList();
+      final subRecs =
+          semesterRecords.where((r) => r.subjectId == sub.id).toList();
       return AnalyticsCalculator.calculateSubjectAnalytics(
         subject: _mapSubject(sub),
         records: subRecs,
@@ -391,7 +548,9 @@ class NotificationScheduler {
     final worstSub = analytics.subjectComparison.lowestAttendanceSubject;
 
     final riskSubjects = subjectAnalyticsList
-        .where((s) => s.riskStatus == RiskStatus.WARNING || s.riskStatus == RiskStatus.CRITICAL)
+        .where((s) =>
+            s.riskStatus == RiskStatus.WARNING ||
+            s.riskStatus == RiskStatus.CRITICAL)
         .map((s) => s.subjectName)
         .toList();
     final riskStr = riskSubjects.isEmpty ? 'None' : riskSubjects.join(', ');
@@ -411,7 +570,9 @@ class NotificationScheduler {
 
     // Cancel all future reports and delete them
     for (final r in futureReports) {
-      await _notificationService.cancelNotification(r.id);
+      await _notificationService.cancelNotification(
+        r.effectiveAndroidNotificationId,
+      );
       await _db.deleteNotification(r.id);
     }
 

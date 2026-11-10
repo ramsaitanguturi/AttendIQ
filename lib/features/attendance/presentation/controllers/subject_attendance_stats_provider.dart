@@ -59,7 +59,7 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   if (subject == null) return null;
 
   // 2. Fetch active semester for end date
-  final semester = await ref.watch(semesterRepositoryProvider).getActiveSemester();
+  final semester = await ref.watch(activeSemesterProvider.future);
   if (semester == null) return null;
 
   // 3. Fetch all attendance records for this subject
@@ -69,9 +69,11 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   int present = 0;
   int absent = 0;
   for (final r in records) {
-    if (r.status == AttendanceStatus.PRESENT || r.status == AttendanceStatus.EXTRA_PRESENT) {
+    if (r.status == AttendanceStatus.PRESENT ||
+        r.status == AttendanceStatus.EXTRA_PRESENT) {
       present++;
-    } else if (r.status == AttendanceStatus.ABSENT || r.status == AttendanceStatus.EXTRA_ABSENT) {
+    } else if (r.status == AttendanceStatus.ABSENT ||
+        r.status == AttendanceStatus.EXTRA_ABSENT) {
       absent++;
     }
   }
@@ -79,9 +81,12 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 
   // 5. Calculate percentage, safe bunks, must-attend
   final target = subject.attendanceTarget;
-  final percentage = AttendanceCalculator.calculatePercentage(attended: present, total: total);
-  final safeBunks = AttendanceCalculator.calculateSafeBunks(attended: present, total: total, target: target);
-  final requiredClasses = AttendanceCalculator.calculateRequiredClasses(attended: present, total: total, target: target);
+  final percentage =
+      AttendanceCalculator.calculatePercentage(attended: present, total: total);
+  final safeBunks = AttendanceCalculator.calculateSafeBunks(
+      attended: present, total: total, target: target);
+  final requiredClasses = AttendanceCalculator.calculateRequiredClasses(
+      attended: present, total: total, target: target);
 
   // 6. Calculate remaining classes using repository
   final templates = await timetableRepo.getTemplatesForSubject(subjectId);
@@ -92,9 +97,11 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   if (today.isBefore(semester.endDate)) {
     // Count remaining scheduled classes starting from today
     DateTime current = DateTime.utc(today.year, today.month, today.day);
-    final end = DateTime.utc(semester.endDate.year, semester.endDate.month, semester.endDate.day);
+    final end = DateTime.utc(
+        semester.endDate.year, semester.endDate.month, semester.endDate.day);
     while (!current.isAfter(end)) {
-      remaining += templateWeekdays.where((int w) => w == current.weekday).length;
+      remaining +=
+          templateWeekdays.where((int w) => w == current.weekday).length;
       current = current.add(const Duration(days: 1));
     }
   }
@@ -102,19 +109,23 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   // 7. Calculate recent attendance rate
   final lifetimeRate = total > 0 ? (present / total) : 1.0;
   final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-  final recentRecords = records.where((AttendanceRecord r) => r.markedAt.isAfter(thirtyDaysAgo)).toList();
+  final recentRecords = records
+      .where((AttendanceRecord r) => r.markedAt.isAfter(thirtyDaysAgo))
+      .toList();
 
   int recentPresent = 0;
   int recentTotal = 0;
   for (final r in recentRecords) {
-    if (r.status == AttendanceStatus.PRESENT || r.status == AttendanceStatus.EXTRA_PRESENT) {
+    if (r.status == AttendanceStatus.PRESENT ||
+        r.status == AttendanceStatus.EXTRA_PRESENT) {
       recentPresent++;
       recentTotal++;
-    } else if (r.status == AttendanceStatus.ABSENT || r.status == AttendanceStatus.EXTRA_ABSENT) {
+    } else if (r.status == AttendanceStatus.ABSENT ||
+        r.status == AttendanceStatus.EXTRA_ABSENT) {
       recentTotal++;
     }
   }
-  
+
   final recentRate = (records.length < 10 || recentTotal == 0)
       ? lifetimeRate
       : (recentPresent / recentTotal);
@@ -149,14 +160,18 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 }
 
 @riverpod
-Future<List<SubjectAttendanceStats>> allSubjectAttendanceStats(AllSubjectAttendanceStatsRef ref) async {
-  final semester = await ref.watch(semesterRepositoryProvider).getActiveSemester();
+Future<List<SubjectAttendanceStats>> allSubjectAttendanceStats(
+    AllSubjectAttendanceStatsRef ref) async {
+  final semester = await ref.watch(activeSemesterProvider.future);
   if (semester == null || semester.localId == null) return const [];
 
-  final subjects = await ref.watch(subjectRepositoryProvider).getSubjectsBySemester(semester.localId!);
+  final subjects = await ref
+      .watch(subjectRepositoryProvider)
+      .getSubjectsBySemester(semester.localId!);
   final List<SubjectAttendanceStats> statsList = [];
   for (final sub in subjects) {
-    final stats = await ref.watch(subjectAttendanceStatsProvider(sub.id!).future);
+    final stats =
+        await ref.watch(subjectAttendanceStatsProvider(sub.id!).future);
     if (stats != null) {
       statsList.add(stats);
     }
@@ -165,7 +180,8 @@ Future<List<SubjectAttendanceStats>> allSubjectAttendanceStats(AllSubjectAttenda
 }
 
 @riverpod
-Future<double> overallAttendancePercentage(OverallAttendancePercentageRef ref) async {
+Future<double> overallAttendancePercentage(
+    OverallAttendancePercentageRef ref) async {
   final statsList = await ref.watch(allSubjectAttendanceStatsProvider.future);
   if (statsList.isEmpty) return 100.0;
 
@@ -182,7 +198,8 @@ Future<double> overallAttendancePercentage(OverallAttendancePercentageRef ref) a
 }
 
 @riverpod
-Future<List<EventLocal>> subjectEvents(SubjectEventsRef ref, int subjectId) async {
+Future<List<EventLocal>> subjectEvents(
+    SubjectEventsRef ref, int subjectId) async {
   final isar = ref.watch(isarProvider).requireValue;
 
   final stream = isar.eventLocals.where().subjectIdEqualTo(subjectId).watch();
@@ -196,7 +213,7 @@ Future<List<EventLocal>> subjectEvents(SubjectEventsRef ref, int subjectId) asyn
       .subjectIdEqualTo(subjectId)
       .isDeletedEqualTo(false)
       .findAll();
-  
+
   list.sort((EventLocal a, EventLocal b) => b.date.compareTo(a.date));
   return list;
 }
@@ -218,7 +235,7 @@ Future<List<EventLocal>> todayEvents(TodayEventsRef ref) async {
       .dateEqualTo(todayUtc)
       .isDeletedEqualTo(false)
       .findAll();
-  
+
   list.sort((EventLocal a, EventLocal b) => a.startTime.compareTo(b.startTime));
   return list;
 }
