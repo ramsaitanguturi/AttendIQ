@@ -26,7 +26,21 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   List<BackupFileItem> _backupFiles = [];
   String _displayFolderPath = 'Documents/AttendIQ/Backups';
   String? _statusMessage;
+  bool _statusIsError = false;
   final TextEditingController _importJsonController = TextEditingController();
+
+  String _formatErrorMessage(Object error) {
+    if (error is FormatException) {
+      return error.message;
+    }
+    if (error is FileSystemException) {
+      final osMsg = error.osError?.message;
+      return osMsg != null && osMsg.isNotEmpty
+          ? '${error.message} ($osMsg)'
+          : error.message;
+    }
+    return '$error';
+  }
 
   @override
   void initState() {
@@ -41,6 +55,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   Future<void> _refreshBackupList() async {
+    if (!mounted) return;
     setState(() {
       _isLoadingFileList = true;
     });
@@ -70,6 +85,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     setState(() {
       _isExporting = true;
       _statusMessage = null;
+      _statusIsError = false;
     });
 
     try {
@@ -87,28 +103,30 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           .updateLastBackupDate(now);
 
       await _refreshBackupList();
+      if (!mounted) return;
 
       setState(() {
         _statusMessage = 'Backup created successfully!\nSaved to: $path';
+        _statusIsError = false;
       });
 
-      if (mounted) {
-        await ExportSuccessDialog.show(
-          context: context,
-          title: 'Backup exported successfully',
-          filePath: path,
-          fileName: fileName,
-          mimeType: 'application/octet-stream',
-        );
-      }
+      await ExportSuccessDialog.show(
+        context: context,
+        title: 'Backup exported successfully',
+        filePath: path,
+        fileName: fileName,
+        mimeType: 'application/octet-stream',
+      );
     } catch (e) {
-      setState(() {
-        _statusMessage = 'Export failed: $e';
-      });
+      final errMsg = _formatErrorMessage(e);
       if (mounted) {
+        setState(() {
+          _statusMessage = 'Export failed: $errMsg';
+          _statusIsError = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Export failed: $e'),
+            content: Text('Export failed: $errMsg'),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
@@ -126,6 +144,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     setState(() {
       _isExporting = true;
       _statusMessage = null;
+      _statusIsError = false;
     });
 
     try {
@@ -135,28 +154,30 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final path =
           await service.exportDataJsonFile(semesterName: activeSemester?.name);
       final fileName = path.split(Platform.pathSeparator).last;
+      if (!mounted) return;
 
       setState(() {
         _statusMessage = 'JSON Data exported successfully!\nSaved to: $path';
+        _statusIsError = false;
       });
 
-      if (mounted) {
-        await ExportSuccessDialog.show(
-          context: context,
-          title: 'JSON Data exported successfully',
-          filePath: path,
-          fileName: fileName,
-          mimeType: 'application/json',
-        );
-      }
+      await ExportSuccessDialog.show(
+        context: context,
+        title: 'JSON Data exported successfully',
+        filePath: path,
+        fileName: fileName,
+        mimeType: 'application/json',
+      );
     } catch (e) {
-      setState(() {
-        _statusMessage = 'Export failed: $e';
-      });
+      final errMsg = _formatErrorMessage(e);
       if (mounted) {
+        setState(() {
+          _statusMessage = 'Export failed: $errMsg';
+          _statusIsError = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Export failed: $e'),
+            content: Text('Export failed: $errMsg'),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
@@ -171,25 +192,31 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   Future<void> _handlePickImportFile() async {
+    if (_isImporting) return;
     setState(() {
       _isImporting = true;
       _statusMessage = null;
+      _statusIsError = false;
     });
 
     try {
       final service = ref.read(backupServiceProvider);
       final picked = await service.pickImportFile();
+      if (!mounted) return;
 
       if (picked != null) {
-        if (mounted) {
-          await _showImportStrategyDialog(picked.content);
-        }
+        await _showImportStrategyDialog(picked.content);
       }
     } catch (e) {
+      final errMsg = _formatErrorMessage(e);
       if (mounted) {
+        setState(() {
+          _statusMessage = 'Failed to read selected file: $errMsg';
+          _statusIsError = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to read selected file: $e'),
+            content: Text('Failed to read selected file: $errMsg'),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
@@ -204,6 +231,43 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   Future<void> _handleRestoreFile(BackupFileItem fileItem) async {
+    if (_isImporting) return;
+    setState(() {
+      _isImporting = true;
+      _statusMessage = null;
+      _statusIsError = false;
+    });
+
+    try {
+      final service = ref.read(backupServiceProvider);
+      await service.validateBackupFile(
+        fileItem.filePath,
+        strategy: null,
+      );
+    } catch (e) {
+      final errMsg = _formatErrorMessage(e);
+      if (mounted) {
+        setState(() {
+          _statusMessage = 'Backup validation error: $errMsg';
+          _statusIsError = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup validation error: $errMsg'),
+            backgroundColor: AppColors.attendanceLow,
+          ),
+        );
+      }
+      return;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isImporting = false;
+        });
+      }
+    }
+
+    if (!mounted) return;
     showDialog<void>(
       context: context,
       builder: (ctx) {
@@ -231,10 +295,15 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 _performFileImport(fileItem.filePath, ImportStrategy.replace);
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.attendanceLow),
-              child: const Text('Replace Data',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+                backgroundColor: AppColors.attendanceLow,
+              ),
+              child: const Text(
+                'Replace Data',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -243,38 +312,45 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   Future<void> _performFileImport(
-      String filePath, ImportStrategy strategy) async {
+    String filePath,
+    ImportStrategy strategy,
+  ) async {
     setState(() {
       _isImporting = true;
       _statusMessage = null;
+      _statusIsError = false;
     });
 
     try {
       final service = ref.read(backupServiceProvider);
       await service.importFromFile(filePath, strategy: strategy);
+      if (!mounted) return;
       ref.invalidate(hasActiveSemesterProvider);
       ref.invalidate(activeSemesterProvider);
       ref.invalidate(allSemestersProvider);
+      await _refreshBackupList();
+      if (!mounted) return;
       setState(() {
         _statusMessage =
             'Import completed successfully (${strategy == ImportStrategy.replace ? "Replaced" : "Merged"})!';
+        _statusIsError = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Database restored successfully!'),
-            backgroundColor: AppColors.primary,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Database restored successfully!'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
     } catch (e) {
-      setState(() {
-        _statusMessage = 'Restore failed: $e';
-      });
+      final errMsg = _formatErrorMessage(e);
       if (mounted) {
+        setState(() {
+          _statusMessage = 'Restore failed: $errMsg';
+          _statusIsError = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Restore failed: $e'),
+            content: Text('Restore failed: $errMsg'),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
@@ -310,7 +386,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Backup'),
         content: Text(
-            'Are you sure you want to delete "${fileItem.fileName}"? This action cannot be undone.'),
+          'Are you sure you want to delete "${fileItem.fileName}"? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -319,18 +396,24 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.attendanceLow),
-            child: const Text('Delete',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
+              backgroundColor: AppColors.attendanceLow,
+            ),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       final service = ref.read(backupServiceProvider);
       final success = await service.deleteBackupFile(fileItem.filePath);
+      if (!mounted) return;
       if (success) {
         await _refreshBackupList();
         if (mounted) {
@@ -383,9 +466,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               },
               style:
                   ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Continue',
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Continue',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -394,26 +481,43 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   Future<void> _showImportStrategyDialog(String jsonString) async {
-    if (jsonString.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No backup content provided.')),
-      );
+    if (jsonString.trim().isEmpty) {
+      if (mounted) {
+        setState(() {
+          _statusMessage = 'No backup content provided.';
+          _statusIsError = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No backup content provided.')),
+        );
+      }
       return;
     }
 
     try {
       final service = ref.read(backupServiceProvider);
-      service.validateBackup(jsonString);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Backup validation error: $e'),
-          backgroundColor: AppColors.attendanceLow,
-        ),
+      await service.validateBackupPayload(
+        jsonString,
+        strategy: null,
       );
+    } catch (e) {
+      final errMsg = _formatErrorMessage(e);
+      if (mounted) {
+        setState(() {
+          _statusMessage = 'Backup validation error: $errMsg';
+          _statusIsError = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup validation error: $errMsg'),
+            backgroundColor: AppColors.attendanceLow,
+          ),
+        );
+      }
       return;
     }
 
+    if (!mounted) return;
     showDialog<void>(
       context: context,
       builder: (ctx) {
@@ -436,10 +540,15 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 _performImportString(jsonString, ImportStrategy.replace);
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.attendanceLow),
-              child: const Text('Replace Existing Data',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+                backgroundColor: AppColors.attendanceLow,
+              ),
+              child: const Text(
+                'Replace Existing Data',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -448,39 +557,45 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   Future<void> _performImportString(
-      String jsonString, ImportStrategy strategy) async {
+    String jsonString,
+    ImportStrategy strategy,
+  ) async {
     setState(() {
       _isImporting = true;
       _statusMessage = null;
+      _statusIsError = false;
     });
 
     try {
       final service = ref.read(backupServiceProvider);
       await service.importFromBackupString(jsonString, strategy: strategy);
+      if (!mounted) return;
       ref.invalidate(hasActiveSemesterProvider);
       ref.invalidate(activeSemesterProvider);
       ref.invalidate(allSemestersProvider);
       await _refreshBackupList();
+      if (!mounted) return;
       setState(() {
         _statusMessage =
             'Import completed successfully (${strategy == ImportStrategy.replace ? "Replaced" : "Merged"})!';
+        _statusIsError = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Database restored successfully!'),
-            backgroundColor: AppColors.primary,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Database restored successfully!'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
     } catch (e) {
-      setState(() {
-        _statusMessage = 'Import failed: $e';
-      });
+      final errMsg = _formatErrorMessage(e);
       if (mounted) {
+        setState(() {
+          _statusMessage = 'Import failed: $errMsg';
+          _statusIsError = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Import failed: $e'),
+            content: Text('Import failed: $errMsg'),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
@@ -946,15 +1061,25 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: (_statusIsError
+                              ? AppColors.attendanceLow
+                              : AppColors.primary)
+                          .withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: AppColors.primary.withOpacity(0.3)),
+                      border: Border.all(
+                        color: (_statusIsError
+                                ? AppColors.attendanceLow
+                                : AppColors.primary)
+                            .withOpacity(0.3),
+                      ),
                     ),
                     child: Text(
                       _statusMessage!,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: _statusIsError ? AppColors.attendanceLow : null,
+                      ),
                     ),
                   ),
                 ],

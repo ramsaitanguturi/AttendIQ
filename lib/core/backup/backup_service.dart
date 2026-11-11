@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:share_plus/share_plus.dart';
+
 import 'backup_exporter.dart';
 import 'backup_importer.dart';
 import 'backup_models.dart';
 import 'backup_path_helper.dart';
+import 'backup_validator.dart';
 
 class PickedBackupResult {
   final String filePath;
@@ -21,16 +25,22 @@ class PickedBackupResult {
 }
 
 class BackupService {
-  final Isar _isar;
   final BackupExporter _exporter;
   final BackupImporter _importer;
+  final Future<PlatformFile?> Function()? _pickFileOverride;
 
-  BackupService(this._isar)
-      : _exporter = BackupExporter(_isar),
-        _importer = BackupImporter(_isar);
+  BackupService(
+    Isar isar, {
+    @visibleForTesting Future<PlatformFile?> Function()? pickFileOverride,
+  })  : _exporter = BackupExporter(isar),
+        _importer = BackupImporter(isar),
+        _pickFileOverride = pickFileOverride;
 
   /// Extensible encoding hook (AES encryption can be plugged in here in future)
-  Future<String> encodeBackupPayload(BackupData data, {String? encryptionKey}) async {
+  Future<String> encodeBackupPayload(
+    BackupData data, {
+    String? encryptionKey,
+  }) async {
     final rawJson = await _exporter.exportToJsonString();
     if (encryptionKey != null && encryptionKey.isNotEmpty) {
       // Future extension: return aesEncrypt(rawJson, encryptionKey);
@@ -39,7 +49,10 @@ class BackupService {
   }
 
   /// Extensible decoding hook (AES decryption can be plugged in here in future)
-  Future<String> decodeBackupPayload(String rawContent, {String? encryptionKey}) async {
+  Future<String> decodeBackupPayload(
+    String rawContent, {
+    String? encryptionKey,
+  }) async {
     if (encryptionKey != null && encryptionKey.isNotEmpty) {
       // Future extension: return aesDecrypt(rawContent, encryptionKey);
     }
@@ -52,7 +65,10 @@ class BackupService {
   }
 
   /// Exports backup (.attendiq) to user-accessible `Documents/AttendIQ (Beta)/Backups/`
-  Future<String> exportToFile({String? semesterName, String? customFileName}) async {
+  Future<String> exportToFile({
+    String? semesterName,
+    String? customFileName,
+  }) async {
     final jsonContent = await exportBackupString();
     final fileName = customFileName ??
         await BackupPathHelper.generateFileName(
@@ -72,7 +88,10 @@ class BackupService {
   }
 
   /// Exports JSON data export file (.json) to `Documents/AttendIQ (Beta)/Exports/`
-  Future<String> exportDataJsonFile({String? semesterName, String? customFileName}) async {
+  Future<String> exportDataJsonFile({
+    String? semesterName,
+    String? customFileName,
+  }) async {
     final jsonContent = await exportBackupString();
     final fileName = customFileName ??
         await BackupPathHelper.generateFileName(
@@ -126,64 +145,158 @@ class BackupService {
 
   /// Opens target file picker dialog allowing user to select `.attendiq` or `.json` files
   /// from Downloads, Documents, File Manager, or Google Drive.
+  ///
+  /// Returns `null` only when the user cancels the picker. Empty files,
+  /// oversized files (> 20 MB), invalid UTF-8 bytes, and IO failures throw
+  /// explicit exceptions for UI reporting.
   Future<PickedBackupResult?> pickImportFile() async {
-    try {
+    final PlatformFile? file;
+    final pickOverride = _pickFileOverride;
+    if (pickOverride != null) {
+      file = await pickOverride();
+    } else {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['attendiq', 'json'],
-        withData: true,
+        withData: kIsWeb,
       );
-
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        String content = '';
-        String filePath = file.path ?? file.name;
-
-        if (file.bytes != null) {
-          content = utf8.decode(file.bytes!);
-        } else if (file.path != null) {
-          final fileOnDisk = File(file.path!);
-          if (await fileOnDisk.exists()) {
-            content = await fileOnDisk.readAsString();
-          }
-        }
-
-        if (content.isNotEmpty) {
-          return PickedBackupResult(
-            filePath: filePath,
-            fileName: file.name,
-            content: content,
-          );
-        }
+      if (result == null || result.files.isEmpty) {
+        return null;
       }
-    } catch (_) {}
-    return null;
+      file = result.files.first;
+    }
+
+    if (file == null) {
+      return null;
+    }
+
+    if (file.size > maxBackupPayloadBytes) {
+      throw const FormatException(
+        'Backup file exceeds maximum supported size of 20 MB.',
+      );
+    }
+
+    final filePath = file.path;
+    final String content;
+    if (filePath != null && filePath.trim().isNotEmpty) {
+      content = await _readRawFileContent(filePath);
+    } else if (file.bytes != null) {
+      content = _decodeBackupBytes(file.bytes!);
+    } else {
+      throw FileSystemException(
+        'Selected backup file could not be read.',
+        file.name,
+      );
+    }
+
+    return PickedBackupResult(
+      filePath: filePath ?? file.name,
+      fileName: file.name,
+      content: content,
+    );
   }
 
-  /// Validates a raw backup JSON string
-  BackupData validateBackup(String rawJson) {
-    return _importer.parseAndValidateJson(rawJson);
+  /// Validates a raw backup JSON string synchronously.
+  BackupData validateBackup(
+    String rawJson, {
+    ImportStrategy? strategy = ImportStrategy.replace,
+  }) {
+    return _importer.parseAndValidateJson(rawJson, strategy: strategy);
+  }
+
+  /// Decodes and validates a raw backup payload through the unified pipeline.
+  Future<BackupData> validateBackupPayload(
+    String rawJson, {
+    ImportStrategy? strategy = ImportStrategy.replace,
+    String? encryptionKey,
+  }) async {
+    BackupValidator.validatePayloadSize(rawJson);
+    final decoded = await decodeBackupPayload(
+      rawJson,
+      encryptionKey: encryptionKey,
+    );
+    return _importer.parseAndValidateJson(decoded, strategy: strategy);
+  }
+
+  /// Reads (with size/UTF-8 checks) and validates a backup file on disk before
+  /// exposing destructive import confirmations.
+  Future<BackupData> validateBackupFile(
+    String filePath, {
+    ImportStrategy? strategy = ImportStrategy.replace,
+    String? encryptionKey,
+  }) async {
+    final rawJson = await _readRawFileContent(filePath);
+    return validateBackupPayload(
+      rawJson,
+      strategy: strategy,
+      encryptionKey: encryptionKey,
+    );
   }
 
   /// Imports data from a raw backup JSON string with strategy (replace or merge)
   Future<void> importFromBackupString(
     String rawJson, {
     ImportStrategy strategy = ImportStrategy.replace,
+    String? encryptionKey,
   }) async {
-    final decoded = await decodeBackupPayload(rawJson);
+    BackupValidator.validatePayloadSize(rawJson);
+    final decoded = await decodeBackupPayload(
+      rawJson,
+      encryptionKey: encryptionKey,
+    );
     await _importer.importData(decoded, strategy: strategy);
   }
 
-  /// Imports data directly from a file path
+  /// Imports data directly from a file path after pre-read size and UTF-8 checks.
   Future<void> importFromFile(
     String filePath, {
     ImportStrategy strategy = ImportStrategy.replace,
+    String? encryptionKey,
   }) async {
-    final File file = File(filePath);
+    final rawJson = await _readRawFileContent(filePath);
+    await importFromBackupString(
+      rawJson,
+      strategy: strategy,
+      encryptionKey: encryptionKey,
+    );
+  }
+
+  Future<String> _readRawFileContent(String filePath) async {
+    final file = File(filePath);
     if (!await file.exists()) {
-      throw FileSystemException('Backup file not found at path: $filePath');
+      throw FileSystemException(
+        'Backup file not found at path: $filePath',
+        filePath,
+      );
     }
-    final rawJson = await file.readAsString();
-    await importFromBackupString(rawJson, strategy: strategy);
+    final sizeBytes = await file.length();
+    if (sizeBytes == 0) {
+      throw const FormatException('Backup file is empty.');
+    }
+    if (sizeBytes > maxBackupPayloadBytes) {
+      throw const FormatException(
+        'Backup file exceeds maximum supported size of 20 MB.',
+      );
+    }
+    final bytes = await file.readAsBytes();
+    return _decodeBackupBytes(bytes);
+  }
+
+  String _decodeBackupBytes(List<int> bytes) {
+    if (bytes.isEmpty) {
+      throw const FormatException('Backup file is empty.');
+    }
+    if (bytes.length > maxBackupPayloadBytes) {
+      throw const FormatException(
+        'Backup file exceeds maximum supported size of 20 MB.',
+      );
+    }
+    try {
+      return utf8.decode(bytes);
+    } on FormatException catch (e) {
+      throw FormatException(
+        'Backup file is not valid UTF-8 text: ${e.message}',
+      );
+    }
   }
 }

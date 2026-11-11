@@ -21,38 +21,24 @@ import '../notifications/models/notification_item.dart';
 import '../notifications/scheduler/notification_database.dart';
 import '../utils/uuid_generator.dart';
 import 'backup_models.dart';
+import 'backup_validator.dart';
 
-enum ImportStrategy { replace, merge }
+export 'backup_validator.dart' show ImportStrategy;
 
 class BackupImporter {
   static const String skippedMergeAuditKind = 'backupMergeSkippedRecord';
 
   final Isar _isar;
-  static const int currentSupportedBackupVersion = 2;
+  static const int currentSupportedBackupVersion = maxSupportedBackupVersion;
 
   BackupImporter(this._isar);
 
-  BackupData parseAndValidateJson(String rawJson) {
-    dynamic decoded;
-    try {
-      decoded = jsonDecode(rawJson);
-    } catch (e) {
-      throw FormatException('Invalid JSON format: $e');
-    }
-
-    if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('Invalid backup payload layout');
-    }
-
-    final backupData = BackupData.fromJson(decoded);
-
-    if (backupData.metadata.backupVersion > currentSupportedBackupVersion) {
-      throw FormatException(
-        'Unsupported backup version ${backupData.metadata.backupVersion}. Current maximum supported version is $currentSupportedBackupVersion.',
-      );
-    }
-
-    return backupData;
+  BackupData parseAndValidateJson(
+    String rawJson, {
+    ImportStrategy? strategy = ImportStrategy.replace,
+  }) {
+    final rootMap = BackupValidator.decodeRawJson(rawJson);
+    return BackupData.fromJson(rootMap, strategy: strategy);
   }
 
   Future<void> importData(
@@ -60,7 +46,7 @@ class BackupImporter {
     ImportStrategy strategy = ImportStrategy.replace,
     @visibleForTesting void Function(Isar isar)? onBeforeCommit,
   }) async {
-    final data = parseAndValidateJson(rawJson);
+    final data = parseAndValidateJson(rawJson, strategy: strategy);
 
     await _isar.writeAsync((isar) {
       if (strategy == ImportStrategy.replace) {
@@ -188,7 +174,8 @@ class BackupImporter {
             used: usedPrefServerIds,
             keepExistingOnOwner: matched?.serverId,
           )
-          ..themeMode = map['themeMode'] as String? ?? 'system'
+          ..themeMode =
+              (map['themeMode'] as String?)?.trim().toLowerCase() ?? 'system'
           ..defaultAttendanceTarget =
               (map['defaultAttendanceTarget'] as num?)?.toDouble() ?? 75.0
           ..classReminderOffset = map['classReminderOffset'] as int? ?? 5
@@ -196,10 +183,8 @@ class BackupImporter {
           ..enableAttendanceWarnings =
               map['enableAttendanceWarnings'] as bool? ?? true
           ..weeklyReportEnabled = map['weeklyReportEnabled'] as bool? ?? true
-          ..lastSyncTime =
-              DateTime.tryParse(map['lastSyncTime'] as String? ?? '')
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..lastSyncTime = _parseValidatedIsoDate(map['lastSyncTime'])
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -210,8 +195,11 @@ class BackupImporter {
       final destSemesters = strategy == ImportStrategy.merge
           ? isar.semesterLocals.where().findAll()
           : <SemesterLocal>[];
-      for (final map in data.semesters) {
-        final sem = SemesterLocal.fromJson(map);
+      for (var i = 0; i < data.semesters.length; i++) {
+        final sem = SemesterLocal.fromJson(
+          data.semesters[i],
+          path: 'semesters[$i]',
+        );
         final srcId = sem.id;
         final srcServerId = _trimOrNull(sem.serverId);
 
@@ -366,12 +354,11 @@ class BackupImporter {
           ..attendanceTarget =
               (map['attendanceTarget'] as num?)?.toDouble() ?? 75.0
           ..color = map['color'] as String? ?? '0xFF10B981'
-          ..type = type
+          ..type = normType
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -470,10 +457,9 @@ class BackupImporter {
           ..faculty = map['faculty'] as String?
           ..notes = map['notes'] as String?
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -493,7 +479,7 @@ class BackupImporter {
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int? ?? 0;
         final date = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
+          _parseValidatedIsoDate(map['date']) ?? nowUtc,
         );
         final startTime = map['startTime'] as String? ?? '09:00';
         final endTime = map['endTime'] as String? ?? '10:00';
@@ -581,10 +567,9 @@ class BackupImporter {
           ..eventType = eventType
           ..status = status
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -705,10 +690,9 @@ class BackupImporter {
           ..type = normType
           ..isActive = map['isActive'] as bool? ?? true
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -734,7 +718,7 @@ class BackupImporter {
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int?;
         final occDate = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
+          _parseValidatedIsoDate(map['date']) ?? nowUtc,
         );
         final startTime = normalizeTimeSlotPart(
           map['startTime'] as String? ?? '09:00',
@@ -913,10 +897,9 @@ class BackupImporter {
           ..faculty = map['faculty'] as String?
           ..reason = map['reason'] as String?
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -963,8 +946,7 @@ class BackupImporter {
         final srcSubId = map['subjectId'] as int? ?? 0;
         final status = map['status'] as String? ?? 'PRESENT';
         final markedAtUtc =
-            (DateTime.tryParse(map['markedAt'] as String? ?? '') ?? nowUtc)
-                .toUtc();
+            (_parseValidatedIsoDate(map['markedAt']) ?? nowUtc).toUtc();
         final isDeleted = map['isDeleted'] as bool? ?? false;
 
         if (strategy == ImportStrategy.merge &&
@@ -1149,10 +1131,9 @@ class BackupImporter {
           ..status = status
           ..markedAt = markedAtUtc
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -1200,7 +1181,7 @@ class BackupImporter {
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int?;
         final exDate = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
+          _parseValidatedIsoDate(map['date']) ?? nowUtc,
         );
         final rawType = _trimOrNull(map['type'] as String?) ?? 'HOLIDAY';
         final normType = rawType.toUpperCase();
@@ -1322,10 +1303,9 @@ class BackupImporter {
           ..title = title
           ..description = map['description'] as String?
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -1343,7 +1323,7 @@ class BackupImporter {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final aeDate = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
+          _parseValidatedIsoDate(map['date']) ?? nowUtc,
         );
         final title = map['title'] as String? ?? '';
         final normTitle = normalizeTitleForKey(title);
@@ -1404,10 +1384,9 @@ class BackupImporter {
           ..endTime = rawEndTime
           ..type = rawType
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -1431,11 +1410,9 @@ class BackupImporter {
         final title = map['title'] as String? ?? '';
         final normTitle = normalizeTitleForKey(title);
         final startDate =
-            (DateTime.tryParse(map['startDate'] as String? ?? '') ?? nowUtc)
-                .toUtc();
+            (_parseValidatedIsoDate(map['startDate']) ?? nowUtc).toUtc();
         final dueDate =
-            (DateTime.tryParse(map['dueDate'] as String? ?? '') ?? nowUtc)
-                .toUtc();
+            (_parseValidatedIsoDate(map['dueDate']) ?? nowUtc).toUtc();
         final taskType =
             _trimOrNull(map['taskType'] as String?) ?? 'ASSIGNMENT';
         final normTaskType = taskType.toUpperCase();
@@ -1531,10 +1508,9 @@ class BackupImporter {
           ..status = status
           ..reminder = map['reminder'] as String? ?? 'NONE'
           ..createdAt = matched?.createdAt ??
-              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              _parseValidatedIsoDate(map['createdAt']) ??
               nowUtc
-          ..updatedAt =
-              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
+          ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -1573,8 +1549,7 @@ class BackupImporter {
         final body = map['body'] as String? ?? '';
         final normTitle = normalizeTitleForKey(title);
         final schedTime =
-            (DateTime.tryParse(map['scheduledTime'] as String? ?? '') ?? nowUtc)
-                .toUtc();
+            (_parseValidatedIsoDate(map['scheduledTime']) ?? nowUtc).toUtc();
         final incomingIsRead = map['isRead'] as bool? ?? false;
 
         final remap = _remapNotificationRelatedIdStrict(
@@ -1929,8 +1904,11 @@ void _importMigrationAuditsInTx(
 }) {
   if (auditMaps.isEmpty) return;
 
-  for (final map in auditMaps) {
-    final parsed = MigrationAuditRecordLocal.fromJson(map);
+  for (var i = 0; i < auditMaps.length; i++) {
+    final parsed = MigrationAuditRecordLocal.fromJson(
+      auditMaps[i],
+      path: 'migrationAudits[$i]',
+    );
     final srcId = parsed.id;
     final srcServerId = _trimOrNull(parsed.serverId);
     final kindEnum = parseMigrationAuditKind(parsed.kind);
@@ -2089,6 +2067,14 @@ String _claimUniqueServerId({
       return fresh;
     }
   }
+}
+
+DateTime? _parseValidatedIsoDate(Object? raw) {
+  if (raw == null) return null;
+  if (raw is! String) {
+    throw const FormatException('Expected ISO-8601 date string.');
+  }
+  return DateTime.parse(raw.trim());
 }
 
 T? _firstOrNull<T>(Iterable<T> iterable) {

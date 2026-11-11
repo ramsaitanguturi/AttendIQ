@@ -1,5 +1,7 @@
 import 'package:isar/isar.dart';
 
+import '../../../../core/backup/backup_json_reader.dart';
+
 part 'semester_local.g.dart';
 
 @collection
@@ -65,28 +67,97 @@ class SemesterLocal {
     };
   }
 
-  factory SemesterLocal.fromJson(Map<String, dynamic> json) {
-    final resolvedStatus = normalizeStatusValue(
-      json['status'] as String?,
-      isActive: json['isActive'] as bool?,
+  factory SemesterLocal.fromJson(
+    Map<String, dynamic> json, {
+    String path = 'semester',
+  }) {
+    final rawStatus = BackupJsonReader.optionalNonNullStringField(
+      json,
+      'status',
+      path,
+      allowEmpty: false,
     );
+    if (rawStatus != null &&
+        !validStatuses.contains(rawStatus.trim().toLowerCase())) {
+      throw FormatException(
+        '$path.status: Invalid semester status "$rawStatus". Expected one of ${validStatuses.join(', ')}.',
+      );
+    }
+    final isActiveFlag = BackupJsonReader.optionalNonNullBoolField(
+      json,
+      'isActive',
+      path,
+    );
+    final resolvedStatus = normalizeStatusValue(
+      rawStatus,
+      isActive: isActiveFlag,
+    );
+
+    final startDate = BackupJsonReader.requireIsoDateTimeField(
+      json,
+      'startDate',
+      path,
+    );
+    final endDate = BackupJsonReader.requireIsoDateTimeField(
+      json,
+      'endDate',
+      path,
+    );
+    final normStart =
+        DateTime.utc(startDate.year, startDate.month, startDate.day);
+    final normEnd = DateTime.utc(endDate.year, endDate.month, endDate.day);
+    if (!normStart.isBefore(normEnd)) {
+      throw FormatException(
+        '$path: startDate must be strictly before endDate.',
+      );
+    }
+
+    final nowUtc = DateTime.now().toUtc();
     return SemesterLocal()
-      ..id = json['id'] as int? ?? 0
-      ..serverId = json['serverId'] as String?
-      ..name = json['name'] as String? ?? ''
-      ..startDate = DateTime.tryParse(json['startDate'] as String? ?? '') ??
-          DateTime.now()
-      ..endDate =
-          DateTime.tryParse(json['endDate'] as String? ?? '') ?? DateTime.now()
-      ..requiredAttendanceRate =
-          (json['requiredAttendanceRate'] as num?)?.toDouble() ?? 75.0
+      ..id = BackupJsonReader.optionalNonNullIntField(
+            json,
+            'id',
+            path,
+            min: 0,
+          ) ??
+          0
+      ..serverId = BackupJsonReader.nullableStringField(json, 'serverId', path)
+      ..name = BackupJsonReader.requireNonEmptyStringField(json, 'name', path)
+      ..startDate = startDate
+      ..endDate = endDate
+      ..requiredAttendanceRate = BackupJsonReader.optionalNonNullDoubleField(
+            json,
+            'requiredAttendanceRate',
+            path,
+            min: 0.0,
+            max: 100.0,
+          ) ??
+          75.0
       ..status = resolvedStatus
       ..isActive = resolvedStatus == statusActive
-      ..createdAt = DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-          DateTime.now()
-      ..updatedAt = DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
-          DateTime.now()
-      ..isDirty = json['isDirty'] as bool? ?? false
-      ..isDeleted = json['isDeleted'] as bool? ?? false;
+      ..createdAt = BackupJsonReader.optionalNonNullIsoDateTimeField(
+            json,
+            'createdAt',
+            path,
+          ) ??
+          nowUtc
+      ..updatedAt = BackupJsonReader.optionalNonNullIsoDateTimeField(
+            json,
+            'updatedAt',
+            path,
+          ) ??
+          nowUtc
+      ..isDirty = BackupJsonReader.optionalNonNullBoolField(
+            json,
+            'isDirty',
+            path,
+          ) ??
+          false
+      ..isDeleted = BackupJsonReader.optionalNonNullBoolField(
+            json,
+            'isDeleted',
+            path,
+          ) ??
+          false;
   }
 }

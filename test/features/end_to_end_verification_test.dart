@@ -343,30 +343,81 @@ void main() {
       final backup = BackupData(
         metadata: meta,
         userPreferences: [],
-        semesters: [],
+        semesters: [
+          {
+            'id': 1,
+            'name': 'Fall 2026',
+            'startDate': '2026-07-01T00:00:00.000Z',
+            'endDate': '2026-12-15T00:00:00.000Z',
+            'requiredAttendanceRate': 75.0,
+            'status': 'active',
+            'isActive': true,
+          },
+        ],
         subjects: [
-          {'id': 101, 'name': 'Mathematics'}
+          {
+            'id': 101,
+            'semesterId': 1,
+            'name': 'Mathematics',
+            'code': 'MATH101',
+          },
         ],
         attendance: [
-          {'id': 1, 'subjectId': 101, 'status': 'PRESENT'}
+          {
+            'id': 1,
+            'subjectId': 101,
+            'status': 'PRESENT',
+            'markedAt': '2026-07-21T09:00:00.000Z',
+          },
         ],
         timetable: [],
         events: [],
         notifications: [],
         scheduleExceptions: [
-          {'id': 10, 'title': 'College Holiday', 'type': 'HOLIDAY', 'date': '2026-07-21T00:00:00.000Z'}
+          {
+            'id': 10,
+            'title': 'College Holiday',
+            'type': 'HOLIDAY',
+            'date': '2026-07-21T00:00:00.000Z',
+          },
         ],
         weeklyRules: [
-          {'id': 20, 'subjectId': 101, 'dayOfWeek': 1, 'startTime': '09:00', 'endTime': '10:00'}
+          {
+            'id': 20,
+            'subjectId': 101,
+            'dayOfWeek': 1,
+            'startTime': '09:00',
+            'endTime': '10:00',
+          },
         ],
         occurrences: [
-          {'id': 30, 'subjectId': 101, 'type': 'EXTRA_CLASS', 'status': 'PRESENT'}
+          {
+            'id': 30,
+            'date': '2026-07-21T00:00:00.000Z',
+            'subjectId': 101,
+            'title': 'Math Extra',
+            'startTime': '14:00',
+            'endTime': '15:00',
+            'type': 'EXTRA_CLASS',
+            'status': 'PRESENT',
+          },
         ],
         academicEvents: [
-          {'id': 40, 'title': 'Midterm Exam', 'type': 'EXAM'}
+          {
+            'id': 40,
+            'title': 'Midterm Exam',
+            'date': '2026-08-15T00:00:00.000Z',
+            'type': 'EXAM',
+          },
         ],
         tasks: [
-          {'id': 50, 'title': 'Lab Report 1', 'priority': 'HIGH'}
+          {
+            'id': 50,
+            'title': 'Lab Report 1',
+            'startDate': '2026-07-21T00:00:00.000Z',
+            'dueDate': '2026-07-28T00:00:00.000Z',
+            'priority': 'HIGH',
+          },
         ],
       );
 

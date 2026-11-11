@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:isar/isar.dart';
 
+import '../backup/backup_json_reader.dart';
+
 part 'migration_audit_record_local.g.dart';
 
 /// Durable Isar collection storing BUG-004 timetable, occurrence, and attendance
@@ -107,57 +109,158 @@ class MigrationAuditRecordLocal {
     };
   }
 
-  factory MigrationAuditRecordLocal.fromJson(Map<String, dynamic> json) {
+  factory MigrationAuditRecordLocal.fromJson(
+    Map<String, dynamic> json, {
+    String path = 'migrationAudit',
+  }) {
     final now = DateTime.now().toUtc();
-    final rawEventDate = json['eventDate'] as String?;
-    final rawCreatedAt = json['createdAt'] as String?;
-    final rawUpdatedAt = json['updatedAt'] as String?;
     final rawCandidates = json['candidateOccurrenceIds'];
     String? candidateStr;
-    if (rawCandidates is String) {
-      candidateStr = rawCandidates.trim().isEmpty ? null : rawCandidates.trim();
+    if (rawCandidates == null) {
+      candidateStr = null;
+    } else if (rawCandidates is String) {
+      final trimmed = rawCandidates.trim();
+      if (trimmed.isEmpty) {
+        candidateStr = null;
+      } else {
+        final parsedIds = <int>[];
+        for (final part in trimmed.split(',')) {
+          final parsed = int.tryParse(part.trim());
+          if (parsed == null || parsed <= 0) {
+            throw FormatException(
+              '$path.candidateOccurrenceIds: Invalid occurrence ID "$part" in "$rawCandidates".',
+            );
+          }
+          parsedIds.add(parsed);
+        }
+        candidateStr = formatCandidateOccurrenceIds(parsedIds);
+      }
     } else if (rawCandidates is List) {
-      final parsed = rawCandidates
-          .map((e) => e is int ? e : int.tryParse('$e'))
-          .whereType<int>();
-      candidateStr = formatCandidateOccurrenceIds(parsed);
+      final parsedIds = <int>[];
+      for (var i = 0; i < rawCandidates.length; i++) {
+        final item = rawCandidates[i];
+        if (item is! int || item <= 0) {
+          throw FormatException(
+            '$path.candidateOccurrenceIds[$i]: Expected a positive integer.',
+          );
+        }
+        parsedIds.add(item);
+      }
+      candidateStr = formatCandidateOccurrenceIds(parsedIds);
+    } else {
+      throw FormatException(
+        '$path.candidateOccurrenceIds: Expected a string, integer list, or null.',
+      );
     }
 
     final rawDetails = json['diagnosticDetails'];
     String? detailsStr;
-    if (rawDetails is String) {
+    if (rawDetails == null) {
+      detailsStr = null;
+    } else if (rawDetails is String) {
       detailsStr = rawDetails;
     } else if (rawDetails is Map) {
-      detailsStr = jsonEncode(rawDetails);
+      final detailsMap = BackupJsonReader.asJsonObject(
+        rawDetails,
+        '$path.diagnosticDetails',
+      );
+      try {
+        detailsStr = jsonEncode(detailsMap);
+      } catch (e) {
+        throw FormatException(
+          '$path.diagnosticDetails: Could not encode JSON object ($e).',
+        );
+      }
+    } else {
+      throw FormatException(
+        '$path.diagnosticDetails: Expected a string, JSON object, or null.',
+      );
     }
 
     return MigrationAuditRecordLocal()
-      ..id = json['id'] as int? ?? 0
-      ..serverId = json['serverId'] as String?
-      ..auditKey = json['auditKey'] as String? ?? ''
-      ..kind = json['kind'] as String? ?? 'missingOccurrenceTarget'
-      ..attendanceRecordId = json['attendanceRecordId'] as int?
-      ..legacyEventId = json['legacyEventId'] as int?
-      ..sourceEventId = json['sourceEventId'] as int?
-      ..occurrenceId = json['occurrenceId'] as int?
-      ..sourceOccurrenceId = json['sourceOccurrenceId'] as int?
-      ..subjectId = json['subjectId'] as int?
-      ..slotKey = json['slotKey'] as String?
+      ..id = BackupJsonReader.optionalNonNullIntField(
+            json,
+            'id',
+            path,
+            min: 0,
+          ) ??
+          0
+      ..serverId = BackupJsonReader.nullableStringField(json, 'serverId', path)
+      ..auditKey = BackupJsonReader.requireNonEmptyStringField(
+        json,
+        'auditKey',
+        path,
+      )
+      ..kind = BackupJsonReader.requireNonEmptyStringField(json, 'kind', path)
+      ..attendanceRecordId = BackupJsonReader.nullableIntField(
+        json,
+        'attendanceRecordId',
+        path,
+        min: 0,
+      )
+      ..legacyEventId = BackupJsonReader.nullableIntField(
+        json,
+        'legacyEventId',
+        path,
+        min: 0,
+      )
+      ..sourceEventId = BackupJsonReader.nullableIntField(
+        json,
+        'sourceEventId',
+        path,
+        min: 0,
+      )
+      ..occurrenceId = BackupJsonReader.nullableIntField(
+        json,
+        'occurrenceId',
+        path,
+        min: 0,
+      )
+      ..sourceOccurrenceId = BackupJsonReader.nullableIntField(
+        json,
+        'sourceOccurrenceId',
+        path,
+        min: 0,
+      )
+      ..subjectId = BackupJsonReader.nullableIntField(
+        json,
+        'subjectId',
+        path,
+        min: 0,
+      )
+      ..slotKey = BackupJsonReader.nullableStringField(json, 'slotKey', path)
       ..candidateOccurrenceIds = candidateStr
-      ..status = json['status'] as String?
-      ..eventDate =
-          rawEventDate != null ? DateTime.tryParse(rawEventDate)?.toUtc() : null
-      ..reason = json['reason'] as String? ?? ''
+      ..status = BackupJsonReader.nullableStringField(json, 'status', path)
+      ..eventDate = BackupJsonReader.nullableIsoDateTimeField(
+        json,
+        'eventDate',
+        path,
+      )?.toUtc()
+      ..reason = BackupJsonReader.requireStringField(json, 'reason', path)
       ..diagnosticDetails = detailsStr
-      ..createdAt = (rawCreatedAt != null
-              ? DateTime.tryParse(rawCreatedAt)?.toUtc()
-              : null) ??
+      ..createdAt = BackupJsonReader.optionalNonNullIsoDateTimeField(
+            json,
+            'createdAt',
+            path,
+          )?.toUtc() ??
           now
-      ..updatedAt = (rawUpdatedAt != null
-              ? DateTime.tryParse(rawUpdatedAt)?.toUtc()
-              : null) ??
+      ..updatedAt = BackupJsonReader.optionalNonNullIsoDateTimeField(
+            json,
+            'updatedAt',
+            path,
+          )?.toUtc() ??
           now
-      ..isDirty = json['isDirty'] as bool? ?? false
-      ..isDeleted = json['isDeleted'] as bool? ?? false;
+      ..isDirty = BackupJsonReader.optionalNonNullBoolField(
+            json,
+            'isDirty',
+            path,
+          ) ??
+          false
+      ..isDeleted = BackupJsonReader.optionalNonNullBoolField(
+            json,
+            'isDeleted',
+            path,
+          ) ??
+          false;
   }
 }

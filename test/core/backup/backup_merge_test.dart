@@ -122,7 +122,7 @@ Map<String, dynamic> _emptyBackupMap({int version = 2}) {
     'metadata': <String, dynamic>{
       'appVersion': '1.0.0',
       'backupVersion': version,
-      'exportedAt': ts,
+      'createdAt': ts,
     },
     'userPreferences': <Map<String, dynamic>>[],
     'semesters': <Map<String, dynamic>>[],
@@ -970,9 +970,9 @@ void main() {
                 ..startDate = ts
                 ..dueDate = DateTime.utc(2026, 9, 25, 17, 0)
                 ..priority = 'HIGH'
-                ..taskType = 'LAB_RECORD'
+                ..taskType = 'LAB_SUBMISSION'
                 ..status = 'PENDING'
-                ..reminder = 'ONE_DAY'
+                ..reminder = 'DAYS_1'
                 ..createdAt = ts
                 ..updatedAt = ts,
             );
@@ -1005,7 +1005,7 @@ void main() {
                 ..id = 4
                 ..title = 'Global Alert'
                 ..body = 'Welcome'
-                ..type = 'GENERAL'
+                ..type = 'WEEKLY_REPORT'
                 ..scheduledTime = DateTime.utc(2026, 9, 2, 9, 0)
                 ..relatedId = null
                 ..isRead = false,
@@ -1337,7 +1337,7 @@ void main() {
               'startDate': ts.toIso8601String(),
               'dueDate': DateTime.utc(2026, 9, 20, 17, 0).toIso8601String(),
               'priority': 'HIGH',
-              'taskType': 'LAB_RECORD',
+              'taskType': 'LAB_SUBMISSION',
               'status': 'PENDING',
               'reminder': 'NONE',
               'createdAt': ts.toIso8601String(),
@@ -1353,7 +1353,7 @@ void main() {
               'startDate': ts.toIso8601String(),
               'dueDate': DateTime.utc(2026, 9, 20, 17, 0).toIso8601String(),
               'priority': 'HIGH',
-              'taskType': 'LAB_RECORD',
+              'taskType': 'LAB_SUBMISSION',
               'status': 'PENDING',
               'reminder': 'NONE',
               'createdAt': ts.toIso8601String(),
@@ -1369,7 +1369,7 @@ void main() {
               'startDate': ts.toIso8601String(),
               'dueDate': DateTime.utc(2026, 9, 27, 17, 0).toIso8601String(),
               'priority': 'HIGH',
-              'taskType': 'LAB_RECORD',
+              'taskType': 'LAB_SUBMISSION',
               'status': 'PENDING',
               'reminder': 'NONE',
               'createdAt': ts.toIso8601String(),
@@ -1456,7 +1456,7 @@ void main() {
               'id': 1,
               'title': 'Global Notice A',
               'body': 'A',
-              'type': 'GENERAL',
+              'type': 'WEEKLY_REPORT',
               'scheduledTime':
                   DateTime.utc(2026, 9, 15, 8, 0).toIso8601String(),
               'relatedId': null,
@@ -1466,7 +1466,7 @@ void main() {
               'id': 2,
               'title': 'Global Notice B',
               'body': 'B',
-              'type': 'GENERAL',
+              'type': 'WEEKLY_REPORT',
               'scheduledTime':
                   DateTime.utc(2026, 9, 15, 8, 0).toIso8601String(),
               'relatedId': null,
@@ -2400,7 +2400,7 @@ void main() {
                 ..androidNotificationId = 123456789
                 ..title = 'Old Read Global'
                 ..body = 'Old Body'
-                ..type = 'GENERAL'
+                ..type = 'WEEKLY_REPORT'
                 ..scheduledTime = globalTime
                 ..relatedId = null
                 ..isRead = true,
@@ -2499,7 +2499,7 @@ void main() {
               'id': 1,
               'title': 'Old Read Global',
               'body': 'Updated Body',
-              'type': 'GENERAL',
+              'type': 'WEEKLY_REPORT',
               'scheduledTime': globalTime.toIso8601String(),
               'relatedId': '   ',
               'isRead': false,
@@ -2675,7 +2675,7 @@ void main() {
                 ..androidNotificationId = null
                 ..title = 'Base Legacy Notif'
                 ..body = 'Body'
-                ..type = 'GENERAL'
+                ..type = 'WEEKLY_REPORT'
                 ..scheduledTime = ts
                 ..isRead = false,
             );
@@ -2731,7 +2731,7 @@ void main() {
             'id': 2,
             'title': 'New Notif',
             'body': 'New',
-            'type': 'GENERAL',
+            'type': 'WEEKLY_REPORT',
             'scheduledTime': ts.toIso8601String(),
             'isRead': false,
           });
@@ -2758,10 +2758,40 @@ void main() {
           // Even Step 14 legacy Android ID allocation rolled back!
           expect(isar.notificationItems.get(1)!.androidNotificationId, isNull);
 
+          // Replace rollback verification uses valid Replace relationships so
+          // the transaction executes and reaches onBeforeCommit cleanly.
+          final replaceBackup = _emptyBackupMap();
+          (replaceBackup['semesters'] as List).addAll(
+            (backup['semesters'] as List).cast<Map<String, dynamic>>(),
+          );
+          (replaceBackup['subjects'] as List).addAll(
+            (backup['subjects'] as List).cast<Map<String, dynamic>>(),
+          );
+          (replaceBackup['tasks'] as List).add(<String, dynamic>{
+            'id': 1,
+            'serverId': 'new_task',
+            'subjectId': 1,
+            'title': 'Rollback Task',
+            'startDate': ts.toIso8601String(),
+            'dueDate': ts.toIso8601String(),
+            'priority': 'MEDIUM',
+            'taskType': 'ASSIGNMENT',
+            'status': 'PENDING',
+            'reminder': 'NONE',
+            'createdAt': ts.toIso8601String(),
+            'updatedAt': ts.toIso8601String(),
+            'isDirty': false,
+            'isDeleted': false,
+          });
+          (replaceBackup['notifications'] as List).addAll(
+            (backup['notifications'] as List).cast<Map<String, dynamic>>(),
+          );
+          final replacePayload = jsonEncode(replaceBackup);
+
           // Same guarantee for ImportStrategy.replace!
           await expectLater(
             importer.importData(
-              payload,
+              replacePayload,
               strategy: ImportStrategy.replace,
               onBeforeCommit: _throwBeforeCommit,
             ),

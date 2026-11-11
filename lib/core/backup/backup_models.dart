@@ -1,5 +1,6 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'backup_validator.dart';
+
+export 'backup_validator.dart' show ImportStrategy;
 
 class BackupMetadata {
   final String appVersion;
@@ -14,6 +15,15 @@ class BackupMetadata {
     required this.devicePlatform,
   });
 
+  factory BackupMetadata._fromValidated(ValidatedBackupMetadata validated) {
+    return BackupMetadata(
+      appVersion: validated.appVersion,
+      backupVersion: validated.backupVersion,
+      createdAt: validated.createdAt,
+      devicePlatform: validated.devicePlatform,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'appVersion': appVersion,
         'backupVersion': backupVersion,
@@ -22,11 +32,8 @@ class BackupMetadata {
       };
 
   factory BackupMetadata.fromJson(Map<String, dynamic> json) {
-    return BackupMetadata(
-      appVersion: json['appVersion'] as String? ?? '1.0.0',
-      backupVersion: json['backupVersion'] as int? ?? 1,
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
-      devicePlatform: json['devicePlatform'] as String? ?? (kIsWeb ? 'web' : Platform.operatingSystem),
+    return BackupMetadata._fromValidated(
+      BackupValidator.validateMetadata(json),
     );
   }
 }
@@ -84,51 +91,32 @@ class BackupData {
         'reportsMetadata': reportsMetadata,
       };
 
-  factory BackupData.fromJson(Map<String, dynamic> json) {
+  /// Deserializes and validates a backup JSON map through the complete
+  /// [BackupValidator] pipeline (envelope, version, collection shapes,
+  /// row-level schema/enum/date/time rules across all 13 collections, and
+  /// strategy-aware relationship validation, defaulting to
+  /// [ImportStrategy.replace]).
+  factory BackupData.fromJson(
+    Map<String, dynamic> json, {
+    ImportStrategy? strategy = ImportStrategy.replace,
+  }) {
+    final validated = BackupValidator.validateMap(json, strategy: strategy);
     return BackupData(
-      metadata: BackupMetadata.fromJson(
-        Map<String, dynamic>.from(json['metadata'] as Map? ?? {}),
-      ),
-      userPreferences: (json['userPreferences'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      semesters: (json['semesters'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      subjects: (json['subjects'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      attendance: (json['attendance'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      timetable: (json['timetable'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      events: (json['events'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      notifications: (json['notifications'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      scheduleExceptions: (json['scheduleExceptions'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      weeklyRules: (json['weeklyRules'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      occurrences: (json['occurrences'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      academicEvents: (json['academicEvents'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      tasks: (json['tasks'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      migrationAudits: (json['migrationAudits'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList(),
-      reportsMetadata: Map<String, dynamic>.from(json['reportsMetadata'] as Map? ?? {}),
+      metadata: BackupMetadata._fromValidated(validated.metadata),
+      userPreferences: validated.userPreferences,
+      semesters: validated.semesters,
+      subjects: validated.subjects,
+      attendance: validated.attendance,
+      timetable: validated.timetable,
+      events: validated.events,
+      notifications: validated.notifications,
+      scheduleExceptions: validated.scheduleExceptions,
+      weeklyRules: validated.weeklyRules,
+      occurrences: validated.occurrences,
+      academicEvents: validated.academicEvents,
+      tasks: validated.tasks,
+      migrationAudits: validated.migrationAudits,
+      reportsMetadata: validated.reportsMetadata,
     );
   }
 }
