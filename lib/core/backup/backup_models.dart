@@ -45,6 +45,7 @@ class BackupData {
   final List<Map<String, dynamic>> occurrences;
   final List<Map<String, dynamic>> academicEvents;
   final List<Map<String, dynamic>> tasks;
+  final List<Map<String, dynamic>> migrationAudits;
   final Map<String, dynamic> reportsMetadata;
 
   BackupData({
@@ -61,6 +62,7 @@ class BackupData {
     this.occurrences = const [],
     this.academicEvents = const [],
     this.tasks = const [],
+    this.migrationAudits = const [],
     this.reportsMetadata = const {},
   });
 
@@ -78,6 +80,7 @@ class BackupData {
         'occurrences': occurrences,
         'academicEvents': academicEvents,
         'tasks': tasks,
+        'migrationAudits': migrationAudits,
         'reportsMetadata': reportsMetadata,
       };
 
@@ -120,6 +123,9 @@ class BackupData {
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
       tasks: (json['tasks'] as List? ?? [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      migrationAudits: (json['migrationAudits'] as List? ?? [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
       reportsMetadata: Map<String, dynamic>.from(json['reportsMetadata'] as Map? ?? {}),

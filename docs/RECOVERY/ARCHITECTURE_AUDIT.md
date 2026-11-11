@@ -80,7 +80,7 @@ main()
 
 ## 4. Database Schema & Persistence Architecture
 
-[`isarProvider`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/database/isar_provider.dart#L33-L50) opens Isar `attendiq_isar` with 12 schemas:
+[`isarProvider`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/database/isar_provider.dart#L33-L50) opens Isar `attendiq_isar` with 13 schemas:
 
 | # | Collection (`*Local` / Item) | Indexed Fields | Active vs Legacy | Key Structural / Consistency Findings |
 |---|---|---|---|---|
@@ -96,11 +96,12 @@ main()
 | 10 | `AttendanceRecordLocal` | `serverId` (unique), `occurrenceId`, `legacyEventId`, `eventId`, `subjectId`, `markedAt` | Canonical | Links via `occurrenceId` (fallback compatibility on `eventId`); `LATE` status tracked in `BUG-018`. |
 | 11 | `NotificationItem` | `type`, `androidNotificationId` | Active | `BUG-009` added `autoIncrement()` & 32-bit `androidNotificationId`; `BUG-004` namespaced `relatedId` (`slot:<slotKey>`, `ae_1d:<id>`, `ae_30m:<id>`, `sub:<id>`) & switched watchers to canonical tables. |
 | 12 | `UserPreferencesLocal` | `serverId` (unique) | Active | Auto-backup fields excluded from `BackupExporter`/`BackupImporter`; `lateWeight` missing. |
+| 13 | `MigrationAuditRecordLocal` | `serverId` (unique), `auditKey` (unique), `kind`, `attendanceRecordId`, `legacyEventId`, `occurrenceId`, `sourceOccurrenceId`, `subjectId`, `createdAt` | Canonical | Durable `BUG-004` migration audit log persisted atomically inside `runTimetableUnificationInWriteTx` with deterministic `auditKey` deduplication across reopens and Replace/Merge backup support. |
 
 **Migration & Transaction Findings**:
-- Consolidated single startup migration in [`isar_provider.dart`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/database/isar_provider.dart) -> [`migrateLegacyTimetableAndEvents`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/database/timetable_migration.dart) (templates->rules, occurrence normalization/dedup, `EventLocal` disambiguation, conservative attendance reconciliation & audit reporting). Constructor side-effects in [`WeeklyScheduleRuleLocalDataSourceImpl`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/features/timetable/data/datasources/weekly_schedule_rule_local_data_source.dart) were replaced with a lazy guard delegating to `migrateLegacyTimetableAndEvents`.
+- Consolidated single startup migration in [`isar_provider.dart`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/database/isar_provider.dart) -> [`migrateLegacyTimetableAndEvents`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/database/timetable_migration.dart) (templates->rules, occurrence normalization/dedup, `EventLocal` disambiguation, conservative attendance reconciliation, and atomic [`MigrationAuditRecordLocal`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/database/migration_audit_record_local.dart) persistence alongside `MigrationAuditReport`). Constructor side-effects in [`WeeklyScheduleRuleLocalDataSourceImpl`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/features/timetable/data/datasources/weekly_schedule_rule_local_data_source.dart) were replaced with a lazy guard delegating to `migrateLegacyTimetableAndEvents`.
 - Repository mutations run in isolate-safe `_isar.writeAsync(...)` transactions (lookups inside `writeAsync`).
-- In [`BackupImporter`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/backup/backup_importer.dart), parent->child topological import builds ID/FK/`serverId`/notification `relatedId` translation maps across Replace & Merge strategies (conflicting source/destination IDs and duplicate `serverId`s remapped safely), followed by `normalizeSemestersInWriteTx`, `runTimetableUnificationInWriteTx`, and `migrateLegacyNotificationItems`. (`BUG-007` empty `{}` JSON pre-validation remains tracked separately.)
+- In [`BackupImporter`](file:///c:/Users/ramsa/Desktop/AttendIQ/lib/core/backup/backup_importer.dart), parent->child topological import builds ID/FK/`serverId`/notification `relatedId`/audit remapping maps across Replace & Merge strategies (conflicting source/destination IDs and duplicate `serverId`s remapped safely, preserving unresolved `occurrenceId: null` collisions conservatively), followed by `normalizeSemestersInWriteTx`, `runTimetableUnificationInWriteTx`, and `migrateLegacyNotificationItems`. (`BUG-007` empty `{}` JSON pre-validation remains tracked separately.)
 
 ---
 

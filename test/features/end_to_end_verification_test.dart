@@ -5,6 +5,7 @@ import 'package:attend_iq/features/attendance/data/models/attendance_record_loca
 import 'package:attend_iq/features/attendance/data/datasources/attendance_local_data_source.dart';
 import 'package:attend_iq/features/attendance/data/repositories/attendance_repository_impl.dart';
 
+import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
 import 'package:attend_iq/features/timetable/domain/entities/daily_schedule_occurrence.dart';
 import 'package:attend_iq/features/timetable/domain/entities/schedule_exception.dart';
 import 'package:attend_iq/features/timetable/domain/entities/academic_event.dart';
@@ -103,8 +104,18 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
   Future<void> updateEventStatus(int eventId, String status) async {}
 
   @override
-  Future<int> createExtraClassEvent(int subjectId, DateTime date, String status) async {
-    return 888;
+  Future<DailyScheduleOccurrenceLocal> saveExtraClassWithAttendance({
+    int? occurrenceId,
+    required int subjectId,
+    required DateTime date,
+    String? subjectTitle,
+    String? startTime,
+    String? endTime,
+    String? reason,
+    String? attendanceStatus,
+    bool autoAllocateSlot = false,
+  }) {
+    throw UnimplementedError();
   }
 }
 

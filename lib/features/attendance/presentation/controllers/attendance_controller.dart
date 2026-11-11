@@ -4,13 +4,15 @@ import '../../domain/repositories/attendance_repository.dart';
 import '../../data/datasources/attendance_local_data_source.dart';
 import '../../data/repositories/attendance_repository_impl.dart';
 import '../../../../core/database/isar_provider.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
 import '../../../timetable/domain/repositories/daily_schedule_occurrence_repository.dart';
-import '../../../timetable/data/utils/occurrence_identity.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
+import '../../../timetable/presentation/controllers/weekly_schedule_view_controller.dart';
 import '../../../timetable/presentation/controllers/academic_calendar_controller.dart';
 import 'subject_attendance_stats_provider.dart';
 import '../../../analytics/presentation/controllers/analytics_controller.dart';
+import '../../../../core/analytics/services/analytics_service.dart';
 import '../../../analytics/presentation/controllers/reports_controller.dart';
 import '../../../widgets/services/widget_refresh_service.dart';
 
@@ -134,33 +136,28 @@ class AttendanceController extends _$AttendanceController {
   }
 
   Future<DailyScheduleOccurrence> addExtraClass({
+    int? occurrenceId,
     required DateTime date,
     required int subjectId,
-    required String subjectTitle,
+    String? subjectTitle,
     required String startTime,
     required String endTime,
     String? reason,
+    AttendanceStatus? initialStatus,
   }) async {
-    final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
-    final dateUtc = normalizeUtcDate(date);
-    final now = DateTime.now().toUtc();
-
-    final occurrence = DailyScheduleOccurrence(
-      date: dateUtc,
+    final repo = ref.read(attendanceRepositoryProvider);
+    final saved = await repo.saveExtraClassWithAttendance(
+      occurrenceId: occurrenceId,
       subjectId: subjectId,
-      title: subjectTitle,
-      startTime: normalizeTimeSlotPart(startTime),
-      endTime: normalizeTimeSlotPart(endTime),
-      type: OccurrenceType.EXTRA_CLASS,
-      status: OccurrenceStatus.UPCOMING,
-      createdFrom: OccurrenceCreatedFrom.MANUAL,
+      date: date,
+      subjectTitle: subjectTitle,
+      startTime: startTime,
+      endTime: endTime,
       reason: reason,
-      createdAt: now,
-      updatedAt: now,
+      status: initialStatus,
+      autoAllocateSlot: false,
     );
-
-    final saved = await occurrenceRepo.saveOccurrence(occurrence);
-    _invalidateProviders();
+    _invalidateProviders(subjectId: subjectId);
     return saved;
   }
 
@@ -203,42 +200,53 @@ class AttendanceController extends _$AttendanceController {
     _invalidateProviders();
   }
 
-  Future<void> markExtraClass({
+  Future<DailyScheduleOccurrence> markExtraClass({
+    int? occurrenceId,
     required int subjectId,
     required DateTime date,
     required AttendanceStatus status,
+    String? startTime,
+    String? endTime,
+    String? reason,
   }) async {
+    if ((startTime == null) != (endTime == null)) {
+      throw const ValidationException(
+        'Both startTime and endTime must be provided together.',
+        'INVALID_TIME_RANGE',
+      );
+    }
+
     final repo = ref.read(attendanceRepositoryProvider);
-    final dateUtc = normalizeUtcDate(date);
-    final now = DateTime.now().toUtc();
-
-    final occId = await repo.createExtraClassEvent(
-      subjectId,
-      dateUtc,
-      _mapToEventStatus(status),
-    );
-
-    final record = AttendanceRecord(
-      occurrenceId: occId,
-      eventId: occId,
+    final hasExplicitTimes = startTime != null && endTime != null;
+    final saved = await repo.saveExtraClassWithAttendance(
+      occurrenceId: occurrenceId,
       subjectId: subjectId,
+      date: date,
+      startTime: startTime,
+      endTime: endTime,
+      reason: reason,
       status: status,
-      markedAt: dateUtc,
-      updatedAt: now,
-      isDirty: false,
-      isDeleted: false,
+      autoAllocateSlot: occurrenceId == null && !hasExplicitTimes,
     );
-
-    await repo.saveAttendanceRecord(record);
-    _invalidateProviders();
+    _invalidateProviders(subjectId: subjectId);
+    return saved;
   }
 
-  void _invalidateProviders() {
+  void _invalidateProviders({int? subjectId}) {
     ref.invalidate(todayScheduleProvider);
     ref.invalidate(todayOccurrencesProvider);
+    ref.invalidate(dayScheduleByKeyProvider);
+    if (subjectId != null) {
+      ref.invalidate(subjectOccurrencesProvider(subjectId));
+      ref.invalidate(subjectAttendanceStatsProvider(subjectId));
+    } else {
+      ref.invalidate(subjectOccurrencesProvider);
+      ref.invalidate(subjectAttendanceStatsProvider);
+    }
     ref.invalidate(allSubjectAttendanceStatsProvider);
     ref.invalidate(overallAttendancePercentageProvider);
     ref.invalidate(analyticsControllerProvider);
+    ref.invalidate(attendanceAnalyticsProvider);
     ref.invalidate(reportsControllerProvider);
     ref.invalidate(monthlyCalendarDataProvider);
     try {

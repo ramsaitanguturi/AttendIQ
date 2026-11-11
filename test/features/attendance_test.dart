@@ -3,6 +3,7 @@ import 'package:attend_iq/features/attendance/domain/entities/attendance_record.
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
 import 'package:attend_iq/features/attendance/data/datasources/attendance_local_data_source.dart';
 import 'package:attend_iq/features/attendance/data/repositories/attendance_repository_impl.dart';
+import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
 
 class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
   final Map<int, AttendanceRecordLocal> records = {};
@@ -94,8 +95,18 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
   Future<void> updateEventStatus(int eventId, String status) async {}
 
   @override
-  Future<int> createExtraClassEvent(int subjectId, DateTime date, String status) async {
-    return 999;
+  Future<DailyScheduleOccurrenceLocal> saveExtraClassWithAttendance({
+    int? occurrenceId,
+    required int subjectId,
+    required DateTime date,
+    String? subjectTitle,
+    String? startTime,
+    String? endTime,
+    String? reason,
+    String? attendanceStatus,
+    bool autoAllocateSlot = false,
+  }) {
+    throw UnimplementedError();
   }
 }
 

@@ -15,6 +15,7 @@ import '../../features/timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../features/timetable/data/models/daily_schedule_occurrence_local.dart';
 import '../../features/timetable/data/models/academic_event_local.dart';
 import '../../features/academic_planner/data/models/academic_task_local.dart';
+import '../database/migration_audit_record_local.dart';
 import 'backup_models.dart';
 
 class BackupExporter {
@@ -35,6 +36,7 @@ class BackupExporter {
     final occurrenceList = _isar.dailyScheduleOccurrenceLocals.where().findAll();
     final academicEventList = _isar.academicEventLocals.where().findAll();
     final taskList = _isar.academicTaskLocals.where().findAll();
+    final migrationAuditList = _isar.migrationAuditRecordLocals.where().findAll();
 
     final metadata = BackupMetadata(
       appVersion: appVersion,
@@ -211,6 +213,7 @@ class BackupExporter {
         'isDirty': tk.isDirty,
         'isDeleted': tk.isDeleted,
       }).toList(),
+      migrationAudits: migrationAuditList.map((a) => a.toJson()).toList(),
       reportsMetadata: {},
     );
   }

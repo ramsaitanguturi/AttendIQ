@@ -3,13 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/colors.dart';
-import '../../../subject/domain/entities/subject.dart';
-import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/academic_event.dart';
 import '../../domain/entities/schedule_exception.dart';
 import '../controllers/academic_calendar_controller.dart';
 import '../controllers/timetable_controller.dart';
-import '../../../attendance/presentation/controllers/attendance_controller.dart';
+import 'add_extra_class_dialog.dart';
 
 import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart';
 
@@ -204,7 +202,15 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                   avatar: const Icon(Icons.add_alarm, size: 16, color: Colors.blueAccent),
                   label: const Text('+ Add Extra Class'),
                   backgroundColor: Colors.blue.withOpacity(0.1),
-                  onPressed: () => _showAddExtraClassDialog(context, ref, dayData.date),
+                  onPressed: () async {
+                    final saved = await AddExtraClassDialog.show(
+                      context,
+                      initialDate: dayData.date,
+                    );
+                    if (saved == true && context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  },
                 ),
                 ActionChip(
                   avatar: const Icon(Icons.beach_access, size: 16, color: Colors.amber),
@@ -482,91 +488,6 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             child: const Text('Save Holiday'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showAddExtraClassDialog(BuildContext context, WidgetRef ref, DateTime date) {
-    final subjects = ref.read(subjectListControllerProvider).valueOrNull ?? [];
-    if (subjects.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add subjects first before scheduling extra classes.')),
-      );
-      return;
-    }
-
-    Subject selectedSubject = subjects.first;
-    final startTimeController = TextEditingController(text: '15:00');
-    final endTimeController = TextEditingController(text: '16:00');
-
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Add Extra Class'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<Subject>(
-                value: selectedSubject,
-                decoration: const InputDecoration(labelText: 'Subject'),
-                items: subjects
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => selectedSubject = val);
-                },
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: startTimeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Start Time',
-                        hintText: 'HH:mm',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: endTimeController,
-                      decoration: const InputDecoration(
-                        labelText: 'End Time',
-                        hintText: 'HH:mm',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (selectedSubject.id == null) return;
-                await ref.read(attendanceControllerProvider.notifier).addExtraClass(
-                      date: date,
-                      subjectId: selectedSubject.id!,
-                      subjectTitle: selectedSubject.name,
-                      startTime: startTimeController.text.trim(),
-                      endTime: endTimeController.text.trim(),
-                    );
-                if (context.mounted) {
-                  Navigator.of(dialogCtx).pop();
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('Add Extra Class'),
-            ),
-          ],
-        ),
       ),
     );
   }

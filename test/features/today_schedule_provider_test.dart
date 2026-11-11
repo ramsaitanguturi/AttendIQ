@@ -621,10 +621,17 @@ class _FakeAttendanceRepository implements AttendanceRepository {
   Future<void> updateEventStatus(int eventId, String status) async {}
 
   @override
-  Future<int> createExtraClassEvent(
-    int subjectId,
-    DateTime date,
-    String status,
-  ) async =>
-      0;
+  Future<DailyScheduleOccurrence> saveExtraClassWithAttendance({
+    int? occurrenceId,
+    required int subjectId,
+    required DateTime date,
+    String? subjectTitle,
+    String? startTime,
+    String? endTime,
+    String? reason,
+    AttendanceStatus? status,
+    bool autoAllocateSlot = false,
+  }) {
+    throw UnimplementedError();
+  }
 }

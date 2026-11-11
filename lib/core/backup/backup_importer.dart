@@ -13,6 +13,7 @@ import '../../features/timetable/data/models/schedule_exception_local.dart';
 import '../../features/timetable/data/models/timetable_template_local.dart';
 import '../../features/timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../features/timetable/data/utils/occurrence_identity.dart';
+import '../database/migration_audit_record_local.dart';
 import '../database/timetable_migration.dart';
 import '../event_generator/data/models/event_local.dart';
 import '../notifications/models/notification_item.dart';
@@ -71,6 +72,7 @@ class BackupImporter {
         isar.dailyScheduleOccurrenceLocals.clear();
         isar.academicEventLocals.clear();
         isar.academicTaskLocals.clear();
+        isar.migrationAuditRecordLocals.clear();
       }
 
       final semesterIdMap = <int, int>{};
@@ -81,6 +83,7 @@ class BackupImporter {
       final ruleBySrcServerId = <String, WeeklyScheduleRuleLocal>{};
       final occurrenceIdMap = <int, int>{};
       final occurrenceBySrcServerId = <String, DailyScheduleOccurrenceLocal>{};
+      final attendanceIdMap = <int, int>{};
       final slotKeyMap = <String, String>{};
       final academicEventIdMap = <int, int>{};
       final taskIdMap = <int, int>{};
@@ -691,7 +694,9 @@ class BackupImporter {
         }
 
         // Priority 3: pre-BUG-004 backup (no occurrenceId field in JSON, only eventId)
-        if (destOccurrenceId == null && srcEventId > 0) {
+        final isPreBug004Row =
+            !map.containsKey('occurrenceId') && srcLegacyEventId == null;
+        if (destOccurrenceId == null && isPreBug004Row && srcEventId > 0) {
           if (occurrenceIdMap.containsKey(srcEventId)) {
             destOccurrenceId = occurrenceIdMap[srcEventId];
           } else if (legacyEventIdMap.containsKey(srcEventId)) {
@@ -764,6 +769,9 @@ class BackupImporter {
           ..isDeleted = map['isDeleted'] as bool? ?? false;
 
         isar.attendanceRecordLocals.put(att);
+        if (srcId > 0) {
+          attendanceIdMap[srcId] = att.id;
+        }
       }
 
       // 9. Schedule Exceptions (remapping subjectId)
@@ -972,6 +980,19 @@ class BackupImporter {
         isar.notificationItems.put(notif);
       }
 
+      // 12.5. Migration Audit Records (remapping parent IDs & stable auditKeys)
+      _importMigrationAuditsInTx(
+        isar,
+        auditMaps: data.migrationAudits,
+        strategy: strategy,
+        subjectIdMap: subjectIdMap,
+        ruleIdMap: ruleIdMap,
+        legacyEventIdMap: legacyEventIdMap,
+        occurrenceIdMap: occurrenceIdMap,
+        attendanceIdMap: attendanceIdMap,
+        slotKeyMap: slotKeyMap,
+      );
+
       // 13. Post-import unification pass (upgrades pre-BUG-004 backups and
       //     reconciles attendance/slotKey invariants atomically).
       runTimetableUnificationInWriteTx(isar);
@@ -979,6 +1000,148 @@ class BackupImporter {
 
     // Ensure NotificationItem persisted Android IDs remain unique and valid 32-bit.
     await migrateLegacyNotificationItems(_isar);
+  }
+}
+
+int? _remapPositiveId(
+  int? srcId,
+  Map<int, int> idMap,
+  ImportStrategy strategy,
+) {
+  if (srcId == null || srcId <= 0) return null;
+  return idMap[srcId] ?? (strategy == ImportStrategy.replace ? srcId : null);
+}
+
+void _importMigrationAuditsInTx(
+  Isar isar, {
+  required List<Map<String, dynamic>> auditMaps,
+  required ImportStrategy strategy,
+  required Map<int, int> subjectIdMap,
+  required Map<int, int> ruleIdMap,
+  required Map<int, int> legacyEventIdMap,
+  required Map<int, int> occurrenceIdMap,
+  required Map<int, int> attendanceIdMap,
+  required Map<String, String> slotKeyMap,
+}) {
+  if (auditMaps.isEmpty) return;
+
+  final existingAudits = strategy == ImportStrategy.merge
+      ? isar.migrationAuditRecordLocals.where().findAll()
+      : <MigrationAuditRecordLocal>[];
+  final usedAuditServerIds = _collectServerIds(
+    existingAudits.map((e) => e.serverId),
+  );
+  final existingAuditsByKey = <String, MigrationAuditRecordLocal>{
+    for (final a in existingAudits) a.auditKey: a,
+  };
+
+  for (final map in auditMaps) {
+    final parsed = MigrationAuditRecordLocal.fromJson(map);
+    final srcId = parsed.id;
+    final srcServerId = _trimOrNull(parsed.serverId);
+    final kindEnum = parseMigrationAuditKind(parsed.kind);
+    final normalizedKind = kindEnum?.name ?? parsed.kind.trim();
+
+    final destAttId =
+        _remapPositiveId(parsed.attendanceRecordId, attendanceIdMap, strategy);
+    final srcLegacyEvId = parsed.legacyEventId;
+    final mappedLegacyEvId = (srcLegacyEvId != null && srcLegacyEvId > 0)
+        ? legacyEventIdMap[srcLegacyEvId]
+        : null;
+    final destLegacyEvId = mappedLegacyEvId ??
+        (strategy == ImportStrategy.replace
+            ? srcLegacyEvId
+            : (kindEnum == MigrationAuditKind.recoveredAttendance
+                ? null
+                : srcLegacyEvId));
+
+    final destOccId =
+        _remapPositiveId(parsed.occurrenceId, occurrenceIdMap, strategy);
+    final destSourceOccId = _remapPositiveId(
+      parsed.sourceOccurrenceId,
+      occurrenceIdMap,
+      strategy,
+    );
+    final destSubId =
+        _remapPositiveId(parsed.subjectId, subjectIdMap, strategy);
+
+    final srcSlotKey = _trimOrNull(parsed.slotKey);
+    final destSlotKey = srcSlotKey != null
+        ? (slotKeyMap[srcSlotKey] ??
+            remapCanonicalSlotKey(
+              srcSlotKey,
+              subjectIdMap: subjectIdMap,
+              ruleIdMap: ruleIdMap,
+              legacyEventIdMap: legacyEventIdMap,
+            ))
+        : null;
+
+    final remappedCandidates = parsed.parsedCandidateOccurrenceIds
+        .map((cId) => _remapPositiveId(cId, occurrenceIdMap, strategy))
+        .whereType<int>()
+        .toList(growable: false);
+    final destCandidatesStr =
+        MigrationAuditRecordLocal.formatCandidateOccurrenceIds(
+      remappedCandidates,
+    );
+
+    final String destAuditKey;
+    if (kindEnum != null) {
+      destAuditKey = computeMigrationAuditKey(
+        kind: kindEnum,
+        attendanceRecordId: destAttId,
+        legacyEventId: destLegacyEvId,
+        sourceEventId: parsed.sourceEventId,
+        occurrenceId: destOccId,
+        sourceOccurrenceId: destSourceOccId,
+        slotKey: destSlotKey,
+        fallbackRawSourceOccurrenceId: parsed.sourceOccurrenceId,
+      );
+    } else if (parsed.auditKey.trim().isNotEmpty) {
+      destAuditKey = parsed.auditKey.trim();
+    } else {
+      destAuditKey = 'audit_${srcServerId ?? generateUuid()}';
+    }
+
+    final matched = existingAuditsByKey[destAuditKey];
+    final targetId = matched?.id ??
+        (strategy == ImportStrategy.replace && srcId > 0
+            ? srcId
+            : isar.migrationAuditRecordLocals.autoIncrement());
+
+    final preferredServerId = matched?.serverId ??
+        ((destAuditKey != parsed.auditKey.trim() || srcServerId == null)
+            ? 'audit_$destAuditKey'
+            : srcServerId);
+
+    final auditRecord = MigrationAuditRecordLocal()
+      ..id = targetId
+      ..serverId = _claimUniqueServerId(
+        candidate: preferredServerId,
+        used: usedAuditServerIds,
+        keepExistingOnOwner: matched?.serverId,
+      )
+      ..auditKey = destAuditKey
+      ..kind = normalizedKind
+      ..attendanceRecordId = destAttId
+      ..legacyEventId = destLegacyEvId
+      ..sourceEventId = parsed.sourceEventId ?? srcLegacyEvId
+      ..occurrenceId = destOccId
+      ..sourceOccurrenceId = destSourceOccId
+      ..subjectId = destSubId
+      ..slotKey = destSlotKey
+      ..candidateOccurrenceIds = destCandidatesStr
+      ..status = parsed.status
+      ..eventDate = parsed.eventDate
+      ..reason = parsed.reason
+      ..diagnosticDetails = parsed.diagnosticDetails
+      ..createdAt = matched?.createdAt ?? parsed.createdAt
+      ..updatedAt = parsed.updatedAt
+      ..isDirty = parsed.isDirty
+      ..isDeleted = parsed.isDeleted;
+
+    isar.migrationAuditRecordLocals.put(auditRecord);
+    existingAuditsByKey[destAuditKey] = auditRecord;
   }
 }
 

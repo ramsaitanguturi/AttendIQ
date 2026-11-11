@@ -3,6 +3,8 @@ import '../../domain/repositories/attendance_repository.dart';
 import '../datasources/attendance_local_data_source.dart';
 import '../models/attendance_record_local.dart';
 import '../../../../core/utils/uuid_generator.dart';
+import '../../../timetable/data/models/daily_schedule_occurrence_local.dart';
+import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
 
 class AttendanceRepositoryImpl implements AttendanceRepository {
   final AttendanceLocalDataSource _localDataSource;
@@ -128,8 +130,56 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     await _localDataSource.updateEventStatus(eventId, status);
   }
 
+  DailyScheduleOccurrence _occurrenceToEntity(
+    DailyScheduleOccurrenceLocal local,
+  ) {
+    return DailyScheduleOccurrence(
+      id: local.id,
+      serverId: local.serverId,
+      date: local.date,
+      subjectId: local.subjectId,
+      ruleId: local.ruleId,
+      legacyEventId: local.legacyEventId,
+      slotKey: local.slotKey,
+      title: local.title,
+      startTime: local.startTime,
+      endTime: local.endTime,
+      type: OccurrenceType.fromString(local.type),
+      status: OccurrenceStatus.fromString(local.status),
+      createdFrom: OccurrenceCreatedFrom.fromString(local.createdFrom),
+      room: local.room,
+      faculty: local.faculty,
+      reason: local.reason,
+      createdAt: local.createdAt,
+      updatedAt: local.updatedAt,
+      isDirty: local.isDirty,
+      isDeleted: local.isDeleted,
+    );
+  }
+
   @override
-  Future<int> createExtraClassEvent(int subjectId, DateTime date, String status) async {
-    return await _localDataSource.createExtraClassEvent(subjectId, date, status);
+  Future<DailyScheduleOccurrence> saveExtraClassWithAttendance({
+    int? occurrenceId,
+    required int subjectId,
+    required DateTime date,
+    String? subjectTitle,
+    String? startTime,
+    String? endTime,
+    String? reason,
+    AttendanceStatus? status,
+    bool autoAllocateSlot = false,
+  }) async {
+    final saved = await _localDataSource.saveExtraClassWithAttendance(
+      occurrenceId: occurrenceId,
+      subjectId: subjectId,
+      date: date,
+      subjectTitle: subjectTitle,
+      startTime: startTime,
+      endTime: endTime,
+      reason: reason,
+      attendanceStatus: status?.name,
+      autoAllocateSlot: autoAllocateSlot,
+    );
+    return _occurrenceToEntity(saved);
   }
 }

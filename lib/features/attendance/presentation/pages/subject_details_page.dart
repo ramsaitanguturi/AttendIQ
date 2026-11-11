@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/attendance_engine/bunk_analyzer.dart';
 import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
+import '../../../timetable/presentation/widgets/add_extra_class_dialog.dart';
 import '../controllers/subject_attendance_stats_provider.dart';
 import '../controllers/attendance_controller.dart';
-import '../../../subject/domain/entities/subject.dart';
 import '../../domain/entities/attendance_record.dart';
 
 class SubjectDetailsPage extends ConsumerWidget {
@@ -34,11 +34,19 @@ class SubjectDetailsPage extends ConsumerWidget {
         actions: [
           statsAsync.when(
             data: (stats) {
-              if (stats == null) return const SizedBox.shrink();
+              if (stats == null || stats.subject.id == null) {
+                return const SizedBox.shrink();
+              }
               return IconButton(
                 icon: const Icon(Icons.add_circle_outline),
                 tooltip: 'Add Extra Class',
-                onPressed: () => _showExtraClassDialog(context, ref, stats.subject),
+                onPressed: () => AddExtraClassDialog.show(
+                  context,
+                  initialSubjectId: stats.subject.id,
+                  initialSubject: stats.subject,
+                  initialStatus: AttendanceStatus.EXTRA_PRESENT,
+                  lockSubject: true,
+                ),
               );
             },
             loading: () => const SizedBox.shrink(),
@@ -579,102 +587,6 @@ class SubjectDetailsPage extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showExtraClassDialog(BuildContext context, WidgetRef ref, Subject subject) {
-    DateTime selectedDate = DateTime.now();
-    AttendanceStatus status = AttendanceStatus.EXTRA_PRESENT;
-
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkSurface
-                  : AppColors.lightSurface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Text('Add Extra Class'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Register an unscheduled/extra class for ${subject.name}.'),
-                  const SizedBox(height: 16),
-                  // Date selection button
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Date of Class'),
-                    subtitle: Text('${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'),
-                    trailing: const Icon(Icons.calendar_today, color: AppColors.primary),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime.now().subtract(const Duration(days: 90)),
-                        lastDate: DateTime.now().add(const Duration(days: 30)),
-                      );
-                      if (picked != null) {
-                        setState(() => selectedDate = picked);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Attendance Status', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  DropdownButton<AttendanceStatus>(
-                    value: status,
-                    isExpanded: true,
-                    dropdownColor: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.darkSurface
-                        : AppColors.lightSurface,
-                    items: const [
-                      DropdownMenuItem(
-                        value: AttendanceStatus.EXTRA_PRESENT,
-                        child: Text('Extra Present'),
-                      ),
-                      DropdownMenuItem(
-                        value: AttendanceStatus.EXTRA_ABSENT,
-                        child: Text('Extra Absent'),
-                      ),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => status = val);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
-                  ),
-                  onPressed: () async {
-                    await ref.read(attendanceControllerProvider.notifier).markExtraClass(
-                          subjectId: subject.id!,
-                          date: selectedDate,
-                          status: status,
-                        );
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Add Log'),
-                ),
-              ],
-            );
-          },
-        );
-      },
     );
   }
 }

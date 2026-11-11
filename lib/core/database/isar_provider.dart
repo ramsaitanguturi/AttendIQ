@@ -22,14 +22,18 @@ import '../errors/app_exception.dart';
 import '../event_generator/data/models/event_local.dart';
 import '../notifications/models/notification_item.dart';
 import '../notifications/scheduler/notification_database.dart';
+import 'migration_audit_record_local.dart';
 import 'timetable_migration.dart';
 
+export 'migration_audit_record_local.dart';
 export 'timetable_migration.dart'
     show
         MigrationAuditEntry,
         MigrationAuditKind,
         MigrationAuditReport,
+        computeMigrationAuditKey,
         migrateLegacyTimetableAndEvents,
+        parseMigrationAuditKind,
         runTimetableUnificationInWriteTx;
 
 part 'isar_provider.g.dart';
@@ -47,6 +51,7 @@ const List<IsarGeneratedSchema> appIsarSchemas = <IsarGeneratedSchema>[
   AttendanceRecordLocalSchema,
   NotificationItemSchema,
   UserPreferencesLocalSchema,
+  MigrationAuditRecordLocalSchema,
 ];
 
 const Duration defaultDatabaseInitTimeout = Duration(seconds: 5);

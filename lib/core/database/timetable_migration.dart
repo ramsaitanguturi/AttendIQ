@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 
 import '../../features/attendance/data/models/attendance_record_local.dart';
@@ -10,6 +12,7 @@ import '../../features/timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../features/timetable/data/utils/occurrence_identity.dart';
 import '../event_generator/data/models/event_local.dart';
 import '../utils/uuid_generator.dart';
+import 'migration_audit_record_local.dart';
 
 enum MigrationAuditKind {
   duplicateOccurrenceMerged,
@@ -19,31 +22,95 @@ enum MigrationAuditKind {
   recoveredAttendance,
 }
 
+MigrationAuditKind? parseMigrationAuditKind(String? rawKind) {
+  if (rawKind == null) return null;
+  final normalized = rawKind.trim();
+  for (final kind in MigrationAuditKind.values) {
+    if (kind.name == normalized) {
+      return kind;
+    }
+  }
+  return null;
+}
+
+/// Computes a deterministic stable identity key for a migration audit event so
+/// repeated startup migrations and DB reopens update idempotently without
+/// creating duplicate rows.
+String computeMigrationAuditKey({
+  required MigrationAuditKind kind,
+  int? attendanceRecordId,
+  int? legacyEventId,
+  int? sourceEventId,
+  int? occurrenceId,
+  int? sourceOccurrenceId,
+  String? slotKey,
+  int? fallbackRawSourceOccurrenceId,
+}) {
+  switch (kind) {
+    case MigrationAuditKind.duplicateOccurrenceMerged:
+      if (sourceOccurrenceId != null &&
+          sourceOccurrenceId > 0 &&
+          occurrenceId != null &&
+          occurrenceId > 0) {
+        return '${kind.name}|src_occ:$sourceOccurrenceId|dest_occ:$occurrenceId';
+      }
+      final rawSrcPart = fallbackRawSourceOccurrenceId != null &&
+              fallbackRawSourceOccurrenceId > 0
+          ? '|raw_src:$fallbackRawSourceOccurrenceId'
+          : '';
+      return '${kind.name}|dest_occ:${occurrenceId ?? 0}|slot:${slotKey ?? ''}|ev:${legacyEventId ?? 0}$rawSrcPart';
+    case MigrationAuditKind.recoveredAttendance:
+      if (legacyEventId != null && legacyEventId > 0) {
+        return '${kind.name}|legacy_ev:$legacyEventId';
+      }
+      return '${kind.name}|att:${attendanceRecordId ?? 0}|occ:${occurrenceId ?? 0}';
+    case MigrationAuditKind.ambiguousAttendanceCollision:
+    case MigrationAuditKind.subjectMismatch:
+    case MigrationAuditKind.missingOccurrenceTarget:
+      if (attendanceRecordId != null && attendanceRecordId > 0) {
+        return '${kind.name}|att:$attendanceRecordId';
+      }
+      final evPart = legacyEventId ?? sourceEventId ?? 0;
+      return '${kind.name}|ev:$evPart';
+  }
+}
+
 class MigrationAuditEntry {
   final MigrationAuditKind kind;
   final int? attendanceRecordId;
   final int? legacyEventId;
+  final int? sourceEventId;
   final int? occurrenceId;
+  final int? sourceOccurrenceId;
   final int? subjectId;
+  final String? slotKey;
+  final List<int> candidateOccurrenceIds;
   final String? status;
   final DateTime? date;
   final String reason;
+  final String? diagnosticDetails;
 
   const MigrationAuditEntry({
     required this.kind,
     this.attendanceRecordId,
     this.legacyEventId,
+    this.sourceEventId,
     this.occurrenceId,
+    this.sourceOccurrenceId,
     this.subjectId,
+    this.slotKey,
+    this.candidateOccurrenceIds = const <int>[],
     this.status,
     this.date,
     required this.reason,
+    this.diagnosticDetails,
   });
 
   @override
   String toString() {
     return 'MigrationAuditEntry($kind, att=$attendanceRecordId, '
-        'legacyEv=$legacyEventId, occ=$occurrenceId, sub=$subjectId, '
+        'legacyEv=$legacyEventId, occ=$occurrenceId, '
+        'srcOcc=$sourceOccurrenceId, sub=$subjectId, '
         'status=$status, date=$date, reason=$reason)';
   }
 }
@@ -73,21 +140,37 @@ class MigrationAuditReport {
 
 /// Runs the full additive, idempotent BUG-004 timetable/event/attendance
 /// unification inside a single exclusive Isar write transaction.
-Future<MigrationAuditReport> migrateLegacyTimetableAndEvents(Isar isar) async {
+Future<MigrationAuditReport> migrateLegacyTimetableAndEvents(
+  Isar isar, {
+  @visibleForTesting void Function(Isar isar)? onBeforeCommit,
+}) async {
   if (!isar.isOpen) {
     return const MigrationAuditReport();
   }
+  if (onBeforeCommit == null) {
+    return isar.writeAsync<MigrationAuditReport>(
+      runTimetableUnificationInWriteTx,
+    );
+  }
   return isar.writeAsync<MigrationAuditReport>(
-    runTimetableUnificationInWriteTx,
+    (db) => runTimetableUnificationInWriteTx(
+      db,
+      onBeforeCommit: onBeforeCommit,
+    ),
   );
 }
 
 /// Executes BUG-004 rule, occurrence, slotKey, deduplication, and conservative
-/// attendance recovery phases inside an active Isar write transaction.
+/// attendance recovery phases inside an active Isar write transaction, and
+/// persists durable [MigrationAuditRecordLocal] records atomically in the same
+/// transaction.
 ///
 /// Safe to execute repeatedly (startup, post-backup import, DB reopen) without
-/// creating duplicate rules, occurrences, or attendance rows.
-MigrationAuditReport runTimetableUnificationInWriteTx(Isar isar) {
+/// creating duplicate rules, occurrences, attendance rows, or audit records.
+MigrationAuditReport runTimetableUnificationInWriteTx(
+  Isar isar, {
+  @visibleForTesting void Function(Isar isar)? onBeforeCommit,
+}) {
   final entries = <MigrationAuditEntry>[];
   final now = DateTime.now().toUtc();
 
@@ -113,6 +196,14 @@ MigrationAuditReport runTimetableUnificationInWriteTx(Isar isar) {
     entries: entries,
     now: now,
   );
+
+  _persistMigrationAuditEntriesInTx(
+    isar,
+    entries: entries,
+    now: now,
+  );
+
+  onBeforeCommit?.call(isar);
 
   final report = MigrationAuditReport(
     rulesMigrated: rulesMigrated,
@@ -394,12 +485,24 @@ _BackfillResult _backfillAndDeduplicateOccurrencesInTx(
           MigrationAuditEntry(
             kind: MigrationAuditKind.duplicateOccurrenceMerged,
             occurrenceId: winner.id,
+            sourceOccurrenceId: dup.id,
             legacyEventId: dup.legacyEventId ?? winner.legacyEventId,
             subjectId: winner.subjectId,
+            slotKey: winner.slotKey,
             status: winner.status,
             date: winner.date,
             reason:
                 'Merged duplicate active occurrence ${dup.id} into canonical occurrence ${winner.id} for slotKey "${winner.slotKey}".',
+            diagnosticDetails: jsonEncode(<String, dynamic>{
+              'resolutionState': 'MERGED',
+              'sourceOccurrenceId': dup.id,
+              'destinationOccurrenceId': winner.id,
+              'sourceServerId': dup.serverId,
+              'destinationServerId': winner.serverId,
+              'slotKey': winner.slotKey,
+              'duplicateStatus': dup.status,
+              'winnerStatus': winner.status,
+            }),
           ),
         );
       }
@@ -696,11 +799,18 @@ _AttendanceReconcileResult _reconcileAttendanceInTx(
           kind: MigrationAuditKind.missingOccurrenceTarget,
           attendanceRecordId: record.id,
           legacyEventId: record.legacyEventId,
+          sourceEventId: record.eventId,
           subjectId: record.subjectId,
           status: record.status,
           date: record.markedAt,
           reason:
               'Attendance record ${record.id} has non-positive eventId (${record.eventId}); kept unlinked without fabricating an occurrence.',
+          diagnosticDetails: jsonEncode(<String, dynamic>{
+            'resolutionState': 'UNRESOLVED_UNLINKED',
+            'attendanceServerId': record.serverId,
+            'sourceEventId': record.eventId,
+            'legacyEventId': record.legacyEventId,
+          }),
         ),
       );
       continue;
@@ -726,11 +836,18 @@ _AttendanceReconcileResult _reconcileAttendanceInTx(
           kind: MigrationAuditKind.missingOccurrenceTarget,
           attendanceRecordId: record.id,
           legacyEventId: record.eventId,
+          sourceEventId: record.eventId,
           subjectId: record.subjectId,
           status: record.status,
           date: record.markedAt,
           reason:
               'No occurrence or legacy event matches eventId=${record.eventId} for attendance record ${record.id}; kept unlinked for audit.',
+          diagnosticDetails: jsonEncode(<String, dynamic>{
+            'resolutionState': 'UNRESOLVED_UNLINKED',
+            'attendanceServerId': record.serverId,
+            'sourceEventId': record.eventId,
+            'legacyEventId': record.legacyEventId,
+          }),
         ),
       );
       continue;
@@ -778,12 +895,24 @@ _AttendanceReconcileResult _reconcileAttendanceInTx(
               : MigrationAuditKind.missingOccurrenceTarget,
           attendanceRecordId: record.id,
           legacyEventId: record.eventId,
+          sourceEventId: record.eventId,
           subjectId: record.subjectId,
+          candidateOccurrenceIds:
+              rawCandidates.map((c) => c.id).toList(growable: false),
           status: record.status,
           date: record.markedAt,
           reason: sawSubjectMismatch
               ? 'Candidate(s) for eventId=${record.eventId} failed mandatory subjectId (${record.subjectId}) alignment on attendance record ${record.id}.'
               : 'Candidate(s) for eventId=${record.eventId} failed plausibility validation on attendance record ${record.id}; kept unlinked.',
+          diagnosticDetails: jsonEncode(<String, dynamic>{
+            'resolutionState': 'UNRESOLVED_UNLINKED',
+            'attendanceServerId': record.serverId,
+            'sourceEventId': record.eventId,
+            'candidateOccurrenceIds':
+                rawCandidates.map((c) => c.id).toList(growable: false),
+            'candidateSubjectIds':
+                rawCandidates.map((c) => c.subjectId).toList(growable: false),
+          }),
         ),
       );
       continue;
@@ -803,11 +932,29 @@ _AttendanceReconcileResult _reconcileAttendanceInTx(
           kind: MigrationAuditKind.ambiguousAttendanceCollision,
           attendanceRecordId: record.id,
           legacyEventId: record.eventId,
+          sourceEventId: record.eventId,
           subjectId: record.subjectId,
+          candidateOccurrenceIds:
+              scored.map((s) => s.occurrence.id).toList(growable: false),
           status: record.status,
           date: record.markedAt,
           reason:
               'Ambiguous collision across ${scored.length} occurrences (${scored.map((s) => s.occurrence.id).join(", ")}) for eventId=${record.eventId} on attendance record ${record.id}; left occurrenceId=null for audit.',
+          diagnosticDetails: jsonEncode(<String, dynamic>{
+            'resolutionState': 'UNRESOLVED_AMBIGUOUS',
+            'attendanceServerId': record.serverId,
+            'sourceEventId': record.eventId,
+            'candidates': scored
+                .map(
+                  (s) => <String, dynamic>{
+                    'occurrenceId': s.occurrence.id,
+                    'score': s.score,
+                    'cameFromLegacyEvent': s.cameFromLegacyEvent,
+                    'slotKey': s.occurrence.slotKey,
+                  },
+                )
+                .toList(growable: false),
+          }),
         ),
       );
       continue;
@@ -918,12 +1065,22 @@ _AttendanceReconcileResult _reconcileAttendanceInTx(
         kind: MigrationAuditKind.recoveredAttendance,
         attendanceRecordId: recovered.id,
         legacyEventId: ev.id,
+        sourceEventId: ev.id,
         occurrenceId: targetOcc.id,
         subjectId: recovered.subjectId,
+        slotKey: targetOcc.slotKey,
         status: recovered.status,
         date: recovered.markedAt,
         reason:
             'Recovered missing AttendanceRecordLocal from legacy EventLocal ${ev.id} (${ev.status} on ${formatUtcDateKey(recoveredDate)}) onto occurrence ${targetOcc.id}.',
+        diagnosticDetails: jsonEncode(<String, dynamic>{
+          'resolutionState': 'RECOVERED',
+          'legacyEventServerId': ev.serverId,
+          'recoveredAttendanceServerId': recovered.serverId,
+          'destinationOccurrenceServerId': targetOcc.serverId,
+          'slotKey': targetOcc.slotKey,
+          'legacyEventStatus': ev.status,
+        }),
       ),
     );
   }
@@ -1054,28 +1211,200 @@ String _normalizeComparableStatus(String raw) {
   }
 }
 
+String _resolveUniqueServerId({
+  String? candidate,
+  String? fallback,
+  required Set<String> usedServerIds,
+  required bool Function(String id) existsInCollection,
+}) {
+  final trimmed = candidate?.trim();
+  if (trimmed != null &&
+      trimmed.isNotEmpty &&
+      !usedServerIds.contains(trimmed) &&
+      !existsInCollection(trimmed)) {
+    return trimmed;
+  }
+  if (fallback != null &&
+      fallback.isNotEmpty &&
+      !usedServerIds.contains(fallback) &&
+      !existsInCollection(fallback)) {
+    return fallback;
+  }
+  while (true) {
+    final generated = generateUuid();
+    if (!usedServerIds.contains(generated) && !existsInCollection(generated)) {
+      return generated;
+    }
+  }
+}
+
 String _resolveUniqueAttendanceServerId(
   Isar isar, {
   required String candidate,
   required Set<String> usedServerIds,
 }) {
-  if (!usedServerIds.contains(candidate) &&
-      isar.attendanceRecordLocals
-              .where()
-              .serverIdEqualTo(candidate)
-              .findFirst() ==
-          null) {
-    return candidate;
-  }
-  while (true) {
-    final generated = generateUuid();
-    if (!usedServerIds.contains(generated) &&
-        isar.attendanceRecordLocals
-                .where()
-                .serverIdEqualTo(generated)
-                .findFirst() ==
-            null) {
-      return generated;
+  return _resolveUniqueServerId(
+    candidate: candidate,
+    usedServerIds: usedServerIds,
+    existsInCollection: (id) =>
+        isar.attendanceRecordLocals.where().serverIdEqualTo(id).findFirst() !=
+        null,
+  );
+}
+
+String _resolveUniqueAuditServerId(
+  Isar isar, {
+  required String candidate,
+  required Set<String> usedServerIds,
+}) {
+  return _resolveUniqueServerId(
+    candidate: candidate,
+    usedServerIds: usedServerIds,
+    existsInCollection: (id) =>
+        isar.migrationAuditRecordLocals
+            .where()
+            .serverIdEqualTo(id)
+            .findFirst() !=
+        null,
+  );
+}
+
+void _persistMigrationAuditEntriesInTx(
+  Isar isar, {
+  required List<MigrationAuditEntry> entries,
+  required DateTime now,
+}) {
+  if (entries.isEmpty) return;
+
+  final existingAll = isar.migrationAuditRecordLocals.where().findAll();
+  final existingByAuditKey = <String, MigrationAuditRecordLocal>{
+    for (final r in existingAll) r.auditKey: r,
+  };
+  final attendanceIdsWithSourceAudit = <int>{
+    for (final r in existingAll)
+      if (!r.isDeleted &&
+          r.attendanceRecordId != null &&
+          r.attendanceRecordId! > 0 &&
+          ((r.legacyEventId ?? 0) > 0 || (r.sourceEventId ?? 0) > 0))
+        r.attendanceRecordId!,
+  };
+  final usedServerIds = <String>{
+    for (final r in existingAll)
+      if (r.serverId != null && r.serverId!.isNotEmpty) r.serverId!,
+  };
+
+  for (final entry in entries) {
+    // Preserve richer historical source audit records (e.g. subjectMismatch or
+    // missingOccurrenceTarget with original source event IDs) when Backup Merge
+    // sanitized an unmapped compatibility eventId to 0 before re-verifying.
+    if (entry.kind == MigrationAuditKind.missingOccurrenceTarget &&
+        (entry.sourceEventId ?? 0) <= 0 &&
+        entry.legacyEventId == null &&
+        entry.attendanceRecordId != null &&
+        attendanceIdsWithSourceAudit.contains(entry.attendanceRecordId)) {
+      continue;
     }
+
+    final auditKey = computeMigrationAuditKey(
+      kind: entry.kind,
+      attendanceRecordId: entry.attendanceRecordId,
+      legacyEventId: entry.legacyEventId,
+      sourceEventId: entry.sourceEventId,
+      occurrenceId: entry.occurrenceId,
+      sourceOccurrenceId: entry.sourceOccurrenceId,
+      slotKey: entry.slotKey,
+    );
+    final candidateIdsStr =
+        MigrationAuditRecordLocal.formatCandidateOccurrenceIds(
+      entry.candidateOccurrenceIds,
+    );
+
+    final existing = existingByAuditKey[auditKey];
+    if (existing != null) {
+      final nextLegacyEventId = entry.legacyEventId ?? existing.legacyEventId;
+      final nextSourceEventId = entry.sourceEventId ?? existing.sourceEventId;
+      final nextOccurrenceId = entry.occurrenceId ?? existing.occurrenceId;
+      final nextSourceOccId =
+          entry.sourceOccurrenceId ?? existing.sourceOccurrenceId;
+      final nextSubjectId = entry.subjectId ?? existing.subjectId;
+      final nextSlotKey = entry.slotKey ?? existing.slotKey;
+      final nextCandidates = candidateIdsStr ?? existing.candidateOccurrenceIds;
+      final nextStatus = entry.status ?? existing.status;
+      final nextEventDate = entry.date ?? existing.eventDate;
+      final nextDetails = entry.diagnosticDetails ?? existing.diagnosticDetails;
+
+      final sameDate = existing.eventDate?.toUtc().microsecondsSinceEpoch ==
+          nextEventDate?.toUtc().microsecondsSinceEpoch;
+      final unchanged = existing.kind == entry.kind.name &&
+          existing.attendanceRecordId == entry.attendanceRecordId &&
+          existing.legacyEventId == nextLegacyEventId &&
+          existing.sourceEventId == nextSourceEventId &&
+          existing.occurrenceId == nextOccurrenceId &&
+          existing.sourceOccurrenceId == nextSourceOccId &&
+          existing.subjectId == nextSubjectId &&
+          existing.slotKey == nextSlotKey &&
+          existing.candidateOccurrenceIds == nextCandidates &&
+          existing.status == nextStatus &&
+          sameDate &&
+          existing.reason == entry.reason &&
+          existing.diagnosticDetails == nextDetails &&
+          !existing.isDeleted;
+
+      if (unchanged) {
+        continue;
+      }
+
+      existing
+        ..kind = entry.kind.name
+        ..attendanceRecordId = entry.attendanceRecordId
+        ..legacyEventId = nextLegacyEventId
+        ..sourceEventId = nextSourceEventId
+        ..occurrenceId = nextOccurrenceId
+        ..sourceOccurrenceId = nextSourceOccId
+        ..subjectId = nextSubjectId
+        ..slotKey = nextSlotKey
+        ..candidateOccurrenceIds = nextCandidates
+        ..status = nextStatus
+        ..eventDate = nextEventDate
+        ..reason = entry.reason
+        ..diagnosticDetails = nextDetails
+        ..updatedAt = now
+        ..isDeleted = false;
+
+      isar.migrationAuditRecordLocals.put(existing);
+      continue;
+    }
+
+    final serverId = _resolveUniqueAuditServerId(
+      isar,
+      candidate: 'audit_$auditKey',
+      usedServerIds: usedServerIds,
+    );
+    usedServerIds.add(serverId);
+
+    final record = MigrationAuditRecordLocal()
+      ..id = isar.migrationAuditRecordLocals.autoIncrement()
+      ..serverId = serverId
+      ..auditKey = auditKey
+      ..kind = entry.kind.name
+      ..attendanceRecordId = entry.attendanceRecordId
+      ..legacyEventId = entry.legacyEventId
+      ..sourceEventId = entry.sourceEventId
+      ..occurrenceId = entry.occurrenceId
+      ..sourceOccurrenceId = entry.sourceOccurrenceId
+      ..subjectId = entry.subjectId
+      ..slotKey = entry.slotKey
+      ..candidateOccurrenceIds = candidateIdsStr
+      ..status = entry.status
+      ..eventDate = entry.date
+      ..reason = entry.reason
+      ..diagnosticDetails = entry.diagnosticDetails
+      ..createdAt = now
+      ..updatedAt = now
+      ..isDirty = false
+      ..isDeleted = false;
+
+    isar.migrationAuditRecordLocals.put(record);
+    existingByAuditKey[auditKey] = record;
   }
 }
