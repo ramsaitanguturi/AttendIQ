@@ -133,6 +133,70 @@ String computeSlotKeyForEntity(DailyScheduleOccurrence occurrence) {
   );
 }
 
+/// Rewrites integer `rule:<id>`, `sub:<id>`, and `LEGACY_EV:<id>` components
+/// inside a canonical `slot:...` notification `relatedId` or raw `slotKey`.
+///
+/// When [requireAllPositiveIdsMapped] is `true` (used during `ImportStrategy.merge`),
+/// returns `null` if any referenced positive `rule:<id>`, `sub:<id>`, or
+/// `LEGACY_EV:<id>` cannot be resolved in the translation maps, or if a
+/// `REGULAR`/`EXTRA` slot references `sub:0`.
+String? tryRemapCanonicalSlotKey(
+  String? rawSlotKey, {
+  required Map<int, int> subjectIdMap,
+  required Map<int, int> ruleIdMap,
+  required Map<int, int> legacyEventIdMap,
+  bool requireAllPositiveIdsMapped = false,
+}) {
+  if (rawSlotKey == null || rawSlotKey.trim().isEmpty) {
+    return rawSlotKey;
+  }
+  final trimmed = rawSlotKey.trim();
+  if (trimmed.startsWith('LEGACY_EV:')) {
+    final oldEvId = int.tryParse(trimmed.substring('LEGACY_EV:'.length));
+    if (oldEvId != null && legacyEventIdMap.containsKey(oldEvId)) {
+      return 'LEGACY_EV:${legacyEventIdMap[oldEvId]}';
+    }
+    return requireAllPositiveIdsMapped ? null : trimmed;
+  }
+
+  final parts = trimmed.split('|');
+  final slotType = parts.first.trim().toUpperCase();
+  final allowsZeroSubject = slotType == 'EXAM' || slotType == 'EVENT';
+
+  final rewritten = <String>[];
+  for (final segment in parts) {
+    if (segment.startsWith('rule:')) {
+      final oldRuleId = int.tryParse(segment.substring('rule:'.length));
+      if (oldRuleId != null &&
+          oldRuleId > 0 &&
+          ruleIdMap.containsKey(oldRuleId)) {
+        rewritten.add('rule:${ruleIdMap[oldRuleId]}');
+        continue;
+      }
+      if (requireAllPositiveIdsMapped) {
+        return null;
+      }
+    } else if (segment.startsWith('sub:')) {
+      final oldSubId = int.tryParse(segment.substring('sub:'.length));
+      if (oldSubId != null &&
+          oldSubId > 0 &&
+          subjectIdMap.containsKey(oldSubId)) {
+        rewritten.add('sub:${subjectIdMap[oldSubId]}');
+        continue;
+      }
+      if (oldSubId == 0 && allowsZeroSubject) {
+        rewritten.add('sub:0');
+        continue;
+      }
+      if (requireAllPositiveIdsMapped) {
+        return null;
+      }
+    }
+    rewritten.add(segment);
+  }
+  return rewritten.join('|');
+}
+
 /// Rewrites integer `rule:<id>` and `sub:<id>` components inside a canonical
 /// `slot:...` notification `relatedId` or raw `slotKey` during backup merge.
 String? remapCanonicalSlotKey(
@@ -141,31 +205,13 @@ String? remapCanonicalSlotKey(
   required Map<int, int> ruleIdMap,
   required Map<int, int> legacyEventIdMap,
 }) {
-  if (rawSlotKey == null || rawSlotKey.trim().isEmpty) return rawSlotKey;
-  if (rawSlotKey.startsWith('LEGACY_EV:')) {
-    final oldEvId = int.tryParse(rawSlotKey.substring('LEGACY_EV:'.length));
-    if (oldEvId != null && legacyEventIdMap.containsKey(oldEvId)) {
-      return 'LEGACY_EV:${legacyEventIdMap[oldEvId]}';
-    }
-    return rawSlotKey;
-  }
-
-  final parts = rawSlotKey.split('|');
-  final rewritten = parts.map((segment) {
-    if (segment.startsWith('rule:')) {
-      final oldRuleId = int.tryParse(segment.substring('rule:'.length));
-      if (oldRuleId != null && ruleIdMap.containsKey(oldRuleId)) {
-        return 'rule:${ruleIdMap[oldRuleId]}';
-      }
-    } else if (segment.startsWith('sub:')) {
-      final oldSubId = int.tryParse(segment.substring('sub:'.length));
-      if (oldSubId != null && subjectIdMap.containsKey(oldSubId)) {
-        return 'sub:${subjectIdMap[oldSubId]}';
-      }
-    }
-    return segment;
-  }).toList(growable: false);
-  return rewritten.join('|');
+  return tryRemapCanonicalSlotKey(
+    rawSlotKey,
+    subjectIdMap: subjectIdMap,
+    ruleIdMap: ruleIdMap,
+    legacyEventIdMap: legacyEventIdMap,
+    requireAllPositiveIdsMapped: false,
+  );
 }
 
 /// Namespace-safe notification `relatedId` helpers preventing cross-entity ID

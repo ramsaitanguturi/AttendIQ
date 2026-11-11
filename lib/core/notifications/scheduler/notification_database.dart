@@ -72,79 +72,91 @@ Future<NotificationMigrationResult> migrateLegacyNotificationItems(
     );
   }
 
-  return isar.writeAsync<NotificationMigrationResult>((isarDb) {
-    final items = isarDb.notificationItems.where().findAll();
-    if (items.isEmpty) {
-      return const NotificationMigrationResult(
-        migratedZeroIdCount: 0,
-        backfilledAndroidIdCount: 0,
-      );
-    }
-
-    final usedAndroidIds = <int>{};
-    final itemsNeedingAndroidId = <NotificationItem>[];
-    final nonPositiveItems = <NotificationItem>[];
-
-    for (final item in items) {
-      if (item.id <= 0) {
-        nonPositiveItems.add(item);
-        continue;
-      }
-
-      final existingAndroidId = item.androidNotificationId;
-      if (existingAndroidId != null &&
-          NotificationItem.isValidPersistedAndroidId(existingAndroidId) &&
-          usedAndroidIds.add(existingAndroidId)) {
-        continue;
-      }
-      itemsNeedingAndroidId.add(item);
-    }
-
-    var backfilledCount = 0;
-    for (final item in itemsNeedingAndroidId) {
-      final assignedAndroidId = _allocateAndroidIdFromUsedSet(
-        dbId: item.id,
-        usedAndroidIds: usedAndroidIds,
-      );
-      item.androidNotificationId = assignedAndroidId;
-      usedAndroidIds.add(assignedAndroidId);
-      isarDb.notificationItems.put(item);
-      backfilledCount++;
-    }
-
-    var migratedZeroCount = 0;
-    for (final legacyItem in nonPositiveItems) {
-      final oldId = legacyItem.id;
-      final newId = isarDb.notificationItems.autoIncrement();
-      final assignedAndroidId = _allocateAndroidIdFromUsedSet(
-        dbId: newId,
-        usedAndroidIds: usedAndroidIds,
-      );
-
-      final migratedItem = NotificationItem()
-        ..id = newId
-        ..androidNotificationId = assignedAndroidId
-        ..title = legacyItem.title
-        ..body = legacyItem.body
-        ..type = legacyItem.type
-        ..scheduledTime = legacyItem.scheduledTime
-        ..relatedId = legacyItem.relatedId
-        ..isRead = legacyItem.isRead;
-
-      usedAndroidIds.add(assignedAndroidId);
-      isarDb.notificationItems.put(migratedItem);
-      isarDb.notificationItems.delete(oldId);
-      migratedZeroCount++;
-    }
-
-    return NotificationMigrationResult(
-      migratedZeroIdCount: migratedZeroCount,
-      backfilledAndroidIdCount: backfilledCount,
-    );
-  });
+  return isar.writeAsync<NotificationMigrationResult>(
+    migrateLegacyNotificationItemsInWriteTx,
+  );
 }
 
-int _allocateAndroidIdFromUsedSet({
+/// Runs legacy [NotificationItem] primary-key (`<= 0`) and 32-bit
+/// [NotificationItem.androidNotificationId] migration synchronously inside an
+/// already-open Isar write transaction.
+NotificationMigrationResult migrateLegacyNotificationItemsInWriteTx(
+  Isar isarDb,
+) {
+  final items = isarDb.notificationItems.where().findAll();
+  if (items.isEmpty) {
+    return const NotificationMigrationResult(
+      migratedZeroIdCount: 0,
+      backfilledAndroidIdCount: 0,
+    );
+  }
+
+  final usedAndroidIds = <int>{};
+  final itemsNeedingAndroidId = <NotificationItem>[];
+  final nonPositiveItems = <NotificationItem>[];
+
+  for (final item in items) {
+    if (item.id <= 0) {
+      nonPositiveItems.add(item);
+      continue;
+    }
+
+    final existingAndroidId = item.androidNotificationId;
+    if (existingAndroidId != null &&
+        NotificationItem.isValidPersistedAndroidId(existingAndroidId) &&
+        usedAndroidIds.add(existingAndroidId)) {
+      continue;
+    }
+    itemsNeedingAndroidId.add(item);
+  }
+
+  var backfilledCount = 0;
+  for (final item in itemsNeedingAndroidId) {
+    final assignedAndroidId = allocateNotificationAndroidIdFromUsedSet(
+      dbId: item.id,
+      usedAndroidIds: usedAndroidIds,
+    );
+    item.androidNotificationId = assignedAndroidId;
+    usedAndroidIds.add(assignedAndroidId);
+    isarDb.notificationItems.put(item);
+    backfilledCount++;
+  }
+
+  var migratedZeroCount = 0;
+  for (final legacyItem in nonPositiveItems) {
+    final oldId = legacyItem.id;
+    final newId = isarDb.notificationItems.autoIncrement();
+    final assignedAndroidId = allocateNotificationAndroidIdFromUsedSet(
+      dbId: newId,
+      usedAndroidIds: usedAndroidIds,
+    );
+
+    final migratedItem = NotificationItem()
+      ..id = newId
+      ..androidNotificationId = assignedAndroidId
+      ..title = legacyItem.title
+      ..body = legacyItem.body
+      ..type = legacyItem.type
+      ..scheduledTime = legacyItem.scheduledTime
+      ..relatedId = legacyItem.relatedId
+      ..isRead = legacyItem.isRead;
+
+    usedAndroidIds.add(assignedAndroidId);
+    isarDb.notificationItems.put(migratedItem);
+    isarDb.notificationItems.delete(oldId);
+    migratedZeroCount++;
+  }
+
+  return NotificationMigrationResult(
+    migratedZeroIdCount: migratedZeroCount,
+    backfilledAndroidIdCount: backfilledCount,
+  );
+}
+
+/// Allocates a unique 32-bit Android notification ID in the persisted
+/// namespace `[NotificationItem.minPersistedAndroidId, NotificationItem.maxPersistedAndroidId]`
+/// avoiding any ID already present in [usedAndroidIds].
+int allocateNotificationAndroidIdFromUsedSet({
   required int dbId,
   required Set<int> usedAndroidIds,
 }) {

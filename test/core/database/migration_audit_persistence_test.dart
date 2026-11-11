@@ -1207,15 +1207,72 @@ void main() {
                     MigrationAuditKind.ambiguousAttendanceCollision.name &&
                 a.attendanceRecordId == srcAttAmbigInDest.id,
           );
+          expect(srcAttAmbigInDest.occurrenceId, isNull);
+          expect(srcAttMismatchInDest.occurrenceId, isNull);
+          expect(srcAttMissingInDest.occurrenceId, isNull);
           expect(importedAmbigAudit.legacyEventId, equals(srcEv4InDest.id));
           expect(
             importedAmbigAudit.parsedCandidateOccurrenceIds,
             hasLength(2),
           );
 
-          // Re-merging identical backup does NOT duplicate audit records!
+          // Re-merging identical backup does NOT duplicate audit records and
+          // preserves unresolved attendance ambiguity (occurrenceId == null).
           await importer.importData(backupJson, strategy: ImportStrategy.merge);
           expect(destIsar.migrationAuditRecordLocals.count(), equals(6));
+          expect(
+            destIsar.attendanceRecordLocals
+                .where()
+                .serverIdEqualTo('src_att_ambig')
+                .findFirst()!
+                .occurrenceId,
+            isNull,
+          );
+          expect(
+            destIsar.attendanceRecordLocals
+                .where()
+                .serverIdEqualTo('src_att_mismatch')
+                .findFirst()!
+                .occurrenceId,
+            isNull,
+          );
+          expect(
+            destIsar.attendanceRecordLocals
+                .where()
+                .serverIdEqualTo('src_att_missing')
+                .findFirst()!
+                .occurrenceId,
+            isNull,
+          );
+
+          // Simulating app restart migration also preserves unresolved
+          // attendance ambiguity without silently auto-resolving it.
+          await migrateLegacyTimetableAndEvents(destIsar);
+          expect(destIsar.migrationAuditRecordLocals.count(), equals(6));
+          expect(
+            destIsar.attendanceRecordLocals
+                .where()
+                .serverIdEqualTo('src_att_ambig')
+                .findFirst()!
+                .occurrenceId,
+            isNull,
+          );
+          expect(
+            destIsar.attendanceRecordLocals
+                .where()
+                .serverIdEqualTo('src_att_mismatch')
+                .findFirst()!
+                .occurrenceId,
+            isNull,
+          );
+          expect(
+            destIsar.attendanceRecordLocals
+                .where()
+                .serverIdEqualTo('src_att_missing')
+                .findFirst()!
+                .occurrenceId,
+            isNull,
+          );
 
           // Replace import clears old audits and restores exact 5 Source audits.
           await importer.importData(

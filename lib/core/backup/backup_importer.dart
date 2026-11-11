@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 
 import '../../features/academic_planner/data/models/academic_task_local.dart';
@@ -24,6 +25,8 @@ import 'backup_models.dart';
 enum ImportStrategy { replace, merge }
 
 class BackupImporter {
+  static const String skippedMergeAuditKind = 'backupMergeSkippedRecord';
+
   final Isar _isar;
   static const int currentSupportedBackupVersion = 2;
 
@@ -55,6 +58,7 @@ class BackupImporter {
   Future<void> importData(
     String rawJson, {
     ImportStrategy strategy = ImportStrategy.replace,
+    @visibleForTesting void Function(Isar isar)? onBeforeCommit,
   }) async {
     final data = parseAndValidateJson(rawJson);
 
@@ -75,6 +79,7 @@ class BackupImporter {
         isar.migrationAuditRecordLocals.clear();
       }
 
+      final nowUtc = DateTime.now().toUtc();
       final semesterIdMap = <int, int>{};
       final subjectIdMap = <int, int>{};
       final templateIdMap = <int, int>{};
@@ -94,6 +99,21 @@ class BackupImporter {
               (m['serverId'] as String?) != null &&
               (m['serverId'] as String).trim().isNotEmpty)
             m['id'] as int: (m['serverId'] as String).trim(),
+      };
+
+      final existingAudits = strategy == ImportStrategy.merge
+          ? isar.migrationAuditRecordLocals.where().findAll()
+          : <MigrationAuditRecordLocal>[];
+      final usedAuditServerIds = _collectServerIds(
+        existingAudits.map((e) => e.serverId),
+      );
+      final existingAuditsByKey = <String, MigrationAuditRecordLocal>{
+        for (final a in existingAudits) a.auditKey: a,
+      };
+      final auditSourceAttendanceIds = <int>{
+        for (final m in data.migrationAudits)
+          if ((m['attendanceRecordId'] as int? ?? 0) > 0)
+            m['attendanceRecordId'] as int,
       };
 
       // Track used serverIds in destination collections to guarantee unique-index safety.
@@ -137,12 +157,24 @@ class BackupImporter {
       // 1. User Preferences
       for (final map in data.userPreferences) {
         final srcServerId = _trimOrNull(map['serverId'] as String?);
+        final isDeleted = map['isDeleted'] as bool? ?? false;
         UserPreferencesLocal? matched;
-        if (strategy == ImportStrategy.merge && srcServerId != null) {
-          matched = isar.userPreferencesLocals
-              .where()
-              .serverIdEqualTo(srcServerId)
-              .findFirst();
+        if (strategy == ImportStrategy.merge) {
+          if (srcServerId != null) {
+            final byServer = isar.userPreferencesLocals
+                .where()
+                .serverIdEqualTo(srcServerId)
+                .findFirst();
+            if (byServer != null && byServer.isDeleted == isDeleted) {
+              matched = byServer;
+            }
+          } else if (!isDeleted) {
+            matched = _firstOrNull(
+              isar.userPreferencesLocals.where().findAll().where(
+                    (p) => !p.isDeleted,
+                  ),
+            );
+          }
         }
         final targetId = matched?.id ??
             (strategy == ImportStrategy.replace && (map['id'] as int? ?? 0) > 0
@@ -166,10 +198,10 @@ class BackupImporter {
           ..weeklyReportEnabled = map['weeklyReportEnabled'] as bool? ?? true
           ..lastSyncTime =
               DateTime.tryParse(map['lastSyncTime'] as String? ?? '')
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.userPreferencesLocals.put(pref);
       }
@@ -190,18 +222,20 @@ class BackupImporter {
                 .where()
                 .serverIdEqualTo(srcServerId)
                 .findFirst();
-            if (existing != null && existing.name == sem.name) {
+            if (existing != null &&
+                existing.name == sem.name &&
+                existing.isDeleted == sem.isDeleted) {
               matched = existing;
             }
           }
-          if (matched == null && !sem.isDeleted) {
+          if (matched == null) {
             final normName = sem.name.trim().toLowerCase();
             final normStart = normalizeUtcDate(sem.startDate);
             final normEnd = normalizeUtcDate(sem.endDate);
             matched = _firstOrNull(
               destSemesters.where(
                 (s) =>
-                    !s.isDeleted &&
+                    s.isDeleted == sem.isDeleted &&
                     s.name.trim().toLowerCase() == normName &&
                     normalizeUtcDate(s.startDate).isAtSameMomentAs(normStart) &&
                     normalizeUtcDate(s.endDate).isAtSameMomentAs(normEnd),
@@ -223,7 +257,7 @@ class BackupImporter {
             keepExistingOnOwner: matched?.serverId,
           );
         isar.semesterLocals.put(sem);
-        destSemesters.add(sem);
+        _upsertCachedRecord(destSemesters, sem, (s) => s.id == sem.id);
         if (srcId > 0) {
           semesterIdMap[srcId] = sem.id;
         }
@@ -238,9 +272,38 @@ class BackupImporter {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSemesterId = map['semesterId'] as int? ?? 0;
-        final destSemesterId = semesterIdMap[srcSemesterId] ?? srcSemesterId;
         final code = map['code'] as String? ?? '';
         final type = map['type'] as String? ?? 'THEORY';
+        final name = map['name'] as String? ?? '';
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+        final normCode = code.trim().toUpperCase();
+        final normType = type.trim().toUpperCase() == 'LAB' ? 'LAB' : 'THEORY';
+        final normName = normalizeTitleForKey(name);
+
+        if (strategy == ImportStrategy.merge &&
+            (srcSemesterId <= 0 || !semesterIdMap.containsKey(srcSemesterId))) {
+          _recordSkippedMergeAuditInTx(
+            isar,
+            now: nowUtc,
+            existingAuditsByKey: existingAuditsByKey,
+            usedAuditServerIds: usedAuditServerIds,
+            entityType: 'SubjectLocal',
+            srcId: srcId,
+            srcServerId: srcServerId,
+            missingParentType: 'SemesterLocal',
+            missingParentSourceId: srcSemesterId,
+            disambiguator: '$normCode|$normType|$normName',
+            status: isDeleted ? 'DELETED' : 'ACTIVE',
+            details: <String, dynamic>{
+              'name': name,
+              'code': code,
+              'type': normType,
+              'isDeleted': isDeleted,
+            },
+          );
+          continue;
+        }
+        final destSemesterId = semesterIdMap[srcSemesterId] ?? srcSemesterId;
 
         SubjectLocal? matched;
         if (strategy == ImportStrategy.merge) {
@@ -251,19 +314,36 @@ class BackupImporter {
                 .findFirst();
             if (byServer != null &&
                 byServer.semesterId == destSemesterId &&
-                byServer.code == code) {
+                byServer.code.trim().toUpperCase() == normCode &&
+                byServer.type.trim().toUpperCase() == normType &&
+                byServer.isDeleted == isDeleted) {
               matched = byServer;
             }
           }
-          matched ??= _firstOrNull(
-            destSubjects.where(
-              (s) =>
-                  !s.isDeleted &&
-                  s.semesterId == destSemesterId &&
-                  s.code.trim().toUpperCase() == code.trim().toUpperCase() &&
-                  s.type.trim().toUpperCase() == type.trim().toUpperCase(),
-            ),
-          );
+          if (matched == null) {
+            if (!isDeleted) {
+              matched = _firstOrNull(
+                destSubjects.where(
+                  (s) =>
+                      !s.isDeleted &&
+                      s.semesterId == destSemesterId &&
+                      s.code.trim().toUpperCase() == normCode &&
+                      s.type.trim().toUpperCase() == normType,
+                ),
+              );
+            } else {
+              matched = _firstOrNull(
+                destSubjects.where(
+                  (s) =>
+                      s.isDeleted &&
+                      s.semesterId == destSemesterId &&
+                      s.code.trim().toUpperCase() == normCode &&
+                      s.type.trim().toUpperCase() == normType &&
+                      normalizeTitleForKey(s.name) == normName,
+                ),
+              );
+            }
+          }
         }
 
         final targetId = matched?.id ??
@@ -279,7 +359,7 @@ class BackupImporter {
             keepExistingOnOwner: matched?.serverId,
           )
           ..semesterId = destSemesterId
-          ..name = map['name'] as String? ?? ''
+          ..name = name
           ..code = code
           ..faculty = map['faculty'] as String?
           ..credits = map['credits'] as int? ?? 3
@@ -287,43 +367,87 @@ class BackupImporter {
               (map['attendanceTarget'] as num?)?.toDouble() ?? 75.0
           ..color = map['color'] as String? ?? '0xFF10B981'
           ..type = type
-          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+          ..createdAt = matched?.createdAt ??
+              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.subjectLocals.put(sub);
-        destSubjects.add(sub);
+        _upsertCachedRecord(destSubjects, sub, (s) => s.id == sub.id);
         if (srcId > 0) {
           subjectIdMap[srcId] = sub.id;
         }
       }
 
       // 4. Legacy Timetable Templates
+      final destTemplates = strategy == ImportStrategy.merge
+          ? isar.timetableTemplateLocals.where().findAll()
+          : <TimetableTemplateLocal>[];
       for (final map in data.timetable) {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int? ?? 0;
-        final destSubId = subjectIdMap[srcSubId] ?? srcSubId;
         final weekday = map['weekday'] as int? ?? 1;
         final startTime = map['startTime'] as String? ?? '09:00';
         final endTime = map['endTime'] as String? ?? '10:00';
+        final normStart = normalizeTimeSlotPart(startTime);
+        final normEnd = normalizeTimeSlotPart(endTime);
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (strategy == ImportStrategy.merge &&
+            (srcSubId <= 0 || !subjectIdMap.containsKey(srcSubId))) {
+          _recordSkippedMergeAuditInTx(
+            isar,
+            now: nowUtc,
+            existingAuditsByKey: existingAuditsByKey,
+            usedAuditServerIds: usedAuditServerIds,
+            entityType: 'TimetableTemplateLocal',
+            srcId: srcId,
+            srcServerId: srcServerId,
+            missingParentType: 'SubjectLocal',
+            missingParentSourceId: srcSubId,
+            disambiguator: '$srcSubId|$weekday|$normStart-$normEnd',
+            status: isDeleted ? 'DELETED' : 'ACTIVE',
+            details: <String, dynamic>{
+              'weekday': weekday,
+              'startTime': normStart,
+              'endTime': normEnd,
+              'isDeleted': isDeleted,
+            },
+          );
+          continue;
+        }
+        final destSubId = subjectIdMap[srcSubId] ?? srcSubId;
 
         TimetableTemplateLocal? matched;
-        if (strategy == ImportStrategy.merge && srcServerId != null) {
-          final existing = isar.timetableTemplateLocals
-              .where()
-              .serverIdEqualTo(srcServerId)
-              .findFirst();
-          if (existing != null &&
-              existing.subjectId == destSubId &&
-              existing.weekday == weekday &&
-              existing.startTime == startTime &&
-              existing.endTime == endTime) {
-            matched = existing;
+        if (strategy == ImportStrategy.merge) {
+          if (srcServerId != null) {
+            final existing = isar.timetableTemplateLocals
+                .where()
+                .serverIdEqualTo(srcServerId)
+                .findFirst();
+            if (existing != null &&
+                existing.isDeleted == isDeleted &&
+                existing.subjectId == destSubId &&
+                existing.weekday == weekday &&
+                normalizeTimeSlotPart(existing.startTime) == normStart &&
+                normalizeTimeSlotPart(existing.endTime) == normEnd) {
+              matched = existing;
+            }
           }
+          matched ??= _firstOrNull(
+            destTemplates.where(
+              (t) =>
+                  t.isDeleted == isDeleted &&
+                  t.subjectId == destSubId &&
+                  t.weekday == weekday &&
+                  normalizeTimeSlotPart(t.startTime) == normStart &&
+                  normalizeTimeSlotPart(t.endTime) == normEnd,
+            ),
+          );
         }
 
         final targetId = matched?.id ??
@@ -345,44 +469,97 @@ class BackupImporter {
           ..room = map['room'] as String?
           ..faculty = map['faculty'] as String?
           ..notes = map['notes'] as String?
-          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+          ..createdAt = matched?.createdAt ??
+              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.timetableTemplateLocals.put(tt);
+        _upsertCachedRecord(destTemplates, tt, (t) => t.id == tt.id);
         if (srcId > 0) {
           templateIdMap[srcId] = tt.id;
         }
       }
 
       // 5. Legacy Events
+      final destEvents = strategy == ImportStrategy.merge
+          ? isar.eventLocals.where().findAll()
+          : <EventLocal>[];
       for (final map in data.events) {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int? ?? 0;
-        final destSubId = subjectIdMap[srcSubId] ?? srcSubId;
         final date = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ??
-              DateTime.now().toUtc(),
+          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
         );
         final startTime = map['startTime'] as String? ?? '09:00';
         final endTime = map['endTime'] as String? ?? '10:00';
+        final normStart = normalizeTimeSlotPart(startTime);
+        final normEnd = normalizeTimeSlotPart(endTime);
         final eventType = map['eventType'] as String? ?? 'REGULAR_CLASS';
+        final normEventType = eventType.trim().toUpperCase();
+        final status = map['status'] as String? ?? 'UNMARKED';
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (strategy == ImportStrategy.merge &&
+            (srcSubId <= 0 || !subjectIdMap.containsKey(srcSubId))) {
+          _recordSkippedMergeAuditInTx(
+            isar,
+            now: nowUtc,
+            existingAuditsByKey: existingAuditsByKey,
+            usedAuditServerIds: usedAuditServerIds,
+            entityType: 'EventLocal',
+            srcId: srcId,
+            srcServerId: srcServerId,
+            missingParentType: 'SubjectLocal',
+            missingParentSourceId: srcSubId,
+            disambiguator:
+                '$srcSubId|${formatUtcDateKey(date)}|$normStart-$normEnd|$normEventType',
+            status: status,
+            eventDate: date,
+            details: <String, dynamic>{
+              'date': date.toIso8601String(),
+              'startTime': normStart,
+              'endTime': normEnd,
+              'eventType': normEventType,
+              'status': status,
+              'isDeleted': isDeleted,
+            },
+          );
+          continue;
+        }
+        final destSubId = subjectIdMap[srcSubId] ?? srcSubId;
 
         EventLocal? matched;
-        if (strategy == ImportStrategy.merge && srcServerId != null) {
-          final existing =
-              isar.eventLocals.where().serverIdEqualTo(srcServerId).findFirst();
-          if (existing != null &&
-              existing.subjectId == destSubId &&
-              normalizeUtcDate(existing.date).isAtSameMomentAs(date) &&
-              existing.startTime == startTime &&
-              existing.endTime == endTime) {
-            matched = existing;
+        if (strategy == ImportStrategy.merge) {
+          if (srcServerId != null) {
+            final existing = isar.eventLocals
+                .where()
+                .serverIdEqualTo(srcServerId)
+                .findFirst();
+            if (existing != null &&
+                existing.isDeleted == isDeleted &&
+                existing.subjectId == destSubId &&
+                normalizeUtcDate(existing.date).isAtSameMomentAs(date) &&
+                normalizeTimeSlotPart(existing.startTime) == normStart &&
+                normalizeTimeSlotPart(existing.endTime) == normEnd) {
+              matched = existing;
+            }
           }
+          matched ??= _firstOrNull(
+            destEvents.where(
+              (e) =>
+                  e.isDeleted == isDeleted &&
+                  e.subjectId == destSubId &&
+                  normalizeUtcDate(e.date).isAtSameMomentAs(date) &&
+                  normalizeTimeSlotPart(e.startTime) == normStart &&
+                  normalizeTimeSlotPart(e.endTime) == normEnd &&
+                  e.eventType.trim().toUpperCase() == normEventType,
+            ),
+          );
         }
 
         final targetId = matched?.id ??
@@ -402,15 +579,17 @@ class BackupImporter {
           ..startTime = startTime
           ..endTime = endTime
           ..eventType = eventType
-          ..status = map['status'] as String? ?? 'UNMARKED'
-          ..createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+          ..status = status
+          ..createdAt = matched?.createdAt ??
+              DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.eventLocals.put(ev);
+        _upsertCachedRecord(destEvents, ev, (e) => e.id == ev.id);
         if (srcId > 0) {
           legacyEventIdMap[srcId] = ev.id;
         }
@@ -428,13 +607,6 @@ class BackupImporter {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int? ?? 0;
-        final destSubId = subjectIdMap[srcSubId] ?? srcSubId;
-        final srcLegacyTplId = map['legacyTemplateId'] as int?;
-        final destLegacyTplId = srcLegacyTplId != null
-            ? (templateIdMap[srcLegacyTplId] ??
-                (strategy == ImportStrategy.replace ? srcLegacyTplId : null))
-            : null;
-
         final dayOfWeek = map['dayOfWeek'] as int? ?? 1;
         final startTime = normalizeTimeSlotPart(
           map['startTime'] as String? ?? '09:00',
@@ -442,12 +614,45 @@ class BackupImporter {
         final endTime = normalizeTimeSlotPart(
           map['endTime'] as String? ?? '10:00',
         );
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (strategy == ImportStrategy.merge &&
+            (srcSubId <= 0 || !subjectIdMap.containsKey(srcSubId))) {
+          _recordSkippedMergeAuditInTx(
+            isar,
+            now: nowUtc,
+            existingAuditsByKey: existingAuditsByKey,
+            usedAuditServerIds: usedAuditServerIds,
+            entityType: 'WeeklyScheduleRuleLocal',
+            srcId: srcId,
+            srcServerId: srcServerId,
+            missingParentType: 'SubjectLocal',
+            missingParentSourceId: srcSubId,
+            disambiguator: '$srcSubId|$dayOfWeek|$startTime-$endTime',
+            status: isDeleted ? 'DELETED' : 'ACTIVE',
+            details: <String, dynamic>{
+              'dayOfWeek': dayOfWeek,
+              'startTime': startTime,
+              'endTime': endTime,
+              'type': map['type'] as String?,
+              'isDeleted': isDeleted,
+            },
+          );
+          continue;
+        }
+
+        final destSubId = subjectIdMap[srcSubId] ?? srcSubId;
+        final srcLegacyTplId = map['legacyTemplateId'] as int?;
+        final destLegacyTplId = srcLegacyTplId != null
+            ? (templateIdMap[srcLegacyTplId] ??
+                (strategy == ImportStrategy.replace ? srcLegacyTplId : null))
+            : null;
+
         final inferredType = (map['type'] as String?) ??
             destSubjectById[destSubId]?.type ??
             'THEORY';
         final normType =
             inferredType.trim().toUpperCase() == 'LAB' ? 'LAB' : 'THEORY';
-        final isDeleted = map['isDeleted'] as bool? ?? false;
 
         WeeklyScheduleRuleLocal? matched;
         if (strategy == ImportStrategy.merge) {
@@ -457,6 +662,7 @@ class BackupImporter {
                 .serverIdEqualTo(srcServerId)
                 .findFirst();
             if (byServer != null &&
+                byServer.isDeleted == isDeleted &&
                 byServer.subjectId == destSubId &&
                 byServer.dayOfWeek == dayOfWeek &&
                 normalizeTimeSlotPart(byServer.startTime) == startTime &&
@@ -464,19 +670,17 @@ class BackupImporter {
               matched = byServer;
             }
           }
-          if (matched == null && !isDeleted) {
-            matched = _firstOrNull(
-              destRules.where(
-                (r) =>
-                    !r.isDeleted &&
-                    r.subjectId == destSubId &&
-                    r.dayOfWeek == dayOfWeek &&
-                    normalizeTimeSlotPart(r.startTime) == startTime &&
-                    normalizeTimeSlotPart(r.endTime) == endTime &&
-                    r.type.toUpperCase() == normType,
-              ),
-            );
-          }
+          matched ??= _firstOrNull(
+            destRules.where(
+              (r) =>
+                  r.isDeleted == isDeleted &&
+                  r.subjectId == destSubId &&
+                  r.dayOfWeek == dayOfWeek &&
+                  normalizeTimeSlotPart(r.startTime) == startTime &&
+                  normalizeTimeSlotPart(r.endTime) == endTime &&
+                  r.type.toUpperCase() == normType,
+            ),
+          );
         }
 
         final targetId = matched?.id ??
@@ -502,14 +706,14 @@ class BackupImporter {
           ..isActive = map['isActive'] as bool? ?? true
           ..createdAt = matched?.createdAt ??
               DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
         isar.weeklyScheduleRuleLocals.put(rule);
-        destRules.add(rule);
+        _upsertCachedRecord(destRules, rule, (r) => r.id == rule.id);
         if (srcId > 0) {
           ruleIdMap[srcId] = rule.id;
         }
@@ -519,12 +723,106 @@ class BackupImporter {
       }
 
       // 7. Daily Schedule Occurrences (remapping subjectId, ruleId, legacyEventId & slotKey)
+      final destDeletedOccurrences = strategy == ImportStrategy.merge
+          ? isar.dailyScheduleOccurrenceLocals
+              .where()
+              .isDeletedEqualTo(true)
+              .findAll()
+          : <DailyScheduleOccurrenceLocal>[];
       for (final map in data.occurrences) {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int?;
-        final destSubId =
-            srcSubId != null ? (subjectIdMap[srcSubId] ?? srcSubId) : null;
+        final occDate = normalizeUtcDate(
+          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
+        );
+        final startTime = normalizeTimeSlotPart(
+          map['startTime'] as String? ?? '09:00',
+        );
+        final endTime = normalizeTimeSlotPart(
+          map['endTime'] as String? ?? '10:00',
+        );
+        final type =
+            (map['type'] as String? ?? 'REGULAR_CLASS').trim().toUpperCase();
+        final title = map['title'] as String? ?? '';
+        final status = map['status'] as String? ?? 'UPCOMING';
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+
+        final bool isSubjectRequiredType =
+            type == 'REGULAR_CLASS' || type == 'EXTRA_CLASS';
+        final int? destSubId;
+        if (strategy == ImportStrategy.merge) {
+          if (isSubjectRequiredType) {
+            if (srcSubId == null ||
+                srcSubId <= 0 ||
+                !subjectIdMap.containsKey(srcSubId)) {
+              _recordSkippedMergeAuditInTx(
+                isar,
+                now: nowUtc,
+                existingAuditsByKey: existingAuditsByKey,
+                usedAuditServerIds: usedAuditServerIds,
+                entityType: 'DailyScheduleOccurrenceLocal',
+                srcId: srcId,
+                srcServerId: srcServerId,
+                missingParentType: 'SubjectLocal',
+                missingParentSourceId: srcSubId ?? 0,
+                disambiguator:
+                    '$type|${srcSubId ?? 0}|${formatUtcDateKey(occDate)}|$startTime-$endTime',
+                status: status,
+                eventDate: occDate,
+                details: <String, dynamic>{
+                  'date': occDate.toIso8601String(),
+                  'startTime': startTime,
+                  'endTime': endTime,
+                  'type': type,
+                  'title': title,
+                  'status': status,
+                  'ruleId': map['ruleId'] as int?,
+                  'isDeleted': isDeleted,
+                },
+              );
+              continue;
+            }
+            destSubId = subjectIdMap[srcSubId];
+          } else {
+            // Optional-subject EXAM / EVENT occurrence: preserve null if source was null,
+            // otherwise skip & audit if explicit positive subjectId cannot be mapped.
+            if (srcSubId == null) {
+              destSubId = null;
+            } else if (srcSubId <= 0 || !subjectIdMap.containsKey(srcSubId)) {
+              _recordSkippedMergeAuditInTx(
+                isar,
+                now: nowUtc,
+                existingAuditsByKey: existingAuditsByKey,
+                usedAuditServerIds: usedAuditServerIds,
+                entityType: 'DailyScheduleOccurrenceLocal',
+                srcId: srcId,
+                srcServerId: srcServerId,
+                missingParentType: 'SubjectLocal',
+                missingParentSourceId: srcSubId,
+                disambiguator:
+                    '$type|$srcSubId|${formatUtcDateKey(occDate)}|$startTime-$endTime|${normalizeTitleForKey(title)}',
+                status: status,
+                eventDate: occDate,
+                details: <String, dynamic>{
+                  'date': occDate.toIso8601String(),
+                  'startTime': startTime,
+                  'endTime': endTime,
+                  'type': type,
+                  'title': title,
+                  'status': status,
+                  'isDeleted': isDeleted,
+                },
+              );
+              continue;
+            } else {
+              destSubId = subjectIdMap[srcSubId];
+            }
+          }
+        } else {
+          destSubId =
+              srcSubId != null ? (subjectIdMap[srcSubId] ?? srcSubId) : null;
+        }
 
         final srcRuleId = map['ruleId'] as int?;
         int? destRuleId;
@@ -546,23 +844,9 @@ class BackupImporter {
           }
         }
 
-        final occDate = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ??
-              DateTime.now().toUtc(),
-        );
-        final startTime = normalizeTimeSlotPart(
-          map['startTime'] as String? ?? '09:00',
-        );
-        final endTime = normalizeTimeSlotPart(
-          map['endTime'] as String? ?? '10:00',
-        );
-        final type =
-            (map['type'] as String? ?? 'REGULAR_CLASS').trim().toUpperCase();
-        final title = map['title'] as String? ?? '';
         final srcSlotKey = _trimOrNull(map['slotKey'] as String?);
         final isLegacyDisambiguated =
             srcSlotKey != null && srcSlotKey.startsWith('LEGACY_EV:');
-        final isDeleted = map['isDeleted'] as bool? ?? false;
 
         final destSlotKey = computeCanonicalSlotKey(
           date: occDate,
@@ -578,18 +862,31 @@ class BackupImporter {
         );
 
         DailyScheduleOccurrenceLocal? matched;
-        if (strategy == ImportStrategy.merge && srcServerId != null) {
-          final byServer = isar.dailyScheduleOccurrenceLocals
-              .where()
-              .serverIdEqualTo(srcServerId)
-              .findFirst();
-          if (byServer != null &&
-              byServer.subjectId == destSubId &&
-              normalizeUtcDate(byServer.date).isAtSameMomentAs(occDate) &&
-              normalizeTimeSlotPart(byServer.startTime) == startTime &&
-              normalizeTimeSlotPart(byServer.endTime) == endTime &&
-              byServer.type.toUpperCase() == type) {
-            matched = byServer;
+        if (strategy == ImportStrategy.merge) {
+          if (srcServerId != null) {
+            final byServer = isar.dailyScheduleOccurrenceLocals
+                .where()
+                .serverIdEqualTo(srcServerId)
+                .findFirst();
+            if (byServer != null &&
+                byServer.isDeleted == isDeleted &&
+                byServer.subjectId == destSubId &&
+                normalizeUtcDate(byServer.date).isAtSameMomentAs(occDate) &&
+                normalizeTimeSlotPart(byServer.startTime) == startTime &&
+                normalizeTimeSlotPart(byServer.endTime) == endTime &&
+                byServer.type.toUpperCase() == type) {
+              matched = byServer;
+            }
+          }
+          if (matched == null && isDeleted) {
+            matched = _firstOrNull(
+              destDeletedOccurrences.where(
+                (o) =>
+                    o.isDeleted &&
+                    o.slotKey == destSlotKey &&
+                    o.subjectId == destSubId,
+              ),
+            );
           }
         }
 
@@ -610,16 +907,16 @@ class BackupImporter {
           ..startTime = startTime
           ..endTime = endTime
           ..type = type
-          ..status = map['status'] as String? ?? 'UPCOMING'
+          ..status = status
           ..createdFrom = map['createdFrom'] as String? ?? 'WEEKLY_RULE'
           ..room = map['room'] as String?
           ..faculty = map['faculty'] as String?
           ..reason = map['reason'] as String?
           ..createdAt = matched?.createdAt ??
               DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;
 
@@ -631,6 +928,11 @@ class BackupImporter {
           incoming.id = targetId;
           isar.dailyScheduleOccurrenceLocals.put(incoming);
           savedOcc = incoming;
+          _upsertCachedRecord(
+            destDeletedOccurrences,
+            savedOcc,
+            (o) => o.id == savedOcc.id,
+          );
         } else {
           savedOcc = upsertCanonicalOccurrenceInWriteTx(
             isar,
@@ -659,6 +961,40 @@ class BackupImporter {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int? ?? 0;
+        final status = map['status'] as String? ?? 'PRESENT';
+        final markedAtUtc =
+            (DateTime.tryParse(map['markedAt'] as String? ?? '') ?? nowUtc)
+                .toUtc();
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+
+        if (strategy == ImportStrategy.merge &&
+            (srcSubId <= 0 || !subjectIdMap.containsKey(srcSubId))) {
+          _recordSkippedMergeAuditInTx(
+            isar,
+            now: nowUtc,
+            existingAuditsByKey: existingAuditsByKey,
+            usedAuditServerIds: usedAuditServerIds,
+            entityType: 'AttendanceRecordLocal',
+            srcId: srcId,
+            srcServerId: srcServerId,
+            missingParentType: 'SubjectLocal',
+            missingParentSourceId: srcSubId,
+            disambiguator:
+                '$srcSubId|${map['occurrenceId'] ?? 0}|${map['legacyEventId'] ?? 0}|${map['eventId'] ?? 0}|${markedAtUtc.millisecondsSinceEpoch}',
+            status: status,
+            eventDate: normalizeUtcDate(markedAtUtc),
+            details: <String, dynamic>{
+              'subjectId': srcSubId,
+              'occurrenceId': map['occurrenceId'] as int?,
+              'legacyEventId': map['legacyEventId'] as int?,
+              'eventId': map['eventId'] as int? ?? 0,
+              'status': status,
+              'markedAt': markedAtUtc.toIso8601String(),
+              'isDeleted': isDeleted,
+            },
+          );
+          continue;
+        }
         final destSubId = subjectIdMap[srcSubId] ?? srcSubId;
 
         final srcOccurrenceId = map['occurrenceId'] as int?;
@@ -706,26 +1042,16 @@ class BackupImporter {
           }
         }
 
-        if (destOccurrenceId != null && destOccurrenceId > 0) {
-          destCompatibilityEventId = destOccurrenceId;
-        } else if (destLegacyEventId != null && destLegacyEventId > 0) {
-          destCompatibilityEventId = destLegacyEventId;
-        } else if (strategy == ImportStrategy.replace) {
-          destCompatibilityEventId = srcEventId;
-        } else {
-          // Do not leave a raw source eventId pointing at an unrelated
-          // destination occurrence during Merge when no legacy event or
-          // occurrence was mapped from the backup.
-          destCompatibilityEventId = 0;
-        }
-
         AttendanceRecordLocal? matched;
         if (strategy == ImportStrategy.merge) {
           if (destOccurrenceId != null && destOccurrenceId > 0) {
-            matched = isar.attendanceRecordLocals
+            final sameOcc = isar.attendanceRecordLocals
                 .where()
                 .occurrenceIdEqualTo(destOccurrenceId)
-                .findFirst();
+                .findAll();
+            matched = _firstOrNull(
+              sameOcc.where((a) => a.isDeleted == isDeleted),
+            );
           }
           if (matched == null && srcServerId != null) {
             final byServer = isar.attendanceRecordLocals
@@ -733,12 +1059,75 @@ class BackupImporter {
                 .serverIdEqualTo(srcServerId)
                 .findFirst();
             if (byServer != null &&
+                byServer.isDeleted == isDeleted &&
                 byServer.subjectId == destSubId &&
-                (byServer.occurrenceId == destOccurrenceId ||
-                    destOccurrenceId == null)) {
+                (destOccurrenceId == null ||
+                    byServer.occurrenceId == destOccurrenceId ||
+                    byServer.occurrenceId == null)) {
               matched = byServer;
             }
           }
+          if (matched == null && srcServerId == null) {
+            if (destLegacyEventId != null && destLegacyEventId > 0) {
+              final sameLegacy = isar.attendanceRecordLocals
+                  .where()
+                  .legacyEventIdEqualTo(destLegacyEventId)
+                  .findAll();
+              matched = _firstOrNull(
+                sameLegacy.where(
+                  (a) =>
+                      a.isDeleted == isDeleted &&
+                      a.subjectId == destSubId &&
+                      (destOccurrenceId == null ||
+                          a.occurrenceId == destOccurrenceId ||
+                          a.occurrenceId == null),
+                ),
+              );
+            } else if (destOccurrenceId == null) {
+              final sameSub = isar.attendanceRecordLocals
+                  .where()
+                  .subjectIdEqualTo(destSubId)
+                  .findAll();
+              matched = _firstOrNull(
+                sameSub.where(
+                  (a) =>
+                      a.isDeleted == isDeleted &&
+                      a.occurrenceId == null &&
+                      a.legacyEventId == null &&
+                      a.status == status &&
+                      a.markedAt.toUtc().isAtSameMomentAs(markedAtUtc),
+                ),
+              );
+            }
+          }
+        }
+
+        // Preserve an existing valid destination occurrenceId when an incoming
+        // matched record carries occurrenceId == null (partial/v1 re-merge).
+        final int? effectiveOccurrenceId;
+        if (destOccurrenceId != null && destOccurrenceId > 0) {
+          effectiveOccurrenceId = destOccurrenceId;
+        } else if (matched?.occurrenceId != null &&
+            matched!.occurrenceId! > 0) {
+          effectiveOccurrenceId = matched.occurrenceId;
+        } else {
+          effectiveOccurrenceId = null;
+        }
+        final int? effectiveLegacyEventId =
+            destLegacyEventId ?? matched?.legacyEventId;
+
+        if (effectiveOccurrenceId != null && effectiveOccurrenceId > 0) {
+          destCompatibilityEventId = effectiveOccurrenceId;
+        } else if (effectiveLegacyEventId != null &&
+            effectiveLegacyEventId > 0) {
+          destCompatibilityEventId = effectiveLegacyEventId;
+        } else if (strategy == ImportStrategy.replace) {
+          destCompatibilityEventId = srcEventId;
+        } else {
+          // Do not leave a raw source eventId pointing at an unrelated
+          // destination occurrence during Merge when no legacy event or
+          // occurrence was mapped from the backup.
+          destCompatibilityEventId = 0;
         }
 
         final targetId = matched?.id ??
@@ -753,53 +1142,166 @@ class BackupImporter {
             used: usedAttendanceServerIds,
             keepExistingOnOwner: matched?.serverId,
           )
-          ..occurrenceId = destOccurrenceId
-          ..legacyEventId = destLegacyEventId
+          ..occurrenceId = effectiveOccurrenceId
+          ..legacyEventId = effectiveLegacyEventId
           ..eventId = destCompatibilityEventId
           ..subjectId = destSubId
-          ..status = map['status'] as String? ?? 'PRESENT'
-          ..markedAt = DateTime.tryParse(map['markedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+          ..status = status
+          ..markedAt = markedAtUtc
           ..createdAt = matched?.createdAt ??
               DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.attendanceRecordLocals.put(att);
         if (srcId > 0) {
           attendanceIdMap[srcId] = att.id;
         }
+
+        final hasUnmappedExplicitOcc = strategy == ImportStrategy.merge &&
+            srcOccurrenceId != null &&
+            srcOccurrenceId > 0 &&
+            effectiveOccurrenceId == null;
+        final hasUnmappedPreBug004Event = strategy == ImportStrategy.merge &&
+            isPreBug004Row &&
+            srcEventId > 0 &&
+            effectiveOccurrenceId == null &&
+            effectiveLegacyEventId == null &&
+            !auditSourceAttendanceIds.contains(srcId);
+        if (hasUnmappedExplicitOcc || hasUnmappedPreBug004Event) {
+          _recordUnmappedOccurrenceAuditInTx(
+            isar,
+            now: nowUtc,
+            existingAuditsByKey: existingAuditsByKey,
+            usedAuditServerIds: usedAuditServerIds,
+            attendanceRecordId: att.id,
+            subjectId: destSubId,
+            legacyEventId: effectiveLegacyEventId,
+            sourceAttendanceId: srcId,
+            sourceAttendanceServerId: srcServerId,
+            sourceOccurrenceId: srcOccurrenceId,
+            sourceLegacyEventId: srcLegacyEventId,
+            sourceEventId: srcEventId,
+            status: status,
+            eventDate: normalizeUtcDate(markedAtUtc),
+          );
+        }
       }
 
-      // 9. Schedule Exceptions (remapping subjectId)
+      // 9. Schedule Exceptions (remapping subjectId + conservative deduplication)
+      final destExceptions = strategy == ImportStrategy.merge
+          ? isar.scheduleExceptionLocals.where().findAll()
+          : <ScheduleExceptionLocal>[];
       for (final map in data.scheduleExceptions) {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int?;
-        final destSubId =
-            srcSubId != null ? (subjectIdMap[srcSubId] ?? srcSubId) : null;
         final exDate = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ??
-              DateTime.now().toUtc(),
+          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
         );
-        final exType = map['type'] as String? ?? 'HOLIDAY';
+        final rawType = _trimOrNull(map['type'] as String?) ?? 'HOLIDAY';
+        final normType = rawType.toUpperCase();
         final title = map['title'] as String? ?? '';
+        final normTitle = normalizeTitleForKey(title);
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+        final isSubjectRequiredType = normType == 'CANCELLED_CLASS';
+
+        final int? destSubId;
+        if (strategy == ImportStrategy.merge) {
+          if (isSubjectRequiredType) {
+            if (srcSubId == null ||
+                srcSubId <= 0 ||
+                !subjectIdMap.containsKey(srcSubId)) {
+              _recordSkippedMergeAuditInTx(
+                isar,
+                now: nowUtc,
+                existingAuditsByKey: existingAuditsByKey,
+                usedAuditServerIds: usedAuditServerIds,
+                entityType: 'ScheduleExceptionLocal',
+                srcId: srcId,
+                srcServerId: srcServerId,
+                missingParentType: 'SubjectLocal',
+                missingParentSourceId: srcSubId ?? 0,
+                disambiguator:
+                    '$normType|${srcSubId ?? 0}|${formatUtcDateKey(exDate)}|$normTitle',
+                status: isDeleted ? 'DELETED' : 'ACTIVE',
+                eventDate: exDate,
+                details: <String, dynamic>{
+                  'date': exDate.toIso8601String(),
+                  'subjectId': srcSubId,
+                  'type': rawType,
+                  'title': title,
+                  'isDeleted': isDeleted,
+                },
+              );
+              continue;
+            }
+            destSubId = subjectIdMap[srcSubId];
+          } else {
+            if (srcSubId == null) {
+              destSubId = null;
+            } else if (srcSubId <= 0 || !subjectIdMap.containsKey(srcSubId)) {
+              _recordSkippedMergeAuditInTx(
+                isar,
+                now: nowUtc,
+                existingAuditsByKey: existingAuditsByKey,
+                usedAuditServerIds: usedAuditServerIds,
+                entityType: 'ScheduleExceptionLocal',
+                srcId: srcId,
+                srcServerId: srcServerId,
+                missingParentType: 'SubjectLocal',
+                missingParentSourceId: srcSubId,
+                disambiguator:
+                    '$normType|$srcSubId|${formatUtcDateKey(exDate)}|$normTitle',
+                status: isDeleted ? 'DELETED' : 'ACTIVE',
+                eventDate: exDate,
+                details: <String, dynamic>{
+                  'date': exDate.toIso8601String(),
+                  'subjectId': srcSubId,
+                  'type': rawType,
+                  'title': title,
+                  'isDeleted': isDeleted,
+                },
+              );
+              continue;
+            } else {
+              destSubId = subjectIdMap[srcSubId];
+            }
+          }
+        } else {
+          destSubId =
+              srcSubId != null ? (subjectIdMap[srcSubId] ?? srcSubId) : null;
+        }
 
         ScheduleExceptionLocal? matched;
-        if (strategy == ImportStrategy.merge && srcServerId != null) {
-          final byServer = isar.scheduleExceptionLocals
-              .where()
-              .serverIdEqualTo(srcServerId)
-              .findFirst();
-          if (byServer != null &&
-              byServer.subjectId == destSubId &&
-              normalizeUtcDate(byServer.date).isAtSameMomentAs(exDate) &&
-              byServer.type == exType) {
-            matched = byServer;
+        if (strategy == ImportStrategy.merge) {
+          if (srcServerId != null) {
+            final byServer = isar.scheduleExceptionLocals
+                .where()
+                .serverIdEqualTo(srcServerId)
+                .findFirst();
+            if (byServer != null &&
+                byServer.isDeleted == isDeleted &&
+                byServer.subjectId == destSubId &&
+                normalizeUtcDate(byServer.date).isAtSameMomentAs(exDate) &&
+                byServer.type.trim().toUpperCase() == normType &&
+                normalizeTitleForKey(byServer.title) == normTitle) {
+              matched = byServer;
+            }
           }
+          matched ??= _firstOrNull(
+            destExceptions.where(
+              (e) =>
+                  e.isDeleted == isDeleted &&
+                  normalizeUtcDate(e.date).isAtSameMomentAs(exDate) &&
+                  e.subjectId == destSubId &&
+                  e.type.trim().toUpperCase() == normType &&
+                  normalizeTitleForKey(e.title) == normTitle,
+            ),
+          );
         }
 
         final targetId = matched?.id ??
@@ -816,41 +1318,71 @@ class BackupImporter {
           )
           ..date = exDate
           ..subjectId = destSubId
-          ..type = exType
+          ..type = rawType
           ..title = title
           ..description = map['description'] as String?
           ..createdAt = matched?.createdAt ??
               DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.scheduleExceptionLocals.put(ex);
+        if (strategy == ImportStrategy.merge) {
+          _upsertCachedRecord(destExceptions, ex, (e) => e.id == ex.id);
+        }
       }
 
-      // 10. Academic Events
+      // 10. Academic Events (discriminating deduplication across date/type/title/times)
+      final destAcademicEvents = strategy == ImportStrategy.merge
+          ? isar.academicEventLocals.where().findAll()
+          : <AcademicEventLocal>[];
       for (final map in data.academicEvents) {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final aeDate = normalizeUtcDate(
-          DateTime.tryParse(map['date'] as String? ?? '') ??
-              DateTime.now().toUtc(),
+          DateTime.tryParse(map['date'] as String? ?? '') ?? nowUtc,
         );
         final title = map['title'] as String? ?? '';
+        final normTitle = normalizeTitleForKey(title);
+        final rawType = _trimOrNull(map['type'] as String?) ?? 'EVENT';
+        final normType = rawType.toUpperCase();
+        final rawStartTime = _trimOrNull(map['startTime'] as String?);
+        final rawEndTime = _trimOrNull(map['endTime'] as String?);
+        final normStartTime = _normalizeOptionalTime(rawStartTime);
+        final normEndTime = _normalizeOptionalTime(rawEndTime);
+        final isDeleted = map['isDeleted'] as bool? ?? false;
 
         AcademicEventLocal? matched;
-        if (strategy == ImportStrategy.merge && srcServerId != null) {
-          final byServer = isar.academicEventLocals
-              .where()
-              .serverIdEqualTo(srcServerId)
-              .findFirst();
-          if (byServer != null &&
-              byServer.title == title &&
-              normalizeUtcDate(byServer.date).isAtSameMomentAs(aeDate)) {
-            matched = byServer;
+        if (strategy == ImportStrategy.merge) {
+          if (srcServerId != null) {
+            final byServer = isar.academicEventLocals
+                .where()
+                .serverIdEqualTo(srcServerId)
+                .findFirst();
+            if (byServer != null &&
+                byServer.isDeleted == isDeleted &&
+                normalizeUtcDate(byServer.date).isAtSameMomentAs(aeDate) &&
+                byServer.type.trim().toUpperCase() == normType &&
+                normalizeTitleForKey(byServer.title) == normTitle &&
+                _normalizeOptionalTime(byServer.startTime) == normStartTime &&
+                _normalizeOptionalTime(byServer.endTime) == normEndTime) {
+              matched = byServer;
+            }
           }
+          matched ??= _firstOrNull(
+            destAcademicEvents.where(
+              (e) =>
+                  e.isDeleted == isDeleted &&
+                  normalizeUtcDate(e.date).isAtSameMomentAs(aeDate) &&
+                  e.type.trim().toUpperCase() == normType &&
+                  normalizeTitleForKey(e.title) == normTitle &&
+                  _normalizeOptionalTime(e.startTime) == normStartTime &&
+                  _normalizeOptionalTime(e.endTime) == normEndTime,
+            ),
+          );
         }
 
         final targetId = matched?.id ??
@@ -868,43 +1400,113 @@ class BackupImporter {
           ..title = title
           ..description = map['description'] as String?
           ..date = aeDate
-          ..startTime = map['startTime'] as String?
-          ..endTime = map['endTime'] as String?
-          ..type = map['type'] as String? ?? 'EVENT'
+          ..startTime = rawStartTime
+          ..endTime = rawEndTime
+          ..type = rawType
           ..createdAt = matched?.createdAt ??
               DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.academicEventLocals.put(ae);
+        if (strategy == ImportStrategy.merge) {
+          _upsertCachedRecord(destAcademicEvents, ae, (e) => e.id == ae.id);
+        }
         if (srcId > 0) {
           academicEventIdMap[srcId] = ae.id;
         }
       }
 
-      // 11. Tasks (remapping subjectId)
+      // 11. Tasks (remapping optional subjectId + conservative deduplication)
+      final destTasks = strategy == ImportStrategy.merge
+          ? isar.academicTaskLocals.where().findAll()
+          : <AcademicTaskLocal>[];
       for (final map in data.tasks) {
         final srcId = map['id'] as int? ?? 0;
         final srcServerId = _trimOrNull(map['serverId'] as String?);
         final srcSubId = map['subjectId'] as int?;
-        final destSubId =
-            srcSubId != null ? (subjectIdMap[srcSubId] ?? srcSubId) : null;
         final title = map['title'] as String? ?? '';
+        final normTitle = normalizeTitleForKey(title);
+        final startDate =
+            (DateTime.tryParse(map['startDate'] as String? ?? '') ?? nowUtc)
+                .toUtc();
+        final dueDate =
+            (DateTime.tryParse(map['dueDate'] as String? ?? '') ?? nowUtc)
+                .toUtc();
+        final taskType =
+            _trimOrNull(map['taskType'] as String?) ?? 'ASSIGNMENT';
+        final normTaskType = taskType.toUpperCase();
+        final status = map['status'] as String? ?? 'PENDING';
+        final isDeleted = map['isDeleted'] as bool? ?? false;
+
+        final int? destSubId;
+        if (strategy == ImportStrategy.merge) {
+          if (srcSubId == null) {
+            destSubId = null;
+          } else if (srcSubId <= 0 || !subjectIdMap.containsKey(srcSubId)) {
+            _recordSkippedMergeAuditInTx(
+              isar,
+              now: nowUtc,
+              existingAuditsByKey: existingAuditsByKey,
+              usedAuditServerIds: usedAuditServerIds,
+              entityType: 'AcademicTaskLocal',
+              srcId: srcId,
+              srcServerId: srcServerId,
+              missingParentType: 'SubjectLocal',
+              missingParentSourceId: srcSubId,
+              disambiguator:
+                  '$srcSubId|$normTaskType|$normTitle|${dueDate.millisecondsSinceEpoch}',
+              status: status,
+              eventDate: normalizeUtcDate(dueDate),
+              details: <String, dynamic>{
+                'subjectId': srcSubId,
+                'title': title,
+                'taskType': taskType,
+                'dueDate': dueDate.toIso8601String(),
+                'status': status,
+                'isDeleted': isDeleted,
+              },
+            );
+            continue;
+          } else {
+            destSubId = subjectIdMap[srcSubId];
+          }
+        } else {
+          destSubId =
+              srcSubId != null ? (subjectIdMap[srcSubId] ?? srcSubId) : null;
+        }
 
         AcademicTaskLocal? matched;
-        if (strategy == ImportStrategy.merge && srcServerId != null) {
-          final byServer = isar.academicTaskLocals
-              .where()
-              .serverIdEqualTo(srcServerId)
-              .findFirst();
-          if (byServer != null &&
-              byServer.subjectId == destSubId &&
-              byServer.title == title) {
-            matched = byServer;
+        if (strategy == ImportStrategy.merge) {
+          if (srcServerId != null) {
+            final byServer = isar.academicTaskLocals
+                .where()
+                .serverIdEqualTo(srcServerId)
+                .findFirst();
+            if (byServer != null &&
+                byServer.isDeleted == isDeleted &&
+                byServer.subjectId == destSubId &&
+                byServer.taskType.trim().toUpperCase() == normTaskType &&
+                normalizeTitleForKey(byServer.title) == normTitle &&
+                byServer.dueDate.toUtc().millisecondsSinceEpoch ==
+                    dueDate.millisecondsSinceEpoch) {
+              matched = byServer;
+            }
           }
+          matched ??= _firstOrNull(
+            destTasks.where(
+              (t) =>
+                  t.isDeleted == isDeleted &&
+                  t.subjectId == destSubId &&
+                  t.taskType.trim().toUpperCase() == normTaskType &&
+                  normalizeTitleForKey(t.title) == normTitle &&
+                  t.dueDate.toUtc().millisecondsSinceEpoch ==
+                      dueDate.millisecondsSinceEpoch,
+            ),
+          );
         }
 
         final targetId = matched?.id ??
@@ -922,36 +1524,62 @@ class BackupImporter {
           ..subjectId = destSubId
           ..title = title
           ..description = map['description'] as String?
-          ..startDate = DateTime.tryParse(map['startDate'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..dueDate = DateTime.tryParse(map['dueDate'] as String? ?? '') ??
-              DateTime.now().toUtc()
+          ..startDate = startDate
+          ..dueDate = dueDate
           ..priority = map['priority'] as String? ?? 'MEDIUM'
-          ..taskType = map['taskType'] as String? ?? 'ASSIGNMENT'
-          ..status = map['status'] as String? ?? 'PENDING'
+          ..taskType = taskType
+          ..status = status
           ..reminder = map['reminder'] as String? ?? 'NONE'
           ..createdAt = matched?.createdAt ??
               DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
-          ..updatedAt = DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
-              DateTime.now().toUtc()
+              nowUtc
+          ..updatedAt =
+              DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
-          ..isDeleted = map['isDeleted'] as bool? ?? false;
+          ..isDeleted = isDeleted;
 
         isar.academicTaskLocals.put(tk);
+        if (strategy == ImportStrategy.merge) {
+          _upsertCachedRecord(destTasks, tk, (t) => t.id == tk.id);
+        }
         if (srcId > 0) {
           taskIdMap[srcId] = tk.id;
         }
       }
 
-      // 12. Notifications (remapping typed/legacy relatedId after all parents)
+      // 12. Notifications (strict entity FK remapping + deduplication + unique Android IDs)
+      final destNotifications = strategy == ImportStrategy.merge
+          ? isar.notificationItems.where().findAll()
+          : <NotificationItem>[];
+      final androidIdOwner = <int, int>{};
+      final usedAndroidIds = <int>{};
+      for (final existing in destNotifications) {
+        final aid = existing.androidNotificationId;
+        if (aid != null &&
+            NotificationItem.isValidPersistedAndroidId(aid) &&
+            !androidIdOwner.containsKey(aid)) {
+          androidIdOwner[aid] = existing.id;
+          usedAndroidIds.add(aid);
+        }
+      }
+
       for (final map in data.notifications) {
         final srcId = map['id'] as int? ?? 0;
-        final notifType = map['type'] as String? ?? 'CLASS_REMINDER';
+        final notifType =
+            _trimOrNull(map['type'] as String?) ?? 'CLASS_REMINDER';
+        final normType = notifType.toUpperCase();
         final rawRelatedId = map['relatedId'] as String?;
-        final remappedRelatedId = _remapNotificationRelatedId(
+        final title = map['title'] as String? ?? '';
+        final body = map['body'] as String? ?? '';
+        final normTitle = normalizeTitleForKey(title);
+        final schedTime =
+            (DateTime.tryParse(map['scheduledTime'] as String? ?? '') ?? nowUtc)
+                .toUtc();
+        final incomingIsRead = map['isRead'] as bool? ?? false;
+
+        final remap = _remapNotificationRelatedIdStrict(
           rawRelatedId: rawRelatedId,
-          type: notifType,
+          type: normType,
           strategy: strategy,
           subjectIdMap: subjectIdMap,
           ruleIdMap: ruleIdMap,
@@ -962,22 +1590,101 @@ class BackupImporter {
           taskIdMap: taskIdMap,
         );
 
-        final targetId = (strategy == ImportStrategy.replace && srcId > 0)
-            ? srcId
-            : isar.notificationItems.autoIncrement();
+        if (strategy == ImportStrategy.merge && remap.shouldSkipOnMerge) {
+          _recordSkippedMergeAuditInTx(
+            isar,
+            now: nowUtc,
+            existingAuditsByKey: existingAuditsByKey,
+            usedAuditServerIds: usedAuditServerIds,
+            entityType: 'NotificationItem',
+            srcId: srcId,
+            srcServerId: null,
+            missingParentType: remap.missingParentType ?? 'EntityRef',
+            missingParentSourceId: remap.missingParentSourceId,
+            disambiguator:
+                '$normType|${rawRelatedId?.trim() ?? ''}|${schedTime.microsecondsSinceEpoch}',
+            status: incomingIsRead ? 'READ' : 'UNREAD',
+            eventDate: normalizeUtcDate(schedTime),
+            details: <String, dynamic>{
+              'type': notifType,
+              'relatedId': rawRelatedId,
+              'title': title,
+              'scheduledTime': schedTime.toIso8601String(),
+              'isRead': incomingIsRead,
+            },
+          );
+          continue;
+        }
+
+        final remappedRelatedId = remap.remappedRelatedId;
+
+        NotificationItem? matched;
+        if (strategy == ImportStrategy.merge) {
+          matched = _firstOrNull(
+            destNotifications.where((n) {
+              if (n.type.trim().toUpperCase() != normType) return false;
+              if (_trimOrNull(n.relatedId) != remappedRelatedId) return false;
+              if (n.scheduledTime.toUtc().microsecondsSinceEpoch !=
+                  schedTime.microsecondsSinceEpoch) {
+                return false;
+              }
+              if (remappedRelatedId == null &&
+                  normalizeTitleForKey(n.title) != normTitle) {
+                return false;
+              }
+              return true;
+            }),
+          );
+        }
+
+        final targetId = matched?.id ??
+            (strategy == ImportStrategy.replace && srcId > 0
+                ? srcId
+                : isar.notificationItems.autoIncrement());
+
+        final existingAid = matched?.androidNotificationId;
+        final incomingAid = map['androidNotificationId'] as int?;
+        final int resolvedAid;
+        if (existingAid != null &&
+            NotificationItem.isValidPersistedAndroidId(existingAid) &&
+            (androidIdOwner[existingAid] == null ||
+                androidIdOwner[existingAid] == targetId)) {
+          resolvedAid = existingAid;
+          androidIdOwner[resolvedAid] = targetId;
+          usedAndroidIds.add(resolvedAid);
+        } else if (incomingAid != null &&
+            NotificationItem.isValidPersistedAndroidId(incomingAid) &&
+            !androidIdOwner.containsKey(incomingAid)) {
+          resolvedAid = incomingAid;
+          androidIdOwner[resolvedAid] = targetId;
+          usedAndroidIds.add(resolvedAid);
+        } else {
+          resolvedAid = allocateNotificationAndroidIdFromUsedSet(
+            dbId: targetId,
+            usedAndroidIds: usedAndroidIds,
+          );
+          androidIdOwner[resolvedAid] = targetId;
+          usedAndroidIds.add(resolvedAid);
+        }
 
         final notif = NotificationItem()
           ..id = targetId
-          ..title = map['title'] as String? ?? ''
-          ..body = map['body'] as String? ?? ''
+          ..androidNotificationId = resolvedAid
+          ..title = title
+          ..body = body
           ..type = notifType
-          ..scheduledTime =
-              DateTime.tryParse(map['scheduledTime'] as String? ?? '') ??
-                  DateTime.now().toUtc()
+          ..scheduledTime = schedTime
           ..relatedId = remappedRelatedId
-          ..isRead = map['isRead'] as bool? ?? false;
+          ..isRead = (matched?.isRead ?? false) || incomingIsRead;
 
         isar.notificationItems.put(notif);
+        if (strategy == ImportStrategy.merge) {
+          _upsertCachedRecord(
+            destNotifications,
+            notif,
+            (n) => n.id == notif.id,
+          );
+        }
       }
 
       // 12.5. Migration Audit Records (remapping parent IDs & stable auditKeys)
@@ -985,6 +1692,8 @@ class BackupImporter {
         isar,
         auditMaps: data.migrationAudits,
         strategy: strategy,
+        existingAuditsByKey: existingAuditsByKey,
+        usedAuditServerIds: usedAuditServerIds,
         subjectIdMap: subjectIdMap,
         ruleIdMap: ruleIdMap,
         legacyEventIdMap: legacyEventIdMap,
@@ -996,11 +1705,204 @@ class BackupImporter {
       // 13. Post-import unification pass (upgrades pre-BUG-004 backups and
       //     reconciles attendance/slotKey invariants atomically).
       runTimetableUnificationInWriteTx(isar);
-    });
 
-    // Ensure NotificationItem persisted Android IDs remain unique and valid 32-bit.
-    await migrateLegacyNotificationItems(_isar);
+      // 14. Normalize/repair persisted NotificationItem Android IDs inside the
+      //     same transaction so the entire import commits or rolls back together.
+      migrateLegacyNotificationItemsInWriteTx(isar);
+
+      // 15. Optional test hook fired strictly before transaction commit to
+      //     prove atomic rollback across all collections.
+      onBeforeCommit?.call(isar);
+    });
   }
+}
+
+void _upsertCachedRecord<T>(
+  List<T> list,
+  T item,
+  bool Function(T existing) predicate,
+) {
+  final idx = list.indexWhere(predicate);
+  if (idx >= 0) {
+    list[idx] = item;
+  } else {
+    list.add(item);
+  }
+}
+
+String? _normalizeOptionalTime(String? raw) {
+  final trimmed = _trimOrNull(raw);
+  if (trimmed == null) return null;
+  return normalizeTimeSlotPart(trimmed);
+}
+
+void _recordSkippedMergeAuditInTx(
+  Isar isar, {
+  required DateTime now,
+  required Map<String, MigrationAuditRecordLocal> existingAuditsByKey,
+  required Set<String> usedAuditServerIds,
+  required String entityType,
+  required int srcId,
+  String? srcServerId,
+  required String missingParentType,
+  required int missingParentSourceId,
+  required String disambiguator,
+  String? status,
+  DateTime? eventDate,
+  required Map<String, dynamic> details,
+}) {
+  final idOrServer = srcId > 0
+      ? 'id:$srcId'
+      : (srcServerId != null ? 'srv:$srcServerId' : 'anon');
+  final auditKey =
+      '${BackupImporter.skippedMergeAuditKind}|$entityType|$idOrServer|$missingParentType:$missingParentSourceId|$disambiguator';
+
+  final encodedDetails = jsonEncode(<String, dynamic>{
+    'entityType': entityType,
+    'sourceId': srcId,
+    if (srcServerId != null) 'sourceServerId': srcServerId,
+    'missingParentType': missingParentType,
+    'missingParentSourceId': missingParentSourceId,
+    ...details,
+  });
+  final reason =
+      'Skipped $entityType (srcId=$srcId) during Merge because referenced '
+      '$missingParentType ($missingParentSourceId) was not mapped.';
+
+  final existing = existingAuditsByKey[auditKey];
+  if (existing != null &&
+      !existing.isDeleted &&
+      existing.kind == BackupImporter.skippedMergeAuditKind &&
+      existing.reason == reason &&
+      existing.diagnosticDetails == encodedDetails &&
+      existing.status == status) {
+    return;
+  }
+
+  final MigrationAuditRecordLocal record;
+  if (existing != null) {
+    record = existing
+      ..kind = BackupImporter.skippedMergeAuditKind
+      ..status = status
+      ..eventDate = eventDate ?? existing.eventDate
+      ..reason = reason
+      ..diagnosticDetails = encodedDetails
+      ..updatedAt = now
+      ..isDeleted = false;
+  } else {
+    record = MigrationAuditRecordLocal()
+      ..id = isar.migrationAuditRecordLocals.autoIncrement()
+      ..serverId = _claimUniqueServerId(
+        candidate: 'audit_$auditKey',
+        used: usedAuditServerIds,
+      )
+      ..auditKey = auditKey
+      ..kind = BackupImporter.skippedMergeAuditKind
+      ..status = status
+      ..eventDate = eventDate
+      ..reason = reason
+      ..diagnosticDetails = encodedDetails
+      ..createdAt = now
+      ..updatedAt = now
+      ..isDirty = false
+      ..isDeleted = false;
+  }
+
+  isar.migrationAuditRecordLocals.put(record);
+  existingAuditsByKey[auditKey] = record;
+}
+
+void _recordUnmappedOccurrenceAuditInTx(
+  Isar isar, {
+  required DateTime now,
+  required Map<String, MigrationAuditRecordLocal> existingAuditsByKey,
+  required Set<String> usedAuditServerIds,
+  required int attendanceRecordId,
+  required int subjectId,
+  required int? legacyEventId,
+  required int sourceAttendanceId,
+  String? sourceAttendanceServerId,
+  int? sourceOccurrenceId,
+  int? sourceLegacyEventId,
+  required int sourceEventId,
+  required String status,
+  required DateTime eventDate,
+}) {
+  final auditKey = computeMigrationAuditKey(
+    kind: MigrationAuditKind.missingOccurrenceTarget,
+    attendanceRecordId: attendanceRecordId,
+  );
+
+  final encodedDetails = jsonEncode(<String, dynamic>{
+    'origin': 'backupMergeUnmappedOccurrence',
+    'sourceAttendanceId': sourceAttendanceId,
+    if (sourceAttendanceServerId != null)
+      'sourceAttendanceServerId': sourceAttendanceServerId,
+    if (sourceOccurrenceId != null) 'sourceOccurrenceId': sourceOccurrenceId,
+    if (sourceLegacyEventId != null) 'sourceLegacyEventId': sourceLegacyEventId,
+    'sourceEventId': sourceEventId,
+  });
+  final reason = 'Preserved AttendanceRecordLocal ($attendanceRecordId) with '
+      'occurrenceId=null during Merge because source occurrenceId='
+      '${sourceOccurrenceId ?? 'null'} / eventId=$sourceEventId could not be mapped.';
+
+  final existing = existingAuditsByKey[auditKey];
+  if (existing != null &&
+      !existing.isDeleted &&
+      existing.kind == MigrationAuditKind.missingOccurrenceTarget.name &&
+      existing.attendanceRecordId == attendanceRecordId &&
+      existing.subjectId == subjectId &&
+      existing.legacyEventId == legacyEventId &&
+      existing.sourceEventId == (sourceEventId > 0 ? sourceEventId : null) &&
+      existing.diagnosticDetails == encodedDetails &&
+      existing.reason == reason) {
+    return;
+  }
+
+  final resolvedSourceEventId = sourceEventId > 0 ? sourceEventId : null;
+  final MigrationAuditRecordLocal record;
+  if (existing != null) {
+    record = existing
+      ..kind = MigrationAuditKind.missingOccurrenceTarget.name
+      ..attendanceRecordId = attendanceRecordId
+      ..legacyEventId = legacyEventId
+      ..sourceEventId = resolvedSourceEventId ?? existing.sourceEventId
+      ..occurrenceId = null
+      ..sourceOccurrenceId = null
+      ..subjectId = subjectId
+      ..status = status
+      ..eventDate = eventDate
+      ..reason = reason
+      ..diagnosticDetails = encodedDetails
+      ..updatedAt = now
+      ..isDeleted = false;
+  } else {
+    record = MigrationAuditRecordLocal()
+      ..id = isar.migrationAuditRecordLocals.autoIncrement()
+      ..serverId = _claimUniqueServerId(
+        candidate: 'audit_$auditKey',
+        used: usedAuditServerIds,
+      )
+      ..auditKey = auditKey
+      ..kind = MigrationAuditKind.missingOccurrenceTarget.name
+      ..attendanceRecordId = attendanceRecordId
+      ..legacyEventId = legacyEventId
+      ..sourceEventId = resolvedSourceEventId
+      ..occurrenceId = null
+      ..sourceOccurrenceId = null
+      ..subjectId = subjectId
+      ..status = status
+      ..eventDate = eventDate
+      ..reason = reason
+      ..diagnosticDetails = encodedDetails
+      ..createdAt = now
+      ..updatedAt = now
+      ..isDirty = false
+      ..isDeleted = false;
+  }
+
+  isar.migrationAuditRecordLocals.put(record);
+  existingAuditsByKey[auditKey] = record;
 }
 
 int? _remapPositiveId(
@@ -1016,6 +1918,8 @@ void _importMigrationAuditsInTx(
   Isar isar, {
   required List<Map<String, dynamic>> auditMaps,
   required ImportStrategy strategy,
+  required Map<String, MigrationAuditRecordLocal> existingAuditsByKey,
+  required Set<String> usedAuditServerIds,
   required Map<int, int> subjectIdMap,
   required Map<int, int> ruleIdMap,
   required Map<int, int> legacyEventIdMap,
@@ -1024,16 +1928,6 @@ void _importMigrationAuditsInTx(
   required Map<String, String> slotKeyMap,
 }) {
   if (auditMaps.isEmpty) return;
-
-  final existingAudits = strategy == ImportStrategy.merge
-      ? isar.migrationAuditRecordLocals.where().findAll()
-      : <MigrationAuditRecordLocal>[];
-  final usedAuditServerIds = _collectServerIds(
-    existingAudits.map((e) => e.serverId),
-  );
-  final existingAuditsByKey = <String, MigrationAuditRecordLocal>{
-    for (final a in existingAudits) a.auditKey: a,
-  };
 
   for (final map in auditMaps) {
     final parsed = MigrationAuditRecordLocal.fromJson(map);
@@ -1068,11 +1962,12 @@ void _importMigrationAuditsInTx(
     final srcSlotKey = _trimOrNull(parsed.slotKey);
     final destSlotKey = srcSlotKey != null
         ? (slotKeyMap[srcSlotKey] ??
-            remapCanonicalSlotKey(
+            tryRemapCanonicalSlotKey(
               srcSlotKey,
               subjectIdMap: subjectIdMap,
               ruleIdMap: ruleIdMap,
               legacyEventIdMap: legacyEventIdMap,
+              requireAllPositiveIdsMapped: strategy == ImportStrategy.merge,
             ))
         : null;
 
@@ -1086,7 +1981,14 @@ void _importMigrationAuditsInTx(
     );
 
     final String destAuditKey;
-    if (kindEnum != null) {
+    if (strategy == ImportStrategy.merge &&
+        kindEnum != null &&
+        parsed.attendanceRecordId != null &&
+        parsed.attendanceRecordId! > 0 &&
+        destAttId == null) {
+      destAuditKey =
+          '${kindEnum.name}|raw_att:${parsed.attendanceRecordId}|ev:${destLegacyEvId ?? parsed.sourceEventId ?? 0}';
+    } else if (kindEnum != null) {
       destAuditKey = computeMigrationAuditKey(
         kind: kindEnum,
         attendanceRecordId: destAttId,
@@ -1125,7 +2027,8 @@ void _importMigrationAuditsInTx(
       ..kind = normalizedKind
       ..attendanceRecordId = destAttId
       ..legacyEventId = destLegacyEvId
-      ..sourceEventId = parsed.sourceEventId ?? srcLegacyEvId
+      ..sourceEventId =
+          parsed.sourceEventId ?? srcLegacyEvId ?? matched?.sourceEventId
       ..occurrenceId = destOccId
       ..sourceOccurrenceId = destSourceOccId
       ..subjectId = destSubId
@@ -1133,8 +2036,11 @@ void _importMigrationAuditsInTx(
       ..candidateOccurrenceIds = destCandidatesStr
       ..status = parsed.status
       ..eventDate = parsed.eventDate
-      ..reason = parsed.reason
-      ..diagnosticDetails = parsed.diagnosticDetails
+      ..reason = (parsed.reason.trim().isEmpty && matched != null)
+          ? matched.reason
+          : parsed.reason
+      ..diagnosticDetails =
+          parsed.diagnosticDetails ?? matched?.diagnosticDetails
       ..createdAt = matched?.createdAt ?? parsed.createdAt
       ..updatedAt = parsed.updatedAt
       ..isDirty = parsed.isDirty
@@ -1190,7 +2096,21 @@ T? _firstOrNull<T>(Iterable<T> iterable) {
   return it.moveNext() ? it.current : null;
 }
 
-String? _remapNotificationRelatedId({
+class _NotificationRemapResult {
+  final String? remappedRelatedId;
+  final bool shouldSkipOnMerge;
+  final String? missingParentType;
+  final int missingParentSourceId;
+
+  const _NotificationRemapResult({
+    this.remappedRelatedId,
+    this.shouldSkipOnMerge = false,
+    this.missingParentType,
+    this.missingParentSourceId = 0,
+  });
+}
+
+_NotificationRemapResult _remapNotificationRelatedIdStrict({
   required String? rawRelatedId,
   required String type,
   required ImportStrategy strategy,
@@ -1203,98 +2123,202 @@ String? _remapNotificationRelatedId({
   required Map<int, int> taskIdMap,
 }) {
   if (rawRelatedId == null || rawRelatedId.trim().isEmpty) {
-    return rawRelatedId;
+    return const _NotificationRemapResult(remappedRelatedId: null);
   }
   final raw = rawRelatedId.trim();
 
   if (raw.startsWith('slot:')) {
     final rawKey = raw.substring('slot:'.length);
-    final remappedKey = slotKeyMap[rawKey] ??
-        remapCanonicalSlotKey(
-          rawKey,
-          subjectIdMap: subjectIdMap,
-          ruleIdMap: ruleIdMap,
-          legacyEventIdMap: legacyEventIdMap,
-        );
-    return 'slot:$remappedKey';
+    final cachedKey = slotKeyMap[rawKey];
+    if (cachedKey != null) {
+      return _NotificationRemapResult(remappedRelatedId: 'slot:$cachedKey');
+    }
+    final remappedKey = tryRemapCanonicalSlotKey(
+      rawKey,
+      subjectIdMap: subjectIdMap,
+      ruleIdMap: ruleIdMap,
+      legacyEventIdMap: legacyEventIdMap,
+      requireAllPositiveIdsMapped: strategy == ImportStrategy.merge,
+    );
+    if (remappedKey != null) {
+      return _NotificationRemapResult(remappedRelatedId: 'slot:$remappedKey');
+    }
+    return const _NotificationRemapResult(
+      shouldSkipOnMerge: true,
+      missingParentType: 'CanonicalSlot',
+    );
   }
   if (raw.startsWith('occ:')) {
     final oldId = int.tryParse(raw.substring('occ:'.length));
-    if (oldId != null && occurrenceIdMap.containsKey(oldId)) {
-      return 'occ:${occurrenceIdMap[oldId]}';
+    if (oldId != null && oldId > 0 && occurrenceIdMap.containsKey(oldId)) {
+      return _NotificationRemapResult(
+        remappedRelatedId: 'occ:${occurrenceIdMap[oldId]}',
+      );
     }
-    return raw;
+    if (strategy == ImportStrategy.merge) {
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'DailyScheduleOccurrenceLocal',
+        missingParentSourceId: oldId ?? 0,
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
   if (raw.startsWith('ae_1d:')) {
     final oldId = int.tryParse(raw.substring('ae_1d:'.length));
-    if (oldId != null && academicEventIdMap.containsKey(oldId)) {
-      return NotificationRelatedKeys.forAcademicEventOneDay(
-        academicEventIdMap[oldId]!,
+    if (oldId != null && oldId > 0 && academicEventIdMap.containsKey(oldId)) {
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forAcademicEventOneDay(
+          academicEventIdMap[oldId]!,
+        ),
       );
     }
-    return raw;
+    if (strategy == ImportStrategy.merge) {
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'AcademicEventLocal',
+        missingParentSourceId: oldId ?? 0,
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
   if (raw.startsWith('ae_30m:')) {
     final oldId = int.tryParse(raw.substring('ae_30m:'.length));
-    if (oldId != null && academicEventIdMap.containsKey(oldId)) {
-      return NotificationRelatedKeys.forAcademicEventThirtyMin(
-        academicEventIdMap[oldId]!,
+    if (oldId != null && oldId > 0 && academicEventIdMap.containsKey(oldId)) {
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forAcademicEventThirtyMin(
+          academicEventIdMap[oldId]!,
+        ),
       );
     }
-    return raw;
+    if (strategy == ImportStrategy.merge) {
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'AcademicEventLocal',
+        missingParentSourceId: oldId ?? 0,
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
   if (raw.startsWith('sub:')) {
     final oldId = int.tryParse(raw.substring('sub:'.length));
-    if (oldId != null && subjectIdMap.containsKey(oldId)) {
-      return NotificationRelatedKeys.forSubjectRisk(subjectIdMap[oldId]!);
+    if (oldId != null && oldId > 0 && subjectIdMap.containsKey(oldId)) {
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forSubjectRisk(
+          subjectIdMap[oldId]!,
+        ),
+      );
     }
-    return raw;
+    if (strategy == ImportStrategy.merge) {
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'SubjectLocal',
+        missingParentSourceId: oldId ?? 0,
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
   if (raw.startsWith('task:')) {
     final oldId = int.tryParse(raw.substring('task:'.length));
-    if (oldId != null && taskIdMap.containsKey(oldId)) {
-      return NotificationRelatedKeys.forTask(taskIdMap[oldId]!);
+    if (oldId != null && oldId > 0 && taskIdMap.containsKey(oldId)) {
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forTask(taskIdMap[oldId]!),
+      );
     }
-    return raw;
+    if (strategy == ImportStrategy.merge) {
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'AcademicTaskLocal',
+        missingParentSourceId: oldId ?? 0,
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
 
   final numeric = int.tryParse(raw);
-  if (numeric == null) return raw;
+  if (numeric == null) {
+    if (strategy == ImportStrategy.merge) {
+      return const _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'EntityRef',
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
+  }
 
   if (type == 'LOW_ATTENDANCE_ALERT' || type == 'ATTENDANCE_WARNING') {
     final mapped = subjectIdMap[numeric];
     if (mapped != null) {
-      return NotificationRelatedKeys.forSubjectRisk(mapped);
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forSubjectRisk(mapped),
+      );
     }
-    return raw;
+    if (strategy == ImportStrategy.merge) {
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'SubjectLocal',
+        missingParentSourceId: numeric,
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
   if (type == 'ASSIGNMENT_REMINDER') {
     final mapped = taskIdMap[numeric];
     if (mapped != null) {
-      return NotificationRelatedKeys.forTask(mapped);
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forTask(mapped),
+      );
     }
-    return raw;
+    if (strategy == ImportStrategy.merge) {
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'AcademicTaskLocal',
+        missingParentSourceId: numeric,
+      );
+    }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
   if (type == 'CLASS_REMINDER') {
     if (numeric > 200000 && academicEventIdMap.containsKey(numeric - 200000)) {
-      return NotificationRelatedKeys.forAcademicEventThirtyMin(
-        academicEventIdMap[numeric - 200000]!,
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forAcademicEventThirtyMin(
+          academicEventIdMap[numeric - 200000]!,
+        ),
       );
     }
     if (numeric > 100000 && academicEventIdMap.containsKey(numeric - 100000)) {
-      return NotificationRelatedKeys.forAcademicEventOneDay(
-        academicEventIdMap[numeric - 100000]!,
+      return _NotificationRemapResult(
+        remappedRelatedId: NotificationRelatedKeys.forAcademicEventOneDay(
+          academicEventIdMap[numeric - 100000]!,
+        ),
       );
     }
     if (occurrenceIdMap.containsKey(numeric)) {
-      return '${occurrenceIdMap[numeric]}';
+      return _NotificationRemapResult(
+        remappedRelatedId: '${occurrenceIdMap[numeric]}',
+      );
     }
     if (legacyEventIdMap.containsKey(numeric)) {
-      return '${legacyEventIdMap[numeric]}';
+      return _NotificationRemapResult(
+        remappedRelatedId: '${legacyEventIdMap[numeric]}',
+      );
     }
     if (strategy == ImportStrategy.merge) {
-      return null;
+      return _NotificationRemapResult(
+        shouldSkipOnMerge: true,
+        missingParentType: 'DailyScheduleOccurrenceLocal',
+        missingParentSourceId: numeric,
+      );
     }
+    return _NotificationRemapResult(remappedRelatedId: raw);
   }
-  return raw;
+
+  if (strategy == ImportStrategy.merge) {
+    return _NotificationRemapResult(
+      shouldSkipOnMerge: true,
+      missingParentType: 'EntityRef',
+      missingParentSourceId: numeric,
+    );
+  }
+  return _NotificationRemapResult(remappedRelatedId: raw);
 }

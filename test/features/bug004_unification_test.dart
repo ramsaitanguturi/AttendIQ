@@ -1585,12 +1585,13 @@ void main() {
           equals(NotificationRelatedKeys.forSlotKey(physOcc.slotKey!)),
         );
 
-        // Re-merging identical backup does NOT duplicate rules/occurrences/attendance for identical active slots
+        // Re-merging identical backup does NOT duplicate rules/occurrences/attendance/notifications
         final ruleCountAfterFirstMerge =
             destIsar.weeklyScheduleRuleLocals.count();
         final occCountAfterFirstMerge =
             destIsar.dailyScheduleOccurrenceLocals.count();
         final attCountAfterFirstMerge = destIsar.attendanceRecordLocals.count();
+        final notifCountAfterFirstMerge = destIsar.notificationItems.count();
 
         await importer.importData(backupJson, strategy: ImportStrategy.merge);
 
@@ -1605,6 +1606,10 @@ void main() {
         expect(
           destIsar.attendanceRecordLocals.count(),
           equals(attCountAfterFirstMerge),
+        );
+        expect(
+          destIsar.notificationItems.count(),
+          equals(notifCountAfterFirstMerge),
         );
 
         // 5d. Execute ImportStrategy.replace with conflicting existing destination DB

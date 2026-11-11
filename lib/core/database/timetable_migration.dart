@@ -782,6 +782,18 @@ _AttendanceReconcileResult _reconcileAttendanceInTx(
       if (!a.isDeleted && a.occurrenceId != null && a.occurrenceId! > 0)
         a.occurrenceId!,
   };
+  final existingPersistedAudits =
+      isar.migrationAuditRecordLocals.where().isDeletedEqualTo(false).findAll();
+  final unresolvedAuditByAttendanceId = <int, MigrationAuditRecordLocal>{};
+  for (final audit in existingPersistedAudits) {
+    final attId = audit.attendanceRecordId;
+    if (attId == null || attId <= 0) continue;
+    if (audit.kind == MigrationAuditKind.ambiguousAttendanceCollision.name ||
+        audit.kind == MigrationAuditKind.subjectMismatch.name ||
+        audit.kind == MigrationAuditKind.missingOccurrenceTarget.name) {
+      unresolvedAuditByAttendanceId.putIfAbsent(attId, () => audit);
+    }
+  }
   final unresolvedCollisionLegacyEventIds = <int>{};
 
   var linkedCount = 0;
@@ -790,6 +802,37 @@ _AttendanceReconcileResult _reconcileAttendanceInTx(
   // using multi-factor evidence rather than raw integer eventId equality.
   for (final record in allAttendance) {
     if (record.occurrenceId != null && record.occurrenceId! > 0) {
+      continue;
+    }
+
+    // Preserve previously audited unresolved states (especially across Backup Merge
+    // where PK renumbering breaks the original raw ID tie) without guessing.
+    final persistedUnresolved = unresolvedAuditByAttendanceId[record.id];
+    if (persistedUnresolved != null) {
+      if (record.legacyEventId != null && record.legacyEventId! > 0) {
+        unresolvedCollisionLegacyEventIds.add(record.legacyEventId!);
+      }
+      if (record.eventId > 0) {
+        unresolvedCollisionLegacyEventIds.add(record.eventId);
+      }
+      final preservedKind = parseMigrationAuditKind(persistedUnresolved.kind) ??
+          MigrationAuditKind.missingOccurrenceTarget;
+      entries.add(
+        MigrationAuditEntry(
+          kind: preservedKind,
+          attendanceRecordId: record.id,
+          legacyEventId: persistedUnresolved.legacyEventId,
+          sourceEventId: persistedUnresolved.sourceEventId,
+          subjectId: persistedUnresolved.subjectId,
+          slotKey: persistedUnresolved.slotKey,
+          candidateOccurrenceIds:
+              persistedUnresolved.parsedCandidateOccurrenceIds,
+          status: persistedUnresolved.status,
+          date: persistedUnresolved.eventDate,
+          reason: persistedUnresolved.reason,
+          diagnosticDetails: persistedUnresolved.diagnosticDetails,
+        ),
+      );
       continue;
     }
 
