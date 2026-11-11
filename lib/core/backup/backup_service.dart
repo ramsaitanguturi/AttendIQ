@@ -12,6 +12,12 @@ import 'backup_models.dart';
 import 'backup_path_helper.dart';
 import 'backup_validator.dart';
 
+typedef ShareFilesHandler = Future<void> Function(
+  List<XFile> files, {
+  String? text,
+  String? subject,
+});
+
 class PickedBackupResult {
   final String filePath;
   final String fileName;
@@ -28,13 +34,28 @@ class BackupService {
   final BackupExporter _exporter;
   final BackupImporter _importer;
   final Future<PlatformFile?> Function()? _pickFileOverride;
+  final Directory? _backupsDirOverride;
+  final Directory? _privateExportBaseDirOverride;
+  final Directory? _tempDirOverride;
+  final bool? _isAndroidOverride;
+  final ShareFilesHandler? _shareFilesOverride;
 
   BackupService(
     Isar isar, {
     @visibleForTesting Future<PlatformFile?> Function()? pickFileOverride,
+    Directory? backupsDirOverride,
+    @visibleForTesting Directory? privateExportBaseDirOverride,
+    @visibleForTesting Directory? tempDirOverride,
+    @visibleForTesting bool? isAndroidOverride,
+    @visibleForTesting ShareFilesHandler? shareFilesOverride,
   })  : _exporter = BackupExporter(isar),
         _importer = BackupImporter(isar),
-        _pickFileOverride = pickFileOverride;
+        _pickFileOverride = pickFileOverride,
+        _backupsDirOverride = backupsDirOverride,
+        _privateExportBaseDirOverride = privateExportBaseDirOverride,
+        _tempDirOverride = tempDirOverride,
+        _isAndroidOverride = isAndroidOverride,
+        _shareFilesOverride = shareFilesOverride;
 
   /// Extensible encoding hook (AES encryption can be plugged in here in future)
   Future<String> encodeBackupPayload(
@@ -64,87 +85,235 @@ class BackupService {
     return _exporter.exportToJsonString(appVersion: appVersion);
   }
 
-  /// Exports backup (.attendiq) to user-accessible `Documents/AttendIQ (Beta)/Backups/`
-  Future<String> exportToFile({
+  /// Writes the authoritative `.attendiq` backup to app-private `backups/`,
+  /// verifies the write, and on Android 10+ (API 29+) optionally mirrors a
+  /// public `MediaStore` copy when [saveToAppPrivateOnly] is `false`.
+  ///
+  /// On Android 6-9 (API 23-28), this remains prompt-free by skipping SAF
+  /// unless the user explicitly invokes [saveBackupCopyToPublicStorage].
+  Future<ExportSaveResult> exportToFileResult({
     String? semesterName,
     String? customFileName,
+    bool saveToAppPrivateOnly = false,
   }) async {
     final jsonContent = await exportBackupString();
-    final fileName = customFileName ??
+    final rawFileName = customFileName ??
         await BackupPathHelper.generateFileName(
           type: 'Backup',
           extension: 'attendiq',
           semesterName: semesterName,
         );
+    final fileName = BackupPathHelper.validateFileName(rawFileName);
+    final bytes = utf8.encode(jsonContent);
 
-    final path = await BackupPathHelper.saveExportFile(
+    // 1. Always write and verify the app-private backup first.
+    final privateResult = await BackupPathHelper.saveAppPrivateBackup(
       fileName: fileName,
-      bytes: utf8.encode(jsonContent),
-      subFolder: 'Backups',
-      mimeType: 'application/octet-stream',
+      bytes: bytes,
+      backupsDirOverride: _backupsDirOverride,
     );
+    final localPath = privateResult.localFilePath;
+    if (localPath == null || !await File(localPath).exists()) {
+      throw const FileSystemException(
+        'App-private backup verification failed after write.',
+      );
+    }
 
-    return path;
+    final isAndroid = _isAndroidOverride ?? (Platform.isAndroid && !kIsWeb);
+    if (saveToAppPrivateOnly || !isAndroid) {
+      return privateResult;
+    }
+
+    // 2. Attempt optional silent MediaStore public copy (API 29+); never
+    // invalidate or delete the app-private backup if public mirroring fails.
+    try {
+      final publicResult = await BackupPathHelper.savePublicExportFile(
+        fileName: fileName,
+        bytes: bytes,
+        subFolder: 'Backups',
+        mimeType: 'application/octet-stream',
+        allowDocumentPicker: false,
+        stageShareCopy: false,
+        isAndroidOverride: _isAndroidOverride,
+        privateExportBaseDirOverride: _privateExportBaseDirOverride,
+        tempDirectoryOverride: _tempDirOverride,
+      );
+
+      if (publicResult.hasContentUri) {
+        return privateResult.copyWith(
+          contentUri: publicResult.contentUri,
+          displayPath: publicResult.displayPath,
+          fileName: publicResult.fileName,
+        );
+      }
+    } catch (_) {
+      // Keep the verified app-private backup intact.
+    }
+
+    return privateResult;
   }
 
-  /// Exports JSON data export file (.json) to `Documents/AttendIQ (Beta)/Exports/`
-  Future<String> exportDataJsonFile({
+  /// Exports backup (.attendiq) to app-private `backups/` and returns its
+  /// canonical local filesystem path for existing callers.
+  Future<String> exportToFile({
+    String? semesterName,
+    String? customFileName,
+    bool saveToAppPrivateOnly = false,
+  }) async {
+    final result = await exportToFileResult(
+      semesterName: semesterName,
+      customFileName: customFileName,
+      saveToAppPrivateOnly: saveToAppPrivateOnly,
+    );
+    return result.localFilePath!;
+  }
+
+  /// Exports JSON data export file (.json) via `MediaStore` (API 29+) or SAF
+  /// `ACTION_CREATE_DOCUMENT` (API 23-28), returning the rich path/URI result.
+  Future<ExportSaveResult> exportDataJsonResult({
     String? semesterName,
     String? customFileName,
   }) async {
     final jsonContent = await exportBackupString();
-    final fileName = customFileName ??
+    final rawFileName = customFileName ??
         await BackupPathHelper.generateFileName(
           type: 'Data',
           extension: 'json',
           semesterName: semesterName,
         );
+    final fileName = BackupPathHelper.validateFileName(rawFileName);
 
-    final path = await BackupPathHelper.saveExportFile(
+    return BackupPathHelper.savePublicExportFile(
       fileName: fileName,
       bytes: utf8.encode(jsonContent),
       subFolder: 'Exports',
       mimeType: 'application/json',
+      allowDocumentPicker: true,
+      stageShareCopy: true,
+      isAndroidOverride: _isAndroidOverride,
+      privateExportBaseDirOverride: _privateExportBaseDirOverride,
+      tempDirectoryOverride: _tempDirOverride,
+    );
+  }
+
+  /// Exports JSON data export file (.json) and returns its URI or local path.
+  Future<String> exportDataJsonFile({
+    String? semesterName,
+    String? customFileName,
+  }) async {
+    final result = await exportDataJsonResult(
+      semesterName: semesterName,
+      customFileName: customFileName,
+    );
+    return result.contentUri ?? result.localFilePath ?? '';
+  }
+
+  /// Explicitly saves a public copy of an existing app-private backup using
+  /// `MediaStore` (API 29+) or SAF `ACTION_CREATE_DOCUMENT` (API 23-28).
+  Future<ExportSaveResult> saveBackupCopyToPublicStorage(
+    String backupFilePath,
+  ) async {
+    final backupsDir = await BackupPathHelper.getAppBackupsDirectory(
+      backupsDirOverride: _backupsDirOverride,
+    );
+    final validatedPath =
+        await BackupPathHelper.resolveValidatedPathInDirectory(
+      candidatePath: backupFilePath,
+      rootDirectory: backupsDir,
+      mustExist: true,
+    );
+    final file = File(validatedPath);
+    final bytes = await file.readAsBytes();
+    final fileName = BackupPathHelper.validateFileName(
+      validatedPath.split(Platform.pathSeparator).last,
     );
 
-    return path;
+    final publicResult = await BackupPathHelper.savePublicExportFile(
+      fileName: fileName,
+      bytes: bytes,
+      subFolder: 'Backups',
+      mimeType: 'application/octet-stream',
+      allowDocumentPicker: true,
+      stageShareCopy: false,
+      isAndroidOverride: _isAndroidOverride,
+      privateExportBaseDirOverride: _privateExportBaseDirOverride,
+      tempDirectoryOverride: _tempDirOverride,
+    );
+
+    if (publicResult.wasCancelled) {
+      return publicResult;
+    }
+
+    return ExportSaveResult(
+      localFilePath: validatedPath,
+      contentUri: publicResult.contentUri,
+      shareableFilePath: validatedPath,
+      displayPath: publicResult.displayPath,
+      fileName: publicResult.fileName,
+      subFolder: 'Backups',
+    );
   }
 
-  /// Lists all backup files from the public `Documents/AttendIQ (Beta)/Backups` directory
+  /// Lists all backup files from the app-private `backups/` directory.
   Future<List<BackupFileItem>> listBackups() async {
-    return BackupPathHelper.listBackupFiles();
+    return BackupPathHelper.listBackupFiles(
+      backupsDirOverride: _backupsDirOverride,
+    );
   }
 
-  /// Deletes a backup file by path
+  /// Deletes a backup file strictly contained within app-private `backups/`.
   Future<bool> deleteBackupFile(String filePath) async {
     try {
-      final file = File(filePath);
-      if (await file.exists()) {
-        await file.delete();
-        return true;
-      }
-    } catch (_) {}
-    return false;
-  }
-
-  /// Shares a backup file using system share dialog (WhatsApp, Drive, Telegram, Email, etc.)
-  Future<void> shareBackupFile(String filePath, {String? text}) async {
-    final file = File(filePath);
-    if (await file.exists()) {
-      final isBeta = await BackupPathHelper.isBetaApp();
-      final appName = isBeta ? 'AttendIQ Beta' : 'AttendIQ';
-      await Share.shareXFiles(
-        [XFile(filePath)],
-        text: text ?? '$appName File Export',
-        subject: '$appName Export',
+      final backupsDir = await BackupPathHelper.getAppBackupsDirectory(
+        backupsDirOverride: _backupsDirOverride,
       );
-    } else {
-      throw FileSystemException('File not found at path: $filePath');
+      final validatedPath =
+          await BackupPathHelper.resolveValidatedPathInDirectory(
+        candidatePath: filePath,
+        rootDirectory: backupsDir,
+        mustExist: true,
+      );
+      await File(validatedPath).delete();
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
+  /// Shares an app-private backup file strictly contained within `backups/`
+  /// using `share_plus` (which uses its own `ShareFileProvider`).
+  Future<void> shareBackupFile(String filePath, {String? text}) async {
+    final backupsDir = await BackupPathHelper.getAppBackupsDirectory(
+      backupsDirOverride: _backupsDirOverride,
+    );
+    final validatedPath =
+        await BackupPathHelper.resolveValidatedPathInDirectory(
+      candidatePath: filePath,
+      rootDirectory: backupsDir,
+      mustExist: true,
+    );
+
+    final isBeta = await BackupPathHelper.isBetaApp();
+    final appName = isBeta ? 'AttendIQ Beta' : 'AttendIQ';
+    final shareHandler = _shareFilesOverride;
+    if (shareHandler != null) {
+      await shareHandler(
+        [XFile(validatedPath)],
+        text: text ?? '$appName File Export',
+        subject: '$appName Export',
+      );
+      return;
+    }
+
+    await Share.shareXFiles(
+      [XFile(validatedPath)],
+      text: text ?? '$appName File Export',
+      subject: '$appName Export',
+    );
+  }
+
   /// Opens target file picker dialog allowing user to select `.attendiq` or `.json` files
-  /// from Downloads, Documents, File Manager, or Google Drive.
+  /// from Downloads, Documents, File Manager, or Google Drive via SAF.
   ///
   /// Returns `null` only when the user cancels the picker. Empty files,
   /// oversized files (> 20 MB), invalid UTF-8 bytes, and IO failures throw
@@ -178,7 +347,9 @@ class BackupService {
 
     final filePath = file.path;
     final String content;
-    if (filePath != null && filePath.trim().isNotEmpty) {
+    if (filePath != null &&
+        filePath.trim().isNotEmpty &&
+        !filePath.trim().toLowerCase().startsWith('content://')) {
       content = await _readRawFileContent(filePath);
     } else if (file.bytes != null) {
       content = _decodeBackupBytes(file.bytes!);
@@ -216,6 +387,54 @@ class BackupService {
       encryptionKey: encryptionKey,
     );
     return _importer.parseAndValidateJson(decoded, strategy: strategy);
+  }
+
+  /// Reads (with canonical containment inside `backups/`, size, and UTF-8
+  /// checks) and validates a managed backup file before restore confirmations.
+  Future<BackupData> validateManagedBackupFile(
+    String filePath, {
+    ImportStrategy? strategy = ImportStrategy.replace,
+    String? encryptionKey,
+  }) async {
+    final backupsDir = await BackupPathHelper.getAppBackupsDirectory(
+      backupsDirOverride: _backupsDirOverride,
+    );
+    final validatedPath =
+        await BackupPathHelper.resolveValidatedPathInDirectory(
+      candidatePath: filePath,
+      rootDirectory: backupsDir,
+      mustExist: true,
+    );
+    final rawJson = await _readRawFileContent(validatedPath);
+    return validateBackupPayload(
+      rawJson,
+      strategy: strategy,
+      encryptionKey: encryptionKey,
+    );
+  }
+
+  /// Imports data from a managed backup file after verifying canonical
+  /// containment inside `backups/` and pre-read validation.
+  Future<void> importManagedBackupFile(
+    String filePath, {
+    ImportStrategy strategy = ImportStrategy.replace,
+    String? encryptionKey,
+  }) async {
+    final backupsDir = await BackupPathHelper.getAppBackupsDirectory(
+      backupsDirOverride: _backupsDirOverride,
+    );
+    final validatedPath =
+        await BackupPathHelper.resolveValidatedPathInDirectory(
+      candidatePath: filePath,
+      rootDirectory: backupsDir,
+      mustExist: true,
+    );
+    final rawJson = await _readRawFileContent(validatedPath);
+    await importFromBackupString(
+      rawJson,
+      strategy: strategy,
+      encryptionKey: encryptionKey,
+    );
   }
 
   /// Reads (with size/UTF-8 checks) and validates a backup file on disk before
@@ -262,14 +481,38 @@ class BackupService {
   }
 
   Future<String> _readRawFileContent(String filePath) async {
-    final file = File(filePath);
-    if (!await file.exists()) {
+    final trimmed = filePath.trim();
+    final lower = trimmed.toLowerCase();
+    if (trimmed.isEmpty ||
+        trimmed.contains('\u0000') ||
+        lower.startsWith('content://') ||
+        lower.startsWith('file://')) {
+      throw FileSystemException(
+        'Invalid filesystem backup path.',
+        filePath,
+      );
+    }
+
+    final entityType = FileSystemEntity.typeSync(
+      trimmed,
+      followLinks: false,
+    );
+    if (entityType == FileSystemEntityType.link) {
+      throw FileSystemException(
+        'Symbolic links cannot be imported as backup files.',
+        filePath,
+      );
+    }
+    if (entityType != FileSystemEntityType.file) {
       throw FileSystemException(
         'Backup file not found at path: $filePath',
         filePath,
       );
     }
-    final sizeBytes = await file.length();
+
+    final canonicalPath = File(trimmed).resolveSymbolicLinksSync();
+    final file = File(canonicalPath);
+    final sizeBytes = file.lengthSync();
     if (sizeBytes == 0) {
       throw const FormatException('Backup file is empty.');
     }

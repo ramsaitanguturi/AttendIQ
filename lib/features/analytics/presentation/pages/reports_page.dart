@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -419,19 +418,19 @@ class ReportsPage extends ConsumerWidget {
         semesterName: report.semesterName,
       );
 
-      final path = await BackupPathHelper.saveExportFile(
+      final result = await BackupPathHelper.savePublicExportFile(
         fileName: fileName,
         bytes: bytes,
         subFolder: 'Reports',
         mimeType: 'application/pdf',
       );
+      if (result.wasCancelled) return;
 
       if (context.mounted) {
         await ExportSuccessDialog.show(
           context: context,
           title: 'PDF Report exported successfully',
-          filePath: path,
-          fileName: fileName,
+          exportResult: result,
           mimeType: 'application/pdf',
         );
       }
@@ -456,19 +455,19 @@ class ReportsPage extends ConsumerWidget {
         semesterName: report.semesterName,
       );
 
-      final path = await BackupPathHelper.saveExportFile(
+      final result = await BackupPathHelper.savePublicExportFile(
         fileName: fileName,
         bytes: utf8.encode(csvString),
         subFolder: 'Reports',
         mimeType: 'text/csv',
       );
+      if (result.wasCancelled) return;
 
       if (context.mounted) {
         await ExportSuccessDialog.show(
           context: context,
           title: 'CSV Report exported successfully',
-          filePath: path,
-          fileName: fileName,
+          exportResult: result,
           mimeType: 'text/csv',
         );
       }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:workmanager/workmanager.dart';
 import '../../features/settings/data/models/user_preferences_local.dart';
@@ -30,7 +31,10 @@ class BackupScheduler {
   }
 
   /// Checks whether automatic backup is due and runs it if required.
-  static Future<bool> checkAndRunAutoBackup(Isar isar) async {
+  static Future<bool> checkAndRunAutoBackup(
+    Isar isar, {
+    @visibleForTesting Directory? backupsDirOverride,
+  }) async {
     try {
       final prefsList = await isar.userPreferencesLocals.where().findAll();
       if (prefsList.isEmpty) return false;
@@ -62,10 +66,16 @@ class BackupScheduler {
       }
 
       if (isDue) {
-        final backupService = BackupService(isar);
+        final backupService = BackupService(
+          isar,
+          backupsDirOverride: backupsDirOverride,
+        );
         final timestamp = now.millisecondsSinceEpoch;
         final fileName = 'attendiq_backup_auto_$timestamp.attendiq';
-        await backupService.exportToFile(customFileName: fileName);
+        await backupService.exportToFile(
+          customFileName: fileName,
+          saveToAppPrivateOnly: true,
+        );
 
         // Update last backup timestamp
         pref.lastBackupDate = now;

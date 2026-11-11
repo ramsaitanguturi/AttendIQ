@@ -24,7 +24,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   bool _isImporting = false;
   bool _isLoadingFileList = true;
   List<BackupFileItem> _backupFiles = [];
-  String _displayFolderPath = 'Documents/AttendIQ/Backups';
+  String _displayFolderPath = 'App Storage/Backups';
   String? _statusMessage;
   bool _statusIsError = false;
   final TextEditingController _importJsonController = TextEditingController();
@@ -92,9 +92,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final service = ref.read(backupServiceProvider);
       final activeSemester =
           await ref.read(semesterRepositoryProvider).getActiveSemester();
-      final path =
-          await service.exportToFile(semesterName: activeSemester?.name);
-      final fileName = path.split(Platform.pathSeparator).last;
+      final result = await service.exportToFileResult(
+        semesterName: activeSemester?.name,
+      );
       final now = DateTime.now();
 
       // Update last backup date in settings
@@ -106,16 +106,19 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       if (!mounted) return;
 
       setState(() {
-        _statusMessage = 'Backup created successfully!\nSaved to: $path';
+        _statusMessage =
+            'Backup created successfully!\nSaved to: ${result.displayPath}';
         _statusIsError = false;
       });
 
       await ExportSuccessDialog.show(
         context: context,
         title: 'Backup exported successfully',
-        filePath: path,
-        fileName: fileName,
+        exportResult: result,
         mimeType: 'application/octet-stream',
+        onSavePublicCopy: (!result.hasContentUri && result.hasLocalFile)
+            ? () => service.saveBackupCopyToPublicStorage(result.localFilePath!)
+            : null,
       );
     } catch (e) {
       final errMsg = _formatErrorMessage(e);
@@ -151,21 +154,21 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final service = ref.read(backupServiceProvider);
       final activeSemester =
           await ref.read(semesterRepositoryProvider).getActiveSemester();
-      final path =
-          await service.exportDataJsonFile(semesterName: activeSemester?.name);
-      final fileName = path.split(Platform.pathSeparator).last;
-      if (!mounted) return;
+      final result = await service.exportDataJsonResult(
+        semesterName: activeSemester?.name,
+      );
+      if (!mounted || result.wasCancelled) return;
 
       setState(() {
-        _statusMessage = 'JSON Data exported successfully!\nSaved to: $path';
+        _statusMessage =
+            'JSON Data exported successfully!\nSaved to: ${result.displayPath}';
         _statusIsError = false;
       });
 
       await ExportSuccessDialog.show(
         context: context,
         title: 'JSON Data exported successfully',
-        filePath: path,
-        fileName: fileName,
+        exportResult: result,
         mimeType: 'application/json',
       );
     } catch (e) {
@@ -240,7 +243,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
     try {
       final service = ref.read(backupServiceProvider);
-      await service.validateBackupFile(
+      await service.validateManagedBackupFile(
         fileItem.filePath,
         strategy: null,
       );
@@ -323,7 +326,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
     try {
       final service = ref.read(backupServiceProvider);
-      await service.importFromFile(filePath, strategy: strategy);
+      await service.importManagedBackupFile(filePath, strategy: strategy);
       if (!mounted) return;
       ref.invalidate(hasActiveSemesterProvider);
       ref.invalidate(activeSemesterProvider);
@@ -421,6 +424,39 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             const SnackBar(content: Text('Backup file deleted successfully.')),
           );
         }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to delete backup file.'),
+            backgroundColor: AppColors.attendanceLow,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleSavePublicCopy(BackupFileItem fileItem) async {
+    try {
+      final service = ref.read(backupServiceProvider);
+      final result =
+          await service.saveBackupCopyToPublicStorage(fileItem.filePath);
+      if (!mounted || result.wasCancelled) return;
+
+      await ExportSuccessDialog.show(
+        context: context,
+        title: 'Backup copy saved',
+        exportResult: result,
+        mimeType: 'application/octet-stream',
+      );
+    } catch (e) {
+      final errMsg = _formatErrorMessage(e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save backup copy: $errMsg'),
+            backgroundColor: AppColors.attendanceLow,
+          ),
+        );
       }
     }
   }
@@ -699,7 +735,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Exports are saved to user-accessible public storage (Documents folder) with separate subfolders for Backups, Reports, and Data Exports.',
+                        'App-managed backups and automatic backups are stored safely in app storage. Reports, JSON exports, and optional public copies are saved via Android system storage without broad permissions. To restore older backups from Documents, use Import Backup / Data File below.',
                         style: TextStyle(fontSize: 13, color: Colors.grey),
                       ),
                     ],
@@ -960,7 +996,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                               padding: const EdgeInsets.all(24.0),
                               child: Center(
                                 child: Text(
-                                  'No backup files (.attendiq) found in $_displayFolderPath',
+                                  'No backup files (.attendiq) found in $_displayFolderPath.\nTo restore older backups from Documents, use Import Backup / Data File.',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                       color: Colors.grey, fontSize: 13),
@@ -1008,6 +1044,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         _handleRestoreFile(fileItem);
                                       } else if (value == 'share') {
                                         _handleShareFile(fileItem);
+                                      } else if (value == 'save_copy') {
+                                        _handleSavePublicCopy(fileItem);
                                       } else if (value == 'delete') {
                                         _handleDeleteFile(fileItem);
                                       }
@@ -1033,6 +1071,23 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                                 size: 18, color: Colors.blue),
                                             SizedBox(width: 8),
                                             Text('Share'),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'save_copy',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.save_alt,
+                                                size: 18,
+                                                color: AppColors.primary),
+                                            SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(
+                                                'Save Copy to Device',
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
