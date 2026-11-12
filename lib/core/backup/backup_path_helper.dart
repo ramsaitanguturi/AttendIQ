@@ -18,17 +18,7 @@ class BackupFileItem {
     required this.sizeBytes,
   });
 
-  String get formattedSize {
-    if (sizeBytes < 1024) {
-      return '$sizeBytes B';
-    } else if (sizeBytes < 1024 * 1024) {
-      final kb = sizeBytes / 1024.0;
-      return '${kb.toStringAsFixed(1)} KB';
-    } else {
-      final mb = sizeBytes / (1024.0 * 1024.0);
-      return '${mb.toStringAsFixed(1)} MB';
-    }
-  }
+  String get formattedSize => BackupPathHelper.formatFileSize(sizeBytes);
 }
 
 /// Result contract for backup and public export operations.
@@ -136,6 +126,17 @@ class OpenExportUriResult {
 class BackupPathHelper {
   static const MethodChannel _storageChannel =
       MethodChannel('com.ramsa.attendiq/storage');
+
+  /// Formats a byte length using consistent B / KB / MB units.
+  static String formatFileSize(int sizeBytes) {
+    if (sizeBytes < 1024) {
+      return '$sizeBytes B';
+    }
+    if (sizeBytes < 1024 * 1024) {
+      return '${(sizeBytes / 1024.0).toStringAsFixed(1)} KB';
+    }
+    return '${(sizeBytes / (1024.0 * 1024.0)).toStringAsFixed(1)} MB';
+  }
 
   static bool? _cachedIsBeta;
 

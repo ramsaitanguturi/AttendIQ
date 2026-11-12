@@ -347,6 +347,20 @@ class MainActivity : FlutterActivity() {
         }
 
         val normalizedMimeType = mimeType.trim().takeIf { it.isNotEmpty() } ?: "*/*"
+        // Generic application/octet-stream has no format-specific viewer contract on Android
+        // and may resolve unrelated handlers (e.g. wallet pass intents) for custom backups.
+        if (normalizedMimeType.equals("application/octet-stream", ignoreCase = true)) {
+            result.success(
+                mapOf(
+                    "opened" to false,
+                    "errorCode" to "NO_COMPATIBLE_APP",
+                    "message" to "No dedicated viewer is available for this binary file format.",
+                    "mimeType" to normalizedMimeType
+                )
+            )
+            return
+        }
+
         val viewIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, normalizedMimeType)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

@@ -54,6 +54,8 @@ void main() {
         expect(kt, contains('INVALID_URI'));
         expect(kt, contains('INVALID_ARGS'));
         expect(kt, contains('FLAG_GRANT_READ_URI_PERMISSION'));
+        expect(kt, contains('application/octet-stream'));
+        expect(kt, isNot(contains('com.google.android.gms')));
         expect(kt, isNot(contains('FLAG_GRANT_WRITE_URI_PERMISSION')));
         expect(kt, isNot(contains('FileProvider')));
       },
@@ -280,7 +282,7 @@ void main() {
         final tempRoot = Directory.systemTemp.createTempSync('open_ux_noview_');
         try {
           final staged = File(
-            '${tempRoot.path}${Platform.pathSeparator}Backup.attendiq',
+            '${tempRoot.path}${Platform.pathSeparator}Data.json',
           )..writeAsStringSync('{}');
 
           TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -297,16 +299,16 @@ void main() {
             MaterialApp(
               home: Scaffold(
                 body: ExportSuccessDialog(
-                  title: 'Backup exported successfully',
+                  title: 'JSON Data exported successfully',
                   exportResult: ExportSaveResult(
                     contentUri: 'content://media/external/file/702',
                     shareableFilePath: staged.path,
                     displayPath:
-                        'Internal Storage/Documents/AttendIQ/Backups/Backup.attendiq',
-                    fileName: 'Backup.attendiq',
-                    subFolder: 'Backups',
+                        'Internal Storage/Documents/AttendIQ/Exports/Data.json',
+                    fileName: 'Data.json',
+                    subFolder: 'Exports',
                   ),
-                  mimeType: 'application/octet-stream',
+                  mimeType: 'application/json',
                   isAndroidOverride: true,
                   shareFilesOverride: (files, {text, subject}) async {
                     sharedFromSnackBar = files;
@@ -321,7 +323,7 @@ void main() {
 
           expect(
             find.textContaining(
-              'No compatible app found to open Backup.attendiq',
+              'No compatible app found to open Data.json',
             ),
             findsOneWidget,
           );
@@ -503,6 +505,101 @@ void main() {
           }
           expect(sharedFiles, isNotNull);
           expect(sharedFiles!.single.path, staged.path);
+        } finally {
+          if (tempRoot.existsSync()) {
+            tempRoot.deleteSync(recursive: true);
+          }
+        }
+      },
+    );
+  });
+
+  group('ExportSuccessDialog .attendiq Backup UX', () {
+    test(
+      'BackupPathHelper.formatFileSize formats bytes, KB, and MB consistently',
+      () {
+        expect(BackupPathHelper.formatFileSize(512), '512 B');
+        expect(BackupPathHelper.formatFileSize(2048), '2.0 KB');
+        expect(BackupPathHelper.formatFileSize(1572864), '1.5 MB');
+      },
+    );
+
+    testWidgets(
+      '.attendiq backup shows Backup Details and Share Backup instead of Open File and never invokes openExportUri',
+      (tester) async {
+        final tempRoot = Directory.systemTemp.createTempSync('attendiq_ux_');
+        try {
+          final localBackup = File(
+            '${tempRoot.path}${Platform.pathSeparator}AttendIQ_Backup_Sem1_2026-11-12.attendiq',
+          )..writeAsBytesSync(List<int>.filled(2048, 65));
+
+          var openChannelInvoked = false;
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(storageChannel, (call) async {
+            if (call.method == 'openExportUri') {
+              openChannelInvoked = true;
+            }
+            return null;
+          });
+
+          List<XFile>? sharedFiles;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: ExportSuccessDialog(
+                  title: 'Backup exported successfully',
+                  exportResult: ExportSaveResult(
+                    localFilePath: localBackup.path,
+                    contentUri: 'content://media/external/file/909',
+                    shareableFilePath: localBackup.path,
+                    displayPath:
+                        'Internal Storage/Documents/AttendIQ/Backups/AttendIQ_Backup_Sem1_2026-11-12.attendiq',
+                    fileName: 'AttendIQ_Backup_Sem1_2026-11-12.attendiq',
+                    subFolder: 'Backups',
+                  ),
+                  mimeType: 'application/octet-stream',
+                  isAndroidOverride: true,
+                  shareFilesOverride: (files, {text, subject}) async {
+                    sharedFiles = files;
+                  },
+                ),
+              ),
+            ),
+          );
+
+          expect(find.text('Open File'), findsNothing);
+          expect(find.text('Share File'), findsNothing);
+          expect(find.text('Backup Details'), findsOneWidget);
+          expect(find.text('Share Backup'), findsOneWidget);
+
+          await tester.tap(find.text('Backup Details'));
+          await tester.pumpAndSettle();
+
+          expect(
+            find.text('AttendIQ Backup (.attendiq JSON)'),
+            findsOneWidget,
+          );
+          expect(find.text('2.0 KB'), findsOneWidget);
+          expect(
+            find.textContaining('AttendIQ_Backup_Sem1_2026-11-12.attendiq'),
+            findsWidgets,
+          );
+          expect(openChannelInvoked, isFalse);
+
+          await tester.tap(find.text('Close'));
+          await tester.pumpAndSettle();
+
+          await tester.tap(find.text('Share Backup'));
+          for (var i = 0; i < 10 && sharedFiles == null; i++) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 25)),
+            );
+            await tester.pump();
+          }
+          expect(sharedFiles, isNotNull);
+          expect(sharedFiles!.single.path, localBackup.path);
+          expect(sharedFiles!.single.path, isNot(startsWith('content://')));
+          expect(openChannelInvoked, isFalse);
         } finally {
           if (tempRoot.existsSync()) {
             tempRoot.deleteSync(recursive: true);

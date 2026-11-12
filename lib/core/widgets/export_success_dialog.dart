@@ -270,6 +270,9 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
     }
   }
 
+  bool get _isAttendIqBackup =>
+      _currentResult.fileName.trim().toLowerCase().endsWith('.attendiq');
+
   String _subtitleText() {
     if (_currentResult.hasContentUri && _currentResult.hasLocalFile) {
       return 'Backup saved to app storage and public external storage:';
@@ -278,6 +281,86 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
       return 'File has been saved to public storage:';
     }
     return 'File has been saved to app storage:';
+  }
+
+  String _resolveBackupSizeLabel() {
+    final candidatePath = _currentResult.effectiveSharePath;
+    if (candidatePath != null &&
+        !candidatePath.trim().toLowerCase().startsWith('content://')) {
+      try {
+        final file = File(candidatePath);
+        if (file.existsSync()) {
+          return BackupPathHelper.formatFileSize(file.lengthSync());
+        }
+      } catch (_) {
+        // Fall through to storage fallback text if size lookup fails.
+      }
+    }
+    return 'Available in device storage';
+  }
+
+  Future<void> _showBackupDetailsDialog(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sizeLabel = _resolveBackupSizeLabel();
+    final locationLines = <String>[
+      _currentResult.displayPath,
+      if (_currentResult.hasLocalFile &&
+          _currentResult.localFilePath != _currentResult.displayPath)
+        'App Storage: ${_currentResult.localFilePath}',
+    ].join('\n');
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor:
+            isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: AppColors.primary),
+            SizedBox(width: 10),
+            Expanded(child: Text('Backup Details')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _BackupDetailRow(
+                label: 'File Name',
+                value: _currentResult.fileName,
+              ),
+              const SizedBox(height: 10),
+              const _BackupDetailRow(
+                label: 'Format',
+                value: 'AttendIQ Backup (.attendiq JSON)',
+              ),
+              const SizedBox(height: 10),
+              _BackupDetailRow(label: 'Size', value: sizeLabel),
+              const SizedBox(height: 10),
+              _BackupDetailRow(label: 'Location', value: locationLines),
+              const SizedBox(height: 14),
+              const Text(
+                'This backup is formatted specifically for AttendIQ. '
+                'To restore it, select it from Backup Manager or tap '
+                'Import Backup / Data File.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Close',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -365,27 +448,8 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            if (_currentResult.hasContentUri)
-              OutlinedButton.icon(
-                onPressed:
-                    _isOpeningFile ? null : () => _handleOpenFile(context),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                icon: const Icon(
-                  Icons.open_in_new,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
-                label: const Text(
-                  'Open File',
-                  style: TextStyle(color: AppColors.primary, fontSize: 13),
-                ),
-              )
-            else if (widget.onSavePublicCopy != null)
+            if (!_currentResult.hasContentUri &&
+                widget.onSavePublicCopy != null)
               OutlinedButton.icon(
                 onPressed:
                     _isSavingCopy ? null : () => _handleSavePublicCopy(context),
@@ -407,6 +471,45 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                     fontSize: 13,
                   ),
                 ),
+              )
+            else if (_isAttendIqBackup)
+              OutlinedButton.icon(
+                onPressed: () => _showBackupDetailsDialog(context),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(
+                  Icons.info_outline,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+                label: const Text(
+                  'Backup Details',
+                  style: TextStyle(color: AppColors.primary, fontSize: 13),
+                ),
+              )
+            else if (_currentResult.hasContentUri)
+              OutlinedButton.icon(
+                onPressed:
+                    _isOpeningFile ? null : () => _handleOpenFile(context),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(
+                  Icons.open_in_new,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+                label: const Text(
+                  'Open File',
+                  style: TextStyle(color: AppColors.primary, fontSize: 13),
+                ),
               ),
             if (_currentResult.effectiveSharePath != null)
               ElevatedButton.icon(
@@ -419,9 +522,12 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                   ),
                 ),
                 icon: const Icon(Icons.share, size: 18, color: Colors.black),
-                label: const Text(
-                  'Share File',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                label: Text(
+                  _isAttendIqBackup ? 'Share Backup' : 'Share File',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             TextButton(
@@ -432,6 +538,38 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _BackupDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _BackupDetailRow({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 2),
+        SelectableText(
+          value,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
         ),
       ],
     );

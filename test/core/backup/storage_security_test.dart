@@ -754,7 +754,7 @@ void main() {
     );
 
     testWidgets(
-      'ExportSuccessDialog Save Copy to Device invokes SAF copy callback and updates to Open File',
+      'ExportSuccessDialog Save Copy to Device invokes SAF copy callback and updates .attendiq action to Backup Details',
       timeout: const Timeout(Duration(seconds: 30)),
       (tester) async {
         final tempRoot = Directory.systemTemp.createTempSync('bug008_copy_');
@@ -795,12 +795,14 @@ void main() {
 
           expect(find.text('Save Copy to Device'), findsOneWidget);
           expect(find.text('Open File'), findsNothing);
+          expect(find.text('Share Backup'), findsOneWidget);
 
           await tester.tap(find.text('Save Copy to Device'));
           await tester.pumpAndSettle();
 
           expect(copyRequested, isTrue);
-          expect(find.text('Open File'), findsOneWidget);
+          expect(find.text('Backup Details'), findsOneWidget);
+          expect(find.text('Open File'), findsNothing);
           expect(find.text('Save Copy to Device'), findsNothing);
         } finally {
           if (tempRoot.existsSync()) {
