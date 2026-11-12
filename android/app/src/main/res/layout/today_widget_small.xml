@@ -15,54 +15,61 @@
         android:gravity="center_vertical">
 
         <TextView
+            android:id="@+id/tv_brand"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="AttendIQ"
+            android:text="@string/app_name"
             android:textColor="#6C5CE7"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/tv_widget_tag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Next Class"
+            android:text="Today"
             android:textColor="#A0A5BD"
-            android:textSize="10sp" />
+            android:textSize="11sp"
+            android:singleLine="true" />
     </LinearLayout>
 
-    <View
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#2E3044"
         android:layout_marginTop="6dp"
         android:layout_marginBottom="8dp" />
 
-    <!-- Content -->
+    <!-- Next Class Content -->
     <LinearLayout
+        android:id="@+id/layout_next_class"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/tv_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="09:00 - 10:00"
+            android:text=""
             android:textColor="#4E9F3D"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:singleLine="true" />
 
         <TextView
             android:id="@+id/tv_subject"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Operating Systems"
+            android:text=""
             android:textColor="#FFFFFF"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:maxLines="2"
             android:ellipsize="end"
@@ -70,20 +77,37 @@
 
         <TextView
             android:id="@+id/tv_room"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Room 301"
+            android:text=""
             android:textColor="#A0A5BD"
             android:textSize="11sp"
-            android:layout_marginTop="2dp" />
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:layout_marginTop="2dp"
+            android:visibility="gone" />
     </LinearLayout>
+
+    <!-- Empty / Holiday State -->
+    <TextView
+        android:id="@+id/tv_empty_small"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="No classes today"
+        android:textColor="#A0A5BD"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:maxLines="3"
+        android:ellipsize="end" />
 
     <TextView
         android:id="@+id/tv_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="UPCOMING"
+        android:text=""
         android:textColor="#6C5CE7"
-        android:textSize="10sp"
-        android:textStyle="bold" />
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 </LinearLayout>

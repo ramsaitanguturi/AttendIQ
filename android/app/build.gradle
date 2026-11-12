@@ -71,6 +71,7 @@ android {
             dimension "default"
             applicationId "com.ramsa.attendiq.attend_iq"
             resValue "string", "app_name", "AttendIQ"
+            resValue "string", "deep_link_scheme", "attendiq"
             manifestPlaceholders = [
                 appName: "AttendIQ",
                 deepLinkScheme: "attendiq"
@@ -80,6 +81,7 @@ android {
             dimension "default"
             applicationId "com.ramsa.attendiq.attend_iq.beta"
             resValue "string", "app_name", "AttendIQ Beta"
+            resValue "string", "deep_link_scheme", "attendiq-beta"
             manifestPlaceholders = [
                 appName: "AttendIQ Beta",
                 deepLinkScheme: "attendiq-beta"
@@ -113,6 +115,10 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation 'androidx.work:work-runtime-ktx:2.8.1'
 }
 
 configurations.all {

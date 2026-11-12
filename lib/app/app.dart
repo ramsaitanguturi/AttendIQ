@@ -11,7 +11,10 @@ import '../core/notifications/providers/notification_providers.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/database_startup_error_page.dart';
 import '../features/onboarding/presentation/pages/splash_page.dart';
+import '../features/semester/presentation/controllers/semester_controller.dart';
 import '../features/settings/presentation/controllers/settings_controller.dart';
+import '../features/timetable/presentation/controllers/academic_calendar_controller.dart';
+import '../features/widgets/presentation/widget_config.dart';
 import '../features/widgets/services/widget_refresh_service.dart';
 import 'app_router.dart';
 
@@ -94,13 +97,14 @@ class _AttendIQRouterShell extends ConsumerStatefulWidget {
 
 class _AttendIQRouterShellState extends ConsumerState<_AttendIQRouterShell> {
   StreamSubscription<Uri?>? _sub;
+  AppLifecycleListener? _lifecycleListener;
 
   @override
   void initState() {
     super.initState();
     _initHomeWidgetDeepLinks();
     _ensureNotificationsInitialized();
-    _refreshWidgetsOnLaunch();
+    _initWidgetSync();
   }
 
   void _ensureNotificationsInitialized() {
@@ -130,12 +134,34 @@ class _AttendIQRouterShellState extends ConsumerState<_AttendIQRouterShell> {
     });
   }
 
-  void _refreshWidgetsOnLaunch() {
+  void _initWidgetSync() {
+    _lifecycleListener = AppLifecycleListener(
+      onResume: () {
+        if (!mounted) return;
+        ref.read(widgetSyncCoordinatorProvider).scheduleRefresh();
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
+        // Ensure widget background schedule matches persisted user settings.
+        ref.read(widgetConfigProvider);
+        final coordinator = ref.read(widgetSyncCoordinatorProvider);
         unawaited(
-          ref.read(widgetRefreshServiceProvider).refreshAllWidgets().catchError(
+          ref.read(isarProvider.future).then((isar) {
+            if (!mounted) return;
+            coordinator.watchIsar(isar);
+          }).catchError((Object error, StackTrace stackTrace) {
+            developer.log(
+              'Widget Isar watcher setup failed: $error',
+              name: 'AttendIQApp',
+              error: error,
+              stackTrace: stackTrace,
+            );
+          }),
+        );
+        unawaited(
+          coordinator.refreshNow().catchError(
             (Object error, StackTrace stackTrace) {
               developer.log(
                 'Launch widget refresh failed: $error',
@@ -161,14 +187,14 @@ class _AttendIQRouterShellState extends ConsumerState<_AttendIQRouterShell> {
     try {
       HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
         if (uri != null && mounted) {
-          _handleWidgetUri(uri);
+          unawaited(_handleWidgetUri(uri));
         }
       }).catchError((Object _) {});
 
       _sub = HomeWidget.widgetClicked.listen(
         (uri) {
           if (uri != null && mounted) {
-            _handleWidgetUri(uri);
+            unawaited(_handleWidgetUri(uri));
           }
         },
         onError: (Object _) {},
@@ -176,8 +202,17 @@ class _AttendIQRouterShellState extends ConsumerState<_AttendIQRouterShell> {
     } catch (_) {}
   }
 
-  void _handleWidgetUri(Uri uri) {
+  Future<void> _handleWidgetUri(Uri uri) async {
     try {
+      if (uri.scheme.isNotEmpty &&
+          uri.scheme != 'attendiq' &&
+          uri.scheme != 'attendiq-beta') {
+        return;
+      }
+
+      final hasSemester = await ref.read(hasActiveSemesterProvider.future);
+      if (!mounted || !hasSemester) return;
+
       final router = ref.read(appRouterProvider);
       final host =
           uri.host.isNotEmpty ? uri.host : uri.path.replaceAll('/', '');
@@ -185,15 +220,22 @@ class _AttendIQRouterShellState extends ConsumerState<_AttendIQRouterShell> {
       if (host == 'today') {
         router.go('/dashboard');
       } else if (host == 'timetable') {
-        router.go('/timetable');
-      } else if (host == 'calendar' || host == 'planner') {
-        router.go('/planner');
+        router.go('/dashboard');
+        unawaited(router.push('/timetable'));
+      } else if (host == 'calendar') {
+        ref.read(isCalendarExpandedProvider.notifier).state = true;
+        router.go('/dashboard?section=calendar');
+      } else if (host == 'planner') {
+        router.go('/dashboard');
+        unawaited(router.push('/planner'));
       }
     } catch (_) {}
   }
 
   @override
   void dispose() {
+    _lifecycleListener?.dispose();
+    _lifecycleListener = null;
     _sub?.cancel();
     super.dispose();
   }

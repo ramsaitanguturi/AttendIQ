@@ -52,7 +52,7 @@ GoRouter appRouter(AppRouterRef ref) {
       }
 
       final hasSemester = hasSemesterAsync.valueOrNull ?? false;
-      final location = state.uri.toString();
+      final location = state.uri.path;
 
       final isSplash = location == '/splash';
       final isOnboarding = location == '/onboarding';
@@ -85,7 +85,9 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/dashboard',
         builder: (BuildContext context, GoRouterState state) {
-          return const DashboardPage();
+          return DashboardPage(
+            initialSection: state.uri.queryParameters['section'],
+          );
         },
       ),
       GoRoute(

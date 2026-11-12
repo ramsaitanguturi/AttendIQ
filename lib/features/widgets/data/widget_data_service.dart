@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:isar/isar.dart';
 
 import '../domain/widget_models.dart';
 import '../../timetable/domain/repositories/weekly_schedule_rule_repository.dart';
@@ -12,13 +13,30 @@ import '../../timetable/domain/repositories/schedule_exception_repository.dart';
 import '../../timetable/domain/repositories/academic_event_repository.dart';
 import '../../timetable/domain/entities/schedule_exception.dart';
 import '../../timetable/domain/entities/daily_schedule_occurrence.dart';
+import '../../timetable/domain/entities/weekly_schedule_rule.dart';
 import '../../timetable/domain/entities/academic_event.dart';
+import '../../timetable/data/datasources/weekly_schedule_rule_local_data_source.dart';
+import '../../timetable/data/datasources/daily_schedule_occurrence_local_data_source.dart';
+import '../../timetable/data/datasources/schedule_exception_local_data_source.dart';
+import '../../timetable/data/datasources/academic_event_local_data_source.dart';
+import '../../timetable/data/repositories/weekly_schedule_rule_repository_impl.dart';
+import '../../timetable/data/repositories/daily_schedule_occurrence_repository_impl.dart';
+import '../../timetable/data/repositories/schedule_exception_repository_impl.dart';
+import '../../timetable/data/repositories/academic_event_repository_impl.dart';
 import '../../timetable/data/utils/occurrence_identity.dart';
 import '../../academic_planner/domain/repositories/task_repository.dart';
+import '../../academic_planner/domain/entities/task_enums.dart';
+import '../../academic_planner/data/datasources/task_local_datasource.dart';
+import '../../academic_planner/data/repositories/task_repository_impl.dart';
 import '../../semester/domain/repositories/semester_repository.dart';
+import '../../semester/data/repositories/semester_repository_impl.dart';
 import '../../subject/domain/repositories/subject_repository.dart';
+import '../../subject/data/datasources/subject_local_data_source.dart';
+import '../../subject/data/repositories/subject_repository_impl.dart';
 import '../../attendance/domain/repositories/attendance_repository.dart';
 import '../../attendance/domain/entities/attendance_record.dart';
+import '../../attendance/data/datasources/attendance_local_data_source.dart';
+import '../../attendance/data/repositories/attendance_repository_impl.dart';
 
 // Providers for dependency injection
 import '../../timetable/presentation/controllers/timetable_controller.dart';
@@ -26,6 +44,8 @@ import '../../academic_planner/presentation/controllers/task_controller.dart';
 import '../../semester/presentation/controllers/semester_controller.dart';
 import '../../subject/presentation/controllers/subject_controller.dart';
 import '../../attendance/presentation/controllers/attendance_controller.dart';
+
+const String _androidWidgetPackage = 'com.ramsa.attendiq.attend_iq';
 
 final widgetDataServiceProvider = Provider<WidgetDataService>((ref) {
   final ruleRepo = ref.watch(weeklyScheduleRuleRepositoryProvider);
@@ -70,8 +90,35 @@ class WidgetDataService {
     required this.attendanceRepo,
   });
 
+  factory WidgetDataService.fromIsar(Isar isar) {
+    return WidgetDataService(
+      ruleRepo: WeeklyScheduleRuleRepositoryImpl(
+        localDataSource: WeeklyScheduleRuleLocalDataSourceImpl(isar),
+      ),
+      occurrenceRepo: DailyScheduleOccurrenceRepositoryImpl(
+        localDataSource: DailyScheduleOccurrenceLocalDataSourceImpl(isar),
+      ),
+      exceptionRepo: ScheduleExceptionRepositoryImpl(
+        localDataSource: ScheduleExceptionLocalDataSourceImpl(isar),
+      ),
+      eventRepo: AcademicEventRepositoryImpl(
+        AcademicEventLocalDataSourceImpl(isar),
+      ),
+      taskRepo: TaskRepositoryImpl(TaskLocalDataSourceImpl(isar)),
+      semesterRepo: SemesterRepositoryImpl(isar),
+      subjectRepo: SubjectRepositoryImpl(
+        localDataSource: SubjectLocalDataSourceImpl(isar),
+      ),
+      attendanceRepo: AttendanceRepositoryImpl(
+        AttendanceLocalDataSourceImpl(isar),
+      ),
+    );
+  }
+
   /// 1. Generate Today's Schedule Widget Data
-  Future<TodayWidgetData> generateTodayWidgetData({DateTime? customDate}) async {
+  Future<TodayWidgetData> generateTodayWidgetData({
+    DateTime? customDate,
+  }) async {
     final now = customDate ?? DateTime.now();
     final todayUtc = DateTime.utc(now.year, now.month, now.day);
     final weekday = now.weekday; // 1 = Mon, 7 = Sun
@@ -79,19 +126,27 @@ class WidgetDataService {
 
     // Fetch schedule exceptions for today
     final exceptions = await exceptionRepo.getExceptionsForDate(todayUtc);
-    final holidayException = exceptions.where((e) => e.type == ScheduleExceptionType.HOLIDAY).firstOrNull;
+    final holidayException = exceptions
+        .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+        .firstOrNull;
 
     if (holidayException != null) {
       return TodayWidgetData(
         dateText: dateText,
         isHoliday: true,
-        holidayTitle: holidayException.title,
+        holidayTitle: holidayException.title.trim().isNotEmpty
+            ? holidayException.title
+            : 'Holiday',
         classes: const [],
       );
     }
 
     final cancelledSubjectIds = exceptions
-        .where((e) => e.type == ScheduleExceptionType.CANCELLED_CLASS && e.subjectId != null)
+        .where(
+          (e) =>
+              e.type == ScheduleExceptionType.CANCELLED_CLASS &&
+              e.subjectId != null,
+        )
         .map((e) => e.subjectId!)
         .toSet();
 
@@ -108,9 +163,18 @@ class WidgetDataService {
       }
 
       final rules = await ruleRepo.getRulesForSemester(semId);
-      final todayRules = rules.where((r) => r.dayOfWeek == weekday && r.isActive).toList();
+      final todayRules = rules
+          .where(
+            (r) =>
+                r.dayOfWeek == weekday &&
+                r.isActive &&
+                !r.isDeleted &&
+                subjectMap.containsKey(r.subjectId),
+          )
+          .toList();
 
-      final savedOccurrences = await occurrenceRepo.getOccurrencesForDate(todayUtc);
+      final savedOccurrences =
+          await occurrenceRepo.getOccurrencesForDate(todayUtc);
       final consumedOccIds = <int>{};
       final savedOccIds = <int>{
         for (final o in savedOccurrences)
@@ -153,12 +217,25 @@ class WidgetDataService {
       final recordsCache = <int, List<AttendanceRecord>>{};
       for (var i = 0; i < todayRules.length; i++) {
         final rule = todayRules[i];
-        final subName = subjectMap[rule.subjectId] ?? 'Subject';
+        final subName = subjectMap[rule.subjectId];
+        if (subName == null) continue;
         final saved = matchedByRuleIndex[i];
 
         String statusStr = 'UPCOMING';
         if (saved != null) {
-          statusStr = _statusToString(saved.status);
+          if (saved.status != OccurrenceStatus.UPCOMING) {
+            statusStr = _statusToString(saved.status);
+          } else if (saved.id != null && saved.id! > 0) {
+            final rec =
+                await attendanceRepo.getAttendanceForOccurrence(saved.id!);
+            if (rec != null) {
+              statusStr = _attendanceStatusToString(rec.status);
+            } else if (cancelledSubjectIds.contains(rule.subjectId)) {
+              statusStr = 'CANCELLED';
+            }
+          } else if (cancelledSubjectIds.contains(rule.subjectId)) {
+            statusStr = 'CANCELLED';
+          }
         } else if (cancelledSubjectIds.contains(rule.subjectId)) {
           statusStr = 'CANCELLED';
         } else if ((unmaterializedCountBySubject[rule.subjectId] ?? 0) == 1) {
@@ -168,31 +245,25 @@ class WidgetDataService {
             if (!normalizeUtcDate(r.markedAt).isAtSameMomentAs(todayUtc)) {
               return false;
             }
-            final linkedOccId = r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
+            final linkedOccId =
+                r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
             return linkedOccId == null || !savedOccIds.contains(linkedOccId);
           }).toList();
 
           if (unlinkedOnToday.length == 1) {
-            final record = unlinkedOnToday.first;
-            if (record.status == AttendanceStatus.PRESENT ||
-                record.status == AttendanceStatus.EXTRA_PRESENT) {
-              statusStr = 'PRESENT';
-            } else if (record.status == AttendanceStatus.ABSENT ||
-                record.status == AttendanceStatus.EXTRA_ABSENT) {
-              statusStr = 'ABSENT';
-            } else if (record.status == AttendanceStatus.CANCELLED) {
-              statusStr = 'CANCELLED';
-            }
+            statusStr = _attendanceStatusToString(unlinkedOnToday.first.status);
           }
         }
 
-        items.add(TodayWidgetItem(
-          subjectName: subName,
-          startTime: rule.startTime,
-          endTime: rule.endTime,
-          room: saved?.room ?? rule.room,
-          status: statusStr,
-        ));
+        items.add(
+          TodayWidgetItem(
+            subjectName: subName,
+            startTime: normalizeTimeSlotPart(rule.startTime),
+            endTime: normalizeTimeSlotPart(rule.endTime),
+            room: saved?.room ?? rule.room,
+            status: statusStr,
+          ),
+        );
       }
 
       // Add extra / unconsumed manual occurrences
@@ -200,24 +271,35 @@ class WidgetDataService {
         if (extra.id != null && consumedOccIds.contains(extra.id)) continue;
         if (extra.createdFrom == OccurrenceCreatedFrom.MANUAL ||
             extra.type == OccurrenceType.EXTRA_CLASS) {
-          items.add(TodayWidgetItem(
-            subjectName: extra.title,
-            startTime: extra.startTime,
-            endTime: extra.endTime,
-            room: extra.room,
-            status: _statusToString(extra.status),
-          ));
+          final fallbackName = extra.subjectId != null
+              ? (subjectMap[extra.subjectId] ?? 'Extra Class')
+              : 'Extra Class';
+          final name =
+              extra.title.trim().isNotEmpty ? extra.title.trim() : fallbackName;
+          items.add(
+            TodayWidgetItem(
+              subjectName: name,
+              startTime: normalizeTimeSlotPart(extra.startTime),
+              endTime: normalizeTimeSlotPart(extra.endTime),
+              room: extra.room,
+              status: _statusToString(extra.status),
+            ),
+          );
         }
       }
     }
 
-    // Sort items by start time
-    items.sort((a, b) => a.startTime.compareTo(b.startTime));
+    // Sort items by normalized start time
+    items.sort(
+      (a, b) => normalizeTimeSlotPart(a.startTime)
+          .compareTo(normalizeTimeSlotPart(b.startTime)),
+    );
 
-    // Determine next class (first upcoming class or next scheduled item)
+    // Determine next class (first upcoming class or first scheduled item)
     TodayWidgetItem? nextClass;
     if (items.isNotEmpty) {
-      nextClass = items.where((i) => i.status == 'UPCOMING').firstOrNull ?? items.first;
+      nextClass =
+          items.where((i) => i.status == 'UPCOMING').firstOrNull ?? items.first;
     }
 
     return TodayWidgetData(
@@ -229,15 +311,18 @@ class WidgetDataService {
   }
 
   /// 2. Generate Weekly Schedule Widget Data
-  Future<WeeklyWidgetData> generateWeeklyWidgetData({DateTime? customDate}) async {
+  Future<WeeklyWidgetData> generateWeeklyWidgetData({
+    DateTime? customDate,
+  }) async {
     final now = customDate ?? DateTime.now();
+    final todayUtc = normalizeUtcDate(now);
     final activeSemester = await semesterRepo.getActiveSemester();
 
     String weekTitle = 'This Week';
     if (activeSemester != null) {
-      final start = activeSemester.startDate;
-      if (now.isAfter(start) || now.isAtSameMomentAs(start)) {
-        final diffDays = now.difference(start).inDays;
+      final startUtc = normalizeUtcDate(activeSemester.startDate);
+      if (!todayUtc.isBefore(startUtc)) {
+        final diffDays = todayUtc.difference(startUtc).inDays;
         final weekNum = (diffDays / 7).floor() + 1;
         weekTitle = 'Week $weekNum';
       }
@@ -245,17 +330,19 @@ class WidgetDataService {
 
     // Find Monday of current week
     final monday = now.subtract(Duration(days: now.weekday - 1));
-    final dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
     final daysList = <WeeklyWidgetDay>[];
 
     final semId = activeSemester?.localId;
     final subjectMap = <int, String>{};
+    List<WeeklyScheduleRule> allRules = const [];
     if (semId != null) {
       final subjects = await subjectRepo.getSubjectsBySemester(semId);
       for (final s in subjects) {
         if (s.id != null) subjectMap[s.id!] = s.name;
       }
+      allRules = await ruleRepo.getRulesForSemester(semId);
     }
 
     for (int i = 0; i < 7; i++) {
@@ -266,65 +353,129 @@ class WidgetDataService {
 
       // Check holiday exception
       final exceptions = await exceptionRepo.getExceptionsForDate(dayDateUtc);
-      final holiday = exceptions.where((e) => e.type == ScheduleExceptionType.HOLIDAY).firstOrNull;
+      final holiday = exceptions
+          .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+          .firstOrNull;
 
       if (holiday != null) {
-        daysList.add(WeeklyWidgetDay(
-          dayName: dayName,
-          dateText: '${dayDate.day}',
-          isHoliday: true,
-          holidayTitle: holiday.title,
-          classes: const [],
-        ));
+        daysList.add(
+          WeeklyWidgetDay(
+            dayName: dayName,
+            dateText: '${dayDate.day}',
+            isHoliday: true,
+            holidayTitle:
+                holiday.title.trim().isNotEmpty ? holiday.title : 'Holiday',
+            classes: const [],
+          ),
+        );
         continue;
       }
 
       final cancelledSubjectIds = exceptions
-          .where((e) => e.type == ScheduleExceptionType.CANCELLED_CLASS && e.subjectId != null)
+          .where(
+            (e) =>
+                e.type == ScheduleExceptionType.CANCELLED_CLASS &&
+                e.subjectId != null,
+          )
           .map((e) => e.subjectId!)
           .toSet();
 
       final dayClasses = <WeeklyWidgetClass>[];
 
       if (semId != null) {
-        final allRules = await ruleRepo.getRulesForSemester(semId);
-        final dayRules = allRules.where((r) => r.dayOfWeek == weekdayNum && r.isActive).toList();
+        final dayRules = allRules
+            .where(
+              (r) =>
+                  r.dayOfWeek == weekdayNum &&
+                  r.isActive &&
+                  !r.isDeleted &&
+                  subjectMap.containsKey(r.subjectId),
+            )
+            .toList();
+
+        final occurrences =
+            await occurrenceRepo.getOccurrencesForDate(dayDateUtc);
+        final consumedOccIds = <int>{};
 
         for (final rule in dayRules) {
-          final subName = subjectMap[rule.subjectId] ?? 'Subject';
-          final isCancelled = cancelledSubjectIds.contains(rule.subjectId);
+          final subName = subjectMap[rule.subjectId];
+          if (subName == null) continue;
+          final normStart = normalizeTimeSlotPart(rule.startTime);
+          final normEnd = normalizeTimeSlotPart(rule.endTime);
 
-          dayClasses.add(WeeklyWidgetClass(
-            subjectName: subName,
-            startTime: rule.startTime,
-            endTime: rule.endTime,
-            isCancelled: isCancelled,
-            isExtra: false,
-          ));
+          DailyScheduleOccurrence? matched;
+          if (rule.id != null) {
+            matched = occurrences.where((o) {
+              final ok = o.id == null || !consumedOccIds.contains(o.id);
+              return ok && o.ruleId == rule.id;
+            }).firstOrNull;
+          }
+          matched ??= occurrences.where((o) {
+            final ok = o.id == null || !consumedOccIds.contains(o.id);
+            return ok &&
+                o.ruleId == null &&
+                o.subjectId == rule.subjectId &&
+                normalizeTimeSlotPart(o.startTime) == normStart &&
+                normalizeTimeSlotPart(o.endTime) == normEnd &&
+                o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE;
+          }).firstOrNull;
+
+          if (matched?.id != null) {
+            consumedOccIds.add(matched!.id!);
+          }
+
+          final isCancelled = matched != null
+              ? matched.status == OccurrenceStatus.CANCELLED
+              : cancelledSubjectIds.contains(rule.subjectId);
+
+          dayClasses.add(
+            WeeklyWidgetClass(
+              subjectName: subName,
+              startTime: normStart,
+              endTime: normEnd,
+              isCancelled: isCancelled,
+              isExtra: false,
+            ),
+          );
         }
 
-        // Add extra class occurrences
-        final occurrences = await occurrenceRepo.getOccurrencesForDate(dayDateUtc);
-        final manualOccurrences = occurrences.where((o) => o.createdFrom == OccurrenceCreatedFrom.MANUAL);
-        for (final extra in manualOccurrences) {
-          dayClasses.add(WeeklyWidgetClass(
-            subjectName: extra.title,
-            startTime: extra.startTime,
-            endTime: extra.endTime,
-            isCancelled: extra.status == OccurrenceStatus.CANCELLED,
-            isExtra: true,
-          ));
+        // Add extra / manual occurrences
+        for (final extra in occurrences) {
+          if (extra.id != null && consumedOccIds.contains(extra.id)) continue;
+          if (extra.createdFrom == OccurrenceCreatedFrom.MANUAL ||
+              extra.type == OccurrenceType.EXTRA_CLASS) {
+            final fallbackName = extra.subjectId != null
+                ? (subjectMap[extra.subjectId] ?? 'Extra Class')
+                : 'Extra Class';
+            final name = extra.title.trim().isNotEmpty
+                ? extra.title.trim()
+                : fallbackName;
+            dayClasses.add(
+              WeeklyWidgetClass(
+                subjectName: name,
+                startTime: normalizeTimeSlotPart(extra.startTime),
+                endTime: normalizeTimeSlotPart(extra.endTime),
+                isCancelled: extra.status == OccurrenceStatus.CANCELLED,
+                isExtra: true,
+              ),
+            );
+          }
         }
       }
 
-      dayClasses.sort((a, b) => a.startTime.compareTo(b.startTime));
+      dayClasses.sort(
+        (a, b) => normalizeTimeSlotPart(a.startTime)
+            .compareTo(normalizeTimeSlotPart(b.startTime)),
+      );
 
-      daysList.add(WeeklyWidgetDay(
-        dayName: dayName,
-        dateText: '${dayDate.day}',
-        isHoliday: false,
-        classes: dayClasses,
-      ));
+      daysList.add(
+        WeeklyWidgetDay(
+          dayName: dayName,
+          dateText: '${dayDate.day}',
+          isHoliday: false,
+          classes: dayClasses,
+        ),
+      );
     }
 
     return WeeklyWidgetData(
@@ -334,8 +485,11 @@ class WidgetDataService {
   }
 
   /// 3. Generate Monthly Academic Calendar Widget Data
-  Future<MonthWidgetData> generateMonthWidgetData({DateTime? customDate}) async {
+  Future<MonthWidgetData> generateMonthWidgetData({
+    DateTime? customDate,
+  }) async {
     final now = customDate ?? DateTime.now();
+    final todayUtc = normalizeUtcDate(now);
     final monthTitle = DateFormat('MMMM yyyy').format(now);
 
     final monday = now.subtract(Duration(days: now.weekday - 1));
@@ -345,106 +499,250 @@ class WidgetDataService {
     final semId = activeSemester?.localId;
 
     final allTasks = await taskRepo.getAllTasks();
+    final pendingTasks =
+        allTasks.where((t) => t.status != TaskStatus.COMPLETED).toList();
+    final rules = semId != null
+        ? (await ruleRepo.getRulesForSemester(semId))
+            .where((r) => r.isActive && !r.isDeleted)
+            .toList()
+        : const <WeeklyScheduleRule>[];
 
-    for (int i = 0; i < 5; i++) { // Monday to Friday date strip
+    for (int i = 0; i < 5; i++) {
+      // Monday to Friday date strip
       final dayDate = monday.add(Duration(days: i));
       final dayUtc = DateTime.utc(dayDate.year, dayDate.month, dayDate.day);
 
       final exceptions = await exceptionRepo.getExceptionsForDate(dayUtc);
       final events = await eventRepo.getEventsForRange(dayUtc, dayUtc);
 
-      final hasHolidays = exceptions.any((e) => e.type == ScheduleExceptionType.HOLIDAY);
+      final hasHolidays =
+          exceptions.any((e) => e.type == ScheduleExceptionType.HOLIDAY);
 
-      final hasExams = exceptions.any((e) => e.type == ScheduleExceptionType.EXAM) ||
-          events.any((e) => e.type == AcademicEventType.EXAM);
+      final hasExams =
+          exceptions.any((e) => e.type == ScheduleExceptionType.EXAM) ||
+              events.any((e) => e.type == AcademicEventType.EXAM);
 
-      final hasEvents = events.any((e) =>
-          e.type == AcademicEventType.EVENT ||
-          e.type == AcademicEventType.ASSIGNMENT ||
-          e.type == AcademicEventType.DEADLINE);
+      final hasEvents = events.any(
+        (e) =>
+            e.type == AcademicEventType.EVENT ||
+            e.type == AcademicEventType.ASSIGNMENT ||
+            e.type == AcademicEventType.DEADLINE,
+      );
 
-      final hasTasks = allTasks.any((t) =>
-          t.dueDate.year == dayDate.year &&
-          t.dueDate.month == dayDate.month &&
-          t.dueDate.day == dayDate.day);
+      final hasTasks = pendingTasks.any(
+        (t) => normalizeUtcDate(t.dueDate).isAtSameMomentAs(dayUtc),
+      );
 
       bool hasClasses = false;
       if (semId != null && !hasHolidays) {
-        final rules = await ruleRepo.getRulesForSemester(semId);
-        hasClasses = rules.any((r) => r.dayOfWeek == dayDate.weekday && r.isActive);
+        hasClasses = rules.any((r) => r.dayOfWeek == dayDate.weekday);
+        if (!hasClasses) {
+          final occurrences =
+              await occurrenceRepo.getOccurrencesForDate(dayUtc);
+          hasClasses = occurrences.any(
+            (o) =>
+                o.type == OccurrenceType.EXTRA_CLASS ||
+                o.createdFrom == OccurrenceCreatedFrom.MANUAL,
+          );
+        }
       }
 
-      final isToday = dayDate.year == now.year && dayDate.month == now.month && dayDate.day == now.day;
+      final isToday = dayUtc.isAtSameMomentAs(todayUtc);
 
-      dayStrip.add(MonthWidgetDay(
-        dayNumber: dayDate.day,
-        dateString: DateFormat('EEE').format(dayDate).toUpperCase(),
-        isToday: isToday,
-        hasClasses: hasClasses,
-        hasExams: hasExams,
-        hasTasks: hasTasks,
-        hasHolidays: hasHolidays,
-        hasEvents: hasEvents,
-      ));
+      dayStrip.add(
+        MonthWidgetDay(
+          dayNumber: dayDate.day,
+          dateString: DateFormat('EEE').format(dayDate).toUpperCase(),
+          isToday: isToday,
+          hasClasses: hasClasses,
+          hasExams: hasExams,
+          hasTasks: hasTasks,
+          hasHolidays: hasHolidays,
+          hasEvents: hasEvents,
+        ),
+      );
     }
 
-    // Upcoming academic items starting from today
-    final upcomingList = <MonthUpcomingItem>[];
-    final todayStart = DateTime(now.year, now.month, now.day);
+    // Collect upcoming academic items starting from today, sorted chronologically
+    final sortableUpcoming =
+        <({DateTime date, int priority, MonthUpcomingItem item})>[];
 
-    // 1. Tasks
-    for (final task in allTasks) {
-      if (task.dueDate.isAfter(todayStart) || task.dueDate.isAtSameMomentAs(todayStart)) {
-        upcomingList.add(MonthUpcomingItem(
-          dateText: DateFormat('d MMMM').format(task.dueDate),
-          title: task.title,
-          type: 'TASK',
-        ));
+    // 1. Pending Tasks
+    for (final task in pendingTasks) {
+      final dueUtc = normalizeUtcDate(task.dueDate);
+      if (!dueUtc.isBefore(todayUtc)) {
+        sortableUpcoming.add(
+          (
+            date: dueUtc,
+            priority: 1,
+            item: MonthUpcomingItem(
+              dateText: DateFormat('d MMMM').format(dueUtc),
+              title: task.title,
+              type: 'TASK',
+            ),
+          ),
+        );
       }
     }
 
-    // 2. Events & Exams
+    // 2. Academic Events & Exams
     final futureEvents = await eventRepo.getAllEvents();
     for (final event in futureEvents) {
-      if (event.date.isAfter(todayStart) || event.date.isAtSameMomentAs(todayStart)) {
-        final typeStr = event.type == AcademicEventType.EXAM ? 'EXAM' : 'EVENT';
-        upcomingList.add(MonthUpcomingItem(
-          dateText: DateFormat('d MMMM').format(event.date),
-          title: event.title,
-          type: typeStr,
-        ));
+      final eventUtc = normalizeUtcDate(event.date);
+      if (!eventUtc.isBefore(todayUtc)) {
+        final isExam = event.type == AcademicEventType.EXAM;
+        sortableUpcoming.add(
+          (
+            date: eventUtc,
+            priority: isExam ? 0 : 2,
+            item: MonthUpcomingItem(
+              dateText: DateFormat('d MMMM').format(eventUtc),
+              title: event.title,
+              type: isExam ? 'EXAM' : 'EVENT',
+            ),
+          ),
+        );
       }
     }
+
+    // 3. Upcoming Schedule Exceptions (Holidays & Exams)
+    final upcomingExceptions = await exceptionRepo.getExceptionsForRange(
+      todayUtc,
+      todayUtc.add(const Duration(days: 90)),
+    );
+    for (final ex in upcomingExceptions) {
+      final exUtc = normalizeUtcDate(ex.date);
+      if (exUtc.isBefore(todayUtc)) continue;
+      if (ex.type == ScheduleExceptionType.HOLIDAY) {
+        sortableUpcoming.add(
+          (
+            date: exUtc,
+            priority: 3,
+            item: MonthUpcomingItem(
+              dateText: DateFormat('d MMMM').format(exUtc),
+              title: ex.title.trim().isNotEmpty ? ex.title : 'Holiday',
+              type: 'HOLIDAY',
+            ),
+          ),
+        );
+      } else if (ex.type == ScheduleExceptionType.EXAM) {
+        sortableUpcoming.add(
+          (
+            date: exUtc,
+            priority: 0,
+            item: MonthUpcomingItem(
+              dateText: DateFormat('d MMMM').format(exUtc),
+              title: ex.title.trim().isNotEmpty ? ex.title : 'Exam',
+              type: 'EXAM',
+            ),
+          ),
+        );
+      } else if (ex.type == ScheduleExceptionType.EVENT) {
+        sortableUpcoming.add(
+          (
+            date: exUtc,
+            priority: 2,
+            item: MonthUpcomingItem(
+              dateText: DateFormat('d MMMM').format(exUtc),
+              title: ex.title.trim().isNotEmpty ? ex.title : 'Event',
+              type: 'EVENT',
+            ),
+          ),
+        );
+      }
+    }
+
+    sortableUpcoming.sort((a, b) {
+      final dateCmp = a.date.compareTo(b.date);
+      if (dateCmp != 0) return dateCmp;
+      final prioCmp = a.priority.compareTo(b.priority);
+      if (prioCmp != 0) return prioCmp;
+      return a.item.title.compareTo(b.item.title);
+    });
+
+    final upcomingList =
+        sortableUpcoming.map((entry) => entry.item).take(5).toList();
 
     return MonthWidgetData(
       monthTitle: monthTitle,
       days: dayStrip,
-      upcomingItems: upcomingList.take(5).toList(),
+      upcomingItems: upcomingList,
     );
   }
 
   /// 4. Serialize JSON and send to HomeWidget / Android SharedPreferences
-  Future<void> updateAllWidgets({DateTime? customDate}) async {
+  Future<void> updateAllWidgets({
+    DateTime? customDate,
+    bool respectEnabledSetting = true,
+  }) async {
     try {
+      if (respectEnabledSetting) {
+        final enabled = await _isWidgetEnabled();
+        if (!enabled) {
+          await notifyProvidersUpdated();
+          return;
+        }
+      }
+
       final todayData = await generateTodayWidgetData(customDate: customDate);
       final weeklyData = await generateWeeklyWidgetData(customDate: customDate);
       final monthData = await generateMonthWidgetData(customDate: customDate);
 
-      await HomeWidget.saveWidgetData<String>('today_widget_data', todayData.toJson());
-      await HomeWidget.saveWidgetData<String>('weekly_widget_data', weeklyData.toJson());
-      await HomeWidget.saveWidgetData<String>('month_widget_data', monthData.toJson());
+      await HomeWidget.saveWidgetData<String>(
+        'today_widget_data',
+        todayData.toJson(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'weekly_widget_data',
+        weeklyData.toJson(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'month_widget_data',
+        monthData.toJson(),
+      );
 
-      await HomeWidget.updateWidget(androidName: 'TodayWidgetProvider');
-      await HomeWidget.updateWidget(androidName: 'WeeklyWidgetProvider');
-      await HomeWidget.updateWidget(androidName: 'MonthWidgetProvider');
+      await notifyProvidersUpdated();
 
       if (kDebugMode) {
-        developer.log('Updated all Android Home Screen Widgets successfully', name: 'WidgetDataService');
+        developer.log(
+          'Updated all Android Home Screen Widgets successfully',
+          name: 'WidgetDataService',
+        );
       }
     } catch (e, stack) {
       if (kDebugMode) {
-        developer.log('Error updating widgets: $e\n$stack', name: 'WidgetDataService', error: e);
+        developer.log(
+          'Error updating widgets: $e\n$stack',
+          name: 'WidgetDataService',
+          error: e,
+        );
       }
+    }
+  }
+
+  Future<void> notifyProvidersUpdated() async {
+    await HomeWidget.updateWidget(
+      androidName: 'TodayWidgetProvider',
+      qualifiedAndroidName: '$_androidWidgetPackage.TodayWidgetProvider',
+    );
+    await HomeWidget.updateWidget(
+      androidName: 'WeeklyWidgetProvider',
+      qualifiedAndroidName: '$_androidWidgetPackage.WeeklyWidgetProvider',
+    );
+    await HomeWidget.updateWidget(
+      androidName: 'MonthWidgetProvider',
+      qualifiedAndroidName: '$_androidWidgetPackage.MonthWidgetProvider',
+    );
+  }
+
+  Future<bool> _isWidgetEnabled() async {
+    try {
+      final raw =
+          await HomeWidget.getWidgetData<String>('widget_settings_config');
+      if (raw == null || raw.isEmpty) return true;
+      return WidgetSettingsModel.fromJson(raw).enabled;
+    } catch (_) {
+      return true;
     }
   }
 
@@ -457,8 +755,20 @@ class WidgetDataService {
       case OccurrenceStatus.CANCELLED:
         return 'CANCELLED';
       case OccurrenceStatus.UPCOMING:
-      default:
         return 'UPCOMING';
+    }
+  }
+
+  String _attendanceStatusToString(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.PRESENT:
+      case AttendanceStatus.EXTRA_PRESENT:
+        return 'PRESENT';
+      case AttendanceStatus.ABSENT:
+      case AttendanceStatus.EXTRA_ABSENT:
+        return 'ABSENT';
+      case AttendanceStatus.CANCELLED:
+        return 'CANCELLED';
     }
   }
 }

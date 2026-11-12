@@ -8,6 +8,7 @@ import '../../data/datasources/subject_local_data_source.dart';
 import '../../data/repositories/subject_repository_impl.dart';
 import '../../../../core/database/isar_provider.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
+import '../../../widgets/services/widget_refresh_service.dart';
 
 part 'subject_controller.g.dart';
 
@@ -33,22 +34,30 @@ class SubjectListController extends _$SubjectListController {
 
     if (semester == null || semester.localId == null) {
       if (kDebugMode) {
-        developer.log('[SubjectListController] Selected semester: None active', name: 'SubjectListController');
-        developer.log('[SubjectListController] Loaded subjects: []', name: 'SubjectListController');
-        developer.log('[SubjectListController] Subject count: 0', name: 'SubjectListController');
+        developer.log('[SubjectListController] Selected semester: None active',
+            name: 'SubjectListController');
+        developer.log('[SubjectListController] Loaded subjects: []',
+            name: 'SubjectListController');
+        developer.log('[SubjectListController] Subject count: 0',
+            name: 'SubjectListController');
       }
       return const [];
     }
 
     final repo = ref.watch(subjectRepositoryProvider);
     final localSemId = semester.localId!;
-    
+
     final subjects = await repo.getSubjectsBySemester(localSemId);
 
     if (kDebugMode) {
-      developer.log('[SubjectListController] Selected semester: ${semester.name} (localId: ${semester.localId})', name: 'SubjectListController');
-      developer.log('[SubjectListController] Loaded subjects: ${subjects.map((s) => '${s.code}[id=${s.id}]').toList()}', name: 'SubjectListController');
-      developer.log('[SubjectListController] Subject count: ${subjects.length}', name: 'SubjectListController');
+      developer.log(
+          '[SubjectListController] Selected semester: ${semester.name} (localId: ${semester.localId})',
+          name: 'SubjectListController');
+      developer.log(
+          '[SubjectListController] Loaded subjects: ${subjects.map((s) => '${s.code}[id=${s.id}]').toList()}',
+          name: 'SubjectListController');
+      developer.log('[SubjectListController] Subject count: ${subjects.length}',
+          name: 'SubjectListController');
     }
 
     final stream = repo.watchSubjects(localSemId);
@@ -56,7 +65,9 @@ class SubjectListController extends _$SubjectListController {
       final updatedList = await repo.getSubjectsBySemester(localSemId);
       state = AsyncValue.data(updatedList);
       if (kDebugMode) {
-        developer.log('[SubjectListController Stream Update] Subject count: ${updatedList.length}', name: 'SubjectListController');
+        developer.log(
+            '[SubjectListController Stream Update] Subject count: ${updatedList.length}',
+            name: 'SubjectListController');
       }
     });
 
@@ -76,9 +87,11 @@ class SubjectListController extends _$SubjectListController {
     required String color,
     required SubjectType type,
   }) async {
-    final semester = await ref.read(semesterRepositoryProvider).getActiveSemester();
+    final semester =
+        await ref.read(semesterRepositoryProvider).getActiveSemester();
     if (semester == null || semester.localId == null) {
-      throw Exception('No active semester found. Please configure a semester first.');
+      throw Exception(
+          'No active semester found. Please configure a semester first.');
     }
 
     final subject = Subject(
@@ -98,9 +111,14 @@ class SubjectListController extends _$SubjectListController {
 
     final updatedList = await repo.getSubjectsBySemester(semester.localId!);
     state = AsyncValue.data(updatedList);
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
 
     if (kDebugMode) {
-      developer.log('[SubjectListController] Added subject ${subject.code}. Updated Subject count: ${updatedList.length}', name: 'SubjectListController');
+      developer.log(
+          '[SubjectListController] Added subject ${subject.code}. Updated Subject count: ${updatedList.length}',
+          name: 'SubjectListController');
     }
   }
 
@@ -112,9 +130,14 @@ class SubjectListController extends _$SubjectListController {
     final semId = semester?.semesterId ?? subject.semesterId;
     final updatedList = await repo.getSubjectsBySemester(semId);
     state = AsyncValue.data(updatedList);
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
 
     if (kDebugMode) {
-      developer.log('[SubjectListController] Updated subject ${subject.code}. Subject count: ${updatedList.length}', name: 'SubjectListController');
+      developer.log(
+          '[SubjectListController] Updated subject ${subject.code}. Subject count: ${updatedList.length}',
+          name: 'SubjectListController');
     }
   }
 
@@ -126,10 +149,14 @@ class SubjectListController extends _$SubjectListController {
     if (subject != null) {
       final updatedList = await repo.getSubjectsBySemester(subject.semesterId);
       state = AsyncValue.data(updatedList);
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
       if (kDebugMode) {
-        developer.log('[SubjectListController] Removed subject id=$id. Subject count: ${updatedList.length}', name: 'SubjectListController');
+        developer.log(
+            '[SubjectListController] Removed subject id=$id. Subject count: ${updatedList.length}',
+            name: 'SubjectListController');
       }
     }
   }
 }
-

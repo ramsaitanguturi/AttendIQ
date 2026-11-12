@@ -11,6 +11,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/export_success_dialog.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../../widgets/services/widget_refresh_service.dart';
 
 class BackupPage extends ConsumerStatefulWidget {
   const BackupPage({super.key});
@@ -331,6 +332,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       ref.invalidate(hasActiveSemesterProvider);
       ref.invalidate(activeSemesterProvider);
       ref.invalidate(allSemestersProvider);
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
       await _refreshBackupList();
       if (!mounted) return;
       setState(() {
@@ -609,6 +613,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       ref.invalidate(hasActiveSemesterProvider);
       ref.invalidate(activeSemesterProvider);
       ref.invalidate(allSemestersProvider);
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
       await _refreshBackupList();
       if (!mounted) return;
       setState(() {

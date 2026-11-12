@@ -6,6 +6,7 @@ import '../../../semester/domain/entities/semester.dart';
 import '../../../semester/domain/validators/semester_validator.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../semester/presentation/widgets/semester_management_sheet.dart';
+import '../../../widgets/services/widget_refresh_service.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -145,6 +146,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       ref.invalidate(hasActiveSemesterProvider);
       ref.invalidate(activeSemesterProvider);
       ref.invalidate(allSemestersProvider);
+      try {
+        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+      } catch (_) {}
     } catch (e) {
       if (mounted) {
         final message = e is ValidationException ? e.message : e.toString();

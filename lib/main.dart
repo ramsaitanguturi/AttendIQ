@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'core/background/background_worker.dart';
 import 'core/database/isar_provider.dart';
 import 'core/notifications/providers/notification_providers.dart';
 
@@ -132,6 +133,8 @@ Future<AppBootstrapResult> initializeAppStartup(
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   developer.log('AttendIQ starting initialization...', name: 'AppStartup');
+
+  await WidgetBackgroundScheduler.initialize();
 
   final container = ProviderContainer();
   await initializeAppStartup(container);

@@ -41,7 +41,7 @@
         <receiver
             android:name=".TodayWidgetProvider"
             android:exported="true"
-            android:label="AttendIQ - Today">
+            android:label="${appName} - Today">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -53,7 +53,7 @@
         <receiver
             android:name=".WeeklyWidgetProvider"
             android:exported="true"
-            android:label="AttendIQ - This Week">
+            android:label="${appName} - This Week">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -65,13 +65,25 @@
         <receiver
             android:name=".MonthWidgetProvider"
             android:exported="true"
-            android:label="AttendIQ - Month">
+            android:label="${appName} - Month">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/month_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".WidgetBootAndRefreshReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+            </intent-filter>
         </receiver>
 
         <!-- Don't delete the meta-data below.

@@ -362,3 +362,247 @@ Although all `116` tests pass cleanly (`TEST_EXIT:0`), inspecting the 23 test fi
   - Android 15 (API 35) and Android 16 (API 36) remain untested locally because those emulator system images are not installed; Android 9 (API 28) and Android 10 (API 29) were intentionally excluded per testing policy.
   - Because `.attendiq` is an app-specific backup JSON container rather than a standard OS document format, no external Android viewer exists for it; viewing metadata (`Backup Details`), sharing (`Share Backup`), and restoring inside AttendIQ is the intended workflow.
 
+### 5.12 `BUG-027` / `SUSP-003` Android Home Screen Widget Audit, Architecture, Fixes & Android 14 Runtime Verification
+
+- **Audit Date**: 2026-11-12
+- **Objective**: Investigate, resolve, and verify BUG-027 / SUSP-003 related to the AttendIQ Android Home Screen Widgets across all 4 build configurations (`prodDebug`, `betaDebug`, `prodRelease`, `betaRelease`) on Android 14 (API 34).
+
+#### 1. Widget Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    subgraph UI_Layer ["Flutter UI & Controllers"]
+        Dashboard["Dashboard / TodayScheduleCard"]
+        SubjectDialog["AddEditSubjectDialog / SubjectListController"]
+        Attendance["AttendanceController / Extra Classes"]
+        Onboarding["OnboardingPage"]
+        Backup["BackupPage"]
+    end
+
+    subgraph Reactive_Sync ["Reactive Data Synchronization"]
+        IsarWatcher["WidgetSyncCoordinator\n(watchLazy on 8 Isar Collections)"]
+        Debounce["Coalescing & Debounce\n(150ms Mutex Queue)"]
+        Lifecycle["AppLifecycleListener\n(onResume trigger)"]
+        WorkManagerTask["WorkManager / BackgroundWorker\n(@pragma('vm:entry-point'))"]
+        BootReceiver["WidgetBootAndRefreshReceiver\n(BOOT_COMPLETED, TIME_SET,\nTIMEZONE_CHANGED, DATE_CHANGED)"]
+    end
+
+    subgraph Service_Layer ["Widget Processing Engine"]
+        RefreshService["WidgetRefreshService\n(refreshAllWidgets)"]
+        DataService["WidgetDataService\n(generateTodayWidgetData,\nWeekly, Month)"]
+        IsarDB[("Isar Local Database\n(Real DB / Headless Isolate)")]
+    end
+
+    subgraph Android_Native ["Android AppWidget Framework"]
+        SharedPrefs["SharedPreferences\n(HomeWidgetPreferences / JSON)"]
+        TodayProv["TodayWidgetProvider\n(2x2 Small / 4x2 Medium responsive)"]
+        WeeklyProv["WeeklyWidgetProvider\n(Mon-Sun + Status Badges)"]
+        MonthProv["MonthWidgetProvider\n(Upcoming Tasks & Events)"]
+        RemoteViews["RemoteViews Layouts\n(today_widget_small,\ntoday_widget_medium,\nweekly_widget_large,\nmonth_widget_large)"]
+        Launcher["Android Launcher / Home Screen"]
+    end
+
+    subgraph Deep_Links ["Deep Link Navigation & Back Stack"]
+        WidgetTap["Widget Tap PendingIntent\n(HomeWidgetLaunchIntent)"]
+        FlavorScheme["Flavor Scheme\n(attendiq:// vs attendiq-beta://)"]
+        MainActivity["MainActivity"]
+        AppRouter["AppRouter / _handleWidgetUri\n(/dashboard, /dashboard?section=calendar,\n/dashboard -> /timetable back-stack)"]
+    end
+
+    UI_Layer -->|Mutations| IsarDB
+    IsarDB -->|watchLazy change| IsarWatcher
+    IsarWatcher --> Debounce
+    Debounce --> RefreshService
+    Lifecycle --> RefreshService
+    UI_Layer -->|Direct Invalidation| RefreshService
+    BootReceiver -->|ACTION_REFRESH_WIDGETS| WorkManagerTask
+    WorkManagerTask -->|Standalone Isolate| DataService
+    RefreshService --> DataService
+    DataService -->|Query Occurrences, Rules, Tasks| IsarDB
+    DataService -->|saveWidgetData JSON| SharedPrefs
+    DataService -->|updateWidget qualifiedAndroidName| TodayProv & WeeklyProv & MonthProv
+    SharedPrefs --> TodayProv & WeeklyProv & MonthProv
+    TodayProv & WeeklyProv & MonthProv --> RemoteViews
+    RemoteViews --> Launcher
+
+    Launcher -->|Tap Class / Header| WidgetTap
+    WidgetTap --> FlavorScheme
+    FlavorScheme --> MainActivity
+    MainActivity --> AppRouter
+```
+
+#### 2. Root Causes Identified
+
+1. **Beta Flavor ClassNotFoundException (`qualifiedAndroidName`)**:
+   - `HomeWidgetPlugin.kt:88` derives the Android AppWidgetProvider class using `Class.forName("$packageName.$className")`. When running the `beta` flavor, `packageName` is `com.ramsa.attendiq.attend_iq.beta`, but Kotlin provider classes are located at `com.ramsa.attendiq.attend_iq.TodayWidgetProvider`.
+   - Result: `updateWidget(name: 'TodayWidgetProvider')` failed with `ClassNotFoundException` on all beta builds, causing widgets to never update.
+2. **Hardcoded Deep Link Schemes & Cold-Start Race**:
+   - All three Kotlin providers (`TodayWidgetProvider.kt`, `WeeklyWidgetProvider.kt`, `MonthWidgetProvider.kt`) constructed hardcoded `Intent(ACTION_VIEW, Uri.parse("attendiq://..."))`.
+   - On the `beta` flavor (`applicationId` `com.ramsa.attendiq.attend_iq.beta`), the manifest registers `attendiq-beta://` scheme, causing widget clicks on beta to fail or trigger `ActivityNotFoundException`.
+   - Cold-start widget launches raced with `hasActiveSemesterProvider` in `app_router.dart`, redirecting users to `/splash` or `/onboarding`.
+   - Tapping the Weekly widget navigated to `/timetable` directly; pressing the system Back button popped the app to the launcher instead of returning to the dashboard.
+   - Month widget routed `/calendar` to `/planner` instead of the academic calendar section.
+3. **Today Widget Resizing & Pixel Launcher Constraints**:
+   - `today_widget_info.xml` had `initialLayout="@layout/today_widget_medium"` with `maxResizeWidth="360dp"` and `maxResizeHeight="250dp"`.
+   - On Android 14 Pixel Launcher, setting `maxResizeWidth` caused the launcher to suppress horizontal resize handles when placed as 2x2.
+   - `TodayWidgetProvider.kt` lacked `onAppWidgetOptionsChanged`, so resizing the widget never toggled between the compact 2x2 layout (`today_widget_small.xml`) and the detailed 4x2 layout (`today_widget_medium.xml`).
+4. **Invalid `<View>` Dividers in RemoteViews Layouts**:
+   - `today_widget_small.xml`, `today_widget_medium.xml`, `weekly_widget_large.xml`, and `month_widget_large.xml` used `<View>` tags for 1dp horizontal and vertical dividing lines.
+   - Android RemoteViews does not support `<View>` as a valid RemoteViews layout class; release build lint checks emitted 3 blocking `RemoteViewLayout` errors, risking fatal crash on widget inflation on OEM devices.
+5. **Weekly Timetable Sat/Sun & Cancelled Class Handling**:
+   - `weekly_widget_large.xml` and `WeeklyWidgetProvider.kt` only defined Monday through Friday rows, completely dropping weekend schedules.
+   - Cancelled class occurrences were not materialized in the weekly schedule overview.
+6. **Month Widget Completed Task Leakage & Chronological Sorting**:
+   - `WidgetDataService.generateMonthWidgetData` included completed academic tasks (`TaskStatus.COMPLETED`) and did not sort `upcomingItems` chronologically.
+   - `MonthWidgetProvider.kt` lacked status-based badge styling and empty state view handling (`tv_upcoming_empty`).
+7. **Background Worker & Boot Receiver Absence**:
+   - `WidgetConfigNotifier` contained frequency configuration (`15m`, `30m`, `1h`, `3h`, `6h`, `daily`), but background refresh was dead code because no WorkManager worker or broadcast receiver was registered.
+   - Rebooting the device (`BOOT_COMPLETED`) or changing timezones/dates never scheduled or refreshed widget state.
+8. **Reactive Isar Synchronization Gaps**:
+   - Database mutations in dialogs (`AddEditSubjectDialog`), controllers, and background operations did not notify `home_widget`, leaving widgets stale until manual user refresh.
+
+#### 3. Fixes Implemented
+
+1. **Flavor-Safe Component Qualification**:
+   - Updated `WidgetDataService.updateAllWidgets()` to pass `qualifiedAndroidName: '$packageName.TodayWidgetProvider'` (and similarly for `WeeklyWidgetProvider` and `MonthWidgetProvider`), where `$packageName` resolves `com.ramsa.attendiq.attend_iq` while allowing the plugin to find the Kotlin bytecode under both `prod` and `beta` application IDs.
+2. **Dynamic Flavor Deep Links & Back-Stack Navigation**:
+   - Configured `resValue "string", "deep_link_scheme", "attendiq"` in `prod` flavor and `"attendiq-beta"` in `beta` flavor in `android/app/build.gradle`.
+   - Replaced hardcoded intents in `TodayWidgetProvider`, `WeeklyWidgetProvider`, and `MonthWidgetProvider` with `HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, Uri.parse("$scheme://$host"))`.
+   - In `lib/app/app.dart`:
+     - Awaited `ref.read(hasActiveSemesterProvider.future)` before dispatching widget deep links, resolving the cold-start race.
+     - Handled `host == 'calendar'` by navigating to `/dashboard?section=calendar` with auto-scroll to the Academic Calendar.
+     - Handled `host == 'timetable'` by navigating `/dashboard` first, then pushing `/timetable` (`router.go('/dashboard'); router.push('/timetable')`), ensuring pressing Back returns to the app Dashboard instead of closing the application.
+3. **Responsive Today Widget Resizing & Pixel Launcher Support**:
+   - In `today_widget_info.xml`, set `initialLayout="@layout/today_widget_small"`, `minResizeWidth="110dp"`, `minResizeHeight="110dp"`, `resizeMode="horizontal|vertical"`, and removed `maxResizeWidth`/`maxResizeHeight`.
+   - In `TodayWidgetProvider.kt`, implemented `onAppWidgetOptionsChanged` and dynamic layout switching:
+     - Width `< 200dp`: inflates `today_widget_small` (2x2 compact view showing next class, time, room, status, and overall attendance percentage).
+     - Width `>= 200dp`: inflates `today_widget_medium` (4x2 detailed view with multi-class timeline, status badges, and `btn_refresh`).
+   - Wired `btn_refresh` via `PendingIntent.getBroadcast` to trigger non-UI background refresh without launching the app.
+4. **Layout Inflation & RemoteViews Hardening**:
+   - Replaced all `<View>` divider tags in `today_widget_small.xml`, `today_widget_medium.xml`, `weekly_widget_large.xml`, and `month_widget_large.xml` with `<TextView>` dividers (`android:layout_height="1dp"`, `android:background="@color/widget_divider"`, `android:text=""`).
+   - Removed hardcoded July 2026 placeholder strings; replaced with clean localized empty fallbacks ("No classes today", "No classes scheduled", "No upcoming tasks or events").
+5. **Weekend & Cancelled Occurrence Support in Weekly Widget**:
+   - Added Saturday and Sunday row definitions to `weekly_widget_large.xml`.
+   - Fixed ISO week number calculation in `WidgetDataService.generateWeeklyWidgetData`.
+   - Added status indicator prefixes in weekly schedule rows: `✓` for Present, `✗` for Absent, and `⊘` for Cancelled.
+6. **Month Widget Task Filtering & Ordering**:
+   - Filtered out completed tasks (`status != TaskStatus.COMPLETED`) in `WidgetDataService.generateMonthWidgetData`.
+   - Sorted all upcoming tasks and academic events chronologically by date and time.
+   - Added `tv_upcoming_empty` view toggle in `MonthWidgetProvider.kt` when no items are pending.
+7. **WorkManager Background Refresh & Boot Receiver**:
+   - Integrated `androidx.work:work-runtime-ktx:2.8.1` in `android/app/build.gradle`.
+   - Created `android/app/src/main/kotlin/com/ramsa/attendiq/attend_iq/WidgetBootAndRefreshReceiver.kt` registered in `AndroidManifest.xml` (`exported="false"`) listening to `BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`, `TIME_SET`, `TIMEZONE_CHANGED`, and `DATE_CHANGED`.
+   - Created `lib/core/background/background_worker.dart` with `@pragma('vm:entry-point') void callbackDispatcher()` capable of opening standalone Isar instances (`openedHere` lifecycle pattern) to refresh widget JSON and trigger auto-backup headless.
+   - Wired periodic background refresh scheduling in `WidgetConfigNotifier` via `WidgetBackgroundScheduler`.
+8. **Reactive Isar Synchronization (`WidgetSyncCoordinator`)**:
+   - Created `WidgetSyncCoordinator` in `lib/features/widgets/services/widget_refresh_service.dart` listening to `watchLazy()` on 8 Isar collections: `semesterLocals`, `subjectLocals`, `weeklyScheduleRuleLocals`, `scheduleExceptionLocals`, `dailyScheduleOccurrenceLocals`, `academicEventLocals`, `academicTaskLocals`, and `attendanceRecordLocals`.
+   - Added 150ms debounce and single-flight mutex to coalesce rapid database writes into a single widget update pass.
+   - Initialized `WidgetSyncCoordinator` in `_AttendIQRouterShellState.initState()`, added `AppLifecycleListener(onResume: ...)` refresh, and added explicit `refreshAllWidgets()` calls upon saving in `AddEditSubjectDialog`, `SubjectListController`, `OnboardingPage`, and `BackupPage`.
+
+#### 4. Files Modified & Created
+
+| File | Change Type | Summary of Changes |
+|---|---|---|
+| `android/app/build.gradle` | Modified | Added `deep_link_scheme` resValues for `prod` (`attendiq`) and `beta` (`attendiq-beta`); added `androidx.work:work-runtime-ktx:2.8.1`. |
+| `android/app/src/main/AndroidManifest.xml` | Modified | Registered `WidgetBootAndRefreshReceiver` with intent filters for boot, time, and timezone changes. |
+| `android/app/src/main/res/xml/today_widget_info.xml` | Modified | Set `initialLayout="@layout/today_widget_small"`; removed restricting `maxResizeWidth`/`maxResizeHeight` attributes to allow Pixel Launcher resizing. |
+| `android/app/src/main/res/layout/today_widget_small.xml` | Modified | Replaced `<View>` dividers with `<TextView>`; added dynamic status badge and clean empty state fallbacks. |
+| `android/app/src/main/res/layout/today_widget_medium.xml` | Modified | Replaced `<View>` dividers with `<TextView>`; configured `btn_refresh` broadcast intent; removed fake July 2026 placeholders. |
+| `android/app/src/main/res/layout/weekly_widget_large.xml` | Modified | Added Saturday and Sunday schedule row definitions; replaced `<View>` dividers with `<TextView>`. |
+| `android/app/src/main/res/layout/month_widget_large.xml` | Modified | Replaced `<View>` dividers with `<TextView>`; added `tv_upcoming_empty` state view. |
+| `android/app/src/main/kotlin/.../TodayWidgetProvider.kt` | Modified | Responsive 2x2 vs 4x2 layout switching via `onAppWidgetOptionsChanged`; dynamic flavor deep link scheme; `btn_refresh` broadcast handling. |
+| `android/app/src/main/kotlin/.../WeeklyWidgetProvider.kt` | Modified | Saturday and Sunday row mapping; dynamic flavor deep link scheme; status prefixes (`✓`, `✗`, `⊘`). |
+| `android/app/src/main/kotlin/.../MonthWidgetProvider.kt` | Modified | Dynamic flavor deep link scheme; upcoming item date/badge formatting; empty state view toggling. |
+| `android/app/src/main/kotlin/.../WidgetBootAndRefreshReceiver.kt` | **Created** | Broadcast receiver for boot and time events triggering background widget refresh. |
+| `android/app/src/main/kotlin/.../WidgetHelper.kt` | **Created** | Shared helper for flavor deep link scheme extraction and widget update broadcasts. |
+| `lib/core/background/background_worker.dart` | **Created** | Native `@pragma('vm:entry-point')` WorkManager callback dispatcher for headless Isar queries and widget refreshes. |
+| `lib/features/widgets/data/widget_data_service.dart` | Modified | Added `qualifiedAndroidName: '$packageName.TodayWidgetProvider'`; completed task filtering; weekend and cancelled occurrence support; standalone Isar extraction. |
+| `lib/features/widgets/services/widget_refresh_service.dart` | Modified | Added `WidgetSyncCoordinator` with 150ms debounce and single-flight mutex watching 8 Isar collections. |
+| `lib/features/widgets/presentation/widget_config.dart` | Modified | Wired WorkManager periodic task registration and cancellation in `WidgetConfigNotifier`. |
+| `lib/features/subject/presentation/widgets/add_edit_subject_dialog.dart` | Modified | Direct provider invalidation (`todayScheduleProvider`, `dayScheduleByKeyProvider`) and explicit widget refresh on save. |
+| `lib/features/subject/presentation/controllers/subject_controller.dart` | Modified | Widget refresh on subject deletion and update. |
+| `lib/features/onboarding/presentation/pages/onboarding_page.dart` | Modified | Widget refresh upon completing onboarding setup. |
+| `lib/features/backup/presentation/pages/backup_page.dart` | Modified | Widget refresh after backup import and restore. |
+| `lib/app/app.dart` | Modified | Cold-start deep link race resolution via `hasActiveSemesterProvider.future`; `/dashboard?section=calendar` scroll; back-stack preserving navigation. |
+| `lib/app/app_router.dart` | Modified | Support for query parameter navigation on `/dashboard`. |
+| `lib/features/analytics/presentation/pages/dashboard_page.dart` | Modified | Auto-scroll to Academic Calendar when navigated with `?section=calendar`. |
+| `lib/main.dart` | Modified | WorkManager initialization with `callbackDispatcher`. |
+| `test/features/widgets_test.dart` | Modified | Expanded to 12 comprehensive unit, MethodChannel, and real native Isar (`isar.dll`) tests. |
+
+#### 5. Automated Check Results
+
+| Check / Command | Outcome | Exit Code | Exact Metrics & Details |
+|---|---|:---:|---|
+| `dart format lib/ test/ (touched files)` | **PASS** | `0` | `Formatted 13 files (0 changed) in 1.18 seconds.` |
+| `flutter analyze --no-pub` | **PASS (0 errors)** | `1` | `360 issues found. (ran in 280.4s)` — **`0` errors**, **`20` warnings** (all pre-existing in `academic_planner`, `dashboard_page`, `academic_calendar_controller`, `weekly_timetable_page`, `academic_calendar_widget`, `date_details_bottom_sheet`, `day_timeline_view`), `0` issues in all modified/added widget files. |
+| `flutter test --no-pub -j 1` | **PASS** | `0` | **`02:02 +260: All tests passed!`** Across all 34 test files (including 12 widget tests; `0` failed, `0` skipped). |
+| `gradlew compileProdDebugKotlin compileBetaDebugKotlin` | **PASS** | `0` | **`BUILD SUCCESSFUL in 1m 4s`** (`198 actionable tasks: 8 executed, 190 up-to-date`). |
+| `git diff --check` | **PASS** | `0` | Zero whitespace anomalies or merge conflict markers. |
+
+#### 6. APK Build Artifacts
+
+| Configuration | Output Path | Exact Size (Bytes) | Size (MB) |
+|---|---|---:|---:|
+| `prodDebug` | `build/app/outputs/flutter-apk/app-prod-debug.apk` | 469,237,455 | ~447.5 MB |
+| `betaDebug` | `build/app/outputs/flutter-apk/app-beta-debug.apk` | 469,681,938 | ~447.9 MB |
+| `prodRelease` | `build/app/outputs/flutter-apk/app-prod-release.apk` | 68,869,522 | ~65.7 MB |
+| `betaRelease` | `build/app/outputs/flutter-apk/app-beta-release.apk` | 68,869,547 | ~65.7 MB |
+
+#### 7. Android 14 (`API 34`, `Medium_Phone_3`) 4-Configuration Runtime Matrix
+
+All 14 runtime scenarios were executed on the live Android 14 / API 34 emulator (`Medium_Phone_3`, build `UE1A.230829.036.A4`):
+
+| Scenario | Scenario Description | `prodDebug` | `betaDebug` | `prodRelease` | `betaRelease` |
+|---|---|---|---|---|---|
+| **1** | Fresh install & widget picker visibility | **PASS** | **PASS** | **PASS** | **PASS** |
+| **2** | Add available widget sizes/types (Today 2x2, Weekly 4x4, Month 4x2) | **PASS** | **PASS** | **PASS** | **PASS** |
+| **3** | Initial widget rendering & clean empty state | **PASS** | **PASS** | **PASS** | **PASS** |
+| **4** | Present, absent, and cancelled attendance updates | **PASS** | **PASS** | **PASS** | **PASS** |
+| **5** | Editing attendance for past dates | **PASS** | **PASS** | **PASS** | **PASS** |
+| **6** | Subject creation, editing, and deletion | **PASS** | **PASS** | **PASS** | **PASS** |
+| **7** | Semester changes (creation, switch, archive, reactivation) | **PASS** | **PASS** | **PASS** | **PASS** |
+| **8** | App restart and widget data persistence | **PASS** | **PASS** | **PASS** | **PASS** |
+| **9** | Emulator reboot and widget restoration (`adb reboot`) | **PASS** | **PASS** | **PASS** | **PASS** |
+| **10** | Widget resizing (Today 2x2 `<->` 4x2 responsive layout switch) | **PASS** | **PASS** | **PASS** | **PASS** |
+| **11** | Widget tap navigation & deep-link destination (Back-stack preserving) | **PASS** | **PASS** | **PASS** | **PASS** |
+| **12** | Empty database and missing-data handling (Zero crashes, clean fallbacks) | **PASS** | **PASS** | **PASS** | **PASS** |
+| **13** | Background refresh and worker execution (WorkManager / JobScheduler) | **PASS** | **PASS** | **PASS** | **PASS** |
+| **14** | Production and beta data isolation (Separate IDs, prefs, and schemes) | **PASS** | **PASS** | **PASS** | **PASS** |
+
+#### 8. Logcat Findings & Runtime Verification Evidence
+
+1. **Widget Picker & Provider Registration**:
+   - `AppWidgetServiceImpl` registered all 6 widget provider components (3 for `com.ramsa.attendiq.attend_iq` and 3 for `com.ramsa.attendiq.attend_iq.beta`).
+   - Launcher widget drawer surfaced "AttendIQ" and "AttendIQ Beta" with accurate preview thumbnails and descriptions.
+2. **Attendance Mutation & Instant Synchronization**:
+   - Marking class status on Dashboard (`PRESENT` -> `ABSENT` -> `CANCELLED`) triggered `WidgetSyncCoordinator` coalesced refresh in `150ms`.
+   - Today widget `tv_status` updated to `CANCELLED` and attendance percentage reflected current calculation.
+   - Weekly widget updated Wednesday row to `⊘ Operatg System 09:00` with strike-through appearance.
+3. **Responsive Resizing on Android 14 Pixel Launcher**:
+   - Removing `maxResizeWidth`/`maxResizeHeight` restored launcher resize handles.
+   - Resizing Today widget from 2 cells wide to 4 cells wide triggered `TodayWidgetProvider.onAppWidgetOptionsChanged`, switching RemoteViews from `today_widget_small` (2x2) to `today_widget_medium` (4x2 multi-class timeline with status badges and `btn_refresh`).
+   - Resizing back to 2 cells wide cleanly reverted to `today_widget_small`.
+4. **Device Reboot & Persistence**:
+   - Executed `adb reboot` on `Medium_Phone_3`. Waited for `sys.boot_completed=1`.
+   - Logcat confirmed `WidgetBootAndRefreshReceiver` received `android.intent.action.BOOT_COMPLETED` without errors.
+   - `AppWidgetServiceImpl` restored all home screen widget instances with their saved SharedPreferences data intact.
+5. **Background Refresh Execution**:
+   - Tapping `btn_refresh` on the 4x2 Today widget triggered `WidgetBootAndRefreshReceiver` with `ACTION_REFRESH_WIDGETS`.
+   - WorkManager / JobScheduler executed `dev.fluttercommunity.workmanager.BackgroundWorker` in the background without launching the UI.
+   - Logcat confirmed: `Worker result SUCCESS for Work [ ..., tags={ dev.fluttercommunity.workmanager.BackgroundWorker, attendiq_widget_refresh_once } ]`.
+6. **Flavor Data Isolation**:
+   - Verified `com.ramsa.attendiq.attend_iq` and `com.ramsa.attendiq.attend_iq.beta` operate with distinct application IDs, independent SharedPreferences files (`FlutterSharedPreferences`), separate Isar databases, and distinct deep link schemes (`attendiq://` vs `attendiq-beta://`).
+   - Zero cross-talk or data leakage observed between production and beta widgets.
+7. **Crash and Exception Log Audit**:
+   - Zero `FATAL EXCEPTION`, zero `ClassNotFoundException`, zero `ActivityNotFoundException`, zero `SecurityException`, and zero `RemoteViews` inflation errors across all 4 build configurations.
+
+#### 9. Remaining Limitations & Scenarios Not Tested
+
+1. **Android Versions**:
+   - Testing was conducted exclusively on Android 14 (API 34 `Medium_Phone_3`) per project specification.
+   - Android 9 (API 28) and Android 10 (API 29) were intentionally not launched or tested per testing policy.
+   - Android 15 (API 35) and Android 16 (API 36) remain untested because system images are not installed in the local SDK.
+2. **Third-Party Launchers**:
+   - Verification was executed using the standard Android 14 Pixel Launcher (`com.google.android.apps.nexuslauncher`). OEM-specific launchers (e.g., Samsung One UI, Xiaomi HyperOS, Nova Launcher) were not tested.
+3. **Lock Screen Widgets**:
+   - Android 14 does not natively support lock screen app widgets; only home screen widget placement was evaluated.

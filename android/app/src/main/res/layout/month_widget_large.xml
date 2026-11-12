@@ -15,25 +15,28 @@
         android:gravity="center_vertical">
 
         <TextView
+            android:id="@+id/tv_brand"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="AttendIQ"
+            android:text="@string/app_name"
             android:textColor="#6C5CE7"
             android:textSize="15sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/tv_month_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="July 2026"
+            android:text="Academic Calendar"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <View
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#2E3044"
@@ -47,16 +50,16 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:id="@+id/tv_day_1"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="20"
+            android:text="M"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center" />
 
@@ -65,9 +68,9 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="21"
+            android:text="T"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center" />
 
@@ -76,9 +79,9 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="22"
-            android:textColor="#EF5350"
-            android:textSize="14sp"
+            android:text="W"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center" />
 
@@ -87,9 +90,9 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="23"
+            android:text="T"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center" />
 
@@ -98,9 +101,9 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="24"
-            android:textColor="#FFCA28"
-            android:textSize="14sp"
+            android:text="F"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center" />
     </LinearLayout>
@@ -125,34 +128,47 @@
             android:id="@+id/tv_upcoming_1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="22 July  •  OS Project Submission"
+            android:text=""
             android:textColor="#FF9800"
             android:textSize="12sp"
             android:paddingVertical="2dp"
             android:singleLine="true"
-            android:ellipsize="end" />
+            android:ellipsize="end"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/tv_upcoming_2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="25 July  •  Mid Semester Exam"
+            android:text=""
             android:textColor="#EF5350"
             android:textSize="12sp"
             android:paddingVertical="2dp"
             android:singleLine="true"
-            android:ellipsize="end" />
+            android:ellipsize="end"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/tv_upcoming_3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="28 July  •  College Foundation Day"
+            android:text=""
             android:textColor="#AB47BC"
             android:textSize="12sp"
             android:paddingVertical="2dp"
             android:singleLine="true"
-            android:ellipsize="end" />
+            android:ellipsize="end"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_upcoming_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No upcoming events"
+            android:textColor="#A0A5BD"
+            android:textSize="12sp"
+            android:paddingVertical="2dp"
+            android:visibility="visible" />
     </LinearLayout>
 
 </LinearLayout>

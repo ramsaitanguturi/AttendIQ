@@ -20,11 +20,51 @@ import '../../../academic_planner/presentation/controllers/task_controller.dart'
 import '../../../academic_planner/presentation/widgets/task_card_widget.dart';
 import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart';
 
-class DashboardPage extends ConsumerWidget {
-  const DashboardPage({super.key});
+class DashboardPage extends ConsumerStatefulWidget {
+  final String? initialSection;
+
+  const DashboardPage({
+    super.key,
+    this.initialSection,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage> {
+  final GlobalKey _calendarKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollToSectionIfNeeded(widget.initialSection);
+  }
+
+  @override
+  void didUpdateWidget(covariant DashboardPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialSection != oldWidget.initialSection) {
+      _scrollToSectionIfNeeded(widget.initialSection);
+    }
+  }
+
+  void _scrollToSectionIfNeeded(String? section) {
+    if (section != 'calendar') return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final targetContext = _calendarKey.currentContext;
+      if (targetContext != null) {
+        Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     const userName = 'Student';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -32,7 +72,8 @@ class DashboardPage extends ConsumerWidget {
     final statsListAsync = ref.watch(allSubjectAttendanceStatsProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -68,7 +109,8 @@ class DashboardPage extends ConsumerWidget {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -83,7 +125,9 @@ class DashboardPage extends ConsumerWidget {
                           'Welcome back,',
                           style: TextStyle(
                             fontSize: 14.0,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -126,7 +170,8 @@ class DashboardPage extends ConsumerWidget {
 
                 // 4. Danger Subjects
                 statsListAsync.when(
-                  data: (stats) => _buildDangerSubjectsSection(context, stats, isDark),
+                  data: (stats) =>
+                      _buildDangerSubjectsSection(context, stats, isDark),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
@@ -153,7 +198,8 @@ class DashboardPage extends ConsumerWidget {
                     ),
                     TextButton(
                       onPressed: () => context.push('/timetable'),
-                      child: const Text('Manage Timetable', style: TextStyle(color: AppColors.primary)),
+                      child: const Text('Manage Timetable',
+                          style: TextStyle(color: AppColors.primary)),
                     ),
                   ],
                 ),
@@ -162,7 +208,7 @@ class DashboardPage extends ConsumerWidget {
                 const SizedBox(height: 28.0),
 
                 // 7. Academic Calendar
-                const AcademicCalendarWidget(),
+                AcademicCalendarWidget(key: _calendarKey),
                 const SizedBox(height: 28.0),
 
                 // 8. Upcoming Tasks Section
@@ -203,7 +249,8 @@ class DashboardPage extends ConsumerWidget {
           SizedBox(width: 6),
           Text(
             'Offline Mode',
-            style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -235,7 +282,9 @@ class DashboardPage extends ConsumerWidget {
           final isSafe = analytics.riskLevel == RiskStatus.SAFE;
           final riskColor = analytics.riskLevel == RiskStatus.CRITICAL
               ? AppColors.attendanceLow
-              : (analytics.riskLevel == RiskStatus.WARNING ? AppColors.attendanceMid : AppColors.primary);
+              : (analytics.riskLevel == RiskStatus.WARNING
+                  ? AppColors.attendanceMid
+                  : AppColors.primary);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +309,9 @@ class DashboardPage extends ConsumerWidget {
                               : 'Attendance warning! Try to skip no more classes.',
                           style: TextStyle(
                             fontSize: 12.0,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                         ),
                       ],
@@ -276,7 +327,9 @@ class DashboardPage extends ConsumerWidget {
                         child: CircularProgressIndicator(
                           value: percentage / 100.0,
                           strokeWidth: 6,
-                          backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          backgroundColor: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                           valueColor: AlwaysStoppedAnimation<Color>(riskColor),
                         ),
                       ),
@@ -297,9 +350,12 @@ class DashboardPage extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildDashboardMetric('Total', '${analytics.totalClasses}', isDark),
-                  _buildDashboardMetric('Present', '${analytics.totalPresent}', isDark),
-                  _buildDashboardMetric('Absent', '${analytics.totalAbsent}', isDark),
+                  _buildDashboardMetric(
+                      'Total', '${analytics.totalClasses}', isDark),
+                  _buildDashboardMetric(
+                      'Present', '${analytics.totalPresent}', isDark),
+                  _buildDashboardMetric(
+                      'Absent', '${analytics.totalAbsent}', isDark),
                 ],
               ),
               const SizedBox(height: 16),
@@ -347,7 +403,9 @@ class DashboardPage extends ConsumerWidget {
           label,
           style: TextStyle(
             fontSize: 11.0,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
           ),
         ),
       ],
@@ -389,7 +447,8 @@ class DashboardPage extends ConsumerWidget {
             final target = stats.subject.attendanceTarget;
             final isCritical = percentage < target;
 
-            final badgeColor = isCritical ? AppColors.attendanceLow : AppColors.attendanceMid;
+            final badgeColor =
+                isCritical ? AppColors.attendanceLow : AppColors.attendanceMid;
             final badgeText = isCritical ? 'Critical' : 'Warning';
 
             return Container(
@@ -432,7 +491,8 @@ class DashboardPage extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: badgeColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -463,7 +523,8 @@ class DashboardPage extends ConsumerWidget {
   ) {
     final points = analytics.attendanceTrend.weekly;
     if (points.isEmpty || points.length < 2) {
-      return const SizedBox.shrink(); // Need at least two points to draw a trend
+      return const SizedBox
+          .shrink(); // Need at least two points to draw a trend
     }
 
     return Column(
@@ -493,10 +554,14 @@ class DashboardPage extends ConsumerWidget {
               gridData: const FlGridData(show: false),
               titlesData: const FlTitlesData(
                 show: true,
-                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
               borderData: FlBorderData(show: false),
               minX: 0,
@@ -534,8 +599,6 @@ class DashboardPage extends ConsumerWidget {
       ],
     );
   }
-
-
 
   Widget _buildSubjectsGrid(
     BuildContext context,
@@ -626,7 +689,8 @@ class DashboardPage extends ConsumerWidget {
                               Text(
                                 '${stats.attendancePercentage.toStringAsFixed(0)}%',
                                 style: TextStyle(
-                                  color: stats.attendancePercentage >= stats.subject.attendanceTarget
+                                  color: stats.attendancePercentage >=
+                                          stats.subject.attendanceTarget
                                       ? AppColors.primary
                                       : AppColors.attendanceLow,
                                   fontSize: 16.0,
@@ -645,7 +709,8 @@ class DashboardPage extends ConsumerWidget {
                               fontSize: 14.0,
                             ),
                           ),
-                          if (stats.subject.faculty != null && stats.subject.faculty!.isNotEmpty) ...[
+                          if (stats.subject.faculty != null &&
+                              stats.subject.faculty!.isNotEmpty) ...[
                             const SizedBox(height: 2),
                             Text(
                               stats.subject.faculty!,
@@ -661,7 +726,8 @@ class DashboardPage extends ConsumerWidget {
                       ),
                       // Badge Pill
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: alertBadgeColor.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(6),
@@ -729,12 +795,12 @@ class DashboardPage extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => context.push('/planner'),
-              child: const Text('View All', style: TextStyle(color: AppColors.primary)),
+              child: const Text('View All',
+                  style: TextStyle(color: AppColors.primary)),
             ),
           ],
         ),
         const SizedBox(height: 12.0),
-
         if (upcomingTasks.isEmpty) ...[
           Container(
             width: double.infinity,
@@ -770,7 +836,9 @@ class DashboardPage extends ConsumerWidget {
                         'You are all caught up! Tap + to add an academic task.',
                         style: TextStyle(
                           fontSize: 12.0,
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                         ),
                       ),
                     ],
@@ -804,4 +872,3 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 }
-
