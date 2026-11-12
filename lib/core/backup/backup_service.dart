@@ -312,21 +312,34 @@ class BackupService {
     );
   }
 
+  static const Set<String> _supportedImportExtensions = <String>{
+    'attendiq',
+    'json',
+  };
+
   /// Opens target file picker dialog allowing user to select `.attendiq` or `.json` files
   /// from Downloads, Documents, File Manager, or Google Drive via SAF.
   ///
-  /// Returns `null` only when the user cancels the picker. Empty files,
-  /// oversized files (> 20 MB), invalid UTF-8 bytes, and IO failures throw
-  /// explicit exceptions for UI reporting.
+  /// Uses [FileType.any] on Android because `file_picker` 8.3.2 cannot map
+  /// custom `.attendiq` (or `.json` on API 28/29) extensions to MIME types in
+  /// `FilePickerUtils`, then validates extension, size, UTF-8 encoding, and
+  /// JSON payload structure in Dart after selection.
+  ///
+  /// Returns `null` only when the user cancels the picker. Unsupported
+  /// extensions, empty files, oversized files (> 20 MB), invalid UTF-8 bytes,
+  /// malformed JSON payloads, and IO failures throw explicit exceptions for UI
+  /// reporting.
   Future<PickedBackupResult?> pickImportFile() async {
     final PlatformFile? file;
     final pickOverride = _pickFileOverride;
     if (pickOverride != null) {
       file = await pickOverride();
     } else {
+      final isAndroid = _isAndroidOverride ?? (Platform.isAndroid && !kIsWeb);
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['attendiq', 'json'],
+        type: isAndroid ? FileType.any : FileType.custom,
+        allowedExtensions:
+            isAndroid ? null : const <String>['attendiq', 'json'],
         withData: kIsWeb,
       );
       if (result == null || result.files.isEmpty) {
@@ -339,18 +352,25 @@ class BackupService {
       return null;
     }
 
+    final filePath = kIsWeb ? null : file.path;
+    _validateSupportedImportExtension(file.name, filePath);
+
     if (file.size > maxBackupPayloadBytes) {
       throw const FormatException(
         'Backup file exceeds maximum supported size of 20 MB.',
       );
     }
 
-    final filePath = file.path;
+    final trimmedPath = filePath?.trim();
+    final lowerPath = trimmedPath?.toLowerCase();
+    final hasReadableFilesystemPath = trimmedPath != null &&
+        trimmedPath.isNotEmpty &&
+        !lowerPath!.startsWith('content://') &&
+        !lowerPath.startsWith('file://');
+
     final String content;
-    if (filePath != null &&
-        filePath.trim().isNotEmpty &&
-        !filePath.trim().toLowerCase().startsWith('content://')) {
-      content = await _readRawFileContent(filePath);
+    if (hasReadableFilesystemPath) {
+      content = await _readRawFileContent(trimmedPath);
     } else if (file.bytes != null) {
       content = _decodeBackupBytes(file.bytes!);
     } else {
@@ -360,11 +380,54 @@ class BackupService {
       );
     }
 
+    BackupValidator.decodeRawJson(content);
+
     return PickedBackupResult(
-      filePath: filePath ?? file.name,
+      filePath: hasReadableFilesystemPath ? trimmedPath : file.name,
       fileName: file.name,
       content: content,
     );
+  }
+
+  static void _validateSupportedImportExtension(
+    String fileName,
+    String? filePath,
+  ) {
+    final trimmedName = fileName.trim();
+    final nameExt = _extractExtension(trimmedName);
+    if (nameExt != null) {
+      if (_supportedImportExtensions.contains(nameExt)) {
+        return;
+      }
+      throw FormatException(
+        'Unsupported backup file "$trimmedName". Please select a .attendiq or .json file.',
+      );
+    }
+
+    if (filePath != null && filePath.trim().isNotEmpty) {
+      final pathExt = _extractExtension(filePath.trim());
+      if (pathExt != null && _supportedImportExtensions.contains(pathExt)) {
+        return;
+      }
+    }
+
+    final displayName =
+        trimmedName.isNotEmpty ? trimmedName : (filePath?.trim() ?? 'unknown');
+    throw FormatException(
+      'Unsupported backup file "$displayName". Please select a .attendiq or .json file.',
+    );
+  }
+
+  static String? _extractExtension(String rawNameOrPath) {
+    final baseName = rawNameOrPath.split(RegExp(r'[/\\]')).last.trim();
+    if (baseName.isEmpty) {
+      return null;
+    }
+    final dotIndex = baseName.lastIndexOf('.');
+    if (dotIndex <= 0 || dotIndex == baseName.length - 1) {
+      return null;
+    }
+    return baseName.substring(dotIndex + 1).toLowerCase();
   }
 
   /// Validates a raw backup JSON string synchronously.
