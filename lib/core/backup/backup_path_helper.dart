@@ -89,6 +89,50 @@ class ExportSaveResult {
   }
 }
 
+/// Structured failure category returned when opening an exported `content://` URI.
+enum OpenExportFailureReason {
+  none,
+  noCompatibleApp,
+  activityLaunchFailed,
+  invalidUri,
+  unsupportedPlatform,
+  channelError,
+}
+
+/// Structured outcome for [BackupPathHelper.openExportUriWithResult].
+class OpenExportUriResult {
+  final bool opened;
+  final OpenExportFailureReason reason;
+  final String? errorCode;
+  final String? message;
+
+  const OpenExportUriResult({
+    required this.opened,
+    this.reason = OpenExportFailureReason.none,
+    this.errorCode,
+    this.message,
+  });
+
+  const OpenExportUriResult.success()
+      : opened = true,
+        reason = OpenExportFailureReason.none,
+        errorCode = null,
+        message = null;
+
+  factory OpenExportUriResult.failure({
+    required OpenExportFailureReason reason,
+    String? errorCode,
+    String? message,
+  }) {
+    return OpenExportUriResult(
+      opened: false,
+      reason: reason,
+      errorCode: errorCode,
+      message: message,
+    );
+  }
+}
+
 class BackupPathHelper {
   static const MethodChannel _storageChannel =
       MethodChannel('com.ramsa.attendiq/storage');
@@ -543,31 +587,124 @@ class BackupPathHelper {
     );
   }
 
-  /// Opens a public `content://` export URI in an external Android viewer.
-  static Future<bool> openExportUri({
+  /// Opens a public `content://` export URI in an external Android viewer
+  /// and returns a structured result describing any failure for UI fallback.
+  static Future<OpenExportUriResult> openExportUriWithResult({
     required String contentUri,
     required String mimeType,
     bool? isAndroidOverride,
   }) async {
     final trimmed = contentUri.trim();
-    if (!trimmed.toLowerCase().startsWith('content://')) {
-      return false;
+    if (!_isValidExternalContentUri(trimmed)) {
+      return OpenExportUriResult.failure(
+        reason: OpenExportFailureReason.invalidUri,
+        errorCode: 'INVALID_URI',
+        message: 'Only external content:// export URIs can be opened.',
+      );
     }
+
     final isAndroid = isAndroidOverride ?? (Platform.isAndroid && !kIsWeb);
     if (!isAndroid) {
-      return false;
+      return OpenExportUriResult.failure(
+        reason: OpenExportFailureReason.unsupportedPlatform,
+        errorCode: 'UNSUPPORTED_PLATFORM',
+        message: 'Opening export URIs is only supported on Android.',
+      );
     }
+
     try {
-      final bool? success = await _storageChannel.invokeMethod<bool>(
+      final dynamic rawResponse = await _storageChannel.invokeMethod<dynamic>(
         'openExportUri',
         <String, dynamic>{
           'contentUri': trimmed,
           'mimeType': mimeType,
         },
       );
-      return success ?? false;
-    } catch (_) {
+
+      if (rawResponse is bool) {
+        if (rawResponse) {
+          return const OpenExportUriResult.success();
+        }
+        return OpenExportUriResult.failure(
+          reason: OpenExportFailureReason.noCompatibleApp,
+          errorCode: 'NO_COMPATIBLE_APP',
+          message: 'No compatible application is installed to open this file.',
+        );
+      }
+
+      if (rawResponse is Map<Object?, Object?>) {
+        final opened = rawResponse['opened'] == true;
+        if (opened) {
+          return const OpenExportUriResult.success();
+        }
+        final code = (rawResponse['errorCode'] as String?)?.trim();
+        final message = (rawResponse['message'] as String?)?.trim();
+        return OpenExportUriResult.failure(
+          reason: _mapOpenErrorReason(code),
+          errorCode:
+              (code != null && code.isNotEmpty) ? code : 'OPEN_URI_FAILED',
+          message: message,
+        );
+      }
+
+      return OpenExportUriResult.failure(
+        reason: OpenExportFailureReason.channelError,
+        errorCode: 'EMPTY_RESPONSE',
+        message: 'Android storage channel returned an unexpected response.',
+      );
+    } on PlatformException catch (e) {
+      return OpenExportUriResult.failure(
+        reason: _mapOpenErrorReason(e.code),
+        errorCode: e.code,
+        message: e.message,
+      );
+    } catch (e) {
+      return OpenExportUriResult.failure(
+        reason: OpenExportFailureReason.channelError,
+        errorCode: 'CHANNEL_ERROR',
+        message: e.toString(),
+      );
+    }
+  }
+
+  /// Opens a public `content://` export URI in an external Android viewer.
+  static Future<bool> openExportUri({
+    required String contentUri,
+    required String mimeType,
+    bool? isAndroidOverride,
+  }) async {
+    final result = await openExportUriWithResult(
+      contentUri: contentUri,
+      mimeType: mimeType,
+      isAndroidOverride: isAndroidOverride,
+    );
+    return result.opened;
+  }
+
+  static bool _isValidExternalContentUri(String uriString) {
+    if (uriString.isEmpty) {
       return false;
+    }
+    final parsed = Uri.tryParse(uriString);
+    if (parsed == null) {
+      return false;
+    }
+    return parsed.scheme.toLowerCase() == 'content' &&
+        parsed.authority.trim().isNotEmpty;
+  }
+
+  static OpenExportFailureReason _mapOpenErrorReason(String? code) {
+    switch (code) {
+      case 'NO_COMPATIBLE_APP':
+        return OpenExportFailureReason.noCompatibleApp;
+      case 'INVALID_ARGS':
+      case 'INVALID_URI':
+        return OpenExportFailureReason.invalidUri;
+      case 'ACTIVITY_LAUNCH_FAILED':
+      case 'OPEN_URI_FAILED':
+        return OpenExportFailureReason.activityLaunchFailed;
+      default:
+        return OpenExportFailureReason.channelError;
     }
   }
 

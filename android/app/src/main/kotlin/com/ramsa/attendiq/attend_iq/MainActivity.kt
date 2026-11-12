@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.ContentValues
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -332,32 +333,103 @@ class MainActivity : FlutterActivity() {
         mimeType: String,
         result: MethodChannel.Result
     ) {
-        try {
-            val uri = Uri.parse(contentUriString)
-            val authority = uri.authority
-            if (uri.scheme != "content" || authority.isNullOrBlank() || authority.startsWith(packageName)) {
-                result.error("INVALID_URI", "Only external content:// export URIs can be opened.", null)
-                return
-            }
-
-            val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, mimeType)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            val chooser = Intent.createChooser(viewIntent, "Open File").apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            try {
-                startActivity(chooser)
-                result.success(true)
-            } catch (_: ActivityNotFoundException) {
-                result.success(false)
-            }
+        val uri = try {
+            Uri.parse(contentUriString.trim())
         } catch (e: Exception) {
-            result.error("OPEN_URI_FAILED", e.message ?: "Failed to open content URI.", null)
+            result.error("INVALID_URI", e.message ?: "Malformed content URI.", null)
+            return
         }
+
+        val authority = uri.authority
+        if (uri.scheme != "content" || authority.isNullOrBlank() || authority.startsWith(packageName)) {
+            result.error("INVALID_URI", "Only external content:// export URIs can be opened.", null)
+            return
+        }
+
+        val normalizedMimeType = mimeType.trim().takeIf { it.isNotEmpty() } ?: "*/*"
+        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, normalizedMimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        val hasViewer = try {
+            hasCompatibleViewer(viewIntent)
+        } catch (e: Exception) {
+            result.error(
+                "OPEN_URI_FAILED",
+                e.message ?: "Failed to query compatible file viewers.",
+                mapOf("mimeType" to normalizedMimeType)
+            )
+            return
+        }
+
+        if (!hasViewer) {
+            result.success(
+                mapOf(
+                    "opened" to false,
+                    "errorCode" to "NO_COMPATIBLE_APP",
+                    "message" to "No compatible application is installed to open this file.",
+                    "mimeType" to normalizedMimeType
+                )
+            )
+            return
+        }
+
+        val chooser = Intent.createChooser(viewIntent, "Open File").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        try {
+            startActivity(chooser)
+            result.success(
+                mapOf(
+                    "opened" to true,
+                    "mimeType" to normalizedMimeType
+                )
+            )
+        } catch (_: ActivityNotFoundException) {
+            result.success(
+                mapOf(
+                    "opened" to false,
+                    "errorCode" to "NO_COMPATIBLE_APP",
+                    "message" to "No compatible application is installed to open this file.",
+                    "mimeType" to normalizedMimeType
+                )
+            )
+        } catch (e: SecurityException) {
+            result.error(
+                "ACTIVITY_LAUNCH_FAILED",
+                e.message ?: "Permission denied while opening content URI.",
+                mapOf("mimeType" to normalizedMimeType)
+            )
+        } catch (e: Exception) {
+            result.error(
+                "ACTIVITY_LAUNCH_FAILED",
+                e.message ?: "Failed to launch external file viewer.",
+                mapOf("mimeType" to normalizedMimeType)
+            )
+        }
+    }
+
+    private fun hasCompatibleViewer(intent: Intent): Boolean {
+        val activities = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.queryIntentActivities(
+                intent,
+                PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong())
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        }
+
+        val hasExternalHandler = activities.any { resolveInfo ->
+            val activityInfo = resolveInfo.activityInfo
+            activityInfo != null &&
+                activityInfo.exported &&
+                activityInfo.packageName != packageName
+        }
+        return hasExternalHandler && intent.resolveActivity(packageManager) != null
     }
 
     private fun sanitizeFileName(raw: String?): String? {

@@ -30,6 +30,7 @@ class ExportSuccessDialog extends StatefulWidget {
     required String mimeType,
     Future<ExportSaveResult> Function()? onSavePublicCopy,
     @visibleForTesting ShareFilesHandler? shareFilesOverride,
+    @visibleForTesting bool? isAndroidOverride,
   }) async {
     return showDialog<void>(
       context: context,
@@ -40,6 +41,7 @@ class ExportSuccessDialog extends StatefulWidget {
         mimeType: mimeType,
         onSavePublicCopy: onSavePublicCopy,
         shareFilesOverride: shareFilesOverride,
+        isAndroidOverride: isAndroidOverride,
       ),
     );
   }
@@ -51,6 +53,7 @@ class ExportSuccessDialog extends StatefulWidget {
 class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
   late ExportSaveResult _currentResult;
   bool _isSavingCopy = false;
+  bool _isOpeningFile = false;
 
   @override
   void initState() {
@@ -58,41 +61,44 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
     _currentResult = widget.exportResult;
   }
 
-  Future<void> _handleShare(BuildContext context) async {
+  static Future<void> _shareExportedFile({
+    required ExportSaveResult result,
+    required String mimeType,
+    required ScaffoldMessengerState? messenger,
+    ShareFilesHandler? shareHandler,
+  }) async {
     try {
-      final sharePath = _currentResult.effectiveSharePath;
+      final sharePath = result.effectiveSharePath;
       if (sharePath != null &&
           !sharePath.trim().toLowerCase().startsWith('content://') &&
           await File(sharePath).exists()) {
         final isBeta = await BackupPathHelper.isBetaApp();
         final appName = isBeta ? 'AttendIQ Beta' : 'AttendIQ';
-        final shareHandler = widget.shareFilesOverride;
+        final files = [XFile(sharePath, mimeType: mimeType)];
         if (shareHandler != null) {
           await shareHandler(
-            [XFile(sharePath, mimeType: widget.mimeType)],
+            files,
             text: '$appName File Export',
-            subject: _currentResult.fileName,
+            subject: result.fileName,
           );
           return;
         }
         await Share.shareXFiles(
-          [XFile(sharePath, mimeType: widget.mimeType)],
+          files,
           text: '$appName File Export',
-          subject: _currentResult.fileName,
+          subject: result.fileName,
         );
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('File path not found for sharing.'),
-              backgroundColor: AppColors.attendanceLow,
-            ),
-          );
-        }
+      } else if (messenger != null && messenger.mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('File path not found for sharing.'),
+            backgroundColor: AppColors.attendanceLow,
+          ),
+        );
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (messenger != null && messenger.mounted) {
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Share failed: $e'),
             backgroundColor: AppColors.attendanceLow,
@@ -102,27 +108,126 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
     }
   }
 
+  Future<void> _handleShare(BuildContext context) async {
+    await _shareExportedFile(
+      result: _currentResult,
+      mimeType: widget.mimeType,
+      messenger: ScaffoldMessenger.maybeOf(context),
+      shareHandler: widget.shareFilesOverride,
+    );
+  }
+
   Future<void> _handleOpenFile(BuildContext context) async {
     final uri = _currentResult.contentUri;
-    if (uri == null || uri.isEmpty) return;
+    if (uri == null || uri.isEmpty || _isOpeningFile) return;
+
+    setState(() {
+      _isOpeningFile = true;
+    });
 
     try {
-      final opened = await BackupPathHelper.openExportUri(
+      final openResult = await BackupPathHelper.openExportUriWithResult(
         contentUri: uri,
         mimeType: widget.mimeType,
         isAndroidOverride: widget.isAndroidOverride,
       );
-      if (!opened && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Saved to ${_currentResult.displayPath}. Open Files app to view.',
-            ),
-            backgroundColor: AppColors.primary,
+      if (!openResult.opened && mounted) {
+        _showOpenFallbackSnackBar(openResult);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showOpenFallbackSnackBar(
+          OpenExportUriResult.failure(
+            reason: OpenExportFailureReason.channelError,
+            errorCode: 'OPEN_FAILED',
+            message: e.toString(),
           ),
         );
       }
-    } catch (_) {}
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOpeningFile = false;
+        });
+      }
+    }
+  }
+
+  void _showOpenFallbackSnackBar(OpenExportUriResult result) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
+    final currentResult = _currentResult;
+    final mimeType = widget.mimeType;
+    final shareHandler = widget.shareFilesOverride;
+    final hasShareable = currentResult.effectiveSharePath != null;
+    final String message;
+    final Color backgroundColor;
+
+    switch (result.reason) {
+      case OpenExportFailureReason.noCompatibleApp:
+        message = hasShareable
+            ? 'No compatible app found to open ${currentResult.fileName}. '
+                'Saved to ${currentResult.displayPath}. '
+                'Use Share or open via Files app.'
+            : 'No compatible app found to open ${currentResult.fileName}. '
+                'Saved to ${currentResult.displayPath}. '
+                'Open Files app to view.';
+        backgroundColor = AppColors.darkSurface;
+        break;
+      case OpenExportFailureReason.activityLaunchFailed:
+      case OpenExportFailureReason.invalidUri:
+      case OpenExportFailureReason.channelError:
+        message = hasShareable
+            ? 'Unable to open ${currentResult.fileName} directly. '
+                'Saved to ${currentResult.displayPath}. '
+                'Use Share or open via Files app.'
+            : 'Unable to open ${currentResult.fileName} directly. '
+                'Saved to ${currentResult.displayPath}. '
+                'Open Files app to view.';
+        backgroundColor = AppColors.attendanceLow;
+        break;
+      case OpenExportFailureReason.unsupportedPlatform:
+        message =
+            'Saved to ${currentResult.displayPath}. Open Files app to view.';
+        backgroundColor = AppColors.darkSurface;
+        break;
+      case OpenExportFailureReason.none:
+        return;
+    }
+
+    // Dismiss the modal dialog so the fallback SnackBar and its Share action
+    // are rendered above any barrier and remain directly interactive.
+    final navigator = Navigator.maybeOf(context);
+    if (navigator != null && navigator.canPop()) {
+      navigator.pop();
+    }
+
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 6),
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: backgroundColor,
+        action: hasShareable
+            ? SnackBarAction(
+                label: 'Share',
+                textColor: AppColors.primary,
+                onPressed: () {
+                  _shareExportedFile(
+                    result: currentResult,
+                    mimeType: mimeType,
+                    messenger: messenger,
+                    shareHandler: shareHandler,
+                  );
+                },
+              )
+            : null,
+      ),
+    );
   }
 
   Future<void> _handleSavePublicCopy(BuildContext context) async {
@@ -262,7 +367,8 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
           children: [
             if (_currentResult.hasContentUri)
               OutlinedButton.icon(
-                onPressed: () => _handleOpenFile(context),
+                onPressed:
+                    _isOpeningFile ? null : () => _handleOpenFile(context),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
