@@ -184,7 +184,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                   backgroundColor: Colors.orange.withOpacity(0.1),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    showModalBottomSheet(
+                    showModalBottomSheet<void>(
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
@@ -343,7 +343,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     final endTimeController = TextEditingController(text: '11:00');
     AcademicEventType selectedType = defaultType;
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
@@ -440,7 +440,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     final titleController = TextEditingController(text: 'Holiday');
     final descController = TextEditingController();
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Add Holiday'),

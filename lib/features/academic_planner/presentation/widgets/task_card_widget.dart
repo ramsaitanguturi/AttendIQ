@@ -76,7 +76,7 @@ class TaskCardWidget extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16.0),
           onTap: onTap ??
               () {
-                showModalBottomSheet(
+                showModalBottomSheet<void>(
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,

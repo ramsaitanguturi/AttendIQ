@@ -36,7 +36,7 @@ class BackupScheduler {
     @visibleForTesting Directory? backupsDirOverride,
   }) async {
     try {
-      final prefsList = await isar.userPreferencesLocals.where().findAll();
+      final prefsList = isar.userPreferencesLocals.where().findAll();
       if (prefsList.isEmpty) return false;
 
       final pref = prefsList.first;

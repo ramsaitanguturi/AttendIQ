@@ -4,9 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
-import '../../../attendance/presentation/controllers/attendance_controller.dart';
-import '../../../attendance/domain/entities/attendance_record.dart';
-import '../../../../core/event_generator/data/models/event_local.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
 import '../../../timetable/presentation/widgets/semester_weekly_calendar_view.dart';
 import '../../../timetable/presentation/widgets/today_schedule_card.dart';
@@ -131,9 +128,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        Text(
+                        const Text(
                           userName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 26.0,
                             fontWeight: FontWeight.bold,
                           ),
@@ -847,7 +844,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 IconButton(
                   icon: const Icon(Icons.add_circle, color: AppColors.primary),
                   onPressed: () {
-                    showModalBottomSheet(
+                    showModalBottomSheet<void>(
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,

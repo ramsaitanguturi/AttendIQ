@@ -121,7 +121,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          showModalBottomSheet(
+          showModalBottomSheet<void>(
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,

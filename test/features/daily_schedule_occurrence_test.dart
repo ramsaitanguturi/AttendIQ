@@ -80,7 +80,7 @@ void main() {
       expect(record.status, equals(AttendanceStatus.PRESENT));
 
       int presentCount = 0;
-      int absentCount = 0;
+      const absentCount = 0;
       if (record.status == AttendanceStatus.PRESENT) presentCount++;
       final totalConducted = presentCount + absentCount;
 
@@ -117,10 +117,10 @@ void main() {
       expect(occurrence.status, equals(OccurrenceStatus.ABSENT));
       expect(record.status, equals(AttendanceStatus.ABSENT));
 
-      int presentCount = 0;
-      int absentCount = 1;
-      final totalConducted = presentCount + absentCount;
-      final percentage = totalConducted > 0 ? (presentCount / totalConducted) * 100 : 100.0;
+      const presentCount = 0;
+      const absentCount = 1;
+      const totalConducted = presentCount + absentCount;
+      const percentage = totalConducted > 0 ? (presentCount / totalConducted) * 100 : 100.0;
 
       expect(totalConducted, equals(1));
       expect(presentCount, equals(0));

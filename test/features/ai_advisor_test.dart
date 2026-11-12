@@ -49,7 +49,7 @@ void main() {
           'predictedPercentage': 92.0,
         }
       ],
-      riskSubjects: const [
+      riskSubjects: [
         {
           'id': 1,
           'name': 'Mathematics IV',
@@ -59,7 +59,7 @@ void main() {
           'mustAttendConsecutive': 8,
         }
       ],
-      upcomingClasses: const [
+      upcomingClasses: [
         {
           'day': 'Today',
           'subjectId': 1,
@@ -76,7 +76,7 @@ void main() {
         }
       ],
       attendanceTarget: 75.0,
-      recentTrends: const {
+      recentTrends: {
         'recentPercentage': 70.0,
         'totalClassesLoggedLast30Days': 10,
         'presentClassesLoggedLast30Days': 7,

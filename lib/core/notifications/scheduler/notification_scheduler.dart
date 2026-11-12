@@ -426,7 +426,7 @@ class NotificationScheduler {
           legacyRelatedKey: (ae.id + 100000).toString(),
           subjectId: 0,
           title: 'Tomorrow:',
-          body: '${ae.title}',
+          body: ae.title,
           scheduledTime: oneDayBefore,
           offsetMinutes: 1440,
         ));
@@ -733,7 +733,7 @@ class NotificationScheduler {
         .toList();
     final riskStr = riskSubjects.isEmpty ? 'None' : riskSubjects.join(', ');
 
-    final title = 'Weekly Attendance Digest';
+    const title = 'Weekly Attendance Digest';
     final body = 'Overall: ${analytics.overallPercentage.toStringAsFixed(1)}%. '
         'Logged $totalClassesLoggedThisWeek classes ($classesAttendedThisWeek attended). '
         'Best: ${bestSub?.subjectName ?? "N/A"} (${bestSub?.percentage.toStringAsFixed(1) ?? "0"}%). '

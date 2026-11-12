@@ -31,7 +31,7 @@ void main() {
     testWidgets('2. Navigating week updates selected week index and date range text',
         (WidgetTester tester) async {
       int currentWeek = 1;
-      final totalWeeks = 16;
+      const totalWeeks = 16;
       String dateRange = '20 Jul - 26 Jul';
 
       await tester.pumpWidget(
@@ -132,7 +132,7 @@ void main() {
     // Test 6: Dashboard and timetable page show same data structure
     test('6. Dashboard and timetable page request same DayScheduleData model', () {
       final targetDate = DateTime.utc(2026, 8, 10);
-      final slot1 = ScheduleClassSlot(
+      const slot1 = ScheduleClassSlot(
         id: 101,
         type: ScheduleSlotType.classSlot,
         subjectId: 1,

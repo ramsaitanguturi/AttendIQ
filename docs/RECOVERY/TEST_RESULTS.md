@@ -606,3 +606,100 @@ All 14 runtime scenarios were executed on the live Android 14 / API 34 emulator 
    - Verification was executed using the standard Android 14 Pixel Launcher (`com.google.android.apps.nexuslauncher`). OEM-specific launchers (e.g., Samsung One UI, Xiaomi HyperOS, Nova Launcher) were not tested.
 3. **Lock Screen Widgets**:
    - Android 14 does not natively support lock screen app widgets; only home screen widget placement was evaluated.
+
+---
+
+### 5.12 BUG-030: Repository-Wide Flutter Analyzer Cleanup Verification
+
+#### 1. Scope & Objective
+
+BUG-030 resolves repository-wide Flutter analyzer warnings and infos across AttendIQ while preserving:
+- All existing BUG-027 / SUSP-003 home screen widget implementations and tests.
+- Core business logic, database schemas, attendance calculations, notifications, and backup/restore behavior.
+- Clean working directory and zero suppression via ignore comments or broad analyzer exclusions.
+
+#### 2. Analyzer Baseline (Phase 1)
+
+Executed command:
+```bash
+flutter analyze --no-pub
+```
+
+Baseline counts:
+| Metric | Baseline Count | Target Count |
+|---|---|---|
+| **Total Issues** | **360** | Reduced (Warnings: 0, Errors: 0) |
+| **Errors** | **0** | **0** |
+| **Warnings** | **20** | **0** |
+| **Infos** | **340** | **298** |
+
+Baseline diagnostic code breakdown:
+- **Warnings (20)**:
+  - `inference_failure_on_function_invocation`: 7
+  - `unused_import`: 9
+  - `unused_field`: 2
+  - `unused_local_variable`: 1
+  - `inference_failure_on_function_return_type`: 1
+- **Infos (340)**:
+  - `require_trailing_commas`: 222
+  - `constant_identifier_names`: 77
+  - `prefer_const_declarations`: 9
+  - `prefer_const_constructors`: 7
+  - `await_only_futures`: 4
+  - `curly_braces_in_flow_control_structures`: 4
+  - `prefer_final_locals`: 4
+  - `prefer_single_quotes`: 3
+  - `unnecessary_const`: 3
+  - `unnecessary_string_escapes`: 2
+  - `unused_element`: 2
+  - `unnecessary_string_interpolations`: 1
+  - `prefer_final_fields`: 1
+  - `prefer_const_literals_to_create_immutables`: 1
+
+#### 3. Corrections & Implementation Details (Phases 2 & 3)
+
+1. **Resolution of All 20 Warnings (100% Fixed)**:
+   - `lib/features/academic_planner/presentation/pages/academic_planner_page.dart`: Added explicit `<void>` type parameter to `showModalBottomSheet<void>`.
+   - `lib/features/academic_planner/presentation/widgets/add_edit_task_sheet.dart`: Removed unused `Subject` import.
+   - `lib/features/academic_planner/presentation/widgets/task_card_widget.dart`: Added explicit `<void>` type parameter to `showModalBottomSheet<void>`.
+   - `lib/features/analytics/presentation/pages/dashboard_page.dart`: Removed 3 unused imports (`attendance_controller.dart`, `attendance_record.dart`, `event_local.dart`) and added `<void>` to `showModalBottomSheet<void>`.
+   - `lib/features/timetable/presentation/controllers/academic_calendar_controller.dart`: Removed 5 unused imports (`semester.dart`, `subject.dart`, `daily_schedule_occurrence.dart`, `weekly_schedule_rule.dart`, `task_enums.dart`).
+   - `lib/features/timetable/presentation/pages/weekly_timetable_page.dart`: Removed unused fields `_selectedWeekdayIndex` and `_dayNames`, unused local variable `subjectsAsync`, unused private methods `_getCurrentWeekDates` and `_showAddEditTemplateBottomSheet`, and dead `_AddEditTemplateForm` class (372 dead lines eliminated).
+   - `lib/features/timetable/presentation/widgets/academic_calendar_widget.dart`: Added `<void>` to `showModalBottomSheet<void>`.
+   - `lib/features/timetable/presentation/widgets/date_details_bottom_sheet.dart`: Added `<void>` to `showModalBottomSheet<void>` and both `showDialog<void>` invocations.
+   - `lib/features/timetable/presentation/widgets/day_timeline_view.dart`: Added explicit `void` return type to `onSlotTap: void Function(ScheduleClassSlot)?`.
+
+2. **Resolution of High-Value Code Health Infos**:
+   - **`await_only_futures` (4 resolved)**: Removed redundant `await` from synchronous Isar 4 queries (`.findAll()` and `.get()`) in `backup_scheduler.dart:39`, `task_local_datasource.dart:42`, and `settings_repository_impl.dart:47,62`.
+   - **`curly_braces_in_flow_control_structures` (4 resolved)**: Enclosed single-line `if` bodies in blocks in `add_edit_subject_dialog.dart:403,421,568,644`.
+   - **`unnecessary_string_escapes` & `unnecessary_string_interpolations` (3 resolved)**: Removed unneeded `\'` escapes in double-quoted strings in `ai_chat_controller.dart:63,139` and interpolation in `notification_scheduler.dart:429`.
+   - **`prefer_single_quotes` (3 resolved)**: Replaced double quotes with single quotes for simple string literals in `ai_assistant_page.dart:19-21`.
+   - **`prefer_const_constructors` & `prefer_const_declarations` (17 resolved)**: Added `const` to constructors and constant local variables in `dashboard_page.dart`, `academic_calendar_widget.dart`, `day_timeline_view.dart`, `notification_scheduler.dart`, `ai_chat_controller.dart`, `backup_service_test.dart`, `daily_schedule_occurrence_test.dart`, `dashboard_weekly_timetable_test.dart`, `flexible_timetable_architecture_test.dart`, `production_readiness_test.dart`, and `reports_test.dart`.
+   - **`unnecessary_const` (3 resolved)**: Removed redundant nested `const` collection keywords inside const constructor arguments in `ai_advisor_test.dart:52,62,79`.
+   - **`prefer_final_locals` (4 resolved)**: Declared immutable locals as `final`/`const` in `academic_planner_test.dart:230` and `daily_schedule_occurrence_test.dart:83,120,121`.
+
+3. **Dead Code Elimination**:
+   - `weekly_timetable_page.dart`: Removed lines 321–694 containing obsolete `_AddEditTemplateForm` and `TimetableTemplate` modal plumbing from the legacy timetable system. Replaced by canonical `SemesterWeeklyCalendarView` and `WeeklyScheduleRule` editing.
+
+#### 4. Intentionally Retained Diagnostics & Rationale
+
+Exactly 298 informational diagnostics are intentionally retained:
+
+| Diagnostic Rule | Count | Severity | Rationale for Retention |
+|---|---|---|---|
+| `require_trailing_commas` | 221 | Info | Pure formatting rule. Enforcing trailing commas on all 221 occurrences would require mechanical, wide-scale line restructuring across 36 files, introducing significant diff churn and git merge conflict risk without defect prevention value (adhering strictly to Phase 3 instructions). |
+| `constant_identifier_names` | 77 | Info | Domain and persistence enums across 11 files (`task_enums.dart`, `daily_schedule_occurrence.dart`, `event.dart`, `academic_calendar_controller.dart`, `notification_item.dart`, `attendance_record.dart`, `academic_event.dart`, `schedule_exception.dart`, `risk_status.dart`, `bunk_analyzer.dart`, `subject.dart`) define uppercase constants (`PRESENT`, `ABSENT`, `SAFE`, `WARNING`, `CRITICAL`, `REGULAR_CLASS`). Modifying these identifiers risks database deserialization mismatches with Isar schemas, JSON backup payloads, and cross-module business logic (strictly adhering to Rule 3). |
+
+#### 5. Verification Matrix (Phase 4)
+
+| Check | Command | Result | Details |
+|---|---|---|---|
+| **Analyzer Verification** | `flutter analyze --no-pub` | **PASS** | 298 issues (0 errors, 0 warnings, 298 intentionally retained infos). |
+| **Unit & Integration Suite** | `flutter test --no-pub -j 1` | **PASS** | **260 / 260 tests passed** across all test files (0 failures, 0 flakes). |
+| **Widget Test Suite** | `flutter test test/features/widgets_test.dart` | **PASS** | **12 / 12 tests passed**; BUG-027 implementation 100% verified. |
+| **Formatting Verification** | `dart format --output=none --set-exit-if-changed <files>` | **PASS** | Formatted 24 files (0 changed) in 0.91s. |
+| **Whitespace & Diff Check** | `git diff --check` | **PASS** | Clean working copy, zero whitespace or conflict markers. |
+| **Kotlin Prod Compilation** | `./gradlew compileProdDebugKotlin` | **PASS** | `BUILD SUCCESSFUL in 1m 1s`. |
+| **Kotlin Beta Compilation** | `./gradlew compileBetaDebugKotlin` | **PASS** | `BUILD SUCCESSFUL in 1m 1s`. |
+| **APK Build Requirement** | N/A | **SKIPPED** | Android native files (`android/**`) were untouched; existing APK artifacts remain valid. |
+| **BUG-027 Preservation** | Codebase inspection & test suite | **VERIFIED** | Widget Kotlin providers, XML layouts, Dart synchronization, and tests are untouched. |

@@ -227,7 +227,7 @@ void main() {
     );
 
     await container.read(taskListControllerProvider.future);
-    var tasks = container.read(allTasksProvider);
+    final tasks = container.read(allTasksProvider);
     final taskId = tasks.first.id!;
 
     expect(container.read(completedTasksProvider).length, equals(0));

@@ -258,7 +258,7 @@ void main() {
       ];
 
       // Simulate Tuesday (weekday = 2)
-      final tuesdayWeekday = 2;
+      const tuesdayWeekday = 2;
       final todayMatchingRules = rules.where((r) => r.dayOfWeek == tuesdayWeekday && r.isActive).toList();
 
       expect(todayMatchingRules.length, equals(1));

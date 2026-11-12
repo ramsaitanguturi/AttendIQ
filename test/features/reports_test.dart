@@ -258,7 +258,7 @@ void main() {
         totalPresent: 38,
         totalAbsent: 12,
         subjectReports: [
-          SubjectReport(
+          const SubjectReport(
             subjectName: 'Mathematics',
             faculty: 'Dr. Euler',
             percentage: 80.0,
@@ -267,7 +267,7 @@ void main() {
             totalClasses: 10,
             riskStatus: RiskStatus.SAFE,
           ),
-          SubjectReport(
+          const SubjectReport(
             subjectName: 'Physics',
             faculty: 'Dr. Newton',
             percentage: 70.0,
@@ -293,7 +293,7 @@ void main() {
         totalPresent: 38,
         totalAbsent: 12,
         subjectReports: [
-          SubjectReport(
+          const SubjectReport(
             subjectName: 'Mathematics',
             faculty: 'Dr. Euler',
             percentage: 80.0,

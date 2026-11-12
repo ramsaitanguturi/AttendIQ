@@ -399,8 +399,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                         border: OutlineInputBorder(),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty)
+                        if (val == null || val.trim().isEmpty) {
                           return 'Required';
+                        }
                         return null;
                       },
                     ),
@@ -417,8 +418,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                         border: OutlineInputBorder(),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty)
+                        if (val == null || val.trim().isEmpty) {
                           return 'Required';
+                        }
                         return null;
                       },
                     ),
@@ -564,8 +566,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                             DropdownMenuItem(value: 7, child: Text('Sunday')),
                           ],
                           onChanged: (val) {
-                            if (val != null)
+                            if (val != null) {
                               setState(() => slot.dayOfWeek = val);
+                            }
                           },
                         ),
                         const SizedBox(height: 10.0),
@@ -640,8 +643,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                                       child: Text('Lab')),
                                 ],
                                 onChanged: (val) {
-                                  if (val != null)
+                                  if (val != null) {
                                     setState(() => slot.type = val);
+                                  }
                                 },
                               ),
                             ),

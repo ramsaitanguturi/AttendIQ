@@ -103,7 +103,7 @@ void main() {
 
     test('BackupImporter throws FormatException on higher unsupported backupVersion', () {
       final importer = BackupImporter(FakeIsar());
-      final invalidVersionJson = '''
+      const invalidVersionJson = '''
       {
         "metadata": {
           "appVersion": "2.0.0",

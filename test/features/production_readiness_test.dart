@@ -77,13 +77,13 @@ void main() {
   group('Production Readiness - AI Fallback Heuristics', () {
     test('LocalAdvisorService fallback generates mathematically correct suggestions when offline', () async {
       const localAdvisor = LocalAdvisorService();
-      final context = AttendanceAIContext(
-        studentInfo: const {},
-        semester: const {},
-        attendanceSummary: const {},
-        recentTrends: const {},
+      const context = AttendanceAIContext(
+        studentInfo: {},
+        semester: {},
+        attendanceSummary: {},
+        recentTrends: {},
         attendanceTarget: 75.0,
-        subjectStatistics: const [
+        subjectStatistics: [
           {
             'id': 1,
             'name': 'Math',
@@ -95,14 +95,14 @@ void main() {
             'currentPercentage': 66.7,
           }
         ],
-        upcomingClasses: const [
+        upcomingClasses: [
           {
             'subjectId': 1,
             'subjectName': 'Math',
             'day': 'Tomorrow',
           }
         ],
-        riskSubjects: const [
+        riskSubjects: [
           {
             'name': 'Math',
             'status': 'Critical',

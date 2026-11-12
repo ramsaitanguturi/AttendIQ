@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:attend_iq/core/theme/colors.dart';
-import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/academic_task.dart';
 import '../../domain/entities/task_enums.dart';

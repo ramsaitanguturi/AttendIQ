@@ -36,15 +36,15 @@ class AcademicCalendarWidget extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_month_outlined,
                     color: AppColors.primary,
                     size: 22,
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: 8),
+                  Text(
                     'Academic Calendar',
                     style: TextStyle(
                       fontSize: 18.0,
@@ -217,7 +217,7 @@ class AcademicCalendarWidget extends ConsumerWidget {
       onTap: isDisabled
           ? null
           : () {
-              showModalBottomSheet(
+              showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,

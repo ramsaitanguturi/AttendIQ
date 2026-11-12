@@ -6,7 +6,7 @@ import 'class_schedule_card.dart';
 
 class DayTimelineView extends StatefulWidget {
   final DayScheduleData dayData;
-  final Function(ScheduleClassSlot)? onSlotTap;
+  final void Function(ScheduleClassSlot)? onSlotTap;
 
   const DayTimelineView({
     super.key,
@@ -110,8 +110,8 @@ class _DayTimelineViewState extends State<DayTimelineView> {
     }
 
     final isTodayDate = _isToday(dayData.date);
-    final totalHours = _endHour - _startHour;
-    final totalGridHeight = totalHours * _hourRowHeight;
+    const totalHours = _endHour - _startHour;
+    const totalGridHeight = totalHours * _hourRowHeight;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -166,7 +166,7 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                 children: dayData.items.map((slot) {
                   final startMin = _timeToMinutes(slot.startTime);
                   final endMin = _timeToMinutes(slot.endTime);
-                  final timelineStartMin = _startHour * 60;
+                  const timelineStartMin = _startHour * 60;
 
                   final topOffset = ((startMin - timelineStartMin) / 60.0) * _hourRowHeight;
                   final durationMinutes = (endMin - startMin).clamp(30, 360);
@@ -190,8 +190,8 @@ class _DayTimelineViewState extends State<DayTimelineView> {
           if (isTodayDate) ...[
             Builder(builder: (context) {
               final currentMinutes = _now.hour * 60 + _now.minute;
-              final startMinutes = _startHour * 60;
-              final endMinutes = _endHour * 60;
+              const startMinutes = _startHour * 60;
+              const endMinutes = _endHour * 60;
 
               if (currentMinutes >= startMinutes && currentMinutes <= endMinutes) {
                 final topPos = ((currentMinutes - startMinutes) / 60.0) * _hourRowHeight;

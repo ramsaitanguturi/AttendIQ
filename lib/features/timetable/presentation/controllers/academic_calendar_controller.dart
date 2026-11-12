@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../semester/domain/entities/semester.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
-import '../../../subject/domain/entities/subject.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/academic_event.dart';
-import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../../domain/entities/schedule_exception.dart';
-import '../../domain/entities/weekly_schedule_rule.dart';
 import 'timetable_controller.dart';
 
 import '../../../academic_planner/presentation/controllers/task_controller.dart';
-import '../../../academic_planner/domain/entities/task_enums.dart';
 
 enum CalendarItemType {
   EXAM,

@@ -39,7 +39,7 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
 
   @override
   Future<void> deleteTask(int id) async {
-    final task = await _isar.academicTaskLocals.get(id);
+    final task = _isar.academicTaskLocals.get(id);
     if (task != null) {
       await _isar.writeAsync((isar) {
         task.isDeleted = true;

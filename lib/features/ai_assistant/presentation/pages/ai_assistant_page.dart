@@ -16,9 +16,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
 
   static const List<String> _suggestedQuestions = [
     "Can I skip tomorrow's classes?",
-    "What happens if I miss two classes?",
-    "Which subjects are risky?",
-    "How many classes do I need to attend?",
+    'What happens if I miss two classes?',
+    'Which subjects are risky?',
+    'How many classes do I need to attend?',
     "Should I attend today's DBMS class?",
   ];
 

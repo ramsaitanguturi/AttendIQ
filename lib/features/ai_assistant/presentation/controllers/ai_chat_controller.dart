@@ -60,7 +60,7 @@ class AIChatController extends _$AIChatController {
   @override
   FutureOr<AIChatState> build() async {
     final initialMessage = ChatMessage(
-      text: "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow\'s classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
+      text: "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
       sender: MessageSender.assistant,
       timestamp: DateTime.now(),
     );
@@ -97,7 +97,7 @@ class AIChatController extends _$AIChatController {
       final connectivityResult = await Connectivity().checkConnectivity();
       final isOffline = connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty;
       
-      final String envApiKey = const String.fromEnvironment('GEMINI_API_KEY');
+      const String envApiKey = String.fromEnvironment('GEMINI_API_KEY');
       
       AIProvider provider;
       if (isOffline || envApiKey.isEmpty) {
@@ -136,7 +136,7 @@ class AIChatController extends _$AIChatController {
 
   Future<void> clearChat() async {
     final initialMessage = ChatMessage(
-      text: "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow\'s classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
+      text: "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
       sender: MessageSender.assistant,
       timestamp: DateTime.now(),
     );

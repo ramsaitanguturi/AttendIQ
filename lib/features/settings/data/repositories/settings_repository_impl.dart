@@ -44,7 +44,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   @override
   Future<UserPreferences?> getPreferences(String userId) async {
-    final list = await _isar.userPreferencesLocals.where().findAll();
+    final list = _isar.userPreferencesLocals.where().findAll();
     if (list.isNotEmpty) {
       return _toEntity(list.first);
     }
@@ -59,7 +59,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ..isDirty = false
       ..isDeleted = false;
 
-    final existingList = await _isar.userPreferencesLocals.where().findAll();
+    final existingList = _isar.userPreferencesLocals.where().findAll();
     if (existingList.isNotEmpty) {
       localPref.id = existingList.first.id;
     }
