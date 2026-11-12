@@ -336,12 +336,20 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     );
   }
 
+  int? _toMinutes(TimeOfDay? time) {
+    if (time == null) return null;
+    return time.hour * 60 + time.minute;
+  }
+
   void _showAddEventDialog(BuildContext context, WidgetRef ref, DateTime date, AcademicEventType defaultType) {
     final titleController = TextEditingController();
     final descController = TextEditingController();
     final startTimeController = TextEditingController(text: '10:00');
     final endTimeController = TextEditingController(text: '11:00');
     AcademicEventType selectedType = defaultType;
+    TimeOfDay? startTime = const TimeOfDay(hour: 10, minute: 0);
+    TimeOfDay? endTime = const TimeOfDay(hour: 11, minute: 0);
+    String? timeError;
 
     showDialog<void>(
       context: context,
@@ -373,24 +381,77 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                     Expanded(
                       child: TextField(
                         controller: startTimeController,
+                        readOnly: true,
                         decoration: const InputDecoration(
                           labelText: 'Start Time',
                           hintText: 'HH:mm',
+                          suffixIcon: Icon(Icons.access_time, size: 20),
                         ),
+                        onTap: () async {
+                          final picked = await showTimePicker(
+                            context: dialogCtx,
+                            initialTime: startTime ?? const TimeOfDay(hour: 10, minute: 0),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              startTime = picked;
+                              final hh = picked.hour.toString().padLeft(2, '0');
+                              final mm = picked.minute.toString().padLeft(2, '0');
+                              startTimeController.text = '$hh:$mm';
+                              final sMin = _toMinutes(startTime);
+                              final eMin = _toMinutes(endTime);
+                              if (sMin != null && eMin != null && eMin <= sMin) {
+                                timeError = 'End time must be after start time';
+                              } else {
+                                timeError = null;
+                              }
+                            });
+                          }
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: endTimeController,
+                        readOnly: true,
                         decoration: const InputDecoration(
                           labelText: 'End Time',
                           hintText: 'HH:mm',
+                          suffixIcon: Icon(Icons.access_time, size: 20),
                         ),
+                        onTap: () async {
+                          final picked = await showTimePicker(
+                            context: dialogCtx,
+                            initialTime: endTime ?? startTime ?? const TimeOfDay(hour: 11, minute: 0),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              endTime = picked;
+                              final hh = picked.hour.toString().padLeft(2, '0');
+                              final mm = picked.minute.toString().padLeft(2, '0');
+                              endTimeController.text = '$hh:$mm';
+                              final sMin = _toMinutes(startTime);
+                              final eMin = _toMinutes(endTime);
+                              if (sMin != null && eMin != null && eMin <= sMin) {
+                                timeError = 'End time must be after start time';
+                              } else {
+                                timeError = null;
+                              }
+                            });
+                          }
+                        },
                       ),
                     ),
                   ],
                 ),
+                if (timeError != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    timeError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 DropdownButtonFormField<AcademicEventType>(
                   value: selectedType,
@@ -414,6 +475,15 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               onPressed: () async {
                 final title = titleController.text.trim();
                 if (title.isEmpty) return;
+
+                final sMin = _toMinutes(startTime);
+                final eMin = _toMinutes(endTime);
+                if (sMin != null && eMin != null && eMin <= sMin) {
+                  setState(() {
+                    timeError = 'End time must be after start time';
+                  });
+                  return;
+                }
 
                 await ref.read(academicEventControllerProvider.notifier).addEvent(
                       title: title,

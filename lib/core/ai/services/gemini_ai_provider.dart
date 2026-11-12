@@ -8,8 +8,16 @@ import 'ai_provider.dart';
 
 class GeminiAIProvider implements AIProvider {
   final String apiKey;
+  final HttpClient? clientOverride;
 
-  GeminiAIProvider({required this.apiKey});
+  GeminiAIProvider({
+    required this.apiKey,
+    this.clientOverride,
+  });
+
+  static Uri get requestUri => Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+      );
 
   @override
   Future<AIResponse> askQuestion({
@@ -17,23 +25,23 @@ class GeminiAIProvider implements AIProvider {
     required String question,
   }) async {
     if (apiKey.isEmpty) {
-      throw Exception('API Key is empty. Configure GEMINI_API_KEY in compilation variables.');
+      throw Exception(
+          'API Key is empty. Configure GEMINI_API_KEY in compilation variables.');
     }
 
-    final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
-    );
+    final url = requestUri;
 
-    final client = HttpClient();
+    final client = clientOverride ?? HttpClient();
     try {
       final request = await client.postUrl(url);
       request.headers.contentType = ContentType.json;
+      request.headers.set('x-goog-api-key', apiKey);
 
       final body = {
         'systemInstruction': {
           'parts': [
-            {'text': AdvisorPrompts.systemInstruction}
-          ]
+            {'text': AdvisorPrompts.systemInstruction},
+          ],
         },
         'contents': [
           {
@@ -42,14 +50,14 @@ class GeminiAIProvider implements AIProvider {
                 'text': AdvisorPrompts.buildPrompt(
                   question,
                   json.encode(context.toJson()),
-                )
-              }
-            ]
-          }
+                ),
+              },
+            ],
+          },
         ],
         'generationConfig': {
           'responseMimeType': 'application/json',
-        }
+        },
       };
 
       request.write(json.encode(body));
@@ -62,12 +70,12 @@ class GeminiAIProvider implements AIProvider {
 
       final responseBody = await response.transform(utf8.decoder).join();
       final decodedResponse = json.decode(responseBody) as Map<String, dynamic>;
-      
+
       final candidates = decodedResponse['candidates'] as List?;
       if (candidates == null || candidates.isEmpty) {
         throw Exception('No candidates returned from Gemini API.');
       }
-      
+
       final content = candidates.first['content'] as Map?;
       final parts = content?['parts'] as List?;
       if (parts == null || parts.isEmpty) {
@@ -77,7 +85,9 @@ class GeminiAIProvider implements AIProvider {
       final rawText = parts.first['text'] as String? ?? '';
       return AIResponseParser.parse(rawText);
     } finally {
-      client.close();
+      if (clientOverride == null) {
+        client.close();
+      }
     }
   }
 
@@ -87,7 +97,8 @@ class GeminiAIProvider implements AIProvider {
   }) async {
     return askQuestion(
       context: context,
-      question: 'Give me general academic advisor suggestions and prioritize classes for me based on my current attendance and weekly schedule.',
+      question:
+          'Give me general academic advisor suggestions and prioritize classes for me based on my current attendance and weekly schedule.',
     );
   }
 }

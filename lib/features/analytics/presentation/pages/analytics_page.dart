@@ -372,7 +372,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 22,
-                            interval: (points.length / 5).clamp(1.0, 100.0),
+                            interval: points.length <= 1
+                                ? 1.0
+                                : (points.length / 5).clamp(1.0, 100.0),
                             getTitlesWidget: (value, meta) {
                               final index = value.toInt();
                               if (index < 0 || index >= points.length) {
@@ -404,7 +406,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                         show: false,
                       ),
                       minX: 0,
-                      maxX: (points.length - 1).toDouble(),
+                      maxX: points.length <= 1
+                          ? 1.0
+                          : (points.length - 1).toDouble(),
                       minY: 0,
                       maxY: 100,
                       lineBarsData: [
@@ -412,7 +416,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                           spots: List.generate(points.length, (index) {
                             return FlSpot(index.toDouble(), points[index].percentage);
                           }),
-                          isCurved: true,
+                          isCurved: points.length > 1,
                           gradient: const LinearGradient(
                             colors: [AppColors.primary, Color(0xFF00BFFF)],
                           ),

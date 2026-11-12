@@ -138,19 +138,24 @@ AttendIQ follows **Clean Architecture** principles decoupled into feature module
 ```text
 lib/
  ├── core/                  # Shared utilities, database, notifications & base widgets
+ │    ├── ai/               # AI Advisor services (Local heuristics & Gemini API)
  │    ├── attendance_engine/# Attendance percentage & safe bunk calculators
- │    ├── backup/           # Import/export backup manager (.attendiq)
- │    ├── database/         # Isar instance setup & schemas
- │    ├── notifications/    # Local notification queue manager
+ │    ├── background/       # WorkManager background worker & periodic refresh
+ │    ├── backup/           # Import/export backup manager (.attendiq, JSON)
+ │    ├── database/         # Isar instance setup, 13 schemas & migrations
+ │    ├── notifications/    # Local notification queue & lifecycle manager
  │    └── theme/            # Material 3 dark/light HSL color tokens
  └── features/              # Feature-First Clean Architecture modules
       ├── academic_planner/ # Tasks, assignments, projects & calendar events
+      ├── ai_assistant/     # Academic counseling chat & recommendation UI
       ├── attendance/       # Daily check-ins, event generation & status updates
       ├── analytics/        # Attendance progress, reports & trends (PDF/CSV)
       ├── onboarding/       # Initial semester configuration wizard
-      ├── semester/         # Active semester metadata & subject management
+      ├── semester/         # Active semester metadata & management
       ├── settings/         # App settings, backups, theme selection
-      └── timetable/        # Weekly slot rules & schedule generation
+      ├── subject/          # Course subjects & weekly rule definitions
+      ├── timetable/        # Weekly slot rules & schedule generation
+      └── widgets/          # Android home screen widgets & sync coordinator
 ```
 
 ## Installation Guide
@@ -165,7 +170,7 @@ lib/
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/username/AttendIQ.git
+   git clone https://github.com/ramsaitanguturi/AttendIQ.git
    cd AttendIQ
    ```
 
@@ -181,7 +186,7 @@ lib/
 
 4. **Run the Application**:
    ```bash
-   flutter run
+   flutter run --flavor prod
    ```
 
 ---
@@ -191,13 +196,14 @@ lib/
 To generate a production release APK for Android:
 
 ```bash
-flutter build apk --release
+flutter build apk --release --flavor prod
 ```
 
 **Output Location**:
 ```text
-build/app/outputs/flutter-apk/app-release.apk
+build/app/outputs/flutter-apk/app-prod-release.apk
 ```
+*(and copied to `app-release.apk`)*
 
 ---
 
@@ -229,10 +235,11 @@ AttendIQ is built around strict data privacy guarantees:
 
 ## Roadmap
 
+- [x] **AI Academic Assistant**: Local AI recommendations for study schedules based on attendance margins (with optional Gemini API).
+- [x] **Smart Attendance Predictions**: Mathematical safe bunk & must-attend algorithms for exam eligibility.
+- [x] **Android Home Screen Widgets**: 2x2 Today, 4x2 Today, Weekly, and Monthly widgets with background sync.
 - [ ] **iOS Release**: Finalize App Store distribution pipeline and iOS notifications.
 - [ ] **Optional Cloud Sync**: Opt-in encrypted backup sync via user-owned Google Drive or iCloud.
-- [ ] **AI Academic Assistant**: Local AI recommendations for study schedules based on attendance margins.
-- [ ] **Smart Attendance Predictions**: Predictive forecasting for exam eligibility based on historical trends.
 - [ ] **College Timetable Import**: ICS calendar import & OCR-based timetable image parsing.
 
 ---

@@ -148,8 +148,7 @@ class _SpyNotificationDatabase implements NotificationDatabase {
   Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
       DateTime start, DateTime end) async {
     return scheduleExceptions.where((e) {
-      final dateStripped =
-          DateTime.utc(e.date.year, e.date.month, e.date.day);
+      final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
     }).toList();
   }
@@ -876,7 +875,7 @@ void main() {
 
       expect(service.isInitialized, isTrue);
       expect(pluginInitCalls, equals(2));
-      expect(channelCreationCalls, equals(3));
+      expect(channelCreationCalls, equals(4));
     });
 
     test(

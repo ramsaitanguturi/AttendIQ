@@ -102,12 +102,23 @@ class LocalNotificationServiceImpl implements NotificationService {
         enableVibration: false,
       );
 
+      const AndroidNotificationChannel defaultChannel =
+          AndroidNotificationChannel(
+        'default',
+        'General Notifications',
+        description: 'General app notifications.',
+        importance: Importance.defaultImportance,
+        playSound: true,
+        enableVibration: true,
+      );
+
       await androidImplementation
           .createNotificationChannel(classRemindersChannel);
       await androidImplementation
           .createNotificationChannel(attendanceWarningsChannel);
       await androidImplementation
           .createNotificationChannel(weeklyReportsChannel);
+      await androidImplementation.createNotificationChannel(defaultChannel);
     }
 
     _isInitialized = true;

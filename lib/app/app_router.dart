@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -42,7 +43,7 @@ GoRouter appRouter(AppRouterRef ref) {
 
   return GoRouter(
     initialLocation: '/splash',
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: kDebugMode,
     refreshListenable: notifier,
     redirect: (BuildContext context, GoRouterState state) {
       final hasSemesterAsync = ref.read(hasActiveSemesterProvider);
@@ -62,7 +63,7 @@ GoRouter appRouter(AppRouterRef ref) {
           return '/dashboard';
         }
       } else {
-        if (isSplash || location == '/dashboard') {
+        if (!isOnboarding) {
           return '/onboarding';
         }
       }
