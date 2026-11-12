@@ -1,8 +1,12 @@
 # SUSP-001 — Android Runtime Verification Report (`BUG-008`)
 
-**Verification Date:** 2026-11-12  
-**Target Commit / Baseline:** `HEAD` `fbf4055` (*docs: reconcile BUG-008 recovery audit*, parent of / including `e08440e` scoped storage changes); zero repository source files modified during this verification run (`BUG_AUDIT.md` untouched).  
-**Overall `SUSP-001` Verdict:** **OPEN — FAIL (NOT CLOSED)**  
+> **Update (`2026-11-12` Post-Fix Addendum):** Sections 1–7 below preserve the **historical baseline run** at `fbf4055` (`OPEN — FAIL`). See **[Section 8 — Post-Fix Verification Addendum (`2026-11-12`)](#8-post-fix-verification-addendum-susp-001-backup-import-fix-2026-11-12)** for the post-fix verification results resolving the `P3-07`/`P3-08` Android backup import failure across API 28, 29, and 34.
+
+**Verification Date:** 2026-11-12
+
+**Target Commit / Baseline:** `HEAD` `fbf4055` (*docs: reconcile BUG-008 recovery audit*, parent of / including `e08440e` scoped storage changes); zero repository source files modified during this verification run (`BUG_AUDIT.md` untouched).
+
+**Overall `SUSP-001` Verdict:** **OPEN — FAIL (NOT CLOSED)**
 - **Build & Packaging (4/4 Configurations):** **PASS** (`prodDebug`, `betaDebug`, `prodRelease`, `betaRelease`)
 - **Runtime Execution Matrix (`3 API Tiers × 4 Configs`):** Executed on `emulator-5556` (API 28), `emulator-5558` (API 29), and `emulator-5554` (API 34) with simultaneous `prod` + `beta` coexistence and data isolation **PASS**, SAF export & MediaStore `IS_PENDING` (`1 -> 0`) **PASS**, v2 Backup Manager & legacy v1 schema restore **PASS**, PDF/CSV reporting **PASS**, and process-kill / OS-reboot persistence **PASS**.
 - **Critical Discovered Failures Blocking Closure:**
@@ -216,3 +220,67 @@ API 34 (`emulator-5554`, `prodRelease`, `pid 4364`):
   1. `BackupService.pickImportFile()` is fixed to support importing `.attendiq` and `.json` files via Android SAF across API 28, API 29, and API 34 (and verified at runtime).
   2. API 28 and API 29 release checks (re-creating `Medium_Phone_1` & `Medium_Phone_2` AVDs if deleted, capturing full `api29_release_logcat.txt` and API 28/29 reboot persistence) are re-verified after the import fix.
 - `docs/RECOVERY/BUG_AUDIT.md` remains unmodified awaiting fix approval and closure verification.
+
+---
+
+## 8. Post-Fix Verification Addendum (`SUSP-001` Backup Import Fix, `2026-11-12`)
+
+**Post-Fix Verdict (`P3-07` / `P3-08` Android Backup Import):** **PASS — RESOLVED & VERIFIED**
+
+**Scope of Code Change:** Dart-only fix in [`lib/core/backup/backup_service.dart`](../../lib/core/backup/backup_service.dart#L315-L431) plus regression suite [`test/core/backup/backup_import_picker_test.dart`](../../test/core/backup/backup_import_picker_test.dart); [`MainActivity.kt`](../../android/app/src/main/kotlin/com/ramsa/attendiq/attend_iq/MainActivity.kt) and unrelated features untouched.
+
+### 8.1 Root Cause & Implemented Fix
+
+- **Root Cause (`file_picker` `8.3.2` Android MIME filtering):** `BackupService.pickImportFile()` previously invoked `FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['attendiq', 'json'], withData: kIsWeb)`. On Android, `file_picker` `8.3.2` resolves `allowedExtensions` via `MimeTypeMap.getSingleton().getMimeTypeFromExtension(...)` (`FileUtils.getMimeTypes`), which rejects `'attendiq'` on API `28`/`29`/`34` and `'json'` on API `28`/`29` (`PlatformException(FilePicker, Unsupported filter...)`), while disabling `.attendiq` selection in `DocumentsUI` on API `34`.
+- **Implemented Fix ([`BackupService.pickImportFile`](../../lib/core/backup/backup_service.dart#L332-L431)):**
+  - Uses `FileType.any` (`allowedExtensions: null`, `withData: kIsWeb`) when running on Android (`!kIsWeb && (_isAndroidOverride ?? Platform.isAndroid)`), while preserving `FileType.custom` (`['attendiq', 'json']`) on non-Android/web platforms.
+  - Enforces strict post-selection extension validation via `_validateSupportedImportExtension` / `_extractExtension` (case-insensitive `.attendiq` or `.json`; rejects unsupported, dot-only, trailing-dot, and extensionless filenames with `FormatException`).
+  - Preserves `content://` and `file://` filesystem URI guards (never passing `content://` URIs to `dart:io File`), reads cached paths via `_readRawFileContent` (supporting `file.bytes == null` when cached path is valid), falls back to `_decodeBackupBytes(file.bytes!)` only when `bytes != null`, and throws `FileSystemException` when neither local path nor bytes is available.
+  - Preserves size limits (`> 0` and `<= 20 MB`), UTF-8 decoding, `BackupValidator.decodeRawJson`, `v1`/`v2` schema/version validation, and `Merge`/`Replace` semantics.
+
+### 8.2 Post-Fix Static & Automated Test Verification
+
+| Check | Command | Result |
+|---|---|---|
+| **New Regression Suite** | `flutter test test/core/backup/backup_import_picker_test.dart` | **PASS (`9/9`)** — covers `.attendiq` & `.json` selection (`FileType.any` on Android, `FileType.custom` on non-Android), legacy `v1` import, malformed JSON, unsupported extensions/content, cancellation, unavailable paths (`null`/empty/`content://`/`file://`/missing), `null` bytes, and `BackupPage` `Merge` & `Replace` flows |
+| **Focused Backup Suite** | `flutter test test/core/backup/` | **PASS (`58/58`)** |
+| **Full Flutter Suite** | `flutter test -j 1` | **PASS (`239/239`)** *(prior default parallel run hit 1 transient Windows temp-dir file lock `PathAccessException` in unrelated `test/features/semester_management_test.dart:738`; sequential `-j 1` passed `239/239`)* |
+| **Focused Dart Analyzer** | `flutter analyze lib/core/backup/backup_service.dart test/core/backup/backup_import_picker_test.dart` | **PASS (`No issues found`)** *(full-repo `flutter analyze` retains `335` pre-existing unrelated issues under `BUG-030`)* |
+| **Formatting & Diff Check** | `dart format --output=none --set-exit-if-changed lib/core/backup/backup_service.dart test/core/backup/backup_import_picker_test.dart` & `git diff --check` | **PASS (`0 changed`, exit code `0`)** |
+
+### 8.3 Post-Fix Android APK Builds (`4/4` PASS)
+
+| Configuration | Artifact Path | Exact Size (Bytes) | Build Time | Status |
+|---|---|---:|---:|---|
+| **`prodDebug`** | `build\app\outputs\flutter-apk\app-prod-debug.apk` | `469,210,643` | `50.4s` | **PASS** |
+| **`betaDebug`** | `build\app\outputs\flutter-apk\app-beta-debug.apk` | `445,973,361` | `23.3s` | **PASS** |
+| **`prodRelease`** | `build\app\outputs\flutter-apk\app-prod-release.apk` (`app-release.apk`) | `68,766,288` | `90.3s` | **PASS** |
+| **`betaRelease`** | `build\app\outputs\flutter-apk\app-beta-release.apk` | `68,766,313` | `79.1s` | **PASS** |
+
+### 8.4 Post-Fix Android Runtime Import Matrix (`12/12` PASS)
+
+Executed sequentially against freshly built APKs (`prod` and `beta` tested separately) on `AttendIQ_API28` (API `28`), `AttendIQ_API29` (API `29`), and `Medium_Phone_3` (API `34`). Every cell verified `DocumentsUI` (`ACTION_OPEN_DOCUMENT` `*/*`) selection from `Downloads` and verified all 5 runtime import cases:
+1. `unsupported_notes.txt` rejected (`Unsupported backup file "unsupported_notes.txt". Please select a .attendiq or .json file.`).
+2. `malformed_runtime.json` rejected (`Invalid JSON format`).
+3. `legacy_v1_runtime.json` imported via `Replace Existing Data` -> Dashboard restored `Legacy V1 Sem`.
+4. `valid_v2_runtime.attendiq` selectable/enabled in `DocumentsUI` and imported via `Replace Existing Data` -> Dashboard restored `Runtime V2 Fall`.
+5. `valid_v2_runtime.json` imported via `Merge Data` -> restored cleanly into isolated flavor DB.
+
+| Build Config | API 28 (`AttendIQ_API28`) | API 29 (`AttendIQ_API29`) | API 34 (`Medium_Phone_3`) |
+|---|---|---|---|
+| **`prodDebug`** | **PASS (`5/5`)** — `FilePickerDelegate: Selected type */*`, cached to `cache/file_picker/...`, 0 crashes | **PASS (`5/5`)** — `msf%3A11/12/13` cached cleanly, 0 crashes | **PASS (`5/5`)** — `.attendiq` & `.json` selectable, 0 crashes |
+| **`betaDebug`** | **PASS (`5/5`)** — isolated `.beta` cache & Isar DB, 0 crashes | **PASS (`5/5`)** — isolated `.beta` cache & Isar DB, 0 crashes | **PASS (`5/5`)** — isolated `.beta` cache & Isar DB, 0 crashes |
+| **`prodRelease`** | **PASS (`5/5`)** — `com.mr.flutter.plugin.filepicker` release caching verified, 0 crashes | **PASS (`5/5`)** — release `logcat` verified cleanly, 0 crashes | **PASS (`5/5`)** — release `.attendiq` & `.json` verified, 0 crashes |
+| **`betaRelease`** | **PASS (`5/5`)** — isolated `.beta` release verified, 0 crashes | **PASS (`5/5`)** — isolated `.beta` release `logcat` verified cleanly, 0 crashes | **PASS (`5/5`)** — isolated `.beta` release verified, 0 crashes |
+
+### 8.5 Historical Test IDs: Re-Verified vs. Not Rerun After Dart-Only Fix
+
+- **Re-verified after the Dart-only `BackupService.pickImportFile()` fix (`12/12` API × config matrix):**
+  - **`P3-07`** (SAF import of `.attendiq` and `.json` via `file_picker`), **`P3-08`** (legacy `v1` backup import via SAF), **`P3-11`** (`content://` URIs cached by `FilePickerUtils` and never passed directly to `dart:io File`), **`P5-01`–`P5-06`** (JSON/UTF-8 validation, `Merge` & `Replace` restore, failed-import DB preservation across SAF imports), and **`P7-01`–`P7-03`** (live `FilePicker` / crash `logcat` capture across API `28`, `29`, and `34` debug & release builds).
+- **Historical baseline checks NOT rerun after the Dart-only picker fix (unchanged since `fbf4055`):**
+  - **`P2-R01`–`P2-R05`** (standalone smoke/Backup Manager listing focus), **`P3-01`–`P3-06`** (export `.attendiq`, `ACTION_CREATE_DOCUMENT`, SAF cancel, unavailable SAF fallback), **`P3-09`** (`Open File`), **`P3-10`** (`Share File`), **`P4-01`–`P4-11`** (MediaStore export, `IS_PENDING`, duplicate naming, `export_share/` cleanup), and **`P6-01`–`P6-06`** (`HOME` backgrounding, `always_finish_activities=1`, `am force-stop`, `adb reboot`).
+
+### 8.6 Remaining Separate Watchpoints & Scope Boundaries
+
+1. **Separate UX Watchpoint (`P3-09` Watchpoint #2 — `MainActivity.openExportContentUri`):** Wrapping `ACTION_VIEW` in `Intent.createChooser(...)` in [`MainActivity.kt`](../../android/app/src/main/kotlin/com/ramsa/attendiq/attend_iq/MainActivity.kt#L349-L357) displays Android's system chooser (`"No apps can perform this action."`) for `.attendiq` instead of throwing `ActivityNotFoundException` to trigger the Dart SnackBar fallback. Left untouched per `MainActivity.kt` restriction; non-crashing UX improvement.
+2. **Home Screen Widgets Runtime Verification (`BUG-027` / `SUSP-003`):** Home Screen Widget runtime behavior and beta deep-link routing remain tracked separately under [`BUG_AUDIT.md`](BUG_AUDIT.md) (`BUG-027` / `SUSP-003`) and are **not** claimed complete under `SUSP-001`.
