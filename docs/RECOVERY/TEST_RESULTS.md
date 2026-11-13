@@ -1088,7 +1088,7 @@ All four APK variants built successfully via Gradle:
 ### 7.1 Scope & Objective
 This remediation phase resolved or formally classified the three remaining issues identified in the Priority 2 report:
 - **BUG-024**: WorkManager auto-backup initialization and runtime behavior.
-- **BUG-031**: Remaining mock-based test infrastructure replacement with real temporary in-memory Isar databases.
+- **BUG-031**: Remaining mock-based test infrastructure replacement with real temporary Isar databases.
 - **BUG-018**: Late attendance status and weighting rules ($W_l$) domain decision analysis per `DOMAIN_RULES.md` §1.1–1.2.
 
 ### 7.2 BUG-024: WorkManager Auto-Backup Implementation & Verification
@@ -1146,7 +1146,7 @@ This remediation phase resolved or formally classified the three remaining issue
 ### 7.5 Test Suite Results
 - **Command**: `flutter test --no-pub -j 1`
 - **Result**: **335 passed, 0 failed, 0 skipped** across all test suites (exit code `0`).
-- **Isar Database Tests**: 100% of migrated real Isar tests (`subject_test.dart`, `attendance_test.dart`, `timetable_test.dart`, `timetable_exceptions_test.dart`, `academic_planner_test.dart`, `production_readiness_test.dart`, `reports_test.dart`, `backup_service_test.dart`) passed on real native in-memory Isar database instances with zero fake mocks.
+- **Isar Database Tests**: 100% of migrated real Isar tests (`subject_test.dart`, `attendance_test.dart`, `timetable_test.dart`, `timetable_exceptions_test.dart`, `academic_planner_test.dart`, `production_readiness_test.dart`, `reports_test.dart`, `backup_service_test.dart`) passed on real native temporary Isar database instances with zero fake mocks.
 
 ### 7.6 Static Analysis
 - **Command**: `flutter analyze --no-pub --no-fatal-infos`
@@ -1165,8 +1165,8 @@ All four application variants built cleanly via Flutter and Gradle with release 
 ### 7.8 Android 14 (API 34) Runtime Verification
 - **Target Device**: `emulator-5554`
 - **OS Version**: Android 14 (`ro.build.version.release = 14`, `ro.build.version.sdk = 34`, product `sdk_gphone64_x86_64`)
-- **Package Under Test**: `com.ramsa.attendiq.attend_iq` (`prodDebug`)
-- **Installation**: Streamed APK install via `adb -s emulator-5554 install -r build/app/outputs/flutter-apk/app-prod-debug.apk` -> `Success`.
+- **Package Under Test**: `com.ramsa.attendiq.attend_iq` (`prodRelease` & `prodDebug`)
+- **Installation**: Streamed APK install via `adb -s emulator-5554 install -r build/app/outputs/flutter-apk/app-prod-release.apk` -> `Success`.
 - **WorkManager Entry Point Verification**:
   - `files/flutter_callback_cache.json` confirms registration of `@pragma('vm:entry-point') void callbackDispatcher()`:
     ```json
@@ -1175,7 +1175,7 @@ All four application variants built cleanly via Flutter and Gradle with release 
 - **JobScheduler Service Verification**:
   - Android WorkManager registered system job:
     ```
-    JOB #u0a219/12: com.ramsa.attendiq.attend_iq/androidx.work.impl.background.systemjob.SystemJobService
+    JOB #u0a220/0: com.ramsa.attendiq.attend_iq/androidx.work.impl.background.systemjob.SystemJobService
     ```
 - **Background Auto-Backup Execution**:
   - Background isolate executed cleanly without requiring foreground application presence.
@@ -1184,4 +1184,23 @@ All four application variants built cleanly via Flutter and Gradle with release 
     - Size: 1,294 bytes
     - Content: Complete restorable JSON structure with `backupVersion: 2`, `metadata`, `userPreferences`, `semesters`, and collections.
 - **Runtime UI Verification**:
-  - Screenshot captured at `build/app_screenshot_final.png`. Zero crashes, zero unhandled platform exceptions.
+  - Screenshot captured at `build/release_screen.png`. Zero crashes, zero unhandled platform exceptions.
+
+### 7.9 Formal Classification Matrix
+
+| Category | Item | Evidence & Details |
+|---|---|---|
+| **Verified** | Git Ancestry | Commits `6852e7c` -> `fa95dcc` -> `9f4b9a3` -> `ae24fd3` -> `57bf5e8` in expected linear ancestry; working tree clean. |
+| **Verified** | Release APK Startup | `prodRelease` installed and launched on Android 14 API 34; logcat shows zero fatal exceptions, zero ANRs, zero crash events. |
+| **Verified** | WorkManager Registration | Unique periodic task registered via `SystemJobService` with constraints `requiresBatteryNotLow: true` and latency window. |
+| **Verified** | Release Entry-Point | `@pragma('vm:entry-point') void callbackDispatcher()` survived release R8 tree-shaking; verified in `files/flutter_callback_cache.json`. |
+| **Verified** | Isar Persistence Regression | Create, Read, Update, Delete, unique auto-increment IDs, and cross-isolate ID preservation verified across all 6 modified data sources on real temporary Isar databases. |
+| **Verified** | Backup Schema & Restoration | v2 `.attendiq` backup envelope, metadata, all 13 collection keys, and Merge/Replace restoration verified via `backup_validation_test.dart` and `backup_merge_test.dart`. |
+| **Verified** | Static Analysis & CI | `flutter analyze --no-pub --no-fatal-infos` (0 errors, 0 warnings), `git diff --check` (clean). |
+| **Verified** | Full Test Suite | `flutter test --no-pub -j 1` passing 335/335 tests (100% pass rate). |
+| **Verified** | Build Compilation | All 4 APK configurations (`prodDebug`, `betaDebug`, `prodRelease`, `betaRelease`) compiled and packaged cleanly. |
+| **Passed with limitations** | WorkManager Natural Periodic Firing | Natural unforced execution without adb trigger could not be observed within the test timeframe because Android 14 JobScheduler enforces a strict +12h timing delay constraint (`TIMING_DELAY [0x80000000]`). Registration and forced execution verified. |
+| **Passed with limitations** | Reboot Persistence Check | JobScheduler `setPersisted(true)` and `RECEIVE_BOOT_COMPLETED` manifest registration verified; full device reboot was bypassed to maintain test agent adb bridge connection. |
+| **Not tested** | Android API 28 & API 29 | Excluded by explicit user instruction ("Do not use API 28 or API 29"). |
+| **Not tested** | Android API 35 & API 36 | Excluded due to absence of local SDK emulator system images. |
+| **Deferred** | BUG-018: Late Attendance & $W_l$ | Deferred pending formal product specification resolving storage scope (global vs semester vs subject), historical immutability guarantees, and fractional UI presentation. |
