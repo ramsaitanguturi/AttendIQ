@@ -54,7 +54,7 @@ class DailyScheduleOccurrence {
   final String? slotKey;
   final String title;
   final String startTime; // "HH:mm"
-  final String endTime;   // "HH:mm"
+  final String endTime; // "HH:mm"
   final OccurrenceType type;
   final OccurrenceStatus status;
   final OccurrenceCreatedFrom createdFrom;

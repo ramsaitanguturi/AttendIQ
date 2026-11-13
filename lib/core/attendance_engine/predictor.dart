@@ -10,7 +10,8 @@ class AttendancePredictor {
     required int attended,
     required int total,
     required int remaining,
-    required double recentRate, // range [0.0, 1.0] representing percentage / 100
+    required double
+        recentRate, // range [0.0, 1.0] representing percentage / 100
   }) {
     final forecastedPresent = attended + (remaining * recentRate);
     final forecastedTotal = total + remaining;

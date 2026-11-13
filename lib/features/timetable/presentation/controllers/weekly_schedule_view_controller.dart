@@ -5,12 +5,13 @@ import '../../../attendance/domain/entities/attendance_record.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../../domain/entities/schedule_exception.dart';
+import '../../domain/entities/academic_event.dart';
 import '../../domain/repositories/daily_schedule_occurrence_repository.dart';
 import '../../domain/utils/semester_week_calculator.dart';
 import '../../data/utils/occurrence_identity.dart';
 import 'timetable_controller.dart';
 
-enum ScheduleSlotType { classSlot, exam }
+enum ScheduleSlotType { classSlot, exam, event }
 
 class ScheduleClassSlot {
   final int id;
@@ -124,6 +125,14 @@ final dayScheduleByKeyProvider =
   final examExceptions =
       exceptions.where((e) => e.type == ScheduleExceptionType.EXAM).toList();
 
+  List<AcademicEvent> academicEvents = [];
+  try {
+    final academicEventRepo = ref.watch(academicEventRepositoryProvider);
+    academicEvents = await academicEventRepo.getEventsForDate(utcDate);
+  } catch (_) {}
+  final activeAcademicEvents =
+      academicEvents.where((e) => !e.isDeleted).toList();
+
   final ruleRepo = ref.watch(weeklyScheduleRuleRepositoryProvider);
   final occurrenceRepo = ref.watch(dailyScheduleOccurrenceRepositoryProvider);
   final attendanceRepo = ref.watch(attendanceRepositoryProvider);
@@ -190,18 +199,64 @@ final dayScheduleByKeyProvider =
     }
   }
 
-  // Add Exams (using exam-scoped slotKey so exam.id cannot collide with rule.id)
+  // Add Exams and Academic Events with actual start and end times and deduplication
+  final consumedAcademicEventIds = <int>{};
+
   for (final exam in examExceptions) {
     final sub = exam.subjectId != null ? subjectMap[exam.subjectId] : null;
-    final examTitle = sub != null ? '${sub.name} Exam' : exam.title;
+
+    AcademicEvent? matchingEvent;
+    for (final ae in activeAcademicEvents) {
+      if (consumedAcademicEventIds.contains(ae.id)) continue;
+      final titleMatches =
+          normalizeTitleForKey(ae.title) == normalizeTitleForKey(exam.title) ||
+              normalizeTitleForKey(ae.title)
+                  .contains(normalizeTitleForKey(exam.title)) ||
+              normalizeTitleForKey(exam.title)
+                  .contains(normalizeTitleForKey(ae.title));
+      final subjectMatches = sub != null &&
+          (normalizeTitleForKey(ae.title)
+                  .contains(normalizeTitleForKey(sub.name)) ||
+              (ae.type == AcademicEventType.EXAM && titleMatches));
+
+      if (titleMatches || subjectMatches) {
+        matchingEvent = ae;
+        if (ae.id != null) consumedAcademicEventIds.add(ae.id!);
+        break;
+      }
+    }
+
+    final examTitle =
+        sub != null ? '${sub.name} Exam' : (matchingEvent?.title ?? exam.title);
+
+    String startTime = '09:00';
+    String endTime = '12:00';
+    if (matchingEvent != null) {
+      if (matchingEvent.startTime != null &&
+          matchingEvent.startTime!.trim().isNotEmpty) {
+        startTime = normalizeTimeSlotPart(matchingEvent.startTime!);
+      }
+      if (matchingEvent.endTime != null &&
+          matchingEvent.endTime!.trim().isNotEmpty) {
+        endTime = normalizeTimeSlotPart(matchingEvent.endTime!);
+      }
+    } else if (exam.description != null) {
+      final match = RegExp(r'(\d{1,2}:\d{2})\s*[-–to]+\s*(\d{1,2}:\d{2})')
+          .firstMatch(exam.description!);
+      if (match != null) {
+        startTime = normalizeTimeSlotPart(match.group(1)!);
+        endTime = normalizeTimeSlotPart(match.group(2)!);
+      }
+    }
+
     items.add(
       ScheduleClassSlot(
-        id: exam.id ?? 0,
+        id: exam.id ?? (matchingEvent?.id ?? 0),
         slotKey: computeCanonicalSlotKey(
           date: utcDate,
           subjectId: exam.subjectId,
-          startTime: '09:00',
-          endTime: '12:00',
+          startTime: startTime,
+          endTime: endTime,
           type: 'EXAM',
           title: examTitle,
         ),
@@ -209,10 +264,44 @@ final dayScheduleByKeyProvider =
         subjectId: exam.subjectId,
         title: examTitle,
         code: sub?.code ?? 'EXAM',
-        startTime: '09:00',
-        endTime: '12:00',
-        description: exam.description ?? 'Exam Event',
+        startTime: startTime,
+        endTime: endTime,
+        description:
+            matchingEvent?.description ?? exam.description ?? 'Exam Event',
         colorHex: '#EF4444',
+        date: utcDate,
+      ),
+    );
+  }
+
+  // Add remaining academic events
+  for (final ae in activeAcademicEvents) {
+    if (ae.id != null && consumedAcademicEventIds.contains(ae.id)) continue;
+    final isExam = ae.type == AcademicEventType.EXAM;
+    final startTime = (ae.startTime != null && ae.startTime!.trim().isNotEmpty)
+        ? normalizeTimeSlotPart(ae.startTime!)
+        : '09:00';
+    final endTime = (ae.endTime != null && ae.endTime!.trim().isNotEmpty)
+        ? normalizeTimeSlotPart(ae.endTime!)
+        : (isExam ? '12:00' : '10:00');
+
+    items.add(
+      ScheduleClassSlot(
+        id: ae.id ?? 0,
+        slotKey: computeCanonicalSlotKey(
+          date: utcDate,
+          startTime: startTime,
+          endTime: endTime,
+          type: isExam ? 'EXAM' : 'EVENT',
+          title: ae.title,
+        ),
+        type: isExam ? ScheduleSlotType.exam : ScheduleSlotType.event,
+        title: ae.title,
+        code: isExam ? 'EXAM' : ae.type.toShortString(),
+        startTime: startTime,
+        endTime: endTime,
+        description: ae.description ?? ae.type.toShortString(),
+        colorHex: isExam ? '#EF4444' : '#3B82F6',
         date: utcDate,
       ),
     );

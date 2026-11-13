@@ -49,14 +49,21 @@ void main() {
     updatedAt: DateTime.now(),
   );
 
-  test('Calendar aggregates recurring weekly classes within semester date range', () async {
+  test(
+      'Calendar aggregates recurring weekly classes within semester date range',
+      () async {
     final container = ProviderContainer(
       overrides: [
-        activeSemesterProvider.overrideWith((ref) => Future.value(testSemester)),
-        weeklyScheduleRuleListControllerProvider.overrideWith(() => FakeRuleListNotifier([testRule])),
-        scheduleExceptionControllerProvider.overrideWith(() => FakeExceptionNotifier([])),
-        academicEventControllerProvider.overrideWith(() => FakeAcademicEventNotifier([])),
-        subjectListControllerProvider.overrideWith(() => FakeSubjectListNotifier([testSubject])),
+        activeSemesterProvider
+            .overrideWith((ref) => Future.value(testSemester)),
+        weeklyScheduleRuleListControllerProvider
+            .overrideWith(() => FakeRuleListNotifier([testRule])),
+        scheduleExceptionControllerProvider
+            .overrideWith(() => FakeExceptionNotifier([])),
+        academicEventControllerProvider
+            .overrideWith(() => FakeAcademicEventNotifier([])),
+        subjectListControllerProvider
+            .overrideWith(() => FakeSubjectListNotifier([testSubject])),
         selectedMonthProvider.overrideWith((ref) => DateTime(2026, 7, 1)),
       ],
     );
@@ -66,7 +73,8 @@ void main() {
     final days = daysAsync.value!;
 
     // July 21, 2026 is Tuesday
-    final july21 = days.firstWhere((d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
+    final july21 = days.firstWhere(
+        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
     expect(july21.isInSemesterRange, isTrue);
     expect(july21.hasRegularClass, isTrue);
     expect(july21.items.any((i) => i.title == 'Operating Systems'), isTrue);
@@ -84,11 +92,16 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
-        activeSemesterProvider.overrideWith((ref) => Future.value(testSemester)),
-        weeklyScheduleRuleListControllerProvider.overrideWith(() => FakeRuleListNotifier([testRule])),
-        scheduleExceptionControllerProvider.overrideWith(() => FakeExceptionNotifier([holidayException])),
-        academicEventControllerProvider.overrideWith(() => FakeAcademicEventNotifier([])),
-        subjectListControllerProvider.overrideWith(() => FakeSubjectListNotifier([testSubject])),
+        activeSemesterProvider
+            .overrideWith((ref) => Future.value(testSemester)),
+        weeklyScheduleRuleListControllerProvider
+            .overrideWith(() => FakeRuleListNotifier([testRule])),
+        scheduleExceptionControllerProvider
+            .overrideWith(() => FakeExceptionNotifier([holidayException])),
+        academicEventControllerProvider
+            .overrideWith(() => FakeAcademicEventNotifier([])),
+        subjectListControllerProvider
+            .overrideWith(() => FakeSubjectListNotifier([testSubject])),
         selectedMonthProvider.overrideWith((ref) => DateTime(2026, 7, 1)),
       ],
     );
@@ -97,7 +110,8 @@ void main() {
     final daysAsync = container.read(monthlyCalendarDataProvider);
     final days = daysAsync.value!;
 
-    final july21 = days.firstWhere((d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
+    final july21 = days.firstWhere(
+        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
     expect(july21.hasHoliday, isTrue);
     // Holiday hides regular class execution
     expect(july21.hasRegularClass, isFalse);
@@ -127,11 +141,16 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
-        activeSemesterProvider.overrideWith((ref) => Future.value(testSemester)),
-        weeklyScheduleRuleListControllerProvider.overrideWith(() => FakeRuleListNotifier([testRule])),
-        scheduleExceptionControllerProvider.overrideWith(() => FakeExceptionNotifier([])),
-        academicEventControllerProvider.overrideWith(() => FakeAcademicEventNotifier([examEvent, deadlineEvent])),
-        subjectListControllerProvider.overrideWith(() => FakeSubjectListNotifier([testSubject])),
+        activeSemesterProvider
+            .overrideWith((ref) => Future.value(testSemester)),
+        weeklyScheduleRuleListControllerProvider
+            .overrideWith(() => FakeRuleListNotifier([testRule])),
+        scheduleExceptionControllerProvider
+            .overrideWith(() => FakeExceptionNotifier([])),
+        academicEventControllerProvider.overrideWith(
+            () => FakeAcademicEventNotifier([examEvent, deadlineEvent])),
+        subjectListControllerProvider
+            .overrideWith(() => FakeSubjectListNotifier([testSubject])),
         selectedMonthProvider.overrideWith((ref) => DateTime(2026, 7, 1)),
       ],
     );
@@ -140,7 +159,8 @@ void main() {
     final daysAsync = container.read(monthlyCalendarDataProvider);
     final days = daysAsync.value!;
 
-    final july21 = days.firstWhere((d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
+    final july21 = days.firstWhere(
+        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
     expect(july21.hasExam, isTrue);
     expect(july21.hasEvent, isTrue);
     expect(july21.hasRegularClass, isTrue);
@@ -149,15 +169,22 @@ void main() {
     expect(july21.items.first.type, equals(CalendarItemType.EXAM));
   });
 
-  testWidgets('AcademicCalendarWidget renders month view and handles month navigation', (tester) async {
+  testWidgets(
+      'AcademicCalendarWidget renders month view and handles month navigation',
+      (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          activeSemesterProvider.overrideWith((ref) => Future.value(testSemester)),
-          weeklyScheduleRuleListControllerProvider.overrideWith(() => FakeRuleListNotifier([testRule])),
-          scheduleExceptionControllerProvider.overrideWith(() => FakeExceptionNotifier([])),
-          academicEventControllerProvider.overrideWith(() => FakeAcademicEventNotifier([])),
-          subjectListControllerProvider.overrideWith(() => FakeSubjectListNotifier([testSubject])),
+          activeSemesterProvider
+              .overrideWith((ref) => Future.value(testSemester)),
+          weeklyScheduleRuleListControllerProvider
+              .overrideWith(() => FakeRuleListNotifier([testRule])),
+          scheduleExceptionControllerProvider
+              .overrideWith(() => FakeExceptionNotifier([])),
+          academicEventControllerProvider
+              .overrideWith(() => FakeAcademicEventNotifier([])),
+          subjectListControllerProvider
+              .overrideWith(() => FakeSubjectListNotifier([testSubject])),
           selectedMonthProvider.overrideWith((ref) => DateTime(2026, 7, 1)),
         ],
         child: const MaterialApp(

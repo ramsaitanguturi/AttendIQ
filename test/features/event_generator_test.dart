@@ -16,7 +16,7 @@ void main() {
     setUp(() {
       semesterStart = DateTime.utc(2026, 10, 1); // A Thursday
       semesterEnd = DateTime.utc(2026, 10, 31); // A Saturday
-      
+
       subjects = [
         Subject(
           id: 1,
@@ -114,7 +114,9 @@ void main() {
       expect(events.any((e) => e.date == DateTime.utc(2026, 10, 5)), isFalse);
     });
 
-    test('generateRollingWindow confines events to a 14-day window [today-7, today+7]', () {
+    test(
+        'generateRollingWindow confines events to a 14-day window [today-7, today+7]',
+        () {
       final today = DateTime.utc(2026, 10, 15); // A Thursday
       // Window range: 2026-10-08 to 2026-10-22
       // Mondays in range: 12, 19 (2 Mondays)
@@ -131,7 +133,7 @@ void main() {
       );
 
       expect(events.length, 5);
-      
+
       // Ensure all event dates are strictly in range
       for (final event in events) {
         expect(event.date.isBefore(DateTime.utc(2026, 10, 8)), isFalse);
@@ -140,7 +142,8 @@ void main() {
     });
 
     test('generateRollingWindow respects semester boundaries', () {
-      final today = DateTime.utc(2026, 10, 2); // Friday (near start of semester)
+      final today =
+          DateTime.utc(2026, 10, 2); // Friday (near start of semester)
       // Window range: 2026-09-25 to 2026-10-09
       // Semester start is 2026-10-01. So range should be confined to 2026-10-01 to 2026-10-09.
       // Thursdays in confined range: 1, 8 (2 Thursdays)

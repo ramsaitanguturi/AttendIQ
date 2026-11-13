@@ -55,11 +55,14 @@ class AcademicCalendarWidget extends ConsumerWidget {
               ),
               IconButton(
                 icon: Icon(
-                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  isExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: AppColors.primary,
                 ),
                 onPressed: () {
-                  ref.read(isCalendarExpandedProvider.notifier).state = !isExpanded;
+                  ref.read(isCalendarExpandedProvider.notifier).state =
+                      !isExpanded;
                 },
               ),
             ],
@@ -74,12 +77,15 @@ class AcademicCalendarWidget extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 14.0,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
@@ -106,13 +112,15 @@ class AcademicCalendarWidget extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () {
-                    final prevMonth = DateTime(selectedMonth.year, selectedMonth.month - 1, 1);
+                    final prevMonth = DateTime(
+                        selectedMonth.year, selectedMonth.month - 1, 1);
                     ref.read(selectedMonthProvider.notifier).state = prevMonth;
                   },
                 ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                  transitionBuilder: (child, anim) =>
+                      FadeTransition(opacity: anim, child: child),
                   child: Text(
                     monthTitle,
                     key: ValueKey(selectedMonth),
@@ -125,7 +133,8 @@ class AcademicCalendarWidget extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () {
-                    final nextMonth = DateTime(selectedMonth.year, selectedMonth.month + 1, 1);
+                    final nextMonth = DateTime(
+                        selectedMonth.year, selectedMonth.month + 1, 1);
                     ref.read(selectedMonthProvider.notifier).state = nextMonth;
                   },
                 ),
@@ -144,7 +153,9 @@ class AcademicCalendarWidget extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 12.0,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
                           ),
                         ),
                       ),
@@ -162,19 +173,24 @@ class AcademicCalendarWidget extends ConsumerWidget {
                     if (details.primaryVelocity != null) {
                       if (details.primaryVelocity! < -200) {
                         // Swipe left -> next month
-                        final nextMonth = DateTime(selectedMonth.year, selectedMonth.month + 1, 1);
-                        ref.read(selectedMonthProvider.notifier).state = nextMonth;
+                        final nextMonth = DateTime(
+                            selectedMonth.year, selectedMonth.month + 1, 1);
+                        ref.read(selectedMonthProvider.notifier).state =
+                            nextMonth;
                       } else if (details.primaryVelocity! > 200) {
                         // Swipe right -> previous month
-                        final prevMonth = DateTime(selectedMonth.year, selectedMonth.month - 1, 1);
-                        ref.read(selectedMonthProvider.notifier).state = prevMonth;
+                        final prevMonth = DateTime(
+                            selectedMonth.year, selectedMonth.month - 1, 1);
+                        ref.read(selectedMonthProvider.notifier).state =
+                            prevMonth;
                       }
                     }
                   },
                   child: GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 7,
                       childAspectRatio: 0.9,
                       crossAxisSpacing: 4,
@@ -202,7 +218,8 @@ class AcademicCalendarWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildDateCell(BuildContext context, CalendarDayData dayData, bool isDark) {
+  Widget _buildDateCell(
+      BuildContext context, CalendarDayData dayData, bool isDark) {
     final isDisabled = !dayData.isInSemesterRange;
 
     Color textColor = isDark ? Colors.white : Colors.black87;
@@ -229,7 +246,9 @@ class AcademicCalendarWidget extends ConsumerWidget {
         decoration: BoxDecoration(
           color: dayData.isToday
               ? AppColors.primary.withOpacity(0.15)
-              : (isDark ? Colors.white.withOpacity(0.02) : Colors.black.withOpacity(0.02)),
+              : (isDark
+                  ? Colors.white.withOpacity(0.02)
+                  : Colors.black.withOpacity(0.02)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: dayData.isToday

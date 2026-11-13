@@ -14,7 +14,6 @@ import '../../../../core/reports/generators/pdf_report_generator.dart';
 import '../../../../core/reports/exporters/csv_report_exporter.dart';
 import '../controllers/reports_controller.dart';
 
-
 class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
 
@@ -24,7 +23,8 @@ class ReportsPage extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -35,7 +35,8 @@ class ReportsPage extends ConsumerWidget {
         title: Text(
           'Attendance Reports',
           style: AppTextStyles.titleMedium.copyWith(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
           ),
         ),
       ),
@@ -48,12 +49,14 @@ class ReportsPage extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.warning_amber_rounded, size: 64, color: AppColors.attendanceMid),
+                    const Icon(Icons.warning_amber_rounded,
+                        size: 64, color: AppColors.attendanceMid),
                     const SizedBox(height: 16),
                     Text(
                       'No active semester found.\nPlease set up a semester first.',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.bodyMedium.copyWith(color: Colors.grey),
+                      style:
+                          AppTextStyles.bodyMedium.copyWith(color: Colors.grey),
                     ),
                   ],
                 ),
@@ -64,7 +67,8 @@ class ReportsPage extends ConsumerWidget {
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -80,7 +84,9 @@ class ReportsPage extends ConsumerWidget {
                   Text(
                     'Subject Statistics Preview',
                     style: AppTextStyles.titleMedium.copyWith(
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -92,7 +98,9 @@ class ReportsPage extends ConsumerWidget {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        ref.read(reportsControllerProvider.notifier).generateReport();
+                        ref
+                            .read(reportsControllerProvider.notifier)
+                            .generateReport();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -131,7 +139,8 @@ class ReportsPage extends ConsumerWidget {
 
   Widget _buildSummaryCard(AttendanceReport report, bool isDark) {
     final double percentage = report.overallPercentage;
-    final Color riskColor = percentage >= 75.0 ? AppColors.primary : AppColors.attendanceLow;
+    final Color riskColor =
+        percentage >= 75.0 ? AppColors.primary : AppColors.attendanceLow;
 
     return Container(
       width: double.infinity,
@@ -155,20 +164,25 @@ class ReportsPage extends ConsumerWidget {
                   Text(
                     report.semesterName,
                     style: AppTextStyles.titleMedium.copyWith(
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Student: ${report.studentName}',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: riskColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -199,7 +213,9 @@ class ReportsPage extends ConsumerWidget {
                   Text(
                     'Overall Attendance',
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                     ),
                   ),
                 ],
@@ -225,7 +241,8 @@ class ReportsPage extends ConsumerWidget {
         Text(
           value,
           style: AppTextStyles.titleMedium.copyWith(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
             fontSize: 18,
           ),
         ),
@@ -233,14 +250,17 @@ class ReportsPage extends ConsumerWidget {
         Text(
           label,
           style: AppTextStyles.labelSmall.copyWith(
-            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildExportActions(BuildContext context, AttendanceReport report, bool isDark) {
+  Widget _buildExportActions(
+      BuildContext context, AttendanceReport report, bool isDark) {
     return Row(
       children: [
         Expanded(
@@ -353,7 +373,9 @@ class ReportsPage extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
                       ),
                     ),
                     if (sub.faculty != null && sub.faculty!.isNotEmpty) ...[
@@ -361,14 +383,17 @@ class ReportsPage extends ConsumerWidget {
                       Text(
                         'Faculty: ${sub.faculty}',
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                         ),
                       ),
                     ],
                     const SizedBox(height: 6),
                     Text(
                       'P: ${sub.present} | A: ${sub.absent} | Total: ${sub.totalClasses}',
-                      style: AppTextStyles.labelSmall.copyWith(color: Colors.grey),
+                      style:
+                          AppTextStyles.labelSmall.copyWith(color: Colors.grey),
                     ),
                   ],
                 ),
@@ -386,7 +411,8 @@ class ReportsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -483,4 +509,3 @@ class ReportsPage extends ConsumerWidget {
     }
   }
 }
-

@@ -21,7 +21,8 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
   int _nextId = 1;
 
   @override
-  Future<List<AttendanceRecordLocal>> getAttendanceForSubject(int subjectId) async {
+  Future<List<AttendanceRecordLocal>> getAttendanceForSubject(
+      int subjectId) async {
     return records.values
         .where((r) => r.subjectId == subjectId && !r.isDeleted)
         .toList();
@@ -33,8 +34,7 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
     if (occurrenceId <= 0) return null;
     try {
       return records.values.firstWhere(
-        (r) =>
-            (r.occurrenceId ?? r.eventId) == occurrenceId && !r.isDeleted,
+        (r) => (r.occurrenceId ?? r.eventId) == occurrenceId && !r.isDeleted,
       );
     } catch (_) {
       return null;
@@ -129,7 +129,9 @@ void main() {
       repository = AttendanceRepositoryImpl(dataSource);
     });
 
-    test('Marking all 5 classes PRESENT creates 5 distinct records without overwrite', () async {
+    test(
+        'Marking all 5 classes PRESENT creates 5 distinct records without overwrite',
+        () async {
       final date = DateTime.utc(2026, 7, 21);
 
       // Simulate 5 classes with unique occurrence IDs (1, 2, 3, 4, 5)
@@ -152,10 +154,12 @@ void main() {
 
       for (final recLocal in dataSource.records.values) {
         if (!recLocal.isDeleted) {
-          if (recLocal.status == 'PRESENT' || recLocal.status == 'EXTRA_PRESENT') {
+          if (recLocal.status == 'PRESENT' ||
+              recLocal.status == 'EXTRA_PRESENT') {
             presentCount++;
             totalConducted++;
-          } else if (recLocal.status == 'ABSENT' || recLocal.status == 'EXTRA_ABSENT') {
+          } else if (recLocal.status == 'ABSENT' ||
+              recLocal.status == 'EXTRA_ABSENT') {
             absentCount++;
             totalConducted++;
           }
@@ -173,7 +177,8 @@ void main() {
       expect(percentage, equals(100.0));
     });
 
-    test('Marking Present -> Absent -> Present updates exact single record', () async {
+    test('Marking Present -> Absent -> Present updates exact single record',
+        () async {
       final date = DateTime.utc(2026, 7, 21);
       const eventId = 42;
 
@@ -256,7 +261,9 @@ void main() {
         ),
       ];
 
-      final holidayException = exceptions.where((e) => e.type == ScheduleExceptionType.HOLIDAY).firstOrNull;
+      final holidayException = exceptions
+          .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+          .firstOrNull;
 
       expect(holidayException, isNotNull);
       expect(holidayException!.title, equals('Independence Day'));
@@ -332,7 +339,9 @@ void main() {
   });
 
   group('Issue 4: Backup & Restore Completeness Verification', () {
-    test('BackupData supports serialization and deserialization of all 5 additional collections', () {
+    test(
+        'BackupData supports serialization and deserialization of all 5 additional collections',
+        () {
       final meta = BackupMetadata(
         appVersion: '1.1.0',
         backupVersion: 2,
@@ -426,7 +435,8 @@ void main() {
 
       expect(restored.metadata.backupVersion, equals(2));
       expect(restored.scheduleExceptions.length, equals(1));
-      expect(restored.scheduleExceptions.first['title'], equals('College Holiday'));
+      expect(restored.scheduleExceptions.first['title'],
+          equals('College Holiday'));
       expect(restored.weeklyRules.length, equals(1));
       expect(restored.occurrences.length, equals(1));
       expect(restored.academicEvents.length, equals(1));

@@ -24,16 +24,27 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final formattedDate = DateFormat('EEEE, MMMM d, yyyy').format(dayData.date);
 
-    final regularClasses = dayData.items.where((i) => i.type == CalendarItemType.REGULAR_CLASS).toList();
-    final cancelledClasses = dayData.items.where((i) => i.type == CalendarItemType.CANCELLED_CLASS).toList();
-    final extraClasses = dayData.items.where((i) => i.type == CalendarItemType.EXTRA_CLASS).toList();
-    final exams = dayData.items.where((i) => i.type == CalendarItemType.EXAM).toList();
-    final holidays = dayData.items.where((i) => i.type == CalendarItemType.HOLIDAY).toList();
-    final events = dayData.items.where((i) => i.type == CalendarItemType.EVENT).toList();
-    final tasks = dayData.items.where((i) => i.type == CalendarItemType.TASK).toList();
+    final regularClasses = dayData.items
+        .where((i) => i.type == CalendarItemType.REGULAR_CLASS)
+        .toList();
+    final cancelledClasses = dayData.items
+        .where((i) => i.type == CalendarItemType.CANCELLED_CLASS)
+        .toList();
+    final extraClasses = dayData.items
+        .where((i) => i.type == CalendarItemType.EXTRA_CLASS)
+        .toList();
+    final exams =
+        dayData.items.where((i) => i.type == CalendarItemType.EXAM).toList();
+    final holidays =
+        dayData.items.where((i) => i.type == CalendarItemType.HOLIDAY).toList();
+    final events =
+        dayData.items.where((i) => i.type == CalendarItemType.EVENT).toList();
+    final tasks =
+        dayData.items.where((i) => i.type == CalendarItemType.TASK).toList();
 
     return Container(
-      padding: const EdgeInsets.only(top: 16.0, left: 20.0, right: 20.0, bottom: 24.0),
+      padding: const EdgeInsets.only(
+          top: 16.0, left: 20.0, right: 20.0, bottom: 24.0),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24.0)),
@@ -74,7 +85,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                       if (dayData.isToday) ...[
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -102,43 +114,52 @@ class DateDetailsBottomSheet extends ConsumerWidget {
 
             // Holidays
             if (holidays.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Holidays', Icons.beach_access, Colors.amber),
+              _buildSectionHeader(
+                  context, 'Holidays', Icons.beach_access, Colors.amber),
               ...holidays.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
 
             // Exams
             if (exams.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Exams', Icons.assignment_late, Colors.redAccent),
+              _buildSectionHeader(
+                  context, 'Exams', Icons.assignment_late, Colors.redAccent),
               ...exams.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
 
             // Regular Classes
             if (regularClasses.isNotEmpty || cancelledClasses.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Classes', Icons.class_, Colors.green),
-              ...regularClasses.map((item) => _buildItemTile(context, item, isDark)),
-              ...cancelledClasses.map((item) => _buildItemTile(context, item, isDark)),
+              _buildSectionHeader(
+                  context, 'Classes', Icons.class_, Colors.green),
+              ...regularClasses
+                  .map((item) => _buildItemTile(context, item, isDark)),
+              ...cancelledClasses
+                  .map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
 
             // Extra Classes
             if (extraClasses.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Extra Classes', Icons.more_time, Colors.blueAccent),
-              ...extraClasses.map((item) => _buildItemTile(context, item, isDark)),
+              _buildSectionHeader(
+                  context, 'Extra Classes', Icons.more_time, Colors.blueAccent),
+              ...extraClasses
+                  .map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
 
             // Events & Deadlines
             if (events.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Events & Deadlines', Icons.event, Colors.purpleAccent),
+              _buildSectionHeader(context, 'Events & Deadlines', Icons.event,
+                  Colors.purpleAccent),
               ...events.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
 
             // Academic Tasks
             if (tasks.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Tasks & Submissions', Icons.task_alt, Colors.orange),
+              _buildSectionHeader(context, 'Tasks & Submissions',
+                  Icons.task_alt, Colors.orange),
               ...tasks.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
@@ -151,7 +172,9 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                   child: Text(
                     'No classes or events scheduled for this day.',
                     style: TextStyle(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                       fontSize: 14.0,
                     ),
                   ),
@@ -179,7 +202,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               runSpacing: 8.0,
               children: [
                 ActionChip(
-                  avatar: const Icon(Icons.add_task, size: 16, color: Colors.orange),
+                  avatar: const Icon(Icons.add_task,
+                      size: 16, color: Colors.orange),
                   label: const Text('+ Add Task'),
                   backgroundColor: Colors.orange.withOpacity(0.1),
                   onPressed: () {
@@ -188,18 +212,22 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (ctx) => AddEditTaskSheet(initialDate: dayData.date),
+                      builder: (ctx) =>
+                          AddEditTaskSheet(initialDate: dayData.date),
                     );
                   },
                 ),
                 ActionChip(
-                  avatar: const Icon(Icons.event, size: 16, color: Colors.purpleAccent),
+                  avatar: const Icon(Icons.event,
+                      size: 16, color: Colors.purpleAccent),
                   label: const Text('+ Add Event'),
                   backgroundColor: Colors.purple.withOpacity(0.1),
-                  onPressed: () => _showAddEventDialog(context, ref, dayData.date, AcademicEventType.EVENT),
+                  onPressed: () => _showAddEventDialog(
+                      context, ref, dayData.date, AcademicEventType.EVENT),
                 ),
                 ActionChip(
-                  avatar: const Icon(Icons.add_alarm, size: 16, color: Colors.blueAccent),
+                  avatar: const Icon(Icons.add_alarm,
+                      size: 16, color: Colors.blueAccent),
                   label: const Text('+ Add Extra Class'),
                   backgroundColor: Colors.blue.withOpacity(0.1),
                   onPressed: () async {
@@ -213,16 +241,20 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                   },
                 ),
                 ActionChip(
-                  avatar: const Icon(Icons.beach_access, size: 16, color: Colors.amber),
+                  avatar: const Icon(Icons.beach_access,
+                      size: 16, color: Colors.amber),
                   label: const Text('+ Add Holiday'),
                   backgroundColor: Colors.amber.withOpacity(0.1),
-                  onPressed: () => _showAddHolidayDialog(context, ref, dayData.date),
+                  onPressed: () =>
+                      _showAddHolidayDialog(context, ref, dayData.date),
                 ),
                 ActionChip(
-                  avatar: const Icon(Icons.assignment, size: 16, color: Colors.redAccent),
+                  avatar: const Icon(Icons.assignment,
+                      size: 16, color: Colors.redAccent),
                   label: const Text('+ Add Exam'),
                   backgroundColor: Colors.red.withOpacity(0.1),
-                  onPressed: () => _showAddEventDialog(context, ref, dayData.date, AcademicEventType.EXAM),
+                  onPressed: () => _showAddEventDialog(
+                      context, ref, dayData.date, AcademicEventType.EXAM),
                 ),
               ],
             ),
@@ -232,7 +264,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon, Color color) {
+  Widget _buildSectionHeader(
+      BuildContext context, String title, IconData icon, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -294,11 +327,14 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                     item.subtitle!,
                     style: TextStyle(
                       fontSize: 12.0,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                     ),
                   ),
                 ],
-                if (item.description != null && item.description!.isNotEmpty) ...[
+                if (item.description != null &&
+                    item.description!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     item.description!,
@@ -341,7 +377,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     return time.hour * 60 + time.minute;
   }
 
-  void _showAddEventDialog(BuildContext context, WidgetRef ref, DateTime date, AcademicEventType defaultType) {
+  void _showAddEventDialog(BuildContext context, WidgetRef ref, DateTime date,
+      AcademicEventType defaultType) {
     final titleController = TextEditingController();
     final descController = TextEditingController();
     final startTimeController = TextEditingController(text: '10:00');
@@ -355,7 +392,9 @@ class DateDetailsBottomSheet extends ConsumerWidget {
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(defaultType == AcademicEventType.EXAM ? 'Add Exam' : 'Add Academic Event'),
+          title: Text(defaultType == AcademicEventType.EXAM
+              ? 'Add Exam'
+              : 'Add Academic Event'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -390,17 +429,21 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                         onTap: () async {
                           final picked = await showTimePicker(
                             context: dialogCtx,
-                            initialTime: startTime ?? const TimeOfDay(hour: 10, minute: 0),
+                            initialTime: startTime ??
+                                const TimeOfDay(hour: 10, minute: 0),
                           );
                           if (picked != null) {
                             setState(() {
                               startTime = picked;
                               final hh = picked.hour.toString().padLeft(2, '0');
-                              final mm = picked.minute.toString().padLeft(2, '0');
+                              final mm =
+                                  picked.minute.toString().padLeft(2, '0');
                               startTimeController.text = '$hh:$mm';
                               final sMin = _toMinutes(startTime);
                               final eMin = _toMinutes(endTime);
-                              if (sMin != null && eMin != null && eMin <= sMin) {
+                              if (sMin != null &&
+                                  eMin != null &&
+                                  eMin <= sMin) {
                                 timeError = 'End time must be after start time';
                               } else {
                                 timeError = null;
@@ -423,17 +466,22 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                         onTap: () async {
                           final picked = await showTimePicker(
                             context: dialogCtx,
-                            initialTime: endTime ?? startTime ?? const TimeOfDay(hour: 11, minute: 0),
+                            initialTime: endTime ??
+                                startTime ??
+                                const TimeOfDay(hour: 11, minute: 0),
                           );
                           if (picked != null) {
                             setState(() {
                               endTime = picked;
                               final hh = picked.hour.toString().padLeft(2, '0');
-                              final mm = picked.minute.toString().padLeft(2, '0');
+                              final mm =
+                                  picked.minute.toString().padLeft(2, '0');
                               endTimeController.text = '$hh:$mm';
                               final sMin = _toMinutes(startTime);
                               final eMin = _toMinutes(endTime);
-                              if (sMin != null && eMin != null && eMin <= sMin) {
+                              if (sMin != null &&
+                                  eMin != null &&
+                                  eMin <= sMin) {
                                 timeError = 'End time must be after start time';
                               } else {
                                 timeError = null;
@@ -457,7 +505,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                   value: selectedType,
                   decoration: const InputDecoration(labelText: 'Event Type'),
                   items: AcademicEventType.values
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t.toShortString())))
+                      .map((t) => DropdownMenuItem(
+                          value: t, child: Text(t.toShortString())))
                       .toList(),
                   onChanged: (val) {
                     if (val != null) setState(() => selectedType = val);
@@ -485,12 +534,20 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                   return;
                 }
 
-                await ref.read(academicEventControllerProvider.notifier).addEvent(
+                await ref
+                    .read(academicEventControllerProvider.notifier)
+                    .addEvent(
                       title: title,
-                      description: descController.text.trim().isEmpty ? null : descController.text.trim(),
+                      description: descController.text.trim().isEmpty
+                          ? null
+                          : descController.text.trim(),
                       date: date,
-                      startTime: startTimeController.text.trim().isEmpty ? null : startTimeController.text.trim(),
-                      endTime: endTimeController.text.trim().isEmpty ? null : endTimeController.text.trim(),
+                      startTime: startTimeController.text.trim().isEmpty
+                          ? null
+                          : startTimeController.text.trim(),
+                      endTime: endTimeController.text.trim().isEmpty
+                          ? null
+                          : endTimeController.text.trim(),
                       type: selectedType,
                     );
                 if (context.mounted) {
@@ -506,7 +563,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     );
   }
 
-  void _showAddHolidayDialog(BuildContext context, WidgetRef ref, DateTime date) {
+  void _showAddHolidayDialog(
+      BuildContext context, WidgetRef ref, DateTime date) {
     final titleController = TextEditingController(text: 'Holiday');
     final descController = TextEditingController();
 
@@ -544,11 +602,15 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               final title = titleController.text.trim();
               if (title.isEmpty) return;
 
-              await ref.read(scheduleExceptionControllerProvider.notifier).addException(
+              await ref
+                  .read(scheduleExceptionControllerProvider.notifier)
+                  .addException(
                     date: date,
                     type: ScheduleExceptionType.HOLIDAY,
                     title: title,
-                    description: descController.text.trim().isEmpty ? null : descController.text.trim(),
+                    description: descController.text.trim().isEmpty
+                        ? null
+                        : descController.text.trim(),
                   );
               if (context.mounted) {
                 Navigator.of(dialogCtx).pop();

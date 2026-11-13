@@ -23,7 +23,8 @@ class SubjectDetailsPage extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -65,7 +66,8 @@ class SubjectDetailsPage extends ConsumerWidget {
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -95,8 +97,12 @@ class SubjectDetailsPage extends ConsumerWidget {
                         child: _buildMetricBox(
                           context: context,
                           label: 'Must Attend',
-                          value: stats.requiredClasses == null ? 'N/A' : '${stats.requiredClasses}',
-                          valueColor: stats.requiredClasses == 0 ? AppColors.primary : AppColors.attendanceLow,
+                          value: stats.requiredClasses == null
+                              ? 'N/A'
+                              : '${stats.requiredClasses}',
+                          valueColor: stats.requiredClasses == 0
+                              ? AppColors.primary
+                              : AppColors.attendanceLow,
                           icon: Icons.warning_amber_rounded,
                           isDark: isDark,
                         ),
@@ -127,15 +133,20 @@ class SubjectDetailsPage extends ConsumerWidget {
                           width: double.infinity,
                           padding: const EdgeInsets.all(32.0),
                           decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                            color: isDark
+                                ? AppColors.darkSurface
+                                : AppColors.lightSurface,
                             borderRadius: BorderRadius.circular(16.0),
                             border: Border.all(
-                              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
                             ),
                           ),
                           child: const Column(
                             children: [
-                              Icon(Icons.history_toggle_off, size: 40, color: Colors.grey),
+                              Icon(Icons.history_toggle_off,
+                                  size: 40, color: Colors.grey),
                               SizedBox(height: 12),
                               Text(
                                 'No classes logged yet',
@@ -150,15 +161,19 @@ class SubjectDetailsPage extends ConsumerWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: occurrences.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 10),
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final occurrence = occurrences[index];
-                          return _buildOccurrenceItem(context, ref, occurrence, subjectColor, isDark);
+                          return _buildOccurrenceItem(
+                              context, ref, occurrence, subjectColor, isDark);
                         },
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Center(child: Text('Error loading classes: $err')),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (err, _) =>
+                        Center(child: Text('Error loading classes: $err')),
                   ),
                 ],
               ),
@@ -182,7 +197,20 @@ class SubjectDetailsPage extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${weekdays[date.weekday - 1]}, ${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
@@ -209,7 +237,8 @@ class SubjectDetailsPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: subjectColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -231,12 +260,15 @@ class SubjectDetailsPage extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (stats.subject.faculty != null && stats.subject.faculty!.isNotEmpty) ...[
+                if (stats.subject.faculty != null &&
+                    stats.subject.faculty!.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
                     'Instructor: ${stats.subject.faculty}',
                     style: TextStyle(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                       fontSize: 14.0,
                     ),
                   ),
@@ -245,7 +277,9 @@ class SubjectDetailsPage extends ConsumerWidget {
                 Text(
                   'Credits: ${stats.subject.credits}',
                   style: TextStyle(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                     fontSize: 14.0,
                   ),
                 ),
@@ -265,7 +299,8 @@ class SubjectDetailsPage extends ConsumerWidget {
                     child: CircularProgressIndicator(
                       value: stats.attendancePercentage / 100,
                       strokeWidth: 8,
-                      backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      backgroundColor:
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
                       valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
                     ),
                   ),
@@ -349,7 +384,9 @@ class SubjectDetailsPage extends ConsumerWidget {
                 Text(
                   stats.bunkAnalysis.recommendation,
                   style: TextStyle(
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
                     fontSize: 13.0,
                     height: 1.4,
                   ),
@@ -409,7 +446,8 @@ class SubjectDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context, SubjectAttendanceStats stats, bool isDark) {
+  Widget _buildStatsSection(
+      BuildContext context, SubjectAttendanceStats stats, bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
@@ -428,16 +466,20 @@ class SubjectDetailsPage extends ConsumerWidget {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
           ),
           const SizedBox(height: 16),
-          _buildStatRow('Present Classes', '${stats.presentCount}', AppColors.primary),
+          _buildStatRow(
+              'Present Classes', '${stats.presentCount}', AppColors.primary),
           const Divider(height: 24),
-          _buildStatRow('Absent Classes', '${stats.absentCount}', AppColors.attendanceLow),
+          _buildStatRow('Absent Classes', '${stats.absentCount}',
+              AppColors.attendanceLow),
           const Divider(height: 24),
           _buildStatRow('Total Logged', '${stats.totalClasses}', null),
           const Divider(height: 24),
           _buildStatRow(
             'Predicted Final Rate',
             '${stats.predictedPercentage.toStringAsFixed(1)}%',
-            stats.predictedPercentage >= stats.subject.attendanceTarget ? AppColors.primary : AppColors.attendanceLow,
+            stats.predictedPercentage >= stats.subject.attendanceTarget
+                ? AppColors.primary
+                : AppColors.attendanceLow,
           ),
         ],
       ),
@@ -557,7 +599,8 @@ class SubjectDetailsPage extends ConsumerWidget {
                 value: 'present',
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_outline, color: AppColors.primary, size: 20),
+                    Icon(Icons.check_circle_outline,
+                        color: AppColors.primary, size: 20),
                     SizedBox(width: 8),
                     Text('Mark Present'),
                   ],
@@ -567,7 +610,8 @@ class SubjectDetailsPage extends ConsumerWidget {
                 value: 'absent',
                 child: Row(
                   children: [
-                    Icon(Icons.cancel_outlined, color: AppColors.attendanceLow, size: 20),
+                    Icon(Icons.cancel_outlined,
+                        color: AppColors.attendanceLow, size: 20),
                     SizedBox(width: 8),
                     Text('Mark Absent'),
                   ],

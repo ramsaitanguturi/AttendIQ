@@ -14,7 +14,8 @@ class WidgetSettingsPage extends ConsumerWidget {
     final notifier = ref.read(widgetConfigProvider.notifier);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -65,7 +66,8 @@ class WidgetSettingsPage extends ConsumerWidget {
                     RadioListTile<String>(
                       title: const Text(
                         'Automatic',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w500),
                       ),
                       subtitle: const Text(
                         'Sync widgets when attendance is marked, schedule updates, or app opens',
@@ -76,7 +78,8 @@ class WidgetSettingsPage extends ConsumerWidget {
                       activeColor: AppColors.primary,
                       onChanged: widgetSettings.enabled
                           ? (val) {
-                              if (val != null) notifier.setRefreshFrequency(val);
+                              if (val != null)
+                                notifier.setRefreshFrequency(val);
                             }
                           : null,
                     ),
@@ -84,7 +87,8 @@ class WidgetSettingsPage extends ConsumerWidget {
                     RadioListTile<String>(
                       title: const Text(
                         'Every Hour',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w500),
                       ),
                       subtitle: const Text(
                         'Periodic background refresh every hour',
@@ -95,7 +99,8 @@ class WidgetSettingsPage extends ConsumerWidget {
                       activeColor: AppColors.primary,
                       onChanged: widgetSettings.enabled
                           ? (val) {
-                              if (val != null) notifier.setRefreshFrequency(val);
+                              if (val != null)
+                                notifier.setRefreshFrequency(val);
                             }
                           : null,
                     ),
@@ -103,7 +108,8 @@ class WidgetSettingsPage extends ConsumerWidget {
                     RadioListTile<String>(
                       title: const Text(
                         'Every 6 Hours',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w500),
                       ),
                       subtitle: const Text(
                         'Periodic background refresh every 6 hours',
@@ -114,7 +120,8 @@ class WidgetSettingsPage extends ConsumerWidget {
                       activeColor: AppColors.primary,
                       onChanged: widgetSettings.enabled
                           ? (val) {
-                              if (val != null) notifier.setRefreshFrequency(val);
+                              if (val != null)
+                                notifier.setRefreshFrequency(val);
                             }
                           : null,
                     ),
@@ -137,10 +144,13 @@ class WidgetSettingsPage extends ConsumerWidget {
                           color: AppColors.primary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.today, color: AppColors.primary),
+                        child:
+                            const Icon(Icons.today, color: AppColors.primary),
                       ),
-                      title: const Text('AttendIQ - Today', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Shows today\'s classes and attendance status (Small 2x2, Medium 4x2)'),
+                      title: const Text('AttendIQ - Today',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text(
+                          'Shows today\'s classes and attendance status (Small 2x2, Medium 4x2)'),
                     ),
                     _buildDivider(isDark),
                     ListTile(
@@ -150,10 +160,13 @@ class WidgetSettingsPage extends ConsumerWidget {
                           color: AppColors.secondary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.calendar_view_week, color: AppColors.secondary),
+                        child: const Icon(Icons.calendar_view_week,
+                            color: AppColors.secondary),
                       ),
-                      title: const Text('AttendIQ - This Week', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Shows complete weekly timetable with exceptions (Large 4x4)'),
+                      title: const Text('AttendIQ - This Week',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text(
+                          'Shows complete weekly timetable with exceptions (Large 4x4)'),
                     ),
                     _buildDivider(isDark),
                     ListTile(
@@ -163,10 +176,13 @@ class WidgetSettingsPage extends ConsumerWidget {
                           color: Colors.purple.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.calendar_month, color: Colors.purple),
+                        child: const Icon(Icons.calendar_month,
+                            color: Colors.purple),
                       ),
-                      title: const Text('AttendIQ - Month', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Shows upcoming academic events, exams, and task deadlines (Medium/Large)'),
+                      title: const Text('AttendIQ - Month',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text(
+                          'Shows upcoming academic events, exams, and task deadlines (Medium/Large)'),
                     ),
                   ],
                 ),
@@ -180,12 +196,16 @@ class WidgetSettingsPage extends ConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.refresh, color: Colors.white),
                   label: const Text(
                     'Refresh Widgets Now',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16),
                   ),
                   onPressed: widgetSettings.enabled
                       ? () async {

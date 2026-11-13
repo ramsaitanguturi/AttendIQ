@@ -14,45 +14,61 @@ import 'package:attend_iq/core/notifications/scheduler/notification_scheduler.da
 import 'package:attend_iq/core/notifications/scheduler/notification_database.dart';
 import 'package:attend_iq/core/notifications/services/notification_service.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
+import 'package:attend_iq/features/settings/data/models/user_preferences_local.dart';
 
 class FakeNotificationDatabase implements NotificationDatabase {
   SemesterLocal? activeSemester;
+  UserPreferencesLocal? userPreferences;
   List<NotificationItem> notifications = [];
 
   @override
   Future<SemesterLocal?> getActiveSemester() async => activeSemester;
 
   @override
-  Future<List<NotificationItem>> getFutureNotifications(DateTime now) async => notifications;
+  Future<UserPreferencesLocal?> getUserPreferences() async => userPreferences;
+
+  @override
+  Future<List<NotificationItem>> getFutureNotifications(DateTime now) async =>
+      notifications;
 
   @override
   Future<List<SubjectLocal>> getSubjects() async => [];
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
-      DateTime start, DateTime end) async => [];
+          DateTime start, DateTime end) async =>
+      [];
 
   @override
-  Future<List<AcademicEventLocal>> getAcademicEvents(DateTime start, DateTime end) async => [];
+  Future<List<AcademicEventLocal>> getAcademicEvents(
+          DateTime start, DateTime end) async =>
+      [];
 
   @override
   Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules() async => [];
 
   @override
   Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
-      DateTime start, DateTime end) async => [];
+          DateTime start, DateTime end) async =>
+      [];
 
   @override
-  Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(int subjectId) async => [];
+  Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
+          int subjectId) async =>
+      [];
 
   @override
   Future<List<AttendanceRecordLocal>> getAllAttendanceRecords() async => [];
 
   @override
-  Future<List<NotificationItem>> getFutureNotificationsByType(String type, DateTime now) async => [];
+  Future<List<NotificationItem>> getFutureNotificationsByType(
+          String type, DateTime now) async =>
+      [];
 
   @override
-  Future<NotificationItem?> getLastNotification(String type, String relatedId) async => null;
+  Future<NotificationItem?> getLastNotification(
+          String type, String relatedId) async =>
+      null;
 
   @override
   Future<void> deleteNotification(int id) async {}
@@ -75,7 +91,9 @@ class FakeNotificationService implements NotificationService {
 
 void main() {
   group('Production Readiness - AI Fallback Heuristics', () {
-    test('LocalAdvisorService fallback generates mathematically correct suggestions when offline', () async {
+    test(
+        'LocalAdvisorService fallback generates mathematically correct suggestions when offline',
+        () async {
       const localAdvisor = LocalAdvisorService();
       const context = AttendanceAIContext(
         studentInfo: {},
@@ -118,7 +136,8 @@ void main() {
       );
 
       expect(response.confidence, 1.0);
-      expect(response.answer, contains('No, you should not skip tomorrow\'s classes.'));
+      expect(response.answer,
+          contains('No, you should not skip tomorrow\'s classes.'));
       expect(response.relatedSubjects, contains('Math'));
       expect(response.actionItems.first, contains('Attend Math'));
     });
@@ -135,7 +154,9 @@ void main() {
       scheduler = NotificationScheduler(mockDb, mockService);
     });
 
-    test('Scheduler handles notification service failures gracefully without crashing', () async {
+    test(
+        'Scheduler handles notification service failures gracefully without crashing',
+        () async {
       final semester = SemesterLocal()
         ..name = 'Spring 2026'
         ..startDate = DateTime.now()

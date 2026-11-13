@@ -47,8 +47,10 @@ class SubjectRepositoryImpl implements SubjectRepository {
   }
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId) async {
-    final list = await _localDataSource.getSubjectsBySemester(semesterId);
+  Future<List<Subject>> getSubjectsBySemester(int semesterId,
+      {bool includeDeleted = false}) async {
+    final list = await _localDataSource.getSubjectsBySemester(semesterId,
+        includeDeleted: includeDeleted);
     return list.map(_toEntity).toList();
   }
 

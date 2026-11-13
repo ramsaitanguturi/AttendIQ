@@ -19,10 +19,14 @@ class AppTheme {
       ),
       dividerColor: AppColors.lightBorder,
       textTheme: TextTheme(
-        displayLarge: AppTextStyles.displayLarge.copyWith(color: AppColors.lightTextPrimary),
-        titleMedium: AppTextStyles.titleMedium.copyWith(color: AppColors.lightTextPrimary),
-        bodyMedium: AppTextStyles.bodyMedium.copyWith(color: AppColors.lightTextSecondary),
-        labelSmall: AppTextStyles.labelSmall.copyWith(color: AppColors.lightTextSecondary),
+        displayLarge: AppTextStyles.displayLarge
+            .copyWith(color: AppColors.lightTextPrimary),
+        titleMedium: AppTextStyles.titleMedium
+            .copyWith(color: AppColors.lightTextPrimary),
+        bodyMedium: AppTextStyles.bodyMedium
+            .copyWith(color: AppColors.lightTextSecondary),
+        labelSmall: AppTextStyles.labelSmall
+            .copyWith(color: AppColors.lightTextSecondary),
       ),
       cardTheme: const CardTheme(
         color: AppColors.lightSurface,
@@ -48,10 +52,14 @@ class AppTheme {
       ),
       dividerColor: AppColors.darkBorder,
       textTheme: TextTheme(
-        displayLarge: AppTextStyles.displayLarge.copyWith(color: AppColors.darkTextPrimary),
-        titleMedium: AppTextStyles.titleMedium.copyWith(color: AppColors.darkTextPrimary),
-        bodyMedium: AppTextStyles.bodyMedium.copyWith(color: AppColors.darkTextSecondary),
-        labelSmall: AppTextStyles.labelSmall.copyWith(color: AppColors.darkTextSecondary),
+        displayLarge: AppTextStyles.displayLarge
+            .copyWith(color: AppColors.darkTextPrimary),
+        titleMedium: AppTextStyles.titleMedium
+            .copyWith(color: AppColors.darkTextPrimary),
+        bodyMedium: AppTextStyles.bodyMedium
+            .copyWith(color: AppColors.darkTextSecondary),
+        labelSmall: AppTextStyles.labelSmall
+            .copyWith(color: AppColors.darkTextSecondary),
       ),
       cardTheme: const CardTheme(
         color: AppColors.darkSurface,

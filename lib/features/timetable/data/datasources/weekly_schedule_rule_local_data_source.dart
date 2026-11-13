@@ -15,7 +15,8 @@ abstract class WeeklyScheduleRuleLocalDataSource {
   Stream<void> watchRules(int semesterId);
 }
 
-class WeeklyScheduleRuleLocalDataSourceImpl implements WeeklyScheduleRuleLocalDataSource {
+class WeeklyScheduleRuleLocalDataSourceImpl
+    implements WeeklyScheduleRuleLocalDataSource {
   final Isar _isar;
   bool _migrationChecked = false;
 
@@ -35,7 +36,8 @@ class WeeklyScheduleRuleLocalDataSourceImpl implements WeeklyScheduleRuleLocalDa
   }
 
   @override
-  Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(int subjectId) async {
+  Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(
+      int subjectId) async {
     await _ensureLegacyTemplatesMigratedIfNeeded();
     return _isar.weeklyScheduleRuleLocals
         .where()
@@ -45,7 +47,8 @@ class WeeklyScheduleRuleLocalDataSourceImpl implements WeeklyScheduleRuleLocalDa
   }
 
   @override
-  Future<List<WeeklyScheduleRuleLocal>> getRulesForSemester(int semesterId) async {
+  Future<List<WeeklyScheduleRuleLocal>> getRulesForSemester(
+      int semesterId) async {
     await _ensureLegacyTemplatesMigratedIfNeeded();
     final subjects = _isar.subjectLocals
         .where()
@@ -125,6 +128,9 @@ class WeeklyScheduleRuleLocalDataSourceImpl implements WeeklyScheduleRuleLocalDa
 
   @override
   Stream<void> watchRules(int semesterId) {
-    return _isar.weeklyScheduleRuleLocals.where().isDeletedEqualTo(false).watch();
+    return _isar.weeklyScheduleRuleLocals
+        .where()
+        .isDeletedEqualTo(false)
+        .watch();
   }
 }

@@ -204,7 +204,9 @@ class FakeSubjectRepository implements SubjectRepository {
   final List<Subject> subjects;
   FakeSubjectRepository(this.subjects);
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId) async => subjects;
+  Future<List<Subject>> getSubjectsBySemester(int semesterId,
+          {bool includeDeleted = false}) async =>
+      includeDeleted ? subjects : subjects.where((s) => !s.isDeleted).toList();
   @override
   Future<Subject?> getSubjectById(int id) async => subjects.firstOrNull;
   @override

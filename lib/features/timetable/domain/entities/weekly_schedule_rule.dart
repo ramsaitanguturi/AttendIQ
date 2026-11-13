@@ -117,4 +117,3 @@ class WeeklyScheduleRule {
     return 'WeeklyScheduleRule(id: $id, subjectId: $subjectId, dayOfWeek: $dayOfWeek, startTime: $startTime, endTime: $endTime, room: $room, faculty: $faculty, type: $type, isActive: $isActive)';
   }
 }
-

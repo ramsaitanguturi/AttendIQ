@@ -37,16 +37,30 @@ class ReportService {
     return semesterLocal?.id;
   }
 
-  Future<AttendanceReport?> generateSemesterReport() async {
+  Future<AttendanceReport?> generateSemesterReport({
+    String? studentName,
+    double? targetPercentage,
+  }) async {
     final semester = await _semesterRepository.getActiveSemester();
     if (semester == null) return null;
 
     final semesterId = semester.localId ?? await getActiveSemesterLocalId();
     if (semesterId == null) return null;
 
-    const studentName = 'Student';
+    final effectiveStudentName =
+        (studentName != null && studentName.trim().isNotEmpty)
+            ? studentName.trim()
+            : 'Student';
 
-    final subjects = await _subjectRepository.getSubjectsBySemester(semesterId);
+    final effectiveTarget = targetPercentage ??
+        (semester.requiredAttendanceRate > 0
+            ? semester.requiredAttendanceRate
+            : 75.0);
+
+    final subjects = await _subjectRepository.getSubjectsBySemester(
+      semesterId,
+      includeDeleted: true,
+    );
 
     int totalClassesOverall = 0;
     int totalAttendedOverall = 0;
@@ -72,12 +86,17 @@ class ReportService {
         }
       }
 
+      // If soft-deleted and has no attendance records, omit from display
+      if (subject.isDeleted && total == 0) continue;
+
       totalClassesOverall += total;
       totalAttendedOverall += attended;
 
       final currentRate = AttendanceCalculator.calculatePercentage(
           attended: attended, total: total);
-      final target = subject.attendanceTarget;
+      final target = subject.attendanceTarget > 0
+          ? subject.attendanceTarget
+          : effectiveTarget;
 
       RiskStatus risk;
       if (currentRate < target) {
@@ -88,9 +107,12 @@ class ReportService {
         risk = RiskStatus.SAFE;
       }
 
+      final displayName =
+          subject.isDeleted ? '${subject.name} (Archived)' : subject.name;
+
       subjectReports.add(
         SubjectReport(
-          subjectName: subject.name,
+          subjectName: displayName,
           faculty: subject.faculty,
           percentage: currentRate,
           present: attended,
@@ -107,10 +129,11 @@ class ReportService {
     );
 
     return AttendanceReport(
-      studentName: studentName,
+      studentName: effectiveStudentName,
       semesterName: semester.name,
       generatedDate: DateTime.now(),
       overallPercentage: overallPercentage,
+      targetPercentage: effectiveTarget,
       totalClasses: totalClassesOverall,
       totalPresent: totalAttendedOverall,
       totalAbsent: totalClassesOverall - totalAttendedOverall,

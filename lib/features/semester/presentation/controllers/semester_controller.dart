@@ -35,4 +35,3 @@ Future<List<Semester>> allSemesters(AllSemestersRef ref) async {
   final repo = ref.watch(semesterRepositoryProvider);
   return repo.getAllSemesters();
 }
-

@@ -23,7 +23,9 @@ class WeeklyScheduleRuleRepositoryImpl implements WeeklyScheduleRuleRepository {
       endTime: local.endTime,
       room: local.room,
       faculty: local.faculty,
-      type: local.type.toUpperCase() == 'LAB' ? SubjectType.LAB : SubjectType.THEORY,
+      type: local.type.toUpperCase() == 'LAB'
+          ? SubjectType.LAB
+          : SubjectType.THEORY,
       isActive: local.isActive,
       createdAt: local.createdAt,
       updatedAt: local.updatedAt,

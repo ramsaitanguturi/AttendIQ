@@ -10,9 +10,11 @@ class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
   int _nextId = 1;
 
   @override
-  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId) async {
+  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId,
+      {bool includeDeleted = false}) async {
     return subjects.values
-        .where((s) => s.semesterId == semesterId && !s.isDeleted)
+        .where((s) =>
+            s.semesterId == semesterId && (includeDeleted || !s.isDeleted))
         .toList();
   }
 

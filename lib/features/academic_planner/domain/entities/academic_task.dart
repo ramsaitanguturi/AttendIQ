@@ -54,7 +54,9 @@ class AcademicTask {
     if (dueDate.isBefore(now)) {
       if (days == 0) return 'Overdue today';
       final overdueDays = days.abs();
-      return overdueDays == 1 ? 'Overdue by 1 day' : 'Overdue by $overdueDays days';
+      return overdueDays == 1
+          ? 'Overdue by 1 day'
+          : 'Overdue by $overdueDays days';
     }
     if (days == 0) {
       final hours = dueDate.difference(now).inHours;

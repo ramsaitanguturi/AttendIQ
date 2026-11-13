@@ -26,10 +26,10 @@ class DailyScheduleOccurrenceLocal {
 
   late String title;
   late String startTime; // "HH:mm"
-  late String endTime;   // "HH:mm"
+  late String endTime; // "HH:mm"
 
-  late String type;        // "REGULAR_CLASS", "EXTRA_CLASS", "EXAM", "EVENT"
-  late String status;      // "UPCOMING", "PRESENT", "ABSENT", "CANCELLED"
+  late String type; // "REGULAR_CLASS", "EXTRA_CLASS", "EXAM", "EVENT"
+  late String status; // "UPCOMING", "PRESENT", "ABSENT", "CANCELLED"
   late String createdFrom; // "WEEKLY_RULE", "MANUAL"
 
   String? room;

@@ -17,7 +17,7 @@ class EventLocal {
 
   late String startTime; // "HH:mm"
   late String endTime; // "HH:mm"
-  
+
   late String eventType; // REGULAR_CLASS, LAB, TUTORIAL
   late String status; // UNMARKED, PRESENT, ABSENT, CANCELLED
 

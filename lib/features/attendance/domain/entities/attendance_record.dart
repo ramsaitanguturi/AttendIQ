@@ -6,7 +6,7 @@ enum AttendanceStatus {
   EXTRA_ABSENT;
 
   String toShortString() => name;
-  
+
   static AttendanceStatus fromString(String value) {
     return AttendanceStatus.values.firstWhere(
       (e) => e.name == value || e.name.toUpperCase() == value.toUpperCase(),

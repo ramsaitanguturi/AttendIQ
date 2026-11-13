@@ -16,7 +16,7 @@ class GeminiAIProvider implements AIProvider {
   });
 
   static Uri get requestUri => Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
       );
 
   @override
@@ -32,8 +32,10 @@ class GeminiAIProvider implements AIProvider {
     final url = requestUri;
 
     final client = clientOverride ?? HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
     try {
-      final request = await client.postUrl(url);
+      final request =
+          await client.postUrl(url).timeout(const Duration(seconds: 10));
       request.headers.contentType = ContentType.json;
       request.headers.set('x-goog-api-key', apiKey);
 
@@ -61,11 +63,13 @@ class GeminiAIProvider implements AIProvider {
       };
 
       request.write(json.encode(body));
-      final response = await request.close();
+      final response =
+          await request.close().timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         final errorBody = await response.transform(utf8.decoder).join();
-        throw Exception('Gemini API status ${response.statusCode}: $errorBody');
+        throw Exception(
+            'Gemini API status ${response.statusCode}: ${_sanitizeError(errorBody)}');
       }
 
       final responseBody = await response.transform(utf8.decoder).join();
@@ -86,9 +90,14 @@ class GeminiAIProvider implements AIProvider {
       return AIResponseParser.parse(rawText);
     } finally {
       if (clientOverride == null) {
-        client.close();
+        client.close(force: true);
       }
     }
+  }
+
+  String _sanitizeError(String body) {
+    if (apiKey.isEmpty) return body;
+    return body.replaceAll(apiKey, '[REDACTED]');
   }
 
   @override

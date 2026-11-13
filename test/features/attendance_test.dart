@@ -10,7 +10,8 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
   int _nextId = 1;
 
   @override
-  Future<List<AttendanceRecordLocal>> getAttendanceForSubject(int subjectId) async {
+  Future<List<AttendanceRecordLocal>> getAttendanceForSubject(
+      int subjectId) async {
     return records.values
         .where((r) => r.subjectId == subjectId && !r.isDeleted)
         .toList();
@@ -22,8 +23,7 @@ class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
     if (occurrenceId <= 0) return null;
     try {
       return records.values.firstWhere(
-        (r) =>
-            (r.occurrenceId ?? r.eventId) == occurrenceId && !r.isDeleted,
+        (r) => (r.occurrenceId ?? r.eventId) == occurrenceId && !r.isDeleted,
       );
     } catch (_) {
       return null;
@@ -211,7 +211,9 @@ void main() {
       expect(finalLocal!.isDeleted, isTrue);
     });
 
-    test('Editing attendance status multiple times updates existing record without duplicates', () async {
+    test(
+        'Editing attendance status multiple times updates existing record without duplicates',
+        () async {
       // 1. Initial Present
       final recordPresent = AttendanceRecord(
         eventId: 500,

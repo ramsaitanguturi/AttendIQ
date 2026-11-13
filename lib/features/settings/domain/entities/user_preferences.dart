@@ -44,10 +44,12 @@ class UserPreferences {
     return UserPreferences(
       id: id ?? this.id,
       themeMode: themeMode ?? this.themeMode,
-      defaultAttendanceTarget: defaultAttendanceTarget ?? this.defaultAttendanceTarget,
+      defaultAttendanceTarget:
+          defaultAttendanceTarget ?? this.defaultAttendanceTarget,
       classReminderOffset: classReminderOffset ?? this.classReminderOffset,
       enableNotifications: enableNotifications ?? this.enableNotifications,
-      enableAttendanceWarnings: enableAttendanceWarnings ?? this.enableAttendanceWarnings,
+      enableAttendanceWarnings:
+          enableAttendanceWarnings ?? this.enableAttendanceWarnings,
       weeklyReportEnabled: weeklyReportEnabled ?? this.weeklyReportEnabled,
       lastSyncTime: lastSyncTime ?? this.lastSyncTime,
       enableAutoBackup: enableAutoBackup ?? this.enableAutoBackup,

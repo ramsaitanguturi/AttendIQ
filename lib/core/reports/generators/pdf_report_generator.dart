@@ -74,7 +74,10 @@ class PdfReportGenerator {
                             style: pw.TextStyle(
                               fontSize: 22,
                               fontWeight: pw.FontWeight.bold,
-                              color: report.overallPercentage >= 75.0 ? PdfColors.green : PdfColors.red,
+                              color: report.overallPercentage >=
+                                      report.targetPercentage
+                                  ? PdfColors.green
+                                  : PdfColors.red,
                             ),
                           ),
                           pw.Text('Overall Attendance'),
@@ -82,19 +85,28 @@ class PdfReportGenerator {
                       ),
                       pw.Column(
                         children: [
-                          pw.Text('${report.totalClasses}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text('${report.totalClasses}',
+                              style: pw.TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: pw.FontWeight.bold)),
                           pw.Text('Total Classes'),
                         ],
                       ),
                       pw.Column(
                         children: [
-                          pw.Text('${report.totalPresent}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text('${report.totalPresent}',
+                              style: pw.TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: pw.FontWeight.bold)),
                           pw.Text('Present'),
                         ],
                       ),
                       pw.Column(
                         children: [
-                          pw.Text('${report.totalAbsent}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text('${report.totalAbsent}',
+                              style: pw.TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: pw.FontWeight.bold)),
                           pw.Text('Absent'),
                         ],
                       ),
@@ -113,7 +125,15 @@ class PdfReportGenerator {
                 ),
                 pw.SizedBox(height: 8),
                 pw.TableHelper.fromTextArray(
-                  headers: ['Subject', 'Faculty', 'Present', 'Absent', 'Total', 'Percentage', 'Status'],
+                  headers: [
+                    'Subject',
+                    'Faculty',
+                    'Present',
+                    'Absent',
+                    'Total',
+                    'Percentage',
+                    'Status'
+                  ],
                   data: report.subjectReports.map((sub) {
                     return [
                       sub.subjectName,
@@ -126,7 +146,8 @@ class PdfReportGenerator {
                     ];
                   }).toList(),
                   headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                  headerDecoration:
+                      const pw.BoxDecoration(color: PdfColors.grey300),
                   cellAlignment: pw.Alignment.centerLeft,
                 ),
                 pw.SizedBox(height: 24),
@@ -155,24 +176,47 @@ class PdfReportGenerator {
       return [
         pw.Text(
           'Status: Excellent! All subjects are in the safe zone.',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.green),
+          style: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold, color: PdfColors.green),
         )
       ];
     }
 
     final List<pw.Widget> widgets = [];
-    widgets.add(pw.Text('Risk Assessment', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)));
+    widgets.add(pw.Text('Risk Assessment',
+        style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)));
     widgets.add(pw.SizedBox(height: 8));
 
     if (criticalSubjects.isNotEmpty) {
       widgets.add(
         pw.Text(
           'Critical Subjects (Below Target):',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.red),
+          style: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold, color: PdfColors.red),
         ),
       );
       for (final sub in criticalSubjects) {
-        widgets.add(pw.Bullet(text: '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)'));
+        widgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.symmetric(vertical: 2),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                pw.Container(
+                  width: 4,
+                  height: 4,
+                  margin: const pw.EdgeInsets.only(right: 6, left: 2),
+                  decoration: const pw.BoxDecoration(
+                    color: PdfColors.red,
+                    shape: pw.BoxShape.circle,
+                  ),
+                ),
+                pw.Text(
+                    '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)'),
+              ],
+            ),
+          ),
+        );
       }
       widgets.add(pw.SizedBox(height: 8));
     }
@@ -181,11 +225,32 @@ class PdfReportGenerator {
       widgets.add(
         pw.Text(
           'Warning Subjects (Near Threshold):',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.orange),
+          style: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold, color: PdfColors.orange),
         ),
       );
       for (final sub in warningSubjects) {
-        widgets.add(pw.Bullet(text: '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)'));
+        widgets.add(
+          pw.Padding(
+            padding: const pw.EdgeInsets.symmetric(vertical: 2),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                pw.Container(
+                  width: 4,
+                  height: 4,
+                  margin: const pw.EdgeInsets.only(right: 6, left: 2),
+                  decoration: const pw.BoxDecoration(
+                    color: PdfColors.orange,
+                    shape: pw.BoxShape.circle,
+                  ),
+                ),
+                pw.Text(
+                    '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)'),
+              ],
+            ),
+          ),
+        );
       }
     }
 

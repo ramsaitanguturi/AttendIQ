@@ -23,8 +23,11 @@ class TodayScheduleCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final date = targetDate ?? DateTime.now();
-    final normalizedParam = targetDate != null ? DateTime(targetDate!.year, targetDate!.month, targetDate!.day) : null;
-    final todayScheduleAsync = ref.watch(todayScheduleProvider(customDate: normalizedParam));
+    final normalizedParam = targetDate != null
+        ? DateTime(targetDate!.year, targetDate!.month, targetDate!.day)
+        : null;
+    final todayScheduleAsync =
+        ref.watch(todayScheduleProvider(customDate: normalizedParam));
     final subjectsAsync = ref.watch(subjectListControllerProvider);
 
     final subjectMap = subjectsAsync.maybeWhen<Map<int, Subject>>(
@@ -62,12 +65,14 @@ class TodayScheduleCard extends ConsumerWidget {
               ],
             ),
             ElevatedButton.icon(
-              onPressed: () => AddExtraClassDialog.show(context, initialDate: date),
+              onPressed: () =>
+                  AddExtraClassDialog.show(context, initialDate: date),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary.withOpacity(0.15),
                 foregroundColor: AppColors.primary,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
@@ -97,7 +102,8 @@ class TodayScheduleCard extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.beach_access, size: 40, color: Colors.amber),
+                    const Icon(Icons.beach_access,
+                        size: 40, color: Colors.amber),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -105,14 +111,18 @@ class TodayScheduleCard extends ConsumerWidget {
                         children: [
                           Text(
                             state.holidayTitle ?? 'College Holiday',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 17),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            state.holidayDescription ?? 'All classes removed for holiday.',
+                            state.holidayDescription ??
+                                'All classes removed for holiday.',
                             style: TextStyle(
                               fontSize: 13,
-                              color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                              color: isDark
+                                  ? Colors.grey.shade300
+                                  : Colors.grey.shade800,
                             ),
                           ),
                         ],
@@ -128,19 +138,25 @@ class TodayScheduleCard extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(28.0),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  color:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
                   borderRadius: BorderRadius.circular(20.0),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   ),
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.event_available, size: 42, color: Colors.grey.shade400),
+                    Icon(Icons.event_available,
+                        size: 42, color: Colors.grey.shade400),
                     const SizedBox(height: 10),
                     const Text(
                       'No classes scheduled today.',
-                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500, fontSize: 15),
+                      style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15),
                     ),
                   ],
                 ),
@@ -154,7 +170,9 @@ class TodayScheduleCard extends ConsumerWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final occurrence = state.occurrences[index];
-                final subject = occurrence.subjectId != null ? subjectMap[occurrence.subjectId] : null;
+                final subject = occurrence.subjectId != null
+                    ? subjectMap[occurrence.subjectId]
+                    : null;
 
                 return _OccurrenceCard(
                   occurrence: occurrence,
@@ -183,18 +201,27 @@ class TodayScheduleCard extends ConsumerWidget {
               children: [
                 const Text(
                   'Error loading today schedule',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 14),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                      fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   err.toString(),
-                  style: TextStyle(fontSize: 12, color: isDark ? Colors.red.shade200 : Colors.red.shade900),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color:
+                          isDark ? Colors.red.shade200 : Colors.red.shade900),
                 ),
                 if (kDebugMode) ...[
                   const SizedBox(height: 8),
                   Text(
                     stackTrace.toString(),
-                    style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: Colors.redAccent),
+                    style: const TextStyle(
+                        fontSize: 10,
+                        fontFamily: 'monospace',
+                        color: Colors.redAccent),
                   ),
                 ],
               ],
@@ -266,7 +293,8 @@ class _OccurrenceCard extends ConsumerWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14.0,
-                      color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                      color:
+                          isDark ? Colors.grey.shade300 : Colors.grey.shade800,
                     ),
                   ),
                 ],
@@ -303,7 +331,8 @@ class _OccurrenceCard extends ConsumerWidget {
                     if (subjectCode != null || occurrence.room != null) ...[
                       const SizedBox(height: 2),
                       Text(
-                        '${subjectCode ?? ""} ${occurrence.room != null ? "• ${occurrence.room}" : ""}'.trim(),
+                        '${subjectCode ?? ""} ${occurrence.room != null ? "• ${occurrence.room}" : ""}'
+                            .trim(),
                         style: const TextStyle(
                           fontSize: 12.0,
                           color: Colors.grey,
@@ -456,7 +485,8 @@ class _ActionButton extends StatelessWidget {
           backgroundColor: color,
           foregroundColor: Colors.white,
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
         ),
         icon: Icon(icon, size: 14),

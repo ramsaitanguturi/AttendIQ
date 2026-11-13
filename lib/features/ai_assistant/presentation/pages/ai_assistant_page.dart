@@ -61,7 +61,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
     });
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -96,15 +97,21 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                 ),
                 chatStateAsync.when(
                   data: (state) => Text(
-                    state.isOffline ? 'Offline - Local Rules' : 'Online - Gemini AI',
+                    state.isOffline
+                        ? 'Offline - Local Rules'
+                        : 'Online - Gemini AI',
                     style: TextStyle(
                       fontSize: 11,
-                      color: state.isOffline ? AppColors.attendanceLow : AppColors.primary,
+                      color: state.isOffline
+                          ? AppColors.attendanceLow
+                          : AppColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  loading: () => const Text('Initializing...', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                  error: (_, __) => const Text('Error', style: TextStyle(fontSize: 11, color: Colors.red)),
+                  loading: () => const Text('Initializing...',
+                      style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  error: (_, __) => const Text('Error',
+                      style: TextStyle(fontSize: 11, color: Colors.red)),
                 ),
               ],
             ),
@@ -114,7 +121,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Clear Chat',
-            onPressed: () => ref.read(aIChatControllerProvider.notifier).clearChat(),
+            onPressed: () =>
+                ref.read(aIChatControllerProvider.notifier).clearChat(),
           ),
         ],
       ),
@@ -127,17 +135,21 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                 Container(
                   width: double.infinity,
                   color: AppColors.attendanceLow.withOpacity(0.12),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     children: [
-                      const Icon(Icons.wifi_off, size: 16, color: AppColors.attendanceLow),
+                      const Icon(Icons.wifi_off,
+                          size: 16, color: AppColors.attendanceLow),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Offline Mode Active. Advice is calculated locally using deterministic rule sets.',
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -163,22 +175,26 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
               // Error Display
               if (chatState.error != null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.attendanceLow.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.attendanceLow.withOpacity(0.3)),
+                      border: Border.all(
+                          color: AppColors.attendanceLow.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.attendanceLow),
+                        const Icon(Icons.error_outline,
+                            color: AppColors.attendanceLow),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             chatState.error!,
-                            style: const TextStyle(fontSize: 12, color: AppColors.attendanceLow),
+                            style: const TextStyle(
+                                fontSize: 12, color: AppColors.attendanceLow),
                           ),
                         ),
                       ],
@@ -189,7 +205,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
               // Loading Shimmer or pulsing text
               if (chatState.isLoading)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: _buildTypingIndicator(isDark),
@@ -208,7 +225,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
                       ),
                     ),
                   ),
@@ -228,12 +247,17 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                         child: ActionChip(
                           label: Text(
                             question,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w600),
                           ),
-                          backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                          backgroundColor: isDark
+                              ? AppColors.darkSurface
+                              : AppColors.lightSurface,
                           surfaceTintColor: Colors.transparent,
                           side: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder,
                           ),
                           onPressed: () => _handleSubmit(question),
                         ),
@@ -242,7 +266,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 12),
 
               // Chat Input text field
@@ -261,7 +285,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
           ),
         ),
         error: (err, _) => Center(
-          child: Text('Initialization Error: $err', style: const TextStyle(color: AppColors.attendanceLow)),
+          child: Text('Initialization Error: $err',
+              style: const TextStyle(color: AppColors.attendanceLow)),
         ),
       ),
     );
@@ -274,7 +299,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -284,20 +310,25 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                 color: Colors.deepPurple.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, size: 14, color: Colors.deepPurpleAccent),
+              child: const Icon(Icons.auto_awesome,
+                  size: 14, color: Colors.deepPurpleAccent),
             ),
             const SizedBox(width: 8),
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: isUser
                         ? Colors.deepPurpleAccent
-                        : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+                        : (isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
@@ -306,7 +337,10 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                     ),
                     border: isUser
                         ? null
-                        : Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                        : Border.all(
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder),
                   ),
                   child: Text(
                     message.text,
@@ -314,16 +348,18 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       fontSize: 14.0,
                       color: isUser
                           ? Colors.black
-                          : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                          : (isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary),
                       height: 1.35,
                     ),
                   ),
                 ),
-                
+
                 // Extra UI elements for the AI response details
                 if (details != null && !isUser) ...[
                   const SizedBox(height: 8),
-                  
+
                   // Related Subjects chips
                   if (details.relatedSubjects.isNotEmpty) ...[
                     Wrap(
@@ -331,11 +367,13 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       runSpacing: 4,
                       children: details.relatedSubjects.map((sub) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppColors.secondary.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                            border: Border.all(
+                                color: AppColors.secondary.withOpacity(0.3)),
                           ),
                           child: Text(
                             sub,
@@ -358,10 +396,14 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       constraints: const BoxConstraints(maxWidth: 320),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                        color: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
                       ),
                       child: Column(
@@ -369,27 +411,32 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.playlist_add_check, size: 18, color: AppColors.primary),
+                              const Icon(Icons.playlist_add_check,
+                                  size: 18, color: AppColors.primary),
                               const SizedBox(width: 8),
                               Text(
                                 'Actionable Recommendations',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.lightTextPrimary,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           ...details.actionItems.map((item) => Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4.0),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Padding(
                                       padding: EdgeInsets.only(top: 2.0),
-                                      child: Icon(Icons.arrow_right, size: 14, color: AppColors.primary),
+                                      child: Icon(Icons.arrow_right,
+                                          size: 14, color: AppColors.primary),
                                     ),
                                     const SizedBox(width: 4),
                                     Expanded(
@@ -397,7 +444,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                                         item,
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                          color: isDark
+                                              ? AppColors.darkTextSecondary
+                                              : AppColors.lightTextSecondary,
                                           height: 1.3,
                                         ),
                                       ),
@@ -429,20 +478,23 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
           bottomLeft: Radius.circular(4),
           bottomRight: Radius.circular(16),
         ),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+        border: Border.all(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Analyzing attendance metrics...',
-            style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
+            style: TextStyle(
+                fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
           ),
           SizedBox(width: 8),
           SizedBox(
             width: 12,
             height: 12,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.deepPurpleAccent),
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: Colors.deepPurpleAccent),
           ),
         ],
       ),
@@ -455,7 +507,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
         border: Border(
-          top: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          top: BorderSide(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
       ),
       child: SafeArea(
@@ -464,10 +517,13 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+                  color: isDark
+                      ? AppColors.darkBackground
+                      : AppColors.lightBackground,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   ),
                 ),
                 child: Padding(
@@ -494,7 +550,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.send, color: Colors.black, size: 20),
-                onPressed: isLoading ? null : () => _handleSubmit(_textController.text),
+                onPressed: isLoading
+                    ? null
+                    : () => _handleSubmit(_textController.text),
               ),
             ),
           ],

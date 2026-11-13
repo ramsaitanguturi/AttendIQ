@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/schedule_exception.dart';
+import '../../domain/entities/academic_event.dart';
 import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../../domain/entities/weekly_schedule_rule.dart';
 import '../../domain/repositories/daily_schedule_occurrence_repository.dart';
@@ -30,13 +31,15 @@ class TodayScheduleState {
 }
 
 @riverpod
-Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? customDate}) async {
+Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
+    {DateTime? customDate}) async {
   final now = customDate ?? DateTime.now();
   final todayUtc = DateTime.utc(now.year, now.month, now.day);
   final weekday = now.weekday; // 1 = Monday, 7 = Sunday
 
   if (kDebugMode) {
-    developer.log('TodayScheduleProvider started', name: 'TodayScheduleProvider');
+    developer.log('TodayScheduleProvider started',
+        name: 'TodayScheduleProvider');
     developer.log('Today\'s date: $todayUtc', name: 'TodayScheduleProvider');
     developer.log('Weekday: $weekday', name: 'TodayScheduleProvider');
   }
@@ -51,41 +54,64 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
     final exceptions = await exceptionRepo.getExceptionsForDate(todayUtc);
 
     if (kDebugMode) {
-      developer.log('Exceptions found: ${exceptions.length}', name: 'TodayScheduleProvider');
-      developer.log('Number of ScheduleExceptions: ${exceptions.length}', name: 'TodayScheduleProvider');
+      developer.log('Exceptions found: ${exceptions.length}',
+          name: 'TodayScheduleProvider');
+      developer.log('Number of ScheduleExceptions: ${exceptions.length}',
+          name: 'TodayScheduleProvider');
     }
 
     // Check if today is a Holiday
-    final holidayException = exceptions.where((e) => e.type == ScheduleExceptionType.HOLIDAY).firstOrNull;
+    final holidayException = exceptions
+        .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+        .firstOrNull;
     if (holidayException != null) {
       if (kDebugMode) {
-        developer.log('Today is a holiday: ${holidayException.title}', name: 'TodayScheduleProvider');
+        developer.log('Today is a holiday: ${holidayException.title}',
+            name: 'TodayScheduleProvider');
         developer.log('Returning AsyncData', name: 'TodayScheduleProvider');
       }
       return TodayScheduleState(
         isHoliday: true,
         holidayTitle: holidayException.title,
-        holidayDescription: holidayException.description ?? 'College Holiday - All classes cancelled today.',
+        holidayDescription: holidayException.description ??
+            'College Holiday - All classes cancelled today.',
         occurrences: const [],
       );
     }
 
     final cancelledSubjectIds = exceptions
-        .where((e) => e.type == ScheduleExceptionType.CANCELLED_CLASS && e.subjectId != null)
+        .where((e) =>
+            e.type == ScheduleExceptionType.CANCELLED_CLASS &&
+            e.subjectId != null)
         .map((e) => e.subjectId!)
         .toSet();
 
-    final examExceptions = exceptions
-        .where((e) => e.type == ScheduleExceptionType.EXAM)
-        .toList();
+    final examExceptions =
+        exceptions.where((e) => e.type == ScheduleExceptionType.EXAM).toList();
+
+    // 1b. Fetch Academic Events for today
+    List<AcademicEvent> academicEvents = [];
+    try {
+      final academicEventRepo = ref.watch(academicEventRepositoryProvider);
+      academicEvents = await academicEventRepo.getEventsForDate(todayUtc);
+    } catch (e) {
+      if (kDebugMode) {
+        developer.log('Academic events unavailable: $e',
+            name: 'TodayScheduleProvider');
+      }
+    }
+    final activeAcademicEvents =
+        academicEvents.where((e) => !e.isDeleted).toList();
 
     // 2. Fetch saved occurrences for today
     final occurrenceRepo = ref.watch(dailyScheduleOccurrenceRepositoryProvider);
-    final savedOccurrences = await occurrenceRepo.getOccurrencesForDate(todayUtc);
+    final savedOccurrences =
+        await occurrenceRepo.getOccurrencesForDate(todayUtc);
 
     // 3. Loading WeeklyScheduleRules...
     if (kDebugMode) {
-      developer.log('Loading WeeklyScheduleRules...', name: 'TodayScheduleProvider');
+      developer.log('Loading WeeklyScheduleRules...',
+          name: 'TodayScheduleProvider');
     }
 
     final activeSemester = await ref.watch(activeSemesterProvider.future);
@@ -97,7 +123,8 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
     if (semId != null) {
       final ruleRepo = ref.watch(weeklyScheduleRuleRepositoryProvider);
       final allRules = await ruleRepo.getRulesForSemester(semId);
-      todayRules = allRules.where((r) => r.dayOfWeek == weekday && r.isActive).toList();
+      todayRules =
+          allRules.where((r) => r.dayOfWeek == weekday && r.isActive).toList();
 
       final subjects = await ref.watch(subjectListControllerProvider.future);
       for (final s in subjects) {
@@ -106,15 +133,19 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
     }
 
     if (kDebugMode) {
-      developer.log('Rules found: ${todayRules.length}', name: 'TodayScheduleProvider');
-      developer.log('Number of WeeklyScheduleRules loaded: ${todayRules.length}', name: 'TodayScheduleProvider');
+      developer.log('Rules found: ${todayRules.length}',
+          name: 'TodayScheduleProvider');
+      developer.log(
+          'Number of WeeklyScheduleRules loaded: ${todayRules.length}',
+          name: 'TodayScheduleProvider');
       developer.log('Generating occurrences...', name: 'TodayScheduleProvider');
     }
 
     final attendanceRepo = ref.watch(attendanceRepositoryProvider);
     final Map<String, DailyScheduleOccurrence> ruleOccurrences = {};
     final Set<int> consumedSavedIds = <int>{};
-    final List<({WeeklyScheduleRule rule, String key})> unmaterializedRules = [];
+    final List<({WeeklyScheduleRule rule, String key})> unmaterializedRules =
+        [];
     final Map<int, int> unmaterializedCountBySubject = {};
 
     // First pass: bind each rule to any materialized occurrence via ruleId or
@@ -133,7 +164,8 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
       DailyScheduleOccurrence? saved;
       if (rule.id != null) {
         saved = savedOccurrences.where((o) {
-          final idNotConsumed = o.id == null || !consumedSavedIds.contains(o.id);
+          final idNotConsumed =
+              o.id == null || !consumedSavedIds.contains(o.id);
           return idNotConsumed && o.ruleId == rule.id;
         }).firstOrNull;
       }
@@ -198,7 +230,8 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
         final unlinkedOnToday = records.where((r) {
           final markedDay = normalizeUtcDate(r.markedAt);
           if (!markedDay.isAtSameMomentAs(todayUtc)) return false;
-          final linkedOccId = r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
+          final linkedOccId =
+              r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
           return linkedOccId == null || !savedOccIds.contains(linkedOccId);
         }).toList();
 
@@ -246,23 +279,71 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
 
     // 4. Add Manual / Extra Class / unconsumed saved Occurrences for today
     for (final extra in savedOccurrences) {
-      final alreadyIncluded = (extra.id != null &&
-              consumedSavedIds.contains(extra.id!)) ||
-          (extra.id != null && resultList.any((e) => e.id == extra.id));
+      final alreadyIncluded =
+          (extra.id != null && consumedSavedIds.contains(extra.id!)) ||
+              (extra.id != null && resultList.any((e) => e.id == extra.id));
       if (!alreadyIncluded) {
         resultList.add(extra);
       }
     }
 
-    // 5. Add Exam Occurrences from exceptions if not already present
+    // 5. Add Exam Occurrences from exceptions and Academic Events
+    final consumedAcademicEventIds = <int>{};
+
     for (final exam in examExceptions) {
       final sub = exam.subjectId != null ? subjectMap[exam.subjectId] : null;
-      final title = sub != null ? '${sub.name} Exam' : exam.title;
+
+      // Deduplicate with matching AcademicEvent
+      AcademicEvent? matchingEvent;
+      for (final ae in activeAcademicEvents) {
+        if (consumedAcademicEventIds.contains(ae.id)) continue;
+        final titleMatches = normalizeTitleForKey(ae.title) ==
+                normalizeTitleForKey(exam.title) ||
+            normalizeTitleForKey(ae.title)
+                .contains(normalizeTitleForKey(exam.title)) ||
+            normalizeTitleForKey(exam.title)
+                .contains(normalizeTitleForKey(ae.title));
+        final subjectMatches = sub != null &&
+            (normalizeTitleForKey(ae.title)
+                    .contains(normalizeTitleForKey(sub.name)) ||
+                (ae.type == AcademicEventType.EXAM && titleMatches));
+
+        if (titleMatches || subjectMatches) {
+          matchingEvent = ae;
+          if (ae.id != null) consumedAcademicEventIds.add(ae.id!);
+          break;
+        }
+      }
+
+      final title = sub != null
+          ? '${sub.name} Exam'
+          : (matchingEvent?.title ?? exam.title);
+
+      String startTime = '09:00';
+      String endTime = '12:00';
+      if (matchingEvent != null) {
+        if (matchingEvent.startTime != null &&
+            matchingEvent.startTime!.trim().isNotEmpty) {
+          startTime = normalizeTimeSlotPart(matchingEvent.startTime!);
+        }
+        if (matchingEvent.endTime != null &&
+            matchingEvent.endTime!.trim().isNotEmpty) {
+          endTime = normalizeTimeSlotPart(matchingEvent.endTime!);
+        }
+      } else if (exam.description != null) {
+        final match = RegExp(r'(\d{1,2}:\d{2})\s*[-–to]+\s*(\d{1,2}:\d{2})')
+            .firstMatch(exam.description!);
+        if (match != null) {
+          startTime = normalizeTimeSlotPart(match.group(1)!);
+          endTime = normalizeTimeSlotPart(match.group(2)!);
+        }
+      }
+
       final examSlotKey = computeCanonicalSlotKey(
         date: todayUtc,
         subjectId: exam.subjectId,
-        startTime: '09:00',
-        endTime: '12:00',
+        startTime: startTime,
+        endTime: endTime,
         type: OccurrenceType.EXAM.toShortString(),
         title: title,
       );
@@ -279,14 +360,61 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
             subjectId: exam.subjectId,
             slotKey: examSlotKey,
             title: title,
-            startTime: '09:00',
-            endTime: '12:00',
+            startTime: startTime,
+            endTime: endTime,
             type: OccurrenceType.EXAM,
             status: OccurrenceStatus.UPCOMING,
             createdFrom: OccurrenceCreatedFrom.MANUAL,
-            reason: exam.description ?? 'Exam Event',
-            createdAt: DateTime.now().toUtc(),
-            updatedAt: DateTime.now().toUtc(),
+            reason:
+                matchingEvent?.description ?? exam.description ?? 'Exam Event',
+            createdAt: matchingEvent?.createdAt ?? DateTime.now().toUtc(),
+            updatedAt: matchingEvent?.updatedAt ?? DateTime.now().toUtc(),
+          ),
+        );
+      }
+    }
+
+    // Add remaining Academic Events
+    for (final ae in activeAcademicEvents) {
+      if (ae.id != null && consumedAcademicEventIds.contains(ae.id)) continue;
+      final isExam = ae.type == AcademicEventType.EXAM;
+      final occType = isExam ? OccurrenceType.EXAM : OccurrenceType.EVENT;
+
+      final startTime =
+          (ae.startTime != null && ae.startTime!.trim().isNotEmpty)
+              ? normalizeTimeSlotPart(ae.startTime!)
+              : '09:00';
+      final endTime = (ae.endTime != null && ae.endTime!.trim().isNotEmpty)
+          ? normalizeTimeSlotPart(ae.endTime!)
+          : (isExam ? '12:00' : '10:00');
+
+      final slotKey = computeCanonicalSlotKey(
+        date: todayUtc,
+        startTime: startTime,
+        endTime: endTime,
+        type: occType.toShortString(),
+        title: ae.title,
+      );
+
+      final existing = resultList
+          .where((o) =>
+              (o.type == occType) &&
+              (o.slotKey == slotKey || o.title == ae.title))
+          .firstOrNull;
+      if (existing == null) {
+        resultList.add(
+          DailyScheduleOccurrence(
+            date: todayUtc,
+            slotKey: slotKey,
+            title: ae.title,
+            startTime: startTime,
+            endTime: endTime,
+            type: occType,
+            status: OccurrenceStatus.UPCOMING,
+            createdFrom: OccurrenceCreatedFrom.MANUAL,
+            reason: ae.description ?? ae.type.toShortString(),
+            createdAt: ae.createdAt,
+            updatedAt: ae.updatedAt,
           ),
         );
       }
@@ -296,8 +424,10 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref, {DateTime? custom
     resultList.sort((a, b) => a.startTime.compareTo(b.startTime));
 
     if (kDebugMode) {
-      developer.log('Occurrences generated: ${resultList.length}', name: 'TodayScheduleProvider');
-      developer.log('Number of DailyScheduleOccurrences: ${resultList.length}', name: 'TodayScheduleProvider');
+      developer.log('Occurrences generated: ${resultList.length}',
+          name: 'TodayScheduleProvider');
+      developer.log('Number of DailyScheduleOccurrences: ${resultList.length}',
+          name: 'TodayScheduleProvider');
       developer.log('Returning AsyncData', name: 'TodayScheduleProvider');
     }
 

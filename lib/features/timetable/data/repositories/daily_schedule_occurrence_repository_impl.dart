@@ -5,7 +5,8 @@ import '../models/daily_schedule_occurrence_local.dart';
 import '../utils/occurrence_identity.dart';
 import '../../../../core/utils/uuid_generator.dart';
 
-class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRepository {
+class DailyScheduleOccurrenceRepositoryImpl
+    implements DailyScheduleOccurrenceRepository {
   final DailyScheduleOccurrenceLocalDataSource _localDataSource;
 
   DailyScheduleOccurrenceRepositoryImpl({
@@ -66,19 +67,22 @@ class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRe
   }
 
   @override
-  Future<List<DailyScheduleOccurrence>> getOccurrencesForDate(DateTime date) async {
+  Future<List<DailyScheduleOccurrence>> getOccurrencesForDate(
+      DateTime date) async {
     final list = await _localDataSource.getOccurrencesForDate(date);
     return list.map(_toEntity).toList();
   }
 
   @override
-  Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(DateTime start, DateTime end) async {
+  Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(
+      DateTime start, DateTime end) async {
     final list = await _localDataSource.getOccurrencesForDateRange(start, end);
     return list.map(_toEntity).toList();
   }
 
   @override
-  Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(int subjectId) async {
+  Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(
+      int subjectId) async {
     final list = await _localDataSource.getOccurrencesForSubject(subjectId);
     return list.map(_toEntity).toList();
   }
@@ -93,7 +97,8 @@ class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRe
   }
 
   @override
-  Future<DailyScheduleOccurrence> saveOccurrence(DailyScheduleOccurrence occurrence) async {
+  Future<DailyScheduleOccurrence> saveOccurrence(
+      DailyScheduleOccurrence occurrence) async {
     final serverId = occurrence.serverId ?? generateUuid();
     final now = DateTime.now().toUtc();
 
@@ -115,7 +120,8 @@ class DailyScheduleOccurrenceRepositoryImpl implements DailyScheduleOccurrenceRe
   }
 
   @override
-  Future<List<DailyScheduleOccurrence>> saveOccurrences(List<DailyScheduleOccurrence> occurrences) async {
+  Future<List<DailyScheduleOccurrence>> saveOccurrences(
+      List<DailyScheduleOccurrence> occurrences) async {
     final now = DateTime.now().toUtc();
     final locals = <DailyScheduleOccurrenceLocal>[];
 

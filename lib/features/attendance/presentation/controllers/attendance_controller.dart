@@ -19,7 +19,8 @@ import '../../../widgets/services/widget_refresh_service.dart';
 part 'attendance_controller.g.dart';
 
 @riverpod
-AttendanceLocalDataSource attendanceLocalDataSource(AttendanceLocalDataSourceRef ref) {
+AttendanceLocalDataSource attendanceLocalDataSource(
+    AttendanceLocalDataSourceRef ref) {
   final isar = ref.watch(isarProvider).requireValue;
   return AttendanceLocalDataSourceImpl(isar);
 }
@@ -38,7 +39,8 @@ class AttendanceController extends _$AttendanceController {
     // Empty build
   }
 
-  Future<DailyScheduleOccurrence> markOccurrencePresent(DailyScheduleOccurrence occurrence) async {
+  Future<DailyScheduleOccurrence> markOccurrencePresent(
+      DailyScheduleOccurrence occurrence) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
     final attendanceRepo = ref.read(attendanceRepositoryProvider);
 
@@ -47,11 +49,15 @@ class AttendanceController extends _$AttendanceController {
       updatedAt: DateTime.now().toUtc(),
     );
 
-    final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
+    final savedOccurrence =
+        await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
-    if (savedOccurrence.subjectId != null && savedOccurrence.id != null && savedOccurrence.id! > 0) {
+    if (savedOccurrence.subjectId != null &&
+        savedOccurrence.id != null &&
+        savedOccurrence.id! > 0) {
       final occId = savedOccurrence.id!;
-      final existingRecord = await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
+      final existingRecord =
+          await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_PRESENT
           : AttendanceStatus.PRESENT;
@@ -75,7 +81,8 @@ class AttendanceController extends _$AttendanceController {
     return savedOccurrence;
   }
 
-  Future<DailyScheduleOccurrence> markOccurrenceAbsent(DailyScheduleOccurrence occurrence) async {
+  Future<DailyScheduleOccurrence> markOccurrenceAbsent(
+      DailyScheduleOccurrence occurrence) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
     final attendanceRepo = ref.read(attendanceRepositoryProvider);
 
@@ -84,11 +91,15 @@ class AttendanceController extends _$AttendanceController {
       updatedAt: DateTime.now().toUtc(),
     );
 
-    final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
+    final savedOccurrence =
+        await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
-    if (savedOccurrence.subjectId != null && savedOccurrence.id != null && savedOccurrence.id! > 0) {
+    if (savedOccurrence.subjectId != null &&
+        savedOccurrence.id != null &&
+        savedOccurrence.id! > 0) {
       final occId = savedOccurrence.id!;
-      final existingRecord = await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
+      final existingRecord =
+          await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
       final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
           ? AttendanceStatus.EXTRA_ABSENT
           : AttendanceStatus.ABSENT;
@@ -112,7 +123,8 @@ class AttendanceController extends _$AttendanceController {
     return savedOccurrence;
   }
 
-  Future<DailyScheduleOccurrence> markOccurrenceCancelled(DailyScheduleOccurrence occurrence) async {
+  Future<DailyScheduleOccurrence> markOccurrenceCancelled(
+      DailyScheduleOccurrence occurrence) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
     final attendanceRepo = ref.read(attendanceRepositoryProvider);
 
@@ -121,11 +133,12 @@ class AttendanceController extends _$AttendanceController {
       updatedAt: DateTime.now().toUtc(),
     );
 
-    final savedOccurrence = await occurrenceRepo.saveOccurrence(updatedOccurrence);
+    final savedOccurrence =
+        await occurrenceRepo.saveOccurrence(updatedOccurrence);
 
     if (savedOccurrence.id != null && savedOccurrence.id! > 0) {
-      final existingRecord =
-          await attendanceRepo.getAttendanceForOccurrenceAnyStatus(savedOccurrence.id!);
+      final existingRecord = await attendanceRepo
+          .getAttendanceForOccurrenceAnyStatus(savedOccurrence.id!);
       if (existingRecord?.id != null) {
         await attendanceRepo.deleteAttendanceRecord(existingRecord!.id!);
       }

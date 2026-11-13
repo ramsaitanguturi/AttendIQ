@@ -16,10 +16,7 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
 
   @override
   Future<List<AcademicTaskLocal>> getAllTasks() async {
-    return _isar.academicTaskLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    return _isar.academicTaskLocals.where().isDeletedEqualTo(false).findAll();
   }
 
   @override

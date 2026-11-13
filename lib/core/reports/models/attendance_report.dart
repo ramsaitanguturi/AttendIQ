@@ -5,6 +5,7 @@ class AttendanceReport {
   final String semesterName;
   final DateTime generatedDate;
   final double overallPercentage;
+  final double targetPercentage;
   final int totalClasses;
   final int totalPresent;
   final int totalAbsent;
@@ -15,6 +16,7 @@ class AttendanceReport {
     required this.semesterName,
     required this.generatedDate,
     required this.overallPercentage,
+    this.targetPercentage = 75.0,
     required this.totalClasses,
     required this.totalPresent,
     required this.totalAbsent,

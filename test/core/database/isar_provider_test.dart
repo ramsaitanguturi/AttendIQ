@@ -23,6 +23,7 @@ import 'package:attend_iq/features/settings/data/repositories/settings_repositor
 import 'package:attend_iq/features/settings/domain/entities/user_preferences.dart';
 import 'package:attend_iq/features/settings/domain/repositories/settings_repository.dart';
 import 'package:attend_iq/features/settings/presentation/controllers/settings_controller.dart';
+import 'package:attend_iq/features/settings/data/models/user_preferences_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/domain/repositories/subject_repository.dart';
@@ -86,6 +87,9 @@ class _FakeNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<SemesterLocal?> getActiveSemester() async => null;
+
+  @override
+  Future<UserPreferencesLocal?> getUserPreferences() async => null;
 
   @override
   Future<List<AttendanceRecordLocal>> getAllAttendanceRecords() async =>
@@ -202,7 +206,9 @@ class _FakeSubjectRepository implements SubjectRepository {
   Future<Subject?> getSubjectById(int id) async => null;
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId) async => const [];
+  Future<List<Subject>> getSubjectsBySemester(int semesterId,
+          {bool includeDeleted = false}) async =>
+      const [];
 
   @override
   Future<void> updateSubject(Subject subject) async {}
@@ -891,7 +897,9 @@ void main() {
           openedIsar.close();
         }
         if (tempDir.existsSync()) {
-          await tempDir.delete(recursive: true);
+          try {
+            await tempDir.delete(recursive: true);
+          } catch (_) {}
         }
       }
     });

@@ -186,31 +186,96 @@ class NotificationScheduler {
     }
   }
 
+  Future<void> cancelAllScheduledNotifications() async {
+    final now = DateTime.now();
+    final allFuture = await _db.getFutureNotifications(now);
+    for (final n in allFuture) {
+      await _notificationService
+          .cancelNotification(n.effectiveAndroidNotificationId);
+      await _db.deleteNotification(n.id);
+    }
+  }
+
+  Future<void> cancelAttendanceWarnings() async {
+    final now = DateTime.now();
+    final warnings = await _db.getFutureNotificationsByType(
+      NotificationType.ATTENDANCE_WARNING.toShortString(),
+      now,
+    );
+    final alerts = await _db.getFutureNotificationsByType(
+      NotificationType.LOW_ATTENDANCE_ALERT.toShortString(),
+      now,
+    );
+    for (final n in [...warnings, ...alerts]) {
+      await _notificationService
+          .cancelNotification(n.effectiveAndroidNotificationId);
+      await _db.deleteNotification(n.id);
+    }
+  }
+
+  Future<void> cancelWeeklyReports() async {
+    final now = DateTime.now();
+    final reports = await _db.getFutureNotificationsByType(
+      NotificationType.WEEKLY_REPORT.toShortString(),
+      now,
+    );
+    for (final r in reports) {
+      await _notificationService
+          .cancelNotification(r.effectiveAndroidNotificationId);
+      await _db.deleteNotification(r.id);
+    }
+  }
+
   Future<void> _executeReschedulePass({
     required List<int> reminderOffsets,
     required DateTime? customNow,
   }) async {
     final now = customNow ?? DateTime.now();
     if (_isDisposed) return;
+
+    final prefs = await _db.getUserPreferences();
+    final enableNotifications = prefs?.enableNotifications ?? true;
+    if (!enableNotifications) {
+      await cancelAllScheduledNotifications();
+      return;
+    }
+
+    final effectiveOffsets = (prefs != null && prefs.classReminderOffset > 0)
+        ? [prefs.classReminderOffset]
+        : reminderOffsets;
+
+    if (_isDisposed) return;
     try {
-      await rescheduleRollingWindow(offsets: reminderOffsets, customNow: now);
+      await rescheduleRollingWindow(offsets: effectiveOffsets, customNow: now);
     } catch (e, stack) {
       debugPrint('Failed to reschedule rolling window reminders: $e');
       debugPrint(stack.toString());
     }
+
     if (_isDisposed) return;
-    try {
-      await checkAttendanceRisks(customNow: now);
-    } catch (e, stack) {
-      debugPrint('Failed to check attendance risks: $e');
-      debugPrint(stack.toString());
+    final enableWarnings = prefs?.enableAttendanceWarnings ?? true;
+    if (enableWarnings) {
+      try {
+        await checkAttendanceRisks(customNow: now);
+      } catch (e, stack) {
+        debugPrint('Failed to check attendance risks: $e');
+        debugPrint(stack.toString());
+      }
+    } else {
+      await cancelAttendanceWarnings();
     }
+
     if (_isDisposed) return;
-    try {
-      await scheduleWeeklyReport(customNow: now);
-    } catch (e, stack) {
-      debugPrint('Failed to schedule weekly report: $e');
-      debugPrint(stack.toString());
+    final enableWeeklyReport = prefs?.weeklyReportEnabled ?? true;
+    if (enableWeeklyReport) {
+      try {
+        await scheduleWeeklyReport(customNow: now);
+      } catch (e, stack) {
+        debugPrint('Failed to schedule weekly report: $e');
+        debugPrint(stack.toString());
+      }
+    } else {
+      await cancelWeeklyReports();
     }
   }
 
@@ -220,8 +285,8 @@ class NotificationScheduler {
     final rollingEnd = now.add(const Duration(days: 7));
 
     final startUtc = DateTime.utc(now.year, now.month, now.day);
-    final endUtc =
-        DateTime.utc(rollingEnd.year, rollingEnd.month, rollingEnd.day, 23, 59, 59);
+    final endUtc = DateTime.utc(
+        rollingEnd.year, rollingEnd.month, rollingEnd.day, 23, 59, 59);
 
     // 1. Fetch canonical occurrences, weekly rules, exceptions, and subjects
     final occurrences = await _db.getOccurrences(startUtc, endUtc);
@@ -316,8 +381,7 @@ class NotificationScheduler {
         continue;
       }
 
-      final subject =
-          occ.subjectId != null ? subjectMap[occ.subjectId!] : null;
+      final subject = occ.subjectId != null ? subjectMap[occ.subjectId!] : null;
       if (occ.subjectId != null && (subject == null || subject.isDeleted)) {
         continue;
       }
@@ -613,7 +677,7 @@ class NotificationScheduler {
             ..title = title
             ..body = body
             ..type = alertType.toShortString()
-            ..scheduledTime = now
+            ..scheduledTime = now.add(const Duration(seconds: 5))
             ..relatedId = subjectKey
             ..isRead = false;
 

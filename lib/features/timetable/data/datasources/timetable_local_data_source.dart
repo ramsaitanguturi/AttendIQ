@@ -16,7 +16,8 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
   TimetableLocalDataSourceImpl(this._isar);
 
   @override
-  Future<List<TimetableTemplateLocal>> getTemplatesForSubject(int subjectId) async {
+  Future<List<TimetableTemplateLocal>> getTemplatesForSubject(
+      int subjectId) async {
     return _isar.timetableTemplateLocals
         .where()
         .subjectIdEqualTo(subjectId)
@@ -25,7 +26,8 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
   }
 
   @override
-  Future<List<TimetableTemplateLocal>> getTemplatesForSemester(int semesterId) async {
+  Future<List<TimetableTemplateLocal>> getTemplatesForSemester(
+      int semesterId) async {
     // 1. Get all subject IDs for the semester
     final subjects = _isar.subjectLocals
         .where()
@@ -36,10 +38,8 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
     if (subjectIds.isEmpty) return [];
 
     // 2. Fetch all templates and filter by subject ID
-    final allTemplates = _isar.timetableTemplateLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final allTemplates =
+        _isar.timetableTemplateLocals.where().isDeletedEqualTo(false).findAll();
 
     return allTemplates.where((t) => subjectIds.contains(t.subjectId)).toList();
   }
@@ -61,6 +61,9 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
 
   @override
   Stream<void> watchTemplates(int semesterId) {
-    return _isar.timetableTemplateLocals.where().isDeletedEqualTo(false).watch();
+    return _isar.timetableTemplateLocals
+        .where()
+        .isDeletedEqualTo(false)
+        .watch();
   }
 }

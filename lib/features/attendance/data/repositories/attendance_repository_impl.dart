@@ -57,7 +57,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
 
   @override
   Future<AttendanceRecord?> getAttendanceForOccurrence(int occurrenceId) async {
-    final local = await _localDataSource.getAttendanceForOccurrence(occurrenceId);
+    final local =
+        await _localDataSource.getAttendanceForOccurrence(occurrenceId);
     if (local != null) {
       return _toEntity(local);
     }
@@ -67,8 +68,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   @override
   Future<AttendanceRecord?> getAttendanceForOccurrenceAnyStatus(
       int occurrenceId) async {
-    final local =
-        await _localDataSource.getAttendanceForOccurrenceAnyStatus(occurrenceId);
+    final local = await _localDataSource
+        .getAttendanceForOccurrenceAnyStatus(occurrenceId);
     if (local != null) {
       return _toEntity(local);
     }
@@ -90,7 +91,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
             ? record.eventId
             : null);
     final existing = (targetOccId != null && targetOccId > 0)
-        ? await _localDataSource.getAttendanceForOccurrenceAnyStatus(targetOccId)
+        ? await _localDataSource
+            .getAttendanceForOccurrenceAnyStatus(targetOccId)
         : null;
     final serverId = record.serverId ?? existing?.serverId ?? generateUuid();
     final now = DateTime.now().toUtc();

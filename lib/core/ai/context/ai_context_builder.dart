@@ -120,8 +120,9 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
       upcomingClasses.add({
         'day': 'Today',
         'subjectId': occ.subjectId,
-        'subjectName':
-            occ.subjectId != null ? (subjectNames[occ.subjectId] ?? occ.title) : occ.title,
+        'subjectName': occ.subjectId != null
+            ? (subjectNames[occ.subjectId] ?? occ.title)
+            : occ.title,
         'time': '${occ.startTime}-${occ.endTime}',
         'status': occ.status.toShortString(),
       });
@@ -133,8 +134,9 @@ Future<AttendanceAIContext> aiContext(AiContextRef ref) async {
       upcomingClasses.add({
         'day': 'Tomorrow',
         'subjectId': occ.subjectId,
-        'subjectName':
-            occ.subjectId != null ? (subjectNames[occ.subjectId] ?? occ.title) : occ.title,
+        'subjectName': occ.subjectId != null
+            ? (subjectNames[occ.subjectId] ?? occ.title)
+            : occ.title,
         'time': '${occ.startTime}-${occ.endTime}',
         'status': occ.status.toShortString(),
       });

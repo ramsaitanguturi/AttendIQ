@@ -225,7 +225,7 @@ void main() {
       expect(
         uri.toString(),
         equals(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         ),
       );
     });
@@ -266,6 +266,7 @@ void main() {
 }
 
 class _FakeHttpClient extends Fake implements HttpClient {
+  Duration? connectionTimeout;
   _FakeHttpClientRequest? recordedRequest;
 
   @override

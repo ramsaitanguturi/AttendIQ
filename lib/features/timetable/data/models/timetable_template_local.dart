@@ -17,7 +17,7 @@ class TimetableTemplateLocal {
 
   late String startTime; // "HH:mm"
   late String endTime; // "HH:mm"
-  
+
   String? room;
   String? faculty;
   String? notes;

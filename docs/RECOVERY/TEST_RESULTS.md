@@ -799,3 +799,92 @@ All 12 tests passed: `00:00 +12: All tests passed!`.
 | `git diff --check` | **PASS** | Zero whitespace errors or conflict markers across working tree. |
 | Isar Schema Preservation | **VERIFIED** | Zero Isar schema alterations; 100% backward-compatible persistence. |
 | Android Home Screen Widgets | **VERIFIED** | BUG-027 widget implementation fully preserved; `widgets_test.dart` passes 12 / 12 tests. |
+
+---
+
+### 5.16 Priority 1 Bug Fix Batch Verification (`NEW-BUG-01`, `NEW-BUG-02`, `BUG-011`, `BUG-012`, `NEW-BUG-04`, `BUG-026`, `BUG-013`, `BUG-014`, `NEW-BUG-09`, `BUG-015`, `BUG-016`, `NEW-BUG-08`)
+
+#### 1. Core Defect Fix Summary
+
+| Bug ID | Module | Root Cause | Implementation Resolution | Files Touched |
+|---|---|---|---|---|
+| **NEW-BUG-01** | Timetable & Widgets | Academic events (`AcademicEventLocal`) were isolated to the academic calendar and omitted from Today Schedule, Weekly Timetable, and Today Widget. | Integrated `AcademicEventRepository.getEventsForDate` into `todayScheduleProvider`, `weekly_schedule_view_controller.dart`, and `WidgetDataService.generateTodayWidgetData`; mapped events to `ScheduleSlotType.event` with distinct badge styling and deduplicated against `ScheduleExceptionType.EXAM`. | `lib/features/timetable/presentation/controllers/today_schedule_provider.dart`<br>`lib/features/timetable/presentation/controllers/weekly_schedule_view_controller.dart`<br>`lib/features/timetable/presentation/widgets/class_schedule_card.dart`<br>`lib/features/widgets/data/widget_data_service.dart` |
+| **NEW-BUG-02** | Timetable / Event Presentation | Non-class academic event and exam timetable slots displayed hardcoded placeholder times (`09:00 - 12:00`) instead of their configured start and end times. | Extracted and normalized actual `startTime` and `endTime` from `AcademicEventLocal` and `ScheduleExceptionLocal` models, falling back to defaults only if values are null or empty. | `lib/features/timetable/presentation/controllers/today_schedule_provider.dart`<br>`lib/features/timetable/presentation/controllers/weekly_schedule_view_controller.dart`<br>`lib/features/widgets/data/widget_data_service.dart` |
+| **BUG-011** | Attendance Forecasting | Remaining class forecasting in `subjectAttendanceStatsProvider` evaluated rules from `DateTime.now()` without checking if today's class was already logged (double-counting today) and did not subtract `ScheduleExceptionLocal` holidays or cancelled classes across the semester. | Iterated remaining semester days checking `ScheduleExceptionType.HOLIDAY` and `CANCELLED_CLASS` exclusions, subtracted already-marked classes on `todayUtc`, and normalized 30-day window dates while filtering soft-deleted records. | `lib/features/attendance/presentation/controllers/subject_attendance_stats_provider.dart` |
+| **BUG-012 & NEW-BUG-04** | Analytics & Attendance | Soft-deleting a subject caused its historical attendance records to be dropped from overall semester attendance rate, class counts, and streak calculations because `AnalyticsService` only queried non-deleted subjects. | Added `{bool includeDeleted = false}` to `SubjectRepository.getSubjectsBySemester`; updated `AnalyticsService` to fetch subjects with `includeDeleted: true` so all historical records and occurrences for the active semester are preserved in analytics and streak calculations. | `lib/features/subject/domain/repositories/subject_repository.dart`<br>`lib/features/subject/data/datasources/subject_local_data_source.dart`<br>`lib/features/subject/data/repositories/subject_repository_impl.dart`<br>`lib/core/analytics/services/analytics_service.dart` |
+| **BUG-026** | Reports & Export | `ReportService` omitted soft-deleted subjects with historical records, hardcoded `'Student'` and target `75.0%` assumptions, and `PdfReportGenerator` used `pw.Bullet()` emitting Unicode character `\u2022` which Helvetica standard font cannot render. | Included soft-deleted subjects with attendance records labeled `(Archived)` while omitting those with zero records; added optional `studentName` and `targetPercentage` parameters to `generateSemesterReport` and `AttendanceReport`; replaced `pw.Bullet()` with drawn circular container widgets in `PdfReportGenerator`. | `lib/core/reports/models/attendance_report.dart`<br>`lib/core/reports/services/report_service.dart`<br>`lib/core/reports/generators/pdf_report_generator.dart` |
+| **BUG-013** | Notification Scheduler | `NotificationScheduler` hardcoded reminder offset `[15]`, ignored user preferences in `UserPreferencesLocal`, and scheduled risk alerts at `now` (which could be in the past). | Added `getUserPreferences()` to `NotificationDatabase`; updated `NotificationScheduler` to check `enableNotifications` (cancelling all future notifications when false), read `classReminderOffset` from user preferences, cancel warnings/weekly reports when toggled off, and set risk alerts to `now.add(const Duration(seconds: 5))` so alerts are never scheduled in the past. | `lib/core/notifications/scheduler/notification_database.dart`<br>`lib/core/notifications/scheduler/notification_scheduler.dart` |
+| **BUG-014** | Notification Platform | Local timezone was not set via `tz.setLocalLocation()` before scheduling, causing alarms to trigger at wrong UTC offsets, and `AndroidManifest.xml` lacked `RECEIVE_BOOT_COMPLETED` permission and boot receiver declarations. | Configured `tz.setLocalLocation` matching device timezone in `NotificationService._performInitialize()`; added `android.permission.RECEIVE_BOOT_COMPLETED` and registered `ScheduledNotificationReceiver` and `ScheduledNotificationBootReceiver` in `AndroidManifest.xml`. | `lib/core/notifications/services/notification_service.dart`<br>`android/app/src/main/AndroidManifest.xml` |
+| **NEW-BUG-09** | Notifications / Settings | Toggling notification settings in UI updated `UserPreferencesLocal` in the database but did not invoke `NotificationScheduler.rescheduleAll()`, leaving previously scheduled reminders active or not scheduling new ones. | Wired `SettingsController` to call `ref.read(notificationSchedulerProvider).rescheduleAll()` whenever `enableNotifications`, `enableAttendanceWarnings`, `weeklyReportEnabled`, or `classReminderOffset` is changed. Added cancel methods for specific categories in `NotificationScheduler`. | `lib/core/notifications/scheduler/notification_scheduler.dart`<br>`lib/features/settings/presentation/controllers/settings_controller.dart` |
+| **BUG-015** | AI Advisor | When Gemini API failed (network error, timeout, HTTP 4xx/5xx, quota exhaustion), `AIChatController` caught the error into an error state instead of falling back to the offline `LocalAdvisorService`. | Wrapped `provider.askQuestion` with a fallback catch block in `AIChatController` that delegates to `LocalAdvisorService` whenever `GeminiAIProvider` encounters an error, ensuring academic advice is always provided. | `lib/features/ai_assistant/presentation/controllers/ai_chat_controller.dart` |
+| **BUG-016 & NEW-BUG-08** | AI Security & Reliability | `GeminiAIProvider` targeted retired `gemini-1.5-flash` model, lacked connection/request timeouts, did not force-close `HttpClient`, and risked leaking API keys in error strings. | Updated request URI to use `gemini-2.5-flash`; added 10-second `connectionTimeout` and 15-second request timeout; added `finally { client.close(force: true); }`; added `_sanitizeError` to redact API keys from error messages. | `lib/core/ai/services/gemini_ai_provider.dart` |
+
+#### 2. Regression Test Suites Added (22 Tests)
+
+1. **`test/features/academic_events_integration_test.dart` (4 tests — ALL PASS)**:
+   - `TodayScheduleProvider` integrates `AcademicEventLocal` with actual start and end times.
+   - Deduplication: `ScheduleException` `EXAM` and `AcademicEvent` `EXAM` on same date are merged without duplicates.
+   - `WeeklyScheduleViewController` integrates academic events with `ScheduleSlotType.event` and distinct badge styling.
+   - `WidgetDataService.generateTodayWidgetData` includes academic events and exams with actual times.
+
+2. **`test/features/attendance_calculations_and_reports_test.dart` (7 tests — ALL PASS)**:
+   - Remaining count excludes `ScheduleExceptionLocal` holidays and cancellations.
+   - Remaining calculation does not double count today's already-marked classes.
+   - 30-day attendance rate calculation respects date boundary and ignores soft-deleted records.
+   - `SubjectRepository.getSubjectsBySemester` with `includeDeleted: true` returns soft-deleted subjects.
+   - `AnalyticsCalculator.calculateOverallAnalytics` includes historical attendance from soft-deleted subjects in overall rate, class counts, and streak calculation.
+   - `ReportService` includes soft-deleted subjects with records (marked `(Archived)`) and supports dynamic student name and target percentage.
+   - `PdfReportGenerator` produces valid PDF bytes without Unicode bullet rendering crashes (`pw.Bullet` replaced by circular container widgets).
+
+3. **`test/features/notifications_preferences_and_reboot_test.dart` (6 tests — ALL PASS)**:
+   - `enableNotifications = false` cancels all future notifications and halts reminder scheduling.
+   - Uses `classReminderOffset` preference instead of hardcoded 15 minutes.
+   - `checkAttendanceRisks` schedules alerts strictly in the future (`now + 5s`), never in the past.
+   - Toggling `enableAttendanceWarnings` to `false` cancels pending warnings.
+   - Toggling `weeklyReportEnabled` to `false` cancels pending weekly reports.
+   - `AndroidManifest.xml` declares `RECEIVE_BOOT_COMPLETED` permission and registers `ScheduledNotificationBootReceiver`.
+
+4. **`test/features/ai_fallback_and_timeout_test.dart` (5 tests — ALL PASS)**:
+   - Model identifier is updated to `gemini-2.5-flash` and not retired models (`gemini-1.5-flash` or `gemini-pro`).
+   - `GeminiAIProvider` configures 10-second `connectionTimeout` and closes `HttpClient` with `force: true`.
+   - API key is redacted with `[REDACTED]` from error messages and never exposed in logs.
+   - When Gemini API fails or times out, fallback pipeline resolves answer via `LocalAdvisorService`.
+   - `LocalAdvisorService` operates fully offline and correctly handles advisor questions with risky subjects.
+
+#### 3. Full Verification Results
+
+| Check / Command | Result | Details |
+|---|:---:|---|
+| `flutter analyze --no-pub --no-fatal-infos` | **PASS** | **0 errors, 0 warnings** (exit code 0). |
+| `flutter test --no-pub -j 1` | **PASS** | **315 / 315 tests passed** across all 31 test files (100% pass rate, 0 failures, 0 flakes). |
+| `compileProdDebugKotlin` & `compileBetaDebugKotlin` | **PASS** | **BUILD SUCCESSFUL** across both build flavors in 1m 40s. |
+| `dart format lib/ test/` | **PASS** | All modified Dart files formatted cleanly. |
+| `git diff --check` | **PASS** | Zero whitespace errors or conflict markers across working tree. |
+| Isar Schema Preservation | **VERIFIED** | Zero Isar schema alterations; 100% backward-compatible persistence. |
+
+#### 4. APK Build Artifacts
+
+| Variant | Output Path | Build Time | Status |
+|---|---|:---:|:---:|
+| `prodDebug` | `build/app/outputs/flutter-apk/app-prod-debug.apk` | 71.5s | **SUCCESS** |
+| `betaDebug` | `build/app/outputs/flutter-apk/app-beta-debug.apk` | 214.4s | **SUCCESS** |
+| `prodRelease` | `build/app/outputs/flutter-apk/app-prod-release.apk` | 176.5s | **SUCCESS (65.8 MB)** |
+| `betaRelease` | `build/app/outputs/flutter-apk/app-beta-release.apk` | 152.2s | **SUCCESS (65.8 MB)** |
+
+#### 5. Android 14 (API 34) Runtime Verification Evidence
+
+Live runtime verification was performed on connected test device `emulator-5554` running Android 14 (`ro.build.version.release = 14`, `ro.build.version.sdk = 34`):
+1. **Application Launch & Execution**:
+   - `app-prod-debug.apk` installed cleanly via streaming install (`Performing Streamed Install -> Success`).
+   - `am start -n com.ramsa.attendiq.attend_iq/.MainActivity` launched successfully (PID 18805).
+   - Zero fatal exceptions, crashes, or ANRs in logcat.
+2. **Reboot Receiver & Boot Permissions**:
+   - Verified `android.permission.RECEIVE_BOOT_COMPLETED: granted=true` via package dumpsys.
+   - Verified `com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver` is registered with OS intent filters:
+     - `android.intent.action.BOOT_COMPLETED`
+     - `android.intent.action.MY_PACKAGE_REPLACED`
+     - `android.intent.action.QUICKBOOT_POWERON`
+3. **Widget Synchronization Broadcast**:
+   - Broadcast intent `com.ramsa.attendiq.attend_iq.ACTION_WIDGET_REFRESH` completed with `result=0`, triggering background widget refresh.
+4. **AI Fallback & Offline Operation**:
+   - Verified AI advice generation falls back to `LocalAdvisorService` seamlessly when remote API is unreachable.

@@ -6,7 +6,15 @@ class DayHeaderStrip extends StatelessWidget {
   final int selectedIndex; // 0..6
   final ValueChanged<int> onDaySelected;
 
-  static const List<String> _dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  static const List<String> _dayNames = [
+    'MON',
+    'TUE',
+    'WED',
+    'THU',
+    'FRI',
+    'SAT',
+    'SUN'
+  ];
 
   const DayHeaderStrip({
     super.key,
@@ -17,7 +25,9 @@ class DayHeaderStrip extends StatelessWidget {
 
   bool _isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   @override
@@ -31,7 +41,8 @@ class DayHeaderStrip extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(7, (index) {
           final isSelected = index == selectedIndex;
-          final date = index < weekDates.length ? weekDates[index] : DateTime.now();
+          final date =
+              index < weekDates.length ? weekDates[index] : DateTime.now();
           final isTodayDate = _isToday(date);
           final dayName = index < _dayNames.length ? _dayNames[index] : '';
 
@@ -44,12 +55,16 @@ class DayHeaderStrip extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary
-                      : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+                      : (isDark
+                          ? AppColors.darkSurface
+                          : AppColors.lightSurface),
                   borderRadius: BorderRadius.circular(12.0),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.primary
-                        : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                        : (isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder),
                     width: isSelected ? 1.5 : 1.0,
                   ),
                   boxShadow: isSelected
@@ -98,7 +113,9 @@ class DayHeaderStrip extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.amberAccent : AppColors.primary,
+                              color: isSelected
+                                  ? Colors.amberAccent
+                                  : AppColors.primary,
                               shape: BoxShape.circle,
                             ),
                           ),

@@ -49,8 +49,10 @@ class ScheduleExceptionRepositoryImpl implements ScheduleExceptionRepository {
   }
 
   @override
-  Future<List<ScheduleException>> getExceptionsForRange(DateTime startDate, DateTime endDate) async {
-    final list = await _localDataSource.getExceptionsForRange(startDate, endDate);
+  Future<List<ScheduleException>> getExceptionsForRange(
+      DateTime startDate, DateTime endDate) async {
+    final list =
+        await _localDataSource.getExceptionsForRange(startDate, endDate);
     return list.map(_toEntity).toList();
   }
 

@@ -19,7 +19,7 @@ class EventGenerator {
   }) {
     final List<Event> newEvents = [];
     final subjectMap = {for (var s in subjects) s.id: s};
-    
+
     DateTime current = _stripTime(startDate);
     final end = _stripTime(endDate);
 
@@ -39,7 +39,9 @@ class EventGenerator {
             e.endTime == template.endTime);
 
         if (!exists) {
-          final eventType = subject.type == SubjectType.LAB ? EventType.LAB : EventType.REGULAR_CLASS;
+          final eventType = subject.type == SubjectType.LAB
+              ? EventType.LAB
+              : EventType.REGULAR_CLASS;
 
           newEvents.add(Event(
             subjectId: template.subjectId,
@@ -98,7 +100,9 @@ class EventGenerator {
             e.endTime == template.endTime);
 
         if (!exists) {
-          final eventType = subject.type == SubjectType.LAB ? EventType.LAB : EventType.REGULAR_CLASS;
+          final eventType = subject.type == SubjectType.LAB
+              ? EventType.LAB
+              : EventType.REGULAR_CLASS;
 
           newEvents.add(Event(
             subjectId: template.subjectId,

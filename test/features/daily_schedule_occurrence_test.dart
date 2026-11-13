@@ -90,7 +90,8 @@ void main() {
     });
 
     // Test 3: Absent updates attendance
-    test('3. Absent status updates attendance record and decreases percentage', () {
+    test('3. Absent status updates attendance record and decreases percentage',
+        () {
       final occurrence = DailyScheduleOccurrence(
         id: 2,
         date: mondayDate,
@@ -120,7 +121,8 @@ void main() {
       const presentCount = 0;
       const absentCount = 1;
       const totalConducted = presentCount + absentCount;
-      const percentage = totalConducted > 0 ? (presentCount / totalConducted) * 100 : 100.0;
+      const percentage =
+          totalConducted > 0 ? (presentCount / totalConducted) * 100 : 100.0;
 
       expect(totalConducted, equals(1));
       expect(presentCount, equals(0));
@@ -128,7 +130,9 @@ void main() {
     });
 
     // Test 4: Cancelled does not affect percentage
-    test('4. Cancelled status does NOT create attendance record and does NOT affect percentage', () {
+    test(
+        '4. Cancelled status does NOT create attendance record and does NOT affect percentage',
+        () {
       final occurrence = DailyScheduleOccurrence(
         id: 3,
         date: mondayDate,
@@ -160,7 +164,9 @@ void main() {
     });
 
     // Test 5: Extra class appears only on selected date
-    test('5. Extra class appears only on selected date and does NOT modify WeeklyScheduleRule', () {
+    test(
+        '5. Extra class appears only on selected date and does NOT modify WeeklyScheduleRule',
+        () {
       final extraOccurrence = DailyScheduleOccurrence(
         id: 10,
         date: extraClassDate,
@@ -187,7 +193,9 @@ void main() {
     });
 
     // Test 6: Extra class included in reports
-    test('6. Extra class marked Present/Absent is included in total conducted classes and reports', () {
+    test(
+        '6. Extra class marked Present/Absent is included in total conducted classes and reports',
+        () {
       final records = [
         AttendanceRecord(
           id: 1,
@@ -218,9 +226,11 @@ void main() {
       int present = 0;
       int absent = 0;
       for (final r in records) {
-        if (r.status == AttendanceStatus.PRESENT || r.status == AttendanceStatus.EXTRA_PRESENT) {
+        if (r.status == AttendanceStatus.PRESENT ||
+            r.status == AttendanceStatus.EXTRA_PRESENT) {
           present++;
-        } else if (r.status == AttendanceStatus.ABSENT || r.status == AttendanceStatus.EXTRA_ABSENT) {
+        } else if (r.status == AttendanceStatus.ABSENT ||
+            r.status == AttendanceStatus.EXTRA_ABSENT) {
           absent++;
         }
       }
@@ -228,7 +238,7 @@ void main() {
       final percentage = (present / totalConducted) * 100;
 
       expect(present, equals(2)); // 1 regular present + 1 extra present
-      expect(absent, equals(1));  // 1 extra absent
+      expect(absent, equals(1)); // 1 extra absent
       expect(totalConducted, equals(3));
       expect(percentage, closeTo(66.66, 0.1));
     });
@@ -246,21 +256,23 @@ void main() {
       );
 
       final isHoliday = holidayException.type == ScheduleExceptionType.HOLIDAY;
-      final List<DailyScheduleOccurrence> schedule = isHoliday ? [] : [
-        DailyScheduleOccurrence(
-          id: 5,
-          date: tuesdayDate,
-          subjectId: 101,
-          title: 'Operating Systems',
-          startTime: '09:00',
-          endTime: '10:00',
-          type: OccurrenceType.REGULAR_CLASS,
-          status: OccurrenceStatus.UPCOMING,
-          createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ];
+      final List<DailyScheduleOccurrence> schedule = isHoliday
+          ? []
+          : [
+              DailyScheduleOccurrence(
+                id: 5,
+                date: tuesdayDate,
+                subjectId: 101,
+                title: 'Operating Systems',
+                startTime: '09:00',
+                endTime: '10:00',
+                type: OccurrenceType.REGULAR_CLASS,
+                status: OccurrenceStatus.UPCOMING,
+                createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              ),
+            ];
 
       expect(isHoliday, isTrue);
       expect(holidayException.title, equals('College Holiday'));

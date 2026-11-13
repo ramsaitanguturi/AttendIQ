@@ -44,6 +44,7 @@ class LocalNotificationServiceImpl implements NotificationService {
 
   Future<void> _performInitialize() async {
     tz.initializeTimeZones();
+    _configureLocalTimeZone();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -122,6 +123,29 @@ class LocalNotificationServiceImpl implements NotificationService {
     }
 
     _isInitialized = true;
+  }
+
+  void _configureLocalTimeZone() {
+    try {
+      final currentTimeZone = DateTime.now().timeZoneName;
+      if (tz.timeZoneDatabase.locations.containsKey(currentTimeZone)) {
+        tz.setLocalLocation(tz.getLocation(currentTimeZone));
+        return;
+      }
+      final offsetMs = DateTime.now().timeZoneOffset.inMilliseconds;
+      tz.Location? matched;
+      for (final loc in tz.timeZoneDatabase.locations.values) {
+        if (loc.currentTimeZone.offset == offsetMs) {
+          matched = loc;
+          break;
+        }
+      }
+      if (matched != null) {
+        tz.setLocalLocation(matched);
+      }
+    } catch (e) {
+      debugPrint('Could not set local timezone location: $e');
+    }
   }
 
   @override

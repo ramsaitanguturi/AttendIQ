@@ -12,14 +12,16 @@ class FakeTimetableLocalDataSource implements TimetableLocalDataSource {
   int _nextId = 1;
 
   @override
-  Future<List<TimetableTemplateLocal>> getTemplatesForSubject(int subjectId) async {
+  Future<List<TimetableTemplateLocal>> getTemplatesForSubject(
+      int subjectId) async {
     return templates.values
         .where((t) => t.subjectId == subjectId && !t.isDeleted)
         .toList();
   }
 
   @override
-  Future<List<TimetableTemplateLocal>> getTemplatesForSemester(int semesterId) async {
+  Future<List<TimetableTemplateLocal>> getTemplatesForSemester(
+      int semesterId) async {
     final subjectIds = subjects
         .where((s) => s.semesterId == semesterId && !s.isDeleted)
         .map((s) => s.id)
@@ -32,7 +34,8 @@ class FakeTimetableLocalDataSource implements TimetableLocalDataSource {
   }
 
   @override
-  Future<TimetableTemplateLocal?> getTemplateById(int id) async => templates[id];
+  Future<TimetableTemplateLocal?> getTemplateById(int id) async =>
+      templates[id];
 
   @override
   Future<void> saveTemplate(TimetableTemplateLocal template) async {

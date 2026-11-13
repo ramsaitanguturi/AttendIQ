@@ -24,7 +24,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -52,7 +53,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -69,11 +71,13 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                   const SizedBox(height: 24.0),
 
                   // 4. Subject Comparison Chart (Bar Chart)
-                  _buildSubjectComparisonChartSection(analytics.subjectComparison, isDark),
+                  _buildSubjectComparisonChartSection(
+                      analytics.subjectComparison, isDark),
                   const SizedBox(height: 24.0),
 
                   // 5. Subject Ranking Summary Card
-                  _buildComparisonRankingCard(analytics.subjectComparison, isDark),
+                  _buildComparisonRankingCard(
+                      analytics.subjectComparison, isDark),
                   const SizedBox(height: 24.0),
 
                   // 6. Risk Level Subjects Section
@@ -130,7 +134,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: riskColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -166,7 +171,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                     'Current Percentage',
                     style: TextStyle(
                       fontSize: 12.0,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                     ),
                   ),
                 ],
@@ -202,7 +209,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           label,
           style: TextStyle(
             fontSize: 11.0,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
           ),
         ),
       ],
@@ -356,7 +365,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                         show: true,
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (value) => FlLine(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                           strokeWidth: 1,
                         ),
                       ),
@@ -383,7 +394,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                               final date = points[index].date;
                               return Text(
                                 '${date.day}/${date.month}',
-                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                style: const TextStyle(
+                                    fontSize: 10, color: Colors.grey),
                               );
                             },
                           ),
@@ -395,7 +407,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '${value.toInt()}%',
-                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                style: const TextStyle(
+                                    fontSize: 10, color: Colors.grey),
                               );
                             },
                             reservedSize: 32,
@@ -414,7 +427,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                       lineBarsData: [
                         LineChartBarData(
                           spots: List.generate(points.length, (index) {
-                            return FlSpot(index.toDouble(), points[index].percentage);
+                            return FlSpot(
+                                index.toDouble(), points[index].percentage);
                           }),
                           isCurved: points.length > 1,
                           gradient: const LinearGradient(
@@ -474,7 +488,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           style: TextStyle(
             color: isSelected
                 ? AppColors.primary
-                : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                : (isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary),
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
@@ -522,9 +538,11 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                       maxY: 100,
                       barTouchData: BarTouchData(
                         touchTooltipData: BarTouchTooltipData(
-                          getTooltipColor: (_) => isDark ? AppColors.darkSurface : Colors.white,
+                          getTooltipColor: (_) =>
+                              isDark ? AppColors.darkSurface : Colors.white,
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            final subjectName = statsList[group.x.toInt()].subject.name;
+                            final subjectName =
+                                statsList[group.x.toInt()].subject.name;
                             return BarTooltipItem(
                               '$subjectName\n${rod.toY.toStringAsFixed(1)}%',
                               TextStyle(
@@ -570,7 +588,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '${value.toInt()}%',
-                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                style: const TextStyle(
+                                    fontSize: 10, color: Colors.grey),
                               );
                             },
                           ),
@@ -586,7 +605,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                         show: true,
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (value) => FlLine(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                           strokeWidth: 1,
                         ),
                       ),
@@ -608,7 +629,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                               backDrawRodData: BackgroundBarChartRodData(
                                 show: true,
                                 toY: 100,
-                                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                                color: isDark
+                                    ? AppColors.darkBorder
+                                    : AppColors.lightBorder,
                               ),
                             ),
                           ],
@@ -622,7 +645,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     );
   }
 
-  Widget _buildComparisonRankingCard(SubjectComparison comparison, bool isDark) {
+  Widget _buildComparisonRankingCard(
+      SubjectComparison comparison, bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
@@ -697,7 +721,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               title,
               style: TextStyle(
                 fontSize: 12.0,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 4),
@@ -747,7 +773,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
         if (riskList.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+            padding:
+                const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
             decoration: BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(16.0),
@@ -758,7 +785,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             child: const Center(
               child: Text(
                 '🎉 All subjects are in the safe zone!',
-                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: AppColors.primary, fontWeight: FontWeight.bold),
               ),
             ),
           )
@@ -774,16 +802,20 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               final target = stats.subject.attendanceTarget;
               final isCritical = percentage < target;
 
-              final badgeColor = isCritical ? AppColors.attendanceLow : AppColors.attendanceMid;
+              final badgeColor = isCritical
+                  ? AppColors.attendanceLow
+                  : AppColors.attendanceMid;
               final badgeText = isCritical ? 'Critical' : 'Warning';
 
               return Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  color:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   ),
                 ),
                 child: Row(
@@ -807,7 +839,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                                 : 'Safe bunks: ${stats.safeBunks}',
                             style: TextStyle(
                               fontSize: 12.0,
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
                             ),
                           ),
                         ],
@@ -826,7 +860,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                         ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: badgeColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),

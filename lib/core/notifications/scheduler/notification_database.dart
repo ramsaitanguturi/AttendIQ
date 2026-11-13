@@ -10,6 +10,7 @@ import '../../../features/timetable/data/models/daily_schedule_occurrence_local.
 import '../../../features/timetable/data/models/schedule_exception_local.dart';
 import '../../../features/timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../../features/timetable/data/models/academic_event_local.dart';
+import '../../../features/settings/data/models/user_preferences_local.dart';
 import '../models/notification_item.dart';
 
 /// Summary of legacy notification migration work performed on an [Isar] box.
@@ -185,6 +186,7 @@ abstract class NotificationDatabase {
       int subjectId);
   Future<List<AttendanceRecordLocal>> getAllAttendanceRecords();
   Future<SemesterLocal?> getActiveSemester();
+  Future<UserPreferencesLocal?> getUserPreferences();
 
   Future<List<NotificationItem>> getFutureNotifications(DateTime now);
   Future<List<NotificationItem>> getFutureNotificationsByType(
@@ -321,6 +323,12 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
   @override
   Future<SemesterLocal?> getActiveSemester() async {
     return resolveActiveSemesterLocal(_isar);
+  }
+
+  @override
+  Future<UserPreferencesLocal?> getUserPreferences() async {
+    if (!_isar.isOpen) return null;
+    return _isar.userPreferencesLocals.where().findFirst();
   }
 
   @override

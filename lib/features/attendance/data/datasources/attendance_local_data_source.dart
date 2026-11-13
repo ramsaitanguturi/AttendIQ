@@ -42,7 +42,8 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
   AttendanceLocalDataSourceImpl(this._isar);
 
   @override
-  Future<List<AttendanceRecordLocal>> getAttendanceForSubject(int subjectId) async {
+  Future<List<AttendanceRecordLocal>> getAttendanceForSubject(
+      int subjectId) async {
     return _isar.attendanceRecordLocals
         .where()
         .subjectIdEqualTo(subjectId)
@@ -320,10 +321,8 @@ String _resolveUniqueAttendanceServerId(
       .findAll()
       .map((s) => s.id)
       .toSet();
-  final activeRules = isar.weeklyScheduleRuleLocals
-      .where()
-      .isDeletedEqualTo(false)
-      .findAll();
+  final activeRules =
+      isar.weeklyScheduleRuleLocals.where().isDeletedEqualTo(false).findAll();
   for (final rule in activeRules) {
     if (!rule.isActive) continue;
     if (rule.dayOfWeek != normDate.weekday) continue;
@@ -498,8 +497,9 @@ DailyScheduleOccurrenceLocal saveExtraClassWithAttendanceInWriteTx(
   final statusPair = _resolveExtraClassStatusPair(attendanceStatus);
   final now = (nowUtc ?? DateTime.now()).toUtc();
   final trimmedTitle = subjectTitle?.trim();
-  final resolvedTitle =
-      (trimmedTitle != null && trimmedTitle.isNotEmpty) ? trimmedTitle : subject.name;
+  final resolvedTitle = (trimmedTitle != null && trimmedTitle.isNotEmpty)
+      ? trimmedTitle
+      : subject.name;
 
   final dayStart = normDate;
   final dayEnd = DateTime.utc(
@@ -742,9 +742,7 @@ DailyScheduleOccurrenceLocal saveExtraClassWithAttendanceInWriteTx(
     );
   }
 
-  final existingAtt = attendanceRows
-      .where((r) => !r.isDeleted)
-      .firstOrNull ??
+  final existingAtt = attendanceRows.where((r) => !r.isDeleted).firstOrNull ??
       attendanceRows.firstOrNull;
 
   onBeforeAttendancePut?.call(isar);

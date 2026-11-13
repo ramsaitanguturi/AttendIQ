@@ -4,6 +4,7 @@ import '../../../../core/database/isar_provider.dart';
 import '../../data/repositories/settings_repository_impl.dart';
 import '../../domain/entities/user_preferences.dart';
 import '../../domain/repositories/settings_repository.dart';
+import '../../../../core/notifications/providers/notification_providers.dart';
 
 part 'settings_controller.g.dart';
 
@@ -68,6 +69,10 @@ class SettingsController extends _$SettingsController {
 
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
+
+    try {
+      await ref.read(notificationSchedulerProvider).rescheduleAll();
+    } catch (_) {}
   }
 
   Future<void> updateEnableNotifications(bool enabled) async {
@@ -79,6 +84,10 @@ class SettingsController extends _$SettingsController {
 
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
+
+    try {
+      await ref.read(notificationSchedulerProvider).rescheduleAll();
+    } catch (_) {}
   }
 
   Future<void> updateEnableAttendanceWarnings(bool enabled) async {
@@ -90,6 +99,10 @@ class SettingsController extends _$SettingsController {
 
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
+
+    try {
+      await ref.read(notificationSchedulerProvider).rescheduleAll();
+    } catch (_) {}
   }
 
   Future<void> updateWeeklyReportEnabled(bool enabled) async {
@@ -101,6 +114,10 @@ class SettingsController extends _$SettingsController {
 
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
+
+    try {
+      await ref.read(notificationSchedulerProvider).rescheduleAll();
+    } catch (_) {}
   }
 
   Future<void> updateEnableAutoBackup(bool enabled) async {

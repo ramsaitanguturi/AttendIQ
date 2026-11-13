@@ -16,7 +16,7 @@ class Subject {
   final double attendanceTarget;
   final String color; // Hex string e.g. '#FF5733'
   final SubjectType type;
-  
+
   // Sync metadata
   final DateTime updatedAt;
   final bool isDirty;

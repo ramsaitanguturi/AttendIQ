@@ -14,7 +14,8 @@ class TaskNotificationScheduler {
     return 800000 + taskId;
   }
 
-  Future<void> scheduleTaskNotification(AcademicTask task, {String? subjectName}) async {
+  Future<void> scheduleTaskNotification(AcademicTask task,
+      {String? subjectName}) async {
     if (task.id == null) return;
     final notifId = _getNotificationId(task.id!);
 
@@ -25,7 +26,9 @@ class TaskNotificationScheduler {
       debugPrint('Error cancelling previous task notification: $e');
     }
 
-    if (task.status == TaskStatus.COMPLETED || task.isDeleted || task.reminder == TaskReminder.NONE) {
+    if (task.status == TaskStatus.COMPLETED ||
+        task.isDeleted ||
+        task.reminder == TaskReminder.NONE) {
       return;
     }
 
@@ -36,13 +39,15 @@ class TaskNotificationScheduler {
     final now = DateTime.now();
 
     if (scheduledTime.isBefore(now)) {
-      debugPrint('Task reminder scheduled time $scheduledTime is in the past. Skipping notification.');
+      debugPrint(
+          'Task reminder scheduled time $scheduledTime is in the past. Skipping notification.');
       return;
     }
 
     // Build user friendly notification message
     String bodyText;
-    final prefix = subjectName != null && subjectName.isNotEmpty ? '$subjectName: ' : '';
+    final prefix =
+        subjectName != null && subjectName.isNotEmpty ? '$subjectName: ' : '';
 
     switch (task.reminder) {
       case TaskReminder.AT_DEADLINE:
@@ -64,7 +69,8 @@ class TaskNotificationScheduler {
         bodyText = '$prefix${task.title} due in 2 days';
         break;
       default:
-        bodyText = '$prefix${task.title} deadline on ${DateFormat('MMM d, jm').format(task.dueDate)}';
+        bodyText =
+            '$prefix${task.title} deadline on ${DateFormat('MMM d, jm').format(task.dueDate)}';
     }
 
     final item = NotificationItem()
@@ -78,7 +84,8 @@ class TaskNotificationScheduler {
 
     try {
       await _notificationService.scheduleNotification(item);
-      debugPrint('Successfully scheduled task notification ID $notifId for $scheduledTime');
+      debugPrint(
+          'Successfully scheduled task notification ID $notifId for $scheduledTime');
     } catch (e) {
       debugPrint('Failed to schedule task notification: $e');
     }

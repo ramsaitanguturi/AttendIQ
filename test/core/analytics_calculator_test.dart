@@ -21,27 +21,27 @@ void main() {
 
     test('Normal case (27 present, 4 absent)', () {
       final records = List.generate(
-        27,
-        (i) => AttendanceRecord(
-          id: i,
-          eventId: i,
-          subjectId: 1,
-          status: AttendanceStatus.PRESENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ) +
-      List.generate(
-        4,
-        (i) => AttendanceRecord(
-          id: i + 100,
-          eventId: i + 100,
-          subjectId: 1,
-          status: AttendanceStatus.ABSENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+            27,
+            (i) => AttendanceRecord(
+              id: i,
+              eventId: i,
+              subjectId: 1,
+              status: AttendanceStatus.PRESENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ) +
+          List.generate(
+            4,
+            (i) => AttendanceRecord(
+              id: i + 100,
+              eventId: i + 100,
+              subjectId: 1,
+              status: AttendanceStatus.ABSENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
 
       final result = AnalyticsCalculator.calculateSubjectAnalytics(
         subject: mockSubject,
@@ -103,27 +103,27 @@ void main() {
     test('Warning status (close to target threshold 75.0%)', () {
       // 23 present, 7 absent -> 23 / 30 = 76.7% (within 2.5% warning of 75.0%)
       final records = List.generate(
-        23,
-        (i) => AttendanceRecord(
-          id: i,
-          eventId: i,
-          subjectId: 1,
-          status: AttendanceStatus.PRESENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ) +
-      List.generate(
-        7,
-        (i) => AttendanceRecord(
-          id: i + 100,
-          eventId: i + 100,
-          subjectId: 1,
-          status: AttendanceStatus.ABSENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+            23,
+            (i) => AttendanceRecord(
+              id: i,
+              eventId: i,
+              subjectId: 1,
+              status: AttendanceStatus.PRESENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ) +
+          List.generate(
+            7,
+            (i) => AttendanceRecord(
+              id: i + 100,
+              eventId: i + 100,
+              subjectId: 1,
+              status: AttendanceStatus.ABSENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
 
       final result = AnalyticsCalculator.calculateSubjectAnalytics(
         subject: mockSubject,
@@ -173,40 +173,120 @@ void main() {
       final records = [
         // Subject A: 4 present, 1 absent -> 80% (Safe)
         AttendanceRecord(
-            id: 1, eventId: 1, subjectId: 1, status: AttendanceStatus.PRESENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 1,
+            eventId: 1,
+            subjectId: 1,
+            status: AttendanceStatus.PRESENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 2, eventId: 2, subjectId: 1, status: AttendanceStatus.PRESENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 2,
+            eventId: 2,
+            subjectId: 1,
+            status: AttendanceStatus.PRESENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 3, eventId: 3, subjectId: 1, status: AttendanceStatus.PRESENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 3,
+            eventId: 3,
+            subjectId: 1,
+            status: AttendanceStatus.PRESENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 4, eventId: 4, subjectId: 1, status: AttendanceStatus.PRESENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 4,
+            eventId: 4,
+            subjectId: 1,
+            status: AttendanceStatus.PRESENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 5, eventId: 5, subjectId: 1, status: AttendanceStatus.ABSENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 5,
+            eventId: 5,
+            subjectId: 1,
+            status: AttendanceStatus.ABSENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
 
         // Subject B: 2 present, 3 absent -> 40% (Critical)
         AttendanceRecord(
-            id: 6, eventId: 6, subjectId: 2, status: AttendanceStatus.PRESENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 6,
+            eventId: 6,
+            subjectId: 2,
+            status: AttendanceStatus.PRESENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 7, eventId: 7, subjectId: 2, status: AttendanceStatus.PRESENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 7,
+            eventId: 7,
+            subjectId: 2,
+            status: AttendanceStatus.PRESENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 8, eventId: 8, subjectId: 2, status: AttendanceStatus.ABSENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 8,
+            eventId: 8,
+            subjectId: 2,
+            status: AttendanceStatus.ABSENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 9, eventId: 9, subjectId: 2, status: AttendanceStatus.ABSENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 9,
+            eventId: 9,
+            subjectId: 2,
+            status: AttendanceStatus.ABSENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
         AttendanceRecord(
-            id: 10, eventId: 10, subjectId: 2, status: AttendanceStatus.ABSENT, markedAt: DateTime.now(), updatedAt: DateTime.now()),
+            id: 10,
+            eventId: 10,
+            subjectId: 2,
+            status: AttendanceStatus.ABSENT,
+            markedAt: DateTime.now(),
+            updatedAt: DateTime.now()),
       ];
 
       final occurrences = [
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 10), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 11), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 12), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 13), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 14), startTime: '09:00', status: AttendanceStatus.ABSENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 15), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 16), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 17), startTime: '09:00', status: AttendanceStatus.ABSENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 18), startTime: '09:00', status: AttendanceStatus.ABSENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 19), startTime: '09:00', status: AttendanceStatus.ABSENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 10),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 11),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 12),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 13),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 14),
+            startTime: '09:00',
+            status: AttendanceStatus.ABSENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 15),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 16),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 17),
+            startTime: '09:00',
+            status: AttendanceStatus.ABSENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 18),
+            startTime: '09:00',
+            status: AttendanceStatus.ABSENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 19),
+            startTime: '09:00',
+            status: AttendanceStatus.ABSENT),
       ];
 
       final overall = AnalyticsCalculator.calculateOverallAnalytics(
@@ -233,12 +313,30 @@ void main() {
 
     test('Streak calculations (ignoring cancelled status)', () {
       final occurrences = [
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 5), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 6), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 7), startTime: '10:00', status: AttendanceStatus.CANCELLED),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 8), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 9), startTime: '09:00', status: AttendanceStatus.ABSENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 10), startTime: '09:00', status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 5),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 6),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 7),
+            startTime: '10:00',
+            status: AttendanceStatus.CANCELLED),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 8),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 9),
+            startTime: '09:00',
+            status: AttendanceStatus.ABSENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 10),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
       ];
 
       final overall = AnalyticsCalculator.calculateOverallAnalytics(
@@ -261,8 +359,14 @@ void main() {
 
     test('Trend generation yields sorted points', () {
       final occurrences = [
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 10), startTime: '09:00', status: AttendanceStatus.PRESENT),
-        LoggedOccurrence(date: DateTime.utc(2026, 1, 15), startTime: '09:00', status: AttendanceStatus.ABSENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 10),
+            startTime: '09:00',
+            status: AttendanceStatus.PRESENT),
+        LoggedOccurrence(
+            date: DateTime.utc(2026, 1, 15),
+            startTime: '09:00',
+            status: AttendanceStatus.ABSENT),
       ];
 
       final overall = AnalyticsCalculator.calculateOverallAnalytics(

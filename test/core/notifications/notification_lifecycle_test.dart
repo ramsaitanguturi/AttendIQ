@@ -22,6 +22,7 @@ import 'package:attend_iq/features/semester/presentation/controllers/semester_co
 import 'package:attend_iq/features/settings/domain/entities/user_preferences.dart';
 import 'package:attend_iq/features/settings/domain/repositories/settings_repository.dart';
 import 'package:attend_iq/features/settings/presentation/controllers/settings_controller.dart';
+import 'package:attend_iq/features/settings/data/models/user_preferences_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/domain/repositories/subject_repository.dart';
@@ -180,6 +181,11 @@ class _SpyNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<SemesterLocal?> getActiveSemester() async => activeSemester;
+
+  UserPreferencesLocal? userPreferences;
+
+  @override
+  Future<UserPreferencesLocal?> getUserPreferences() async => userPreferences;
 
   @override
   Future<List<NotificationItem>> getFutureNotifications(DateTime now) async {
@@ -360,7 +366,8 @@ class _FakeSubjectRepository implements SubjectRepository {
   Future<Subject?> getSubjectById(int id) async => null;
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId) async =>
+  Future<List<Subject>> getSubjectsBySemester(int semesterId,
+          {bool includeDeleted = false}) async =>
       const <Subject>[];
 
   @override

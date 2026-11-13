@@ -34,6 +34,7 @@ class ClassScheduleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardColor = _parseColor(slot.colorHex);
     final isExam = slot.type == ScheduleSlotType.exam;
+    final isEvent = slot.type == ScheduleSlotType.event;
     final textColor = _adaptiveTextColor(context);
 
     return Card(
@@ -42,7 +43,11 @@ class ClassScheduleCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14.0),
         side: BorderSide(
-          color: isExam ? Colors.redAccent.withOpacity(0.5) : cardColor.withOpacity(0.3),
+          color: isExam
+              ? Colors.redAccent.withOpacity(0.5)
+              : (isEvent
+                  ? Colors.blueAccent.withOpacity(0.5)
+                  : cardColor.withOpacity(0.3)),
           width: 1.2,
         ),
       ),
@@ -56,7 +61,9 @@ class ClassScheduleCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(14.0),
             border: Border(
               left: BorderSide(
-                color: isExam ? Colors.red : cardColor,
+                color: isExam
+                    ? Colors.red
+                    : (isEvent ? Colors.blueAccent : cardColor),
                 width: 5.0,
               ),
             ),
@@ -78,7 +85,9 @@ class ClassScheduleCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 15.0,
                             fontWeight: FontWeight.bold,
-                            color: cardColor.computeLuminance() > 0.6 ? Colors.black87 : cardColor,
+                            color: cardColor.computeLuminance() > 0.6
+                                ? Colors.black87
+                                : cardColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -98,10 +107,11 @@ class ClassScheduleCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Exam / Status Pills
+                  // Exam / Event / Status Pills
                   if (isExam)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.redAccent,
                         borderRadius: BorderRadius.circular(8),
@@ -115,16 +125,36 @@ class ClassScheduleCard extends StatelessWidget {
                         ),
                       ),
                     )
+                  else if (isEvent)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        slot.code.isNotEmpty ? slot.code : 'EVENT',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
                   else if (slot.status != 'UNMARKED')
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: slot.status == 'PRESENT'
                             ? Colors.green.withOpacity(0.2)
                             : Colors.red.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: slot.status == 'PRESENT' ? Colors.green : Colors.red,
+                          color: slot.status == 'PRESENT'
+                              ? Colors.green
+                              : Colors.red,
                         ),
                       ),
                       child: Text(
@@ -132,7 +162,9 @@ class ClassScheduleCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: slot.status == 'PRESENT' ? Colors.green : Colors.red,
+                          color: slot.status == 'PRESENT'
+                              ? Colors.green
+                              : Colors.red,
                         ),
                       ),
                     ),
@@ -148,7 +180,8 @@ class ClassScheduleCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.access_time_rounded, size: 13.0, color: cardColor),
+                      Icon(Icons.access_time_rounded,
+                          size: 13.0, color: cardColor),
                       const SizedBox(width: 4.0),
                       Text(
                         '${slot.startTime} - ${slot.endTime}',
@@ -164,7 +197,8 @@ class ClassScheduleCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.meeting_room_outlined, size: 13.0, color: cardColor),
+                        Icon(Icons.meeting_room_outlined,
+                            size: 13.0, color: cardColor),
                         const SizedBox(width: 4.0),
                         Text(
                           slot.room!,
@@ -179,7 +213,8 @@ class ClassScheduleCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.person_outline, size: 13.0, color: cardColor),
+                        Icon(Icons.person_outline,
+                            size: 13.0, color: cardColor),
                         const SizedBox(width: 4.0),
                         Text(
                           slot.faculty!,

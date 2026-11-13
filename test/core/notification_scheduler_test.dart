@@ -10,6 +10,7 @@ import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurren
 import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
 import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
 import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
+import 'package:attend_iq/features/settings/data/models/user_preferences_local.dart';
 import 'package:attend_iq/features/timetable/data/utils/occurrence_identity.dart';
 
 class MockNotificationDatabase implements NotificationDatabase {
@@ -21,8 +22,12 @@ class MockNotificationDatabase implements NotificationDatabase {
   final List<AttendanceRecordLocal> attendanceRecords = [];
   final List<NotificationItem> notifications = [];
   SemesterLocal? activeSemester;
+  UserPreferencesLocal? userPreferences;
 
   int _nextNotificationId = 1;
+
+  @override
+  Future<UserPreferencesLocal?> getUserPreferences() async => userPreferences;
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(

@@ -1,8 +1,4 @@
-enum BunkStatus {
-  NORMAL,
-  WARNING,
-  CRITICAL
-}
+enum BunkStatus { NORMAL, WARNING, CRITICAL }
 
 class BunkAnalysis {
   final BunkStatus status;
@@ -39,7 +35,8 @@ class BunkAnalyzer {
         statusText: 'Critical',
         safeBunks: 0,
         requiredClasses: requiredClasses,
-        recommendation: 'Attendance is below target! You must attend $reqStr consecutive classes to recover.',
+        recommendation:
+            'Attendance is below target! You must attend $reqStr consecutive classes to recover.',
       );
     } else if (currentPercentage - targetPercentage <= 2.5) {
       return BunkAnalysis(
@@ -47,7 +44,8 @@ class BunkAnalyzer {
         statusText: 'Warning',
         safeBunks: safeBunks,
         requiredClasses: 0,
-        recommendation: 'Warning: Narrow attendance margin! Avoid skipping any more classes.',
+        recommendation:
+            'Warning: Narrow attendance margin! Avoid skipping any more classes.',
       );
     } else {
       return BunkAnalysis(

@@ -20,7 +20,9 @@ void main() {
     );
 
     // Requirement 9 Test 1: Same subject on 3 different days with different times
-    test('1. Same subject can be scheduled on 3 different days with different times', () {
+    test(
+        '1. Same subject can be scheduled on 3 different days with different times',
+        () {
       final rules = [
         WeeklyScheduleRule(
           id: 1,
@@ -123,7 +125,9 @@ void main() {
     });
 
     // Requirement 9 Test 3: Extra class on a day where subject already exists
-    test('3. Extra class on a day where subject already exists creates separate occurrence without modifying rules', () {
+    test(
+        '3. Extra class on a day where subject already exists creates separate occurrence without modifying rules',
+        () {
       final regularRule = WeeklyScheduleRule(
         id: 1,
         subjectId: osSubject.id!,
@@ -177,7 +181,9 @@ void main() {
     });
 
     // Requirement 9 Test 4: Cancel one occurrence without removing weekly rule
-    test('4. Cancelling an occurrence sets status to CANCELLED without deleting weekly schedule rule', () {
+    test(
+        '4. Cancelling an occurrence sets status to CANCELLED without deleting weekly schedule rule',
+        () {
       final weeklyRule = WeeklyScheduleRule(
         id: 5,
         subjectId: osSubject.id!,
@@ -202,7 +208,9 @@ void main() {
       );
 
       // Evaluate occurrence status for tuesdayDate
-      final isCancelled = exception.type == ScheduleExceptionType.CANCELLED_CLASS && exception.subjectId == weeklyRule.subjectId;
+      final isCancelled =
+          exception.type == ScheduleExceptionType.CANCELLED_CLASS &&
+              exception.subjectId == weeklyRule.subjectId;
       final occurrence = DailyScheduleOccurrence(
         id: 5,
         date: tuesdayDate,
@@ -211,7 +219,9 @@ void main() {
         startTime: weeklyRule.startTime,
         endTime: weeklyRule.endTime,
         type: OccurrenceType.REGULAR_CLASS,
-        status: isCancelled ? OccurrenceStatus.CANCELLED : OccurrenceStatus.UPCOMING,
+        status: isCancelled
+            ? OccurrenceStatus.CANCELLED
+            : OccurrenceStatus.UPCOMING,
         createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -226,7 +236,9 @@ void main() {
     });
 
     // Requirement 9 Test 5: Dashboard showing today's correct classes
-    test("5. Dashboard filters WeeklyScheduleRules matching today's weekday correctly", () {
+    test(
+        "5. Dashboard filters WeeklyScheduleRules matching today's weekday correctly",
+        () {
       final rules = [
         WeeklyScheduleRule(
           id: 1,
@@ -259,7 +271,9 @@ void main() {
 
       // Simulate Tuesday (weekday = 2)
       const tuesdayWeekday = 2;
-      final todayMatchingRules = rules.where((r) => r.dayOfWeek == tuesdayWeekday && r.isActive).toList();
+      final todayMatchingRules = rules
+          .where((r) => r.dayOfWeek == tuesdayWeekday && r.isActive)
+          .toList();
 
       expect(todayMatchingRules.length, equals(1));
       expect(todayMatchingRules.first.startTime, equals('12:00'));
@@ -267,7 +281,9 @@ void main() {
     });
 
     // Requirement 9 Test 6: Weekly calendar rendering all slots independently
-    test('6. Weekly calendar view renders all slots as independent timetable blocks without merging', () {
+    test(
+        '6. Weekly calendar view renders all slots as independent timetable blocks without merging',
+        () {
       final mondayDate = DateTime.utc(2026, 7, 20);
 
       final slot1 = ScheduleClassSlot(

@@ -65,7 +65,8 @@ class CalendarItem {
   final String? endTime;
   final CalendarItemType type;
   final int? subjectId;
-  final String? status; // PRESENT, ABSENT, CANCELLED, UPCOMING, PENDING, COMPLETED
+  final String?
+      status; // PRESENT, ABSENT, CANCELLED, UPCOMING, PENDING, COMPLETED
   final String? description;
 
   const CalendarItem({
@@ -117,7 +118,8 @@ final selectedMonthProvider = StateProvider<DateTime>((ref) {
 
 final isCalendarExpandedProvider = StateProvider<bool>((ref) => true);
 
-final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>((ref) {
+final monthlyCalendarDataProvider =
+    Provider<AsyncValue<List<CalendarDayData>>>((ref) {
   final selectedMonth = ref.watch(selectedMonthProvider);
   final semesterAsync = ref.watch(activeSemesterProvider);
   final rulesAsync = ref.watch(weeklyScheduleRuleListControllerProvider);
@@ -131,11 +133,15 @@ final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>(
   final exceptions = exceptionsAsync.valueOrNull ?? [];
   final academicEvents = academicEventsAsync.valueOrNull ?? [];
   final subjects = subjectsAsync.valueOrNull ?? [];
-  final subjectMap = {for (final s in subjects) if (s.id != null) s.id!: s};
+  final subjectMap = {
+    for (final s in subjects)
+      if (s.id != null) s.id!: s
+  };
 
   // Build grid matrix for selectedMonth (starting from Monday of first week)
   final firstDayOfMonth = DateTime(selectedMonth.year, selectedMonth.month, 1);
-  final daysInMonth = DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
+  final daysInMonth =
+      DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
 
   // 1 = Mon, ..., 7 = Sun
   final firstWeekday = firstDayOfMonth.weekday;
@@ -145,24 +151,30 @@ final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>(
   // Ensure we show 5 or 6 full weeks (up to 35 or 42 cells)
   final totalDays = (daysBefore + daysInMonth) > 35 ? 42 : 35;
 
-  final todayClean = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+  final todayClean =
+      DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
   final List<CalendarDayData> dayList = [];
 
   for (int i = 0; i < totalDays; i++) {
     final date = gridStartDate.add(Duration(days: i));
     final cleanDate = DateTime.utc(date.year, date.month, date.day);
-    final isCurrentMonth = date.month == selectedMonth.month && date.year == selectedMonth.year;
+    final isCurrentMonth =
+        date.month == selectedMonth.month && date.year == selectedMonth.year;
     final isToday = cleanDate.year == todayClean.year &&
         cleanDate.month == todayClean.month &&
         cleanDate.day == todayClean.day;
 
     bool isInSemesterRange = true;
     if (semester != null) {
-      final startClean = DateTime.utc(semester.startDate.year, semester.startDate.month, semester.startDate.day);
-      final endClean = DateTime.utc(semester.endDate.year, semester.endDate.month, semester.endDate.day);
-      isInSemesterRange = (cleanDate.isAfter(startClean) || cleanDate.isAtSameMomentAs(startClean)) &&
-          (cleanDate.isBefore(endClean) || cleanDate.isAtSameMomentAs(endClean));
+      final startClean = DateTime.utc(semester.startDate.year,
+          semester.startDate.month, semester.startDate.day);
+      final endClean = DateTime.utc(
+          semester.endDate.year, semester.endDate.month, semester.endDate.day);
+      isInSemesterRange = (cleanDate.isAfter(startClean) ||
+              cleanDate.isAtSameMomentAs(startClean)) &&
+          (cleanDate.isBefore(endClean) ||
+              cleanDate.isAtSameMomentAs(endClean));
     }
 
     final dayItems = <CalendarItem>[];
@@ -173,16 +185,21 @@ final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>(
       return ed.isAtSameMomentAs(cleanDate);
     }).toList();
 
-    final isHoliday = dayExceptions.any((e) => e.type == ScheduleExceptionType.HOLIDAY);
+    final isHoliday =
+        dayExceptions.any((e) => e.type == ScheduleExceptionType.HOLIDAY);
     String? holidayTitle;
     if (isHoliday) {
-      holidayTitle = dayExceptions.firstWhere((e) => e.type == ScheduleExceptionType.HOLIDAY).title;
+      holidayTitle = dayExceptions
+          .firstWhere((e) => e.type == ScheduleExceptionType.HOLIDAY)
+          .title;
       dayItems.add(CalendarItem(
         id: 'holiday_${cleanDate.toIso8601String()}',
         title: holidayTitle.isEmpty ? 'Holiday' : holidayTitle,
         subtitle: 'Semester Holiday',
         type: CalendarItemType.HOLIDAY,
-        description: dayExceptions.firstWhere((e) => e.type == ScheduleExceptionType.HOLIDAY).description,
+        description: dayExceptions
+            .firstWhere((e) => e.type == ScheduleExceptionType.HOLIDAY)
+            .description,
       ));
     }
 
@@ -242,7 +259,8 @@ final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>(
       dayItems.add(CalendarItem(
         id: 'task_${task.id}',
         title: task.title,
-        subtitle: '${task.taskType.displayName}${sub != null ? ' (${sub.name})' : ''}',
+        subtitle:
+            '${task.taskType.displayName}${sub != null ? ' (${sub.name})' : ''}',
         type: CalendarItemType.TASK,
         subjectId: task.subjectId,
         description: task.description,
@@ -253,11 +271,13 @@ final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>(
     // 4. Regular Recurring Classes (WeeklyScheduleRule) if within semester and not holiday
     if (isInSemesterRange && !isHoliday) {
       final dayOfWeek = cleanDate.weekday; // 1=Mon ... 7=Sun
-      final matchingRules = rules.where((r) => r.isActive && r.dayOfWeek == dayOfWeek).toList();
+      final matchingRules =
+          rules.where((r) => r.isActive && r.dayOfWeek == dayOfWeek).toList();
 
       for (final rule in matchingRules) {
         final isCancelled = dayExceptions.any((e) =>
-            e.type == ScheduleExceptionType.CANCELLED_CLASS && e.subjectId == rule.subjectId);
+            e.type == ScheduleExceptionType.CANCELLED_CLASS &&
+            e.subjectId == rule.subjectId);
 
         final sub = subjectMap[rule.subjectId];
         final subName = sub?.name ?? 'Subject';
@@ -277,7 +297,9 @@ final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>(
           dayItems.add(CalendarItem(
             id: 'regular_rule_${rule.id}_${cleanDate.toIso8601String()}',
             title: subName,
-            subtitle: rule.room != null && rule.room!.isNotEmpty ? 'Room ${rule.room}' : 'Regular Class',
+            subtitle: rule.room != null && rule.room!.isNotEmpty
+                ? 'Room ${rule.room}'
+                : 'Regular Class',
             startTime: rule.startTime,
             endTime: rule.endTime,
             type: CalendarItemType.REGULAR_CLASS,
@@ -293,9 +315,12 @@ final monthlyCalendarDataProvider = Provider<AsyncValue<List<CalendarDayData>>>(
     // Dots calculation
     final hasExam = dayItems.any((it) => it.type == CalendarItemType.EXAM);
     final hasTask = dayItems.any((it) => it.type == CalendarItemType.TASK);
-    final hasHoliday = dayItems.any((it) => it.type == CalendarItemType.HOLIDAY);
-    final hasExtraClass = dayItems.any((it) => it.type == CalendarItemType.EXTRA_CLASS);
-    final hasRegularClass = dayItems.any((it) => it.type == CalendarItemType.REGULAR_CLASS);
+    final hasHoliday =
+        dayItems.any((it) => it.type == CalendarItemType.HOLIDAY);
+    final hasExtraClass =
+        dayItems.any((it) => it.type == CalendarItemType.EXTRA_CLASS);
+    final hasRegularClass =
+        dayItems.any((it) => it.type == CalendarItemType.REGULAR_CLASS);
     final hasEvent = dayItems.any((it) => it.type == CalendarItemType.EVENT);
 
     dayList.add(CalendarDayData(
@@ -322,7 +347,9 @@ final upcomingMonthEventsCountProvider = Provider<int>((ref) {
   int count = 0;
   for (final day in days) {
     if (day.isCurrentMonth) {
-      count += day.items.where((it) => it.type != CalendarItemType.REGULAR_CLASS).length;
+      count += day.items
+          .where((it) => it.type != CalendarItemType.REGULAR_CLASS)
+          .length;
     }
   }
   return count;

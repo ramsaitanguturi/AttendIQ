@@ -289,6 +289,100 @@ class WidgetDataService {
       }
     }
 
+    // Fetch Academic Events and merge with Exam Exceptions
+    List<AcademicEvent> academicEvents = [];
+    try {
+      academicEvents = await eventRepo.getEventsForDate(todayUtc);
+    } catch (_) {}
+    final activeAcademicEvents =
+        academicEvents.where((e) => !e.isDeleted).toList();
+
+    final examExceptions =
+        exceptions.where((e) => e.type == ScheduleExceptionType.EXAM).toList();
+
+    final consumedAcademicEventIds = <int>{};
+
+    for (final exam in examExceptions) {
+      final subName =
+          exam.subjectId != null ? subjectMap[exam.subjectId] : null;
+
+      AcademicEvent? matchingEvent;
+      for (final ae in activeAcademicEvents) {
+        if (consumedAcademicEventIds.contains(ae.id)) continue;
+        final titleMatches = normalizeTitleForKey(ae.title) ==
+                normalizeTitleForKey(exam.title) ||
+            normalizeTitleForKey(ae.title)
+                .contains(normalizeTitleForKey(exam.title)) ||
+            normalizeTitleForKey(exam.title)
+                .contains(normalizeTitleForKey(ae.title));
+        final subjectMatches = subName != null &&
+            (normalizeTitleForKey(ae.title)
+                    .contains(normalizeTitleForKey(subName)) ||
+                (ae.type == AcademicEventType.EXAM && titleMatches));
+
+        if (titleMatches || subjectMatches) {
+          matchingEvent = ae;
+          if (ae.id != null) consumedAcademicEventIds.add(ae.id!);
+          break;
+        }
+      }
+
+      final examTitle = subName != null
+          ? '$subName Exam'
+          : (matchingEvent?.title ?? exam.title);
+
+      String startTime = '09:00';
+      String endTime = '12:00';
+      if (matchingEvent != null) {
+        if (matchingEvent.startTime != null &&
+            matchingEvent.startTime!.trim().isNotEmpty) {
+          startTime = normalizeTimeSlotPart(matchingEvent.startTime!);
+        }
+        if (matchingEvent.endTime != null &&
+            matchingEvent.endTime!.trim().isNotEmpty) {
+          endTime = normalizeTimeSlotPart(matchingEvent.endTime!);
+        }
+      } else if (exam.description != null) {
+        final match = RegExp(r'(\d{1,2}:\d{2})\s*[-–to]+\s*(\d{1,2}:\d{2})')
+            .firstMatch(exam.description!);
+        if (match != null) {
+          startTime = normalizeTimeSlotPart(match.group(1)!);
+          endTime = normalizeTimeSlotPart(match.group(2)!);
+        }
+      }
+
+      items.add(
+        TodayWidgetItem(
+          subjectName: examTitle,
+          startTime: startTime,
+          endTime: endTime,
+          room: 'Exam Hall',
+          status: 'UPCOMING',
+        ),
+      );
+    }
+
+    for (final ae in activeAcademicEvents) {
+      if (ae.id != null && consumedAcademicEventIds.contains(ae.id)) continue;
+      final startTime =
+          (ae.startTime != null && ae.startTime!.trim().isNotEmpty)
+              ? normalizeTimeSlotPart(ae.startTime!)
+              : '09:00';
+      final endTime = (ae.endTime != null && ae.endTime!.trim().isNotEmpty)
+          ? normalizeTimeSlotPart(ae.endTime!)
+          : (ae.type == AcademicEventType.EXAM ? '12:00' : '10:00');
+
+      items.add(
+        TodayWidgetItem(
+          subjectName: ae.title,
+          startTime: startTime,
+          endTime: endTime,
+          room: null,
+          status: 'UPCOMING',
+        ),
+      );
+    }
+
     // Sort items by normalized start time
     items.sort(
       (a, b) => normalizeTimeSlotPart(a.startTime)

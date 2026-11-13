@@ -25,13 +25,15 @@ import '../../../../core/notifications/providers/notification_providers.dart';
 part 'timetable_controller.g.dart';
 
 @riverpod
-AcademicEventLocalDataSource academicEventLocalDataSource(AcademicEventLocalDataSourceRef ref) {
+AcademicEventLocalDataSource academicEventLocalDataSource(
+    AcademicEventLocalDataSourceRef ref) {
   final isar = ref.watch(isarProvider).requireValue;
   return AcademicEventLocalDataSourceImpl(isar);
 }
 
 @riverpod
-AcademicEventRepository academicEventRepository(AcademicEventRepositoryRef ref) {
+AcademicEventRepository academicEventRepository(
+    AcademicEventRepositoryRef ref) {
   return AcademicEventRepositoryImpl(
     ref.watch(academicEventLocalDataSourceProvider),
   );
@@ -110,33 +112,38 @@ class AcademicEventController extends _$AcademicEventController {
 }
 
 @riverpod
-WeeklyScheduleRuleLocalDataSource weeklyScheduleRuleLocalDataSource(WeeklyScheduleRuleLocalDataSourceRef ref) {
+WeeklyScheduleRuleLocalDataSource weeklyScheduleRuleLocalDataSource(
+    WeeklyScheduleRuleLocalDataSourceRef ref) {
   final isar = ref.watch(isarProvider).requireValue;
   return WeeklyScheduleRuleLocalDataSourceImpl(isar);
 }
 
 @riverpod
-WeeklyScheduleRuleRepository weeklyScheduleRuleRepository(WeeklyScheduleRuleRepositoryRef ref) {
+WeeklyScheduleRuleRepository weeklyScheduleRuleRepository(
+    WeeklyScheduleRuleRepositoryRef ref) {
   return WeeklyScheduleRuleRepositoryImpl(
     localDataSource: ref.watch(weeklyScheduleRuleLocalDataSourceProvider),
   );
 }
 
 @riverpod
-ScheduleExceptionLocalDataSource scheduleExceptionLocalDataSource(ScheduleExceptionLocalDataSourceRef ref) {
+ScheduleExceptionLocalDataSource scheduleExceptionLocalDataSource(
+    ScheduleExceptionLocalDataSourceRef ref) {
   final isar = ref.watch(isarProvider).requireValue;
   return ScheduleExceptionLocalDataSourceImpl(isar);
 }
 
 @riverpod
-ScheduleExceptionRepository scheduleExceptionRepository(ScheduleExceptionRepositoryRef ref) {
+ScheduleExceptionRepository scheduleExceptionRepository(
+    ScheduleExceptionRepositoryRef ref) {
   return ScheduleExceptionRepositoryImpl(
     localDataSource: ref.watch(scheduleExceptionLocalDataSourceProvider),
   );
 }
 
 @riverpod
-TimetableLocalDataSource timetableLocalDataSource(TimetableLocalDataSourceRef ref) {
+TimetableLocalDataSource timetableLocalDataSource(
+    TimetableLocalDataSourceRef ref) {
   final isar = ref.watch(isarProvider).requireValue;
   return TimetableLocalDataSourceImpl(isar);
 }
@@ -149,7 +156,8 @@ TimetableRepository timetableRepository(TimetableRepositoryRef ref) {
 }
 
 @riverpod
-class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListController {
+class WeeklyScheduleRuleListController
+    extends _$WeeklyScheduleRuleListController {
   @override
   FutureOr<List<WeeklyScheduleRule>> build() async {
     final semesterAsync = ref.watch(activeSemesterProvider);
@@ -189,7 +197,8 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
     return hours * 60 + minutes;
   }
 
-  bool checkCollision(int dayOfWeek, String startTime, String endTime, {int? excludeId}) {
+  bool checkCollision(int dayOfWeek, String startTime, String endTime,
+      {int? excludeId}) {
     final list = state.valueOrNull ?? [];
     final startMin = _timeToMinutes(startTime);
     final endMin = _timeToMinutes(endTime);
@@ -221,7 +230,8 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
 
     for (final day in daysOfWeek) {
       if (checkCollision(day, startTime, endTime)) {
-        throw Exception('Schedule collision on day $day: overlapping class exists.');
+        throw Exception(
+            'Schedule collision on day $day: overlapping class exists.');
       }
       newRules.add(
         WeeklyScheduleRule(
@@ -247,8 +257,10 @@ class WeeklyScheduleRuleListController extends _$WeeklyScheduleRuleListControlle
   }
 
   Future<void> saveRule(WeeklyScheduleRule rule) async {
-    if (checkCollision(rule.dayOfWeek, rule.startTime, rule.endTime, excludeId: rule.id)) {
-      throw Exception('Schedule collision: overlapping class exists at this time.');
+    if (checkCollision(rule.dayOfWeek, rule.startTime, rule.endTime,
+        excludeId: rule.id)) {
+      throw Exception(
+          'Schedule collision: overlapping class exists at this time.');
     }
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.saveRule(rule);
@@ -355,7 +367,8 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
 class TimetableListController extends _$TimetableListController {
   @override
   FutureOr<List<TimetableTemplate>> build() async {
-    final rules = await ref.watch(weeklyScheduleRuleListControllerProvider.future);
+    final rules =
+        await ref.watch(weeklyScheduleRuleListControllerProvider.future);
     return rules
         .where((r) => r.isActive && !r.isDeleted)
         .map(
@@ -381,7 +394,8 @@ class TimetableListController extends _$TimetableListController {
     return hours * 60 + minutes;
   }
 
-  bool checkCollision(int weekday, String startTime, String endTime, {int? excludeId}) {
+  bool checkCollision(int weekday, String startTime, String endTime,
+      {int? excludeId}) {
     final list = state.valueOrNull ?? [];
     final startMin = _timeToMinutes(startTime);
     final endMin = _timeToMinutes(endTime);
@@ -408,7 +422,8 @@ class TimetableListController extends _$TimetableListController {
     String? faculty,
     String? notes,
   }) async {
-    final ruleController = ref.read(weeklyScheduleRuleListControllerProvider.notifier);
+    final ruleController =
+        ref.read(weeklyScheduleRuleListControllerProvider.notifier);
     await ruleController.addRulesForDays(
       subjectId: subjectId,
       daysOfWeek: [weekday],

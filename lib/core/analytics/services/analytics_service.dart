@@ -32,9 +32,10 @@ class AnalyticsService {
         semester?.localId ?? resolveActiveSemesterLocal(_isar)?.id;
     if (semester == null || semesterId == null) return null;
 
-    // 2. Fetch subjects for semester
+    // 2. Fetch subjects for semester (including soft-deleted for historical records)
     final subjectRepo = _ref.read(subjectRepositoryProvider);
-    final subjects = await subjectRepo.getSubjectsBySemester(semesterId);
+    final subjects = await subjectRepo.getSubjectsBySemester(semesterId,
+        includeDeleted: true);
     if (subjects.isEmpty) {
       return AttendanceAnalytics(
         overallPercentage: 100.0,

@@ -9,11 +9,14 @@ part 'daily_schedule_occurrence_repository.g.dart';
 
 abstract class DailyScheduleOccurrenceRepository {
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDate(DateTime date);
-  Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(DateTime start, DateTime end);
+  Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(
+      DateTime start, DateTime end);
   Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(int subjectId);
   Future<DailyScheduleOccurrence?> getOccurrenceById(int id);
-  Future<DailyScheduleOccurrence> saveOccurrence(DailyScheduleOccurrence occurrence);
-  Future<List<DailyScheduleOccurrence>> saveOccurrences(List<DailyScheduleOccurrence> occurrences);
+  Future<DailyScheduleOccurrence> saveOccurrence(
+      DailyScheduleOccurrence occurrence);
+  Future<List<DailyScheduleOccurrence>> saveOccurrences(
+      List<DailyScheduleOccurrence> occurrences);
   Future<void> deleteOccurrence(int id);
   Future<List<DailyScheduleOccurrence>> getAllOccurrences();
   Stream<void> watchOccurrencesForDate(DateTime date);

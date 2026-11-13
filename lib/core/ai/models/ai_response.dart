@@ -16,18 +16,23 @@ class AIResponse {
     String parsedAnswer = '';
     if (json['answer'] != null) {
       parsedAnswer = json['answer'] as String;
-    } else if (json['userIntentResolution'] != null && json['userIntentResolution'] is Map) {
-      parsedAnswer = (json['userIntentResolution'] as Map)['verdict'] as String? ?? '';
+    } else if (json['userIntentResolution'] != null &&
+        json['userIntentResolution'] is Map) {
+      parsedAnswer =
+          (json['userIntentResolution'] as Map)['verdict'] as String? ?? '';
     } else if (json['verdict'] != null) {
       parsedAnswer = json['verdict'] as String;
     }
 
-    final double parsedConfidence = (json['confidence'] as num?)?.toDouble() ?? 0.8;
+    final double parsedConfidence =
+        (json['confidence'] as num?)?.toDouble() ?? 0.8;
 
     final List<String> parsedRelated = [];
     if (json['relatedSubjects'] != null && json['relatedSubjects'] is List) {
-      parsedRelated.addAll((json['relatedSubjects'] as List).map((e) => e.toString()));
-    } else if (json['criticalWarnings'] != null && json['criticalWarnings'] is List) {
+      parsedRelated
+          .addAll((json['relatedSubjects'] as List).map((e) => e.toString()));
+    } else if (json['criticalWarnings'] != null &&
+        json['criticalWarnings'] is List) {
       for (final item in json['criticalWarnings'] as List) {
         if (item is Map && item['title'] != null) {
           parsedRelated.add(item['title'].toString());
@@ -37,8 +42,10 @@ class AIResponse {
 
     final List<String> parsedActions = [];
     if (json['actionItems'] != null && json['actionItems'] is List) {
-      parsedActions.addAll((json['actionItems'] as List).map((e) => e.toString()));
-    } else if (json['recommendations'] != null && json['recommendations'] is List) {
+      parsedActions
+          .addAll((json['actionItems'] as List).map((e) => e.toString()));
+    } else if (json['recommendations'] != null &&
+        json['recommendations'] is List) {
       for (final item in json['recommendations'] as List) {
         if (item is Map && item['description'] != null) {
           parsedActions.add(item['description'].toString());

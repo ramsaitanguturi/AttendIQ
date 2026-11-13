@@ -51,7 +51,8 @@ class TimetableRepositoryImpl implements TimetableRepository {
   }
 
   @override
-  Future<List<TimetableTemplate>> getTemplatesForSemester(int semesterId) async {
+  Future<List<TimetableTemplate>> getTemplatesForSemester(
+      int semesterId) async {
     final list = await _localDataSource.getTemplatesForSemester(semesterId);
     return list.map(_toEntity).toList();
   }

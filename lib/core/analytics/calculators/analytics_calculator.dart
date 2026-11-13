@@ -132,14 +132,14 @@ class AnalyticsCalculator {
     SubjectAnalytics? mostAttendedSubject;
 
     if (subjectAnalyticsList.isNotEmpty) {
-      highestAttendanceSubject = subjectAnalyticsList.reduce((curr, next) =>
-          curr.percentage > next.percentage ? curr : next);
-      lowestAttendanceSubject = subjectAnalyticsList.reduce((curr, next) =>
-          curr.percentage < next.percentage ? curr : next);
-      mostMissedSubject = subjectAnalyticsList.reduce((curr, next) =>
-          curr.absent > next.absent ? curr : next);
-      mostAttendedSubject = subjectAnalyticsList.reduce((curr, next) =>
-          curr.present > next.present ? curr : next);
+      highestAttendanceSubject = subjectAnalyticsList.reduce(
+          (curr, next) => curr.percentage > next.percentage ? curr : next);
+      lowestAttendanceSubject = subjectAnalyticsList.reduce(
+          (curr, next) => curr.percentage < next.percentage ? curr : next);
+      mostMissedSubject = subjectAnalyticsList
+          .reduce((curr, next) => curr.absent > next.absent ? curr : next);
+      mostAttendedSubject = subjectAnalyticsList
+          .reduce((curr, next) => curr.present > next.present ? curr : next);
     }
 
     final subjectComparison = SubjectComparison(
@@ -233,7 +233,8 @@ class AnalyticsCalculator {
     // Extract unique dates that have occurrences
     final Set<DateTime> uniqueDatesSet = {};
     for (final occ in occurrences) {
-      final dateOnly = DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
+      final dateOnly =
+          DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
       uniqueDatesSet.add(dateOnly);
     }
     final List<DateTime> sortedDates = uniqueDatesSet.toList()..sort();
@@ -243,7 +244,8 @@ class AnalyticsCalculator {
       int totalUpToDate = 0;
 
       for (final occ in occurrences) {
-        final occDateOnly = DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
+        final occDateOnly =
+            DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
         if (!occDateOnly.isAfter(date)) {
           if (occ.status == AttendanceStatus.PRESENT ||
               occ.status == AttendanceStatus.EXTRA_PRESENT) {
@@ -300,7 +302,8 @@ class AnalyticsCalculator {
       int totalUpToDate = 0;
 
       for (final occ in occurrences) {
-        final occDateOnly = DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
+        final occDateOnly =
+            DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
         if (!occDateOnly.isAfter(sunday)) {
           if (occ.status == AttendanceStatus.PRESENT ||
               occ.status == AttendanceStatus.EXTRA_PRESENT) {
@@ -322,11 +325,13 @@ class AnalyticsCalculator {
 
     // --- Monthly Trend ---
     // Calculate cumulative overall percentage at the end of each calendar month
-    DateTime currentMonth = DateTime.utc(semesterStart.year, semesterStart.month, 1);
+    DateTime currentMonth =
+        DateTime.utc(semesterStart.year, semesterStart.month, 1);
     final List<DateTime> monthEnds = [];
     while (!currentMonth.isAfter(limitDate)) {
       // Find the last day of currentMonth
-      final nextMonth = DateTime.utc(currentMonth.year, currentMonth.month + 1, 1);
+      final nextMonth =
+          DateTime.utc(currentMonth.year, currentMonth.month + 1, 1);
       final lastDay = nextMonth.subtract(const Duration(days: 1));
       if (!lastDay.isAfter(limitDate)) {
         monthEnds.add(lastDay);
@@ -350,7 +355,8 @@ class AnalyticsCalculator {
       int totalUpToDate = 0;
 
       for (final occ in occurrences) {
-        final occDateOnly = DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
+        final occDateOnly =
+            DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
         if (!occDateOnly.isAfter(monthEnd)) {
           if (occ.status == AttendanceStatus.PRESENT ||
               occ.status == AttendanceStatus.EXTRA_PRESENT) {

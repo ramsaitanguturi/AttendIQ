@@ -8,7 +8,8 @@ import 'package:attend_iq/features/settings/presentation/controllers/settings_co
 
 class FakeSettingsRepository implements SettingsRepository {
   final Map<String, UserPreferences> _store = {};
-  final StreamController<UserPreferences?> _controller = StreamController<UserPreferences?>.broadcast();
+  final StreamController<UserPreferences?> _controller =
+      StreamController<UserPreferences?>.broadcast();
   int saveCount = 0;
 
   @override
@@ -31,7 +32,8 @@ class FakeSettingsRepository implements SettingsRepository {
 
 void main() {
   group('UserPreferences Entity tests', () {
-    test('Entity should initialize with correct values and support copyWith', () {
+    test('Entity should initialize with correct values and support copyWith',
+        () {
       const prefs = UserPreferences(
         id: 'local_user',
         themeMode: 'system',
@@ -46,7 +48,8 @@ void main() {
       expect(prefs.themeMode, 'system');
       expect(prefs.defaultAttendanceTarget, 75.0);
 
-      final updated = prefs.copyWith(themeMode: 'dark', defaultAttendanceTarget: 80.0);
+      final updated =
+          prefs.copyWith(themeMode: 'dark', defaultAttendanceTarget: 80.0);
       expect(updated.themeMode, 'dark');
       expect(updated.defaultAttendanceTarget, 80.0);
       expect(updated.id, 'local_user');
@@ -59,7 +62,7 @@ void main() {
 
     setUp(() {
       settingsRepository = FakeSettingsRepository();
-      
+
       container = ProviderContainer(
         overrides: [
           settingsRepositoryProvider.overrideWithValue(settingsRepository),
@@ -71,7 +74,9 @@ void main() {
       container.dispose();
     });
 
-    test('Controller initializes preferences with defaults if none stored in repository', () async {
+    test(
+        'Controller initializes preferences with defaults if none stored in repository',
+        () async {
       final sub = container.listen(settingsControllerProvider, (_, __) {});
 
       final state = await container.read(settingsControllerProvider.future);
@@ -84,7 +89,9 @@ void main() {
       sub.close();
     });
 
-    test('Updating settings fields updates state and calls repository savePreferences', () async {
+    test(
+        'Updating settings fields updates state and calls repository savePreferences',
+        () async {
       final sub = container.listen(settingsControllerProvider, (_, __) {});
 
       await container.read(settingsControllerProvider.future);

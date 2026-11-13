@@ -3,7 +3,8 @@ import '../models/academic_event_local.dart';
 
 abstract class AcademicEventLocalDataSource {
   Future<List<AcademicEventLocal>> getEventsForDate(DateTime date);
-  Future<List<AcademicEventLocal>> getEventsForRange(DateTime startDate, DateTime endDate);
+  Future<List<AcademicEventLocal>> getEventsForRange(
+      DateTime startDate, DateTime endDate);
   Future<List<AcademicEventLocal>> getAllEvents();
   Future<AcademicEventLocal?> getEventById(int id);
   Future<void> saveEvent(AcademicEventLocal event);
@@ -31,14 +32,13 @@ class AcademicEventLocalDataSourceImpl implements AcademicEventLocalDataSource {
   }
 
   @override
-  Future<List<AcademicEventLocal>> getEventsForRange(DateTime startDate, DateTime endDate) async {
+  Future<List<AcademicEventLocal>> getEventsForRange(
+      DateTime startDate, DateTime endDate) async {
     final start = _cleanDate(startDate);
     final end = _cleanDate(endDate);
 
-    final all = _isar.academicEventLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final all =
+        _isar.academicEventLocals.where().isDeletedEqualTo(false).findAll();
 
     return all.where((e) {
       final date = _cleanDate(e.date);
@@ -49,10 +49,7 @@ class AcademicEventLocalDataSourceImpl implements AcademicEventLocalDataSource {
 
   @override
   Future<List<AcademicEventLocal>> getAllEvents() async {
-    return _isar.academicEventLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    return _isar.academicEventLocals.where().isDeletedEqualTo(false).findAll();
   }
 
   @override

@@ -53,7 +53,9 @@ enum TaskType {
 
   static TaskType fromString(String value) {
     return TaskType.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase() || e.displayName.toUpperCase() == value.toUpperCase(),
+      (e) =>
+          e.name.toUpperCase() == value.toUpperCase() ||
+          e.displayName.toUpperCase() == value.toUpperCase(),
       orElse: () => TaskType.OTHER,
     );
   }
@@ -106,7 +108,9 @@ enum TaskPriority {
 
   static TaskPriority fromString(String value) {
     return TaskPriority.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase() || e.displayName.toUpperCase() == value.toUpperCase(),
+      (e) =>
+          e.name.toUpperCase() == value.toUpperCase() ||
+          e.displayName.toUpperCase() == value.toUpperCase(),
       orElse: () => TaskPriority.MEDIUM,
     );
   }
@@ -130,7 +134,9 @@ enum TaskStatus {
 
   static TaskStatus fromString(String value) {
     return TaskStatus.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase() || e.displayName.toUpperCase() == value.toUpperCase(),
+      (e) =>
+          e.name.toUpperCase() == value.toUpperCase() ||
+          e.displayName.toUpperCase() == value.toUpperCase(),
       orElse: () => TaskStatus.PENDING,
     );
   }
@@ -185,7 +191,9 @@ enum TaskReminder {
 
   static TaskReminder fromString(String value) {
     return TaskReminder.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase() || e.displayName.toUpperCase() == value.toUpperCase(),
+      (e) =>
+          e.name.toUpperCase() == value.toUpperCase() ||
+          e.displayName.toUpperCase() == value.toUpperCase(),
       orElse: () => TaskReminder.DAYS_1,
     );
   }
@@ -223,7 +231,8 @@ enum TaskUrgency {
     }
   }
 
-  static TaskUrgency calculate(DateTime dueDate, DateTime now, {TaskStatus? status}) {
+  static TaskUrgency calculate(DateTime dueDate, DateTime now,
+      {TaskStatus? status}) {
     if (status == TaskStatus.COMPLETED) {
       return TaskUrgency.NORMAL;
     }
@@ -233,7 +242,7 @@ enum TaskUrgency {
 
     final diff = dueDate.difference(now);
     final days = diff.inDays;
-    
+
     if (diff.inHours < 72) {
       return TaskUrgency.URGENT;
     } else if (days < 7) {

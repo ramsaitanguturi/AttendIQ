@@ -46,7 +46,9 @@ class _DayTimelineViewState extends State<DayTimelineView> {
   }
 
   bool _isToday(DateTime date) {
-    return date.year == _now.year && date.month == _now.month && date.day == _now.day;
+    return date.year == _now.year &&
+        date.month == _now.month &&
+        date.day == _now.day;
   }
 
   int _timeToMinutes(String timeStr) {
@@ -99,7 +101,9 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                 dayData.holidayDescription ?? 'No classes scheduled for today.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -136,7 +140,9 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                         style: TextStyle(
                           fontSize: 12.0,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                         ),
                       ),
                     ),
@@ -168,7 +174,8 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                   final endMin = _timeToMinutes(slot.endTime);
                   const timelineStartMin = _startHour * 60;
 
-                  final topOffset = ((startMin - timelineStartMin) / 60.0) * _hourRowHeight;
+                  final topOffset =
+                      ((startMin - timelineStartMin) / 60.0) * _hourRowHeight;
                   final durationMinutes = (endMin - startMin).clamp(30, 360);
                   final cardHeight = (durationMinutes / 60.0) * _hourRowHeight;
 
@@ -188,40 +195,44 @@ class _DayTimelineViewState extends State<DayTimelineView> {
 
           // Current Time Indicator Line (If today)
           if (isTodayDate) ...[
-            Builder(builder: (context) {
-              final currentMinutes = _now.hour * 60 + _now.minute;
-              const startMinutes = _startHour * 60;
-              const endMinutes = _endHour * 60;
+            Builder(
+              builder: (context) {
+                final currentMinutes = _now.hour * 60 + _now.minute;
+                const startMinutes = _startHour * 60;
+                const endMinutes = _endHour * 60;
 
-              if (currentMinutes >= startMinutes && currentMinutes <= endMinutes) {
-                final topPos = ((currentMinutes - startMinutes) / 60.0) * _hourRowHeight;
+                if (currentMinutes >= startMinutes &&
+                    currentMinutes <= endMinutes) {
+                  final topPos =
+                      ((currentMinutes - startMinutes) / 60.0) * _hourRowHeight;
 
-                return Positioned(
-                  top: topPos + 6.0,
-                  left: _timeColumnWidth - 6.0,
-                  right: 0,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12.0,
-                        height: 12.0,
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
+                  return Positioned(
+                    top: topPos + 6.0,
+                    left: _timeColumnWidth - 6.0,
+                    right: 0,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 12.0,
+                          height: 12.0,
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          height: 2.0,
-                          color: Colors.redAccent,
+                        Expanded(
+                          child: Container(
+                            height: 2.0,
+                            color: Colors.redAccent,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ],
 
           // Empty state if no items scheduled
@@ -236,14 +247,17 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                     Icon(
                       Icons.event_available_outlined,
                       size: 40,
-                      color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                      color:
+                          isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'No classes scheduled for this day',
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                        color: isDark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

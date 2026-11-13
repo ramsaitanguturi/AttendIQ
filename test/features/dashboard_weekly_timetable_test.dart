@@ -13,7 +13,7 @@ void main() {
       localId: 1,
       name: 'Fall 2026 Semester',
       startDate: DateTime.utc(2026, 7, 20), // Monday
-      endDate: DateTime.utc(2026, 11, 8),   // 16 weeks later (112 days)
+      endDate: DateTime.utc(2026, 11, 8), // 16 weeks later (112 days)
       requiredAttendanceRate: 75.0,
     );
 
@@ -28,7 +28,8 @@ void main() {
     });
 
     // Test 2: Swiping / navigating changes week correctly
-    testWidgets('2. Navigating week updates selected week index and date range text',
+    testWidgets(
+        '2. Navigating week updates selected week index and date range text',
         (WidgetTester tester) async {
       int currentWeek = 1;
       const totalWeeks = 16;
@@ -81,7 +82,9 @@ void main() {
     });
 
     // Test 3: Future weeks show timetable slots
-    test('3. Future weeks evaluate WeeklyScheduleRules correctly for dates ahead', () {
+    test(
+        '3. Future weeks evaluate WeeklyScheduleRules correctly for dates ahead',
+        () {
       final weeks = SemesterWeekCalculator.calculateWeeks(sampleSemester);
       final futureWeek = weeks[10]; // Week 11 (Future week)
 
@@ -93,7 +96,9 @@ void main() {
     });
 
     // Test 4: Past weeks show timetable slots
-    test('4. Past weeks evaluate WeeklyScheduleRules correctly for dates behind', () {
+    test(
+        '4. Past weeks evaluate WeeklyScheduleRules correctly for dates behind',
+        () {
       final weeks = SemesterWeekCalculator.calculateWeeks(sampleSemester);
       final pastWeek = weeks[0]; // Week 1 (Past/Initial week)
 
@@ -130,7 +135,8 @@ void main() {
     });
 
     // Test 6: Dashboard and timetable page show same data structure
-    test('6. Dashboard and timetable page request same DayScheduleData model', () {
+    test('6. Dashboard and timetable page request same DayScheduleData model',
+        () {
       final targetDate = DateTime.utc(2026, 8, 10);
       const slot1 = ScheduleClassSlot(
         id: 101,
@@ -157,7 +163,8 @@ void main() {
       );
 
       expect(dataFromDashboard.date, equals(dataFromTimetablePage.date));
-      expect(dataFromDashboard.items.length, equals(dataFromTimetablePage.items.length));
+      expect(dataFromDashboard.items.length,
+          equals(dataFromTimetablePage.items.length));
       expect(dataFromDashboard.items.first.title, equals('Data Structures'));
     });
   });

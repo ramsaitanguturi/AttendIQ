@@ -3,14 +3,16 @@ import '../models/schedule_exception_local.dart';
 
 abstract class ScheduleExceptionLocalDataSource {
   Future<List<ScheduleExceptionLocal>> getExceptionsForDate(DateTime date);
-  Future<List<ScheduleExceptionLocal>> getExceptionsForRange(DateTime startDate, DateTime endDate);
+  Future<List<ScheduleExceptionLocal>> getExceptionsForRange(
+      DateTime startDate, DateTime endDate);
   Future<ScheduleExceptionLocal?> getExceptionById(int id);
   Future<void> saveException(ScheduleExceptionLocal exception);
   Future<void> deleteException(int id);
   Stream<void> watchExceptions();
 }
 
-class ScheduleExceptionLocalDataSourceImpl implements ScheduleExceptionLocalDataSource {
+class ScheduleExceptionLocalDataSourceImpl
+    implements ScheduleExceptionLocalDataSource {
   final Isar _isar;
 
   ScheduleExceptionLocalDataSourceImpl(this._isar);
@@ -20,7 +22,8 @@ class ScheduleExceptionLocalDataSourceImpl implements ScheduleExceptionLocalData
   }
 
   @override
-  Future<List<ScheduleExceptionLocal>> getExceptionsForDate(DateTime date) async {
+  Future<List<ScheduleExceptionLocal>> getExceptionsForDate(
+      DateTime date) async {
     final targetDate = _cleanDate(date);
     return _isar.scheduleExceptionLocals
         .where()
@@ -30,14 +33,13 @@ class ScheduleExceptionLocalDataSourceImpl implements ScheduleExceptionLocalData
   }
 
   @override
-  Future<List<ScheduleExceptionLocal>> getExceptionsForRange(DateTime startDate, DateTime endDate) async {
+  Future<List<ScheduleExceptionLocal>> getExceptionsForRange(
+      DateTime startDate, DateTime endDate) async {
     final start = _cleanDate(startDate);
     final end = _cleanDate(endDate);
 
-    final all = _isar.scheduleExceptionLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final all =
+        _isar.scheduleExceptionLocals.where().isDeletedEqualTo(false).findAll();
 
     return all.where((e) {
       final date = _cleanDate(e.date);
@@ -77,6 +79,9 @@ class ScheduleExceptionLocalDataSourceImpl implements ScheduleExceptionLocalData
 
   @override
   Stream<void> watchExceptions() {
-    return _isar.scheduleExceptionLocals.where().isDeletedEqualTo(false).watch();
+    return _isar.scheduleExceptionLocals
+        .where()
+        .isDeletedEqualTo(false)
+        .watch();
   }
 }

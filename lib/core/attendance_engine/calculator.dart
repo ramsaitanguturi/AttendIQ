@@ -24,10 +24,10 @@ class AttendanceCalculator {
   }) {
     if (total <= 0) return 0;
     if (target <= 0) return 0;
-    
+
     final value = ((100.0 * attended) - (target * total)) / target;
     final safeBunks = value.floor();
-    
+
     return safeBunks < 0 ? 0 : safeBunks;
   }
 
@@ -41,9 +41,10 @@ class AttendanceCalculator {
     required int total,
     required double target,
   }) {
-    final currentPercentage = calculatePercentage(attended: attended, total: total);
+    final currentPercentage =
+        calculatePercentage(attended: attended, total: total);
     if (currentPercentage >= target) return 0;
-    
+
     if (target >= 100.0) {
       if (attended < total) {
         return null; // N/A

@@ -9,21 +9,31 @@ import 'package:attend_iq/features/timetable/data/repositories/weekly_schedule_r
 import 'package:attend_iq/features/timetable/data/repositories/schedule_exception_repository_impl.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 
-class FakeWeeklyScheduleRuleLocalDataSource implements WeeklyScheduleRuleLocalDataSource {
+class FakeWeeklyScheduleRuleLocalDataSource
+    implements WeeklyScheduleRuleLocalDataSource {
   final Map<int, WeeklyScheduleRuleLocal> rules = {};
   final List<SubjectLocal> subjects = [];
   int _nextId = 1;
 
   @override
-  Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(int subjectId) async {
-    return rules.values.where((r) => r.subjectId == subjectId && !r.isDeleted).toList();
+  Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(
+      int subjectId) async {
+    return rules.values
+        .where((r) => r.subjectId == subjectId && !r.isDeleted)
+        .toList();
   }
 
   @override
-  Future<List<WeeklyScheduleRuleLocal>> getRulesForSemester(int semesterId) async {
-    final subjectIds = subjects.where((s) => s.semesterId == semesterId && !s.isDeleted).map((s) => s.id).toSet();
+  Future<List<WeeklyScheduleRuleLocal>> getRulesForSemester(
+      int semesterId) async {
+    final subjectIds = subjects
+        .where((s) => s.semesterId == semesterId && !s.isDeleted)
+        .map((s) => s.id)
+        .toSet();
     if (subjectIds.isEmpty) return [];
-    return rules.values.where((r) => subjectIds.contains(r.subjectId) && !r.isDeleted).toList();
+    return rules.values
+        .where((r) => subjectIds.contains(r.subjectId) && !r.isDeleted)
+        .toList();
   }
 
   @override
@@ -67,20 +77,25 @@ class FakeWeeklyScheduleRuleLocalDataSource implements WeeklyScheduleRuleLocalDa
   Stream<void> watchRules(int semesterId) => const Stream.empty();
 }
 
-class FakeScheduleExceptionLocalDataSource implements ScheduleExceptionLocalDataSource {
+class FakeScheduleExceptionLocalDataSource
+    implements ScheduleExceptionLocalDataSource {
   final Map<int, ScheduleExceptionLocal> exceptions = {};
   int _nextId = 1;
 
   DateTime _cleanDate(DateTime dt) => DateTime.utc(dt.year, dt.month, dt.day);
 
   @override
-  Future<List<ScheduleExceptionLocal>> getExceptionsForDate(DateTime date) async {
+  Future<List<ScheduleExceptionLocal>> getExceptionsForDate(
+      DateTime date) async {
     final target = _cleanDate(date);
-    return exceptions.values.where((e) => _cleanDate(e.date) == target && !e.isDeleted).toList();
+    return exceptions.values
+        .where((e) => _cleanDate(e.date) == target && !e.isDeleted)
+        .toList();
   }
 
   @override
-  Future<List<ScheduleExceptionLocal>> getExceptionsForRange(DateTime startDate, DateTime endDate) async {
+  Future<List<ScheduleExceptionLocal>> getExceptionsForRange(
+      DateTime startDate, DateTime endDate) async {
     final start = _cleanDate(startDate);
     final end = _cleanDate(endDate);
     return exceptions.values.where((e) {
@@ -92,7 +107,8 @@ class FakeScheduleExceptionLocalDataSource implements ScheduleExceptionLocalData
   }
 
   @override
-  Future<ScheduleExceptionLocal?> getExceptionById(int id) async => exceptions[id];
+  Future<ScheduleExceptionLocal?> getExceptionById(int id) async =>
+      exceptions[id];
 
   @override
   Future<void> saveException(ScheduleExceptionLocal exception) async {
@@ -122,8 +138,10 @@ void main() {
   setUp(() {
     ruleDataSource = FakeWeeklyScheduleRuleLocalDataSource();
     exceptionDataSource = FakeScheduleExceptionLocalDataSource();
-    ruleRepository = WeeklyScheduleRuleRepositoryImpl(localDataSource: ruleDataSource);
-    exceptionRepository = ScheduleExceptionRepositoryImpl(localDataSource: exceptionDataSource);
+    ruleRepository =
+        WeeklyScheduleRuleRepositoryImpl(localDataSource: ruleDataSource);
+    exceptionRepository =
+        ScheduleExceptionRepositoryImpl(localDataSource: exceptionDataSource);
 
     ruleDataSource.subjects.addAll([
       SubjectLocal()
@@ -157,16 +175,18 @@ void main() {
       final days = [1, 2, 5];
       final now = DateTime.now();
 
-      final rules = days.map((day) => WeeklyScheduleRule(
-        subjectId: 101,
-        dayOfWeek: day,
-        startTime: '10:00',
-        endTime: '11:00',
-        room: 'Room A203',
-        faculty: 'Dr. Smith',
-        createdAt: now,
-        updatedAt: now,
-      )).toList();
+      final rules = days
+          .map((day) => WeeklyScheduleRule(
+                subjectId: 101,
+                dayOfWeek: day,
+                startTime: '10:00',
+                endTime: '11:00',
+                room: 'Room A203',
+                faculty: 'Dr. Smith',
+                createdAt: now,
+                updatedAt: now,
+              ))
+          .toList();
 
       await ruleRepository.saveRules(rules);
 
@@ -191,7 +211,8 @@ void main() {
       ));
 
       final activeRules = await ruleRepository.getRulesForSemester(1);
-      final todayClasses = activeRules.where((r) => r.dayOfWeek == todayWeekday).toList();
+      final todayClasses =
+          activeRules.where((r) => r.dayOfWeek == todayWeekday).toList();
       expect(todayClasses.length, 1);
       expect(todayClasses.first.subjectId, 101);
       expect(todayClasses.first.startTime, '10:00');
@@ -212,12 +233,14 @@ void main() {
 
       await exceptionRepository.saveException(exception);
 
-      final exceptionsOnHoliday = await exceptionRepository.getExceptionsForDate(holidayDate);
+      final exceptionsOnHoliday =
+          await exceptionRepository.getExceptionsForDate(holidayDate);
       expect(exceptionsOnHoliday.length, 1);
       expect(exceptionsOnHoliday.first.type, ScheduleExceptionType.HOLIDAY);
     });
 
-    test('4. Cancelled class removes only that date for target subject', () async {
+    test('4. Cancelled class removes only that date for target subject',
+        () async {
       final cancelDate = DateTime.utc(2026, 3, 25);
       final now = DateTime.now();
 
@@ -233,10 +256,12 @@ void main() {
 
       await exceptionRepository.saveException(exception);
 
-      final exceptionsOnDate = await exceptionRepository.getExceptionsForDate(cancelDate);
+      final exceptionsOnDate =
+          await exceptionRepository.getExceptionsForDate(cancelDate);
       expect(exceptionsOnDate.length, 1);
       expect(exceptionsOnDate.first.subjectId, 101);
-      expect(exceptionsOnDate.first.type, ScheduleExceptionType.CANCELLED_CLASS);
+      expect(
+          exceptionsOnDate.first.type, ScheduleExceptionType.CANCELLED_CLASS);
     });
 
     test('5. Exam appears correctly for date and subject', () async {
@@ -255,7 +280,8 @@ void main() {
 
       await exceptionRepository.saveException(exception);
 
-      final exceptionsOnDate = await exceptionRepository.getExceptionsForDate(examDate);
+      final exceptionsOnDate =
+          await exceptionRepository.getExceptionsForDate(examDate);
       expect(exceptionsOnDate.length, 1);
       expect(exceptionsOnDate.first.type, ScheduleExceptionType.EXAM);
       expect(exceptionsOnDate.first.title, 'OS Midterm Exam');

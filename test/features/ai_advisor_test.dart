@@ -123,11 +123,13 @@ void main() {
       });
 
       test('Falls back gracefully on invalid JSON', () {
-        const invalidStr = 'This is not a JSON string, just plain text response.';
+        const invalidStr =
+            'This is not a JSON string, just plain text response.';
 
         final response = AIResponseParser.parse(invalidStr);
 
-        expect(response.answer, 'This is not a JSON string, just plain text response.');
+        expect(response.answer,
+            'This is not a JSON string, just plain text response.');
         expect(response.confidence, 0.5);
         expect(response.actionItems.first, 'Check subject logs manually');
       });
@@ -136,15 +138,25 @@ void main() {
     group('Fallback Rules Tests', () {
       const localAdvisor = LocalAdvisorService();
 
-      test('Generates generic advice applying threshold warnings and safe bunks', () async {
-        final response = await localAdvisor.generateAdvice(context: dummyContext);
+      test(
+          'Generates generic advice applying threshold warnings and safe bunks',
+          () async {
+        final response =
+            await localAdvisor.generateAdvice(context: dummyContext);
 
         expect(response.answer, contains('local rule-based'));
         expect(response.confidence, 1.0);
         // Mathematics IV is Critical
-        expect(response.actionItems.any((item) => item.contains('Mathematics IV') && item.contains('consecutive')), isTrue);
+        expect(
+            response.actionItems.any((item) =>
+                item.contains('Mathematics IV') &&
+                item.contains('consecutive')),
+            isTrue);
         // Physics Lab has Safe Skips
-        expect(response.actionItems.any((item) => item.contains('Physics Lab') && item.contains('safe skips')), isTrue);
+        expect(
+            response.actionItems.any((item) =>
+                item.contains('Physics Lab') && item.contains('safe skips')),
+            isTrue);
       });
 
       test('Answers tomorrow skipping question locally', () async {
@@ -157,7 +169,8 @@ void main() {
         expect(response.relatedSubjects, contains('Physics Lab'));
       });
 
-      test('Answers tomorrow skipping question with critical classes scheduled', () async {
+      test('Answers tomorrow skipping question with critical classes scheduled',
+          () async {
         final contextWithCriticalTomorrow = AttendanceAIContext(
           studentInfo: dummyContext.studentInfo,
           semester: dummyContext.semester,
@@ -213,7 +226,10 @@ void main() {
         );
 
         expect(response.answer, contains('consecutive classes'));
-        expect(response.actionItems.any((item) => item.contains('Math') && item.contains('8')), isTrue);
+        expect(
+            response.actionItems
+                .any((item) => item.contains('Math') && item.contains('8')),
+            isTrue);
       });
     });
   });

@@ -8,7 +8,8 @@ abstract class AppException implements Exception {
   const AppException(this.message, [this.code]);
 
   @override
-  String toString() => '$runtimeType: $message${code != null ? ' (Code: $code)' : ''}';
+  String toString() =>
+      '$runtimeType: $message${code != null ? ' (Code: $code)' : ''}';
 }
 
 class DatabaseException extends AppException {

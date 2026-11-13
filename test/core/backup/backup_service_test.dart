@@ -101,7 +101,9 @@ void main() {
       );
     });
 
-    test('BackupImporter throws FormatException on higher unsupported backupVersion', () {
+    test(
+        'BackupImporter throws FormatException on higher unsupported backupVersion',
+        () {
       final importer = BackupImporter(FakeIsar());
       const invalidVersionJson = '''
       {

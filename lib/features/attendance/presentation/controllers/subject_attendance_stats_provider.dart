@@ -13,6 +13,7 @@ import '../../../timetable/data/models/daily_schedule_occurrence_local.dart';
 import '../../../timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../../timetable/data/utils/occurrence_identity.dart';
 import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
+import '../../../timetable/domain/entities/schedule_exception.dart';
 import '../../../timetable/domain/repositories/daily_schedule_occurrence_repository.dart';
 import '../../../timetable/presentation/controllers/timetable_controller.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
@@ -67,7 +68,8 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   // Watch canonical weekly schedule rules if database is open
   final isar = ref.watch(isarProvider).valueOrNull;
   if (isar != null && isar.isOpen) {
-    final ruleSub = isar.weeklyScheduleRuleLocals.where().watchLazy().listen((_) {
+    final ruleSub =
+        isar.weeklyScheduleRuleLocals.where().watchLazy().listen((_) {
       if (!isDisposed) {
         ref.invalidateSelf();
       }
@@ -109,7 +111,8 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   final requiredClasses = AttendanceCalculator.calculateRequiredClasses(
       attended: present, total: total, target: target);
 
-  // 6. Calculate remaining classes using canonical WeeklyScheduleRuleRepository
+  // 6. Calculate remaining classes using canonical WeeklyScheduleRuleRepository,
+  // accounting for schedule exceptions (holidays, cancelled classes) and already-marked classes today
   final rules = await ruleRepo.getRulesForSubject(subjectId);
   final activeRuleWeekdays = rules
       .where((r) => r.isActive && !r.isDeleted)
@@ -118,23 +121,66 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 
   int remaining = 0;
   final today = DateTime.now();
-  if (today.isBefore(semester.endDate)) {
-    // Count remaining scheduled classes starting from today
-    DateTime current = normalizeUtcDate(today);
-    final end = normalizeUtcDate(semester.endDate);
-    while (!current.isAfter(end)) {
-      remaining +=
-          activeRuleWeekdays.where((int w) => w == current.weekday).length;
+  final todayUtc = normalizeUtcDate(today);
+  final endUtc = normalizeUtcDate(semester.endDate);
+
+  if (!todayUtc.isAfter(endUtc)) {
+    // Fetch exceptions across semester range
+    List<ScheduleException> exceptions = [];
+    try {
+      final exceptionRepo = ref.watch(scheduleExceptionRepositoryProvider);
+      exceptions = await exceptionRepo.getExceptionsForRange(todayUtc, endUtc);
+    } catch (_) {}
+
+    final holidayDates = <String>{};
+    final cancelledDatesForSubject = <String>{};
+    for (final ex in exceptions) {
+      if (ex.isDeleted) continue;
+      final exDateKey = formatUtcDateKey(ex.date);
+      if (ex.type == ScheduleExceptionType.HOLIDAY) {
+        holidayDates.add(exDateKey);
+      } else if (ex.type == ScheduleExceptionType.CANCELLED_CLASS &&
+          (ex.subjectId == null || ex.subjectId == subjectId)) {
+        cancelledDatesForSubject.add(exDateKey);
+      }
+    }
+
+    // Classes already marked today for this subject
+    final alreadyMarkedTodayCount = records
+        .where((r) =>
+            !r.isDeleted &&
+            normalizeUtcDate(r.markedAt).isAtSameMomentAs(todayUtc))
+        .length;
+
+    DateTime current = todayUtc;
+    while (!current.isAfter(endUtc)) {
+      final dateKey = formatUtcDateKey(current);
+      if (!holidayDates.contains(dateKey) &&
+          !cancelledDatesForSubject.contains(dateKey)) {
+        final scheduledForDay =
+            activeRuleWeekdays.where((int w) => w == current.weekday).length;
+        if (current.isAtSameMomentAs(todayUtc)) {
+          // On today, deduct classes that have already been marked
+          final remainingToday = scheduledForDay - alreadyMarkedTodayCount;
+          if (remainingToday > 0) {
+            remaining += remainingToday;
+          }
+        } else {
+          remaining += scheduledForDay;
+        }
+      }
       current = current.add(const Duration(days: 1));
     }
   }
 
-  // 7. Calculate recent attendance rate
+  // 7. Calculate recent attendance rate (using normalized 30-day UTC window)
   final lifetimeRate = total > 0 ? (present / total) : 1.0;
-  final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
-  final recentRecords = records
-      .where((AttendanceRecord r) => r.markedAt.isAfter(thirtyDaysAgo))
-      .toList();
+  final thirtyDaysAgoUtc = todayUtc.subtract(const Duration(days: 30));
+  final recentRecords = records.where((AttendanceRecord r) {
+    if (r.isDeleted) return false;
+    final recordDate = normalizeUtcDate(r.markedAt);
+    return !recordDate.isBefore(thirtyDaysAgoUtc);
+  }).toList();
 
   int recentPresent = 0;
   int recentTotal = 0;
@@ -228,8 +274,10 @@ Future<List<DailyScheduleOccurrence>> subjectOccurrences(
 
   final isar = ref.watch(isarProvider).valueOrNull;
   if (isar != null && isar.isOpen) {
-    final stream =
-        isar.dailyScheduleOccurrenceLocals.where().subjectIdEqualTo(subjectId).watch();
+    final stream = isar.dailyScheduleOccurrenceLocals
+        .where()
+        .subjectIdEqualTo(subjectId)
+        .watch();
     final sub = stream.listen((_) {
       if (!isDisposed) {
         ref.invalidateSelf();

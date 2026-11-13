@@ -7,7 +7,7 @@ String generateUuid() {
   values[6] = (values[6] & 0x0f) | 0x40;
   // Set variant to RFC 4122
   values[8] = (values[8] & 0x3f) | 0x80;
-  
+
   final buffer = StringBuffer();
   for (var i = 0; i < 16; i++) {
     if (i == 4 || i == 6 || i == 8 || i == 10) {

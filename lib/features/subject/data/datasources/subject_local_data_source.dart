@@ -2,7 +2,8 @@ import 'package:isar/isar.dart';
 import '../models/subject_local.dart';
 
 abstract class SubjectLocalDataSource {
-  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId);
+  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId,
+      {bool includeDeleted = false});
   Future<SubjectLocal?> getSubjectById(int id);
   Future<void> saveSubject(SubjectLocal subject);
   Stream<void> watchSubjects(int semesterId);
@@ -14,7 +15,14 @@ class SubjectLocalDataSourceImpl implements SubjectLocalDataSource {
   SubjectLocalDataSourceImpl(this._isar);
 
   @override
-  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId) async {
+  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId,
+      {bool includeDeleted = false}) async {
+    if (includeDeleted) {
+      return _isar.subjectLocals
+          .where()
+          .semesterIdEqualTo(semesterId)
+          .findAll();
+    }
     return _isar.subjectLocals
         .where()
         .semesterIdEqualTo(semesterId)

@@ -35,7 +35,9 @@ class FakeSubjectRepository implements SubjectRepository {
   final List<Subject> subjects = [];
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId) async => subjects;
+  Future<List<Subject>> getSubjectsBySemester(int semesterId,
+          {bool includeDeleted = false}) async =>
+      includeDeleted ? subjects : subjects.where((s) => !s.isDeleted).toList();
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -94,7 +96,8 @@ void main() {
       expect(report, isNull);
     });
 
-    test('generateSemesterReport handles empty data gracefully (no subjects)', () async {
+    test('generateSemesterReport handles empty data gracefully (no subjects)',
+        () async {
       semesterRepository.activeSemester = Semester(
         id: '1',
         name: 'Fall 2026',
@@ -111,7 +114,8 @@ void main() {
       expect(report.subjectReports, isEmpty);
     });
 
-    test('generateSemesterReport calculates correct metrics and risk levels', () async {
+    test('generateSemesterReport calculates correct metrics and risk levels',
+        () async {
       semesterRepository.activeSemester = Semester(
         id: '1',
         name: 'Fall 2026',
@@ -161,72 +165,75 @@ void main() {
 
       // MATH101: 8 present, 2 absent -> 80% (Safe status: 80 - 75 = 5 > 2.5)
       attendanceRepository.records[10] = List.generate(
-        8,
-        (i) => AttendanceRecord(
-          id: i,
-          eventId: i,
-          subjectId: 10,
-          status: AttendanceStatus.PRESENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ) + List.generate(
-        2,
-        (i) => AttendanceRecord(
-          id: 100 + i,
-          eventId: 100 + i,
-          subjectId: 10,
-          status: AttendanceStatus.ABSENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+            8,
+            (i) => AttendanceRecord(
+              id: i,
+              eventId: i,
+              subjectId: 10,
+              status: AttendanceStatus.PRESENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ) +
+          List.generate(
+            2,
+            (i) => AttendanceRecord(
+              id: 100 + i,
+              eventId: 100 + i,
+              subjectId: 10,
+              status: AttendanceStatus.ABSENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
 
       // PHYS101: 7 present, 3 absent -> 70% (Critical status: 70 < 75)
       attendanceRepository.records[20] = List.generate(
-        7,
-        (i) => AttendanceRecord(
-          id: 20 + i,
-          eventId: 20 + i,
-          subjectId: 20,
-          status: AttendanceStatus.PRESENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ) + List.generate(
-        3,
-        (i) => AttendanceRecord(
-          id: 200 + i,
-          eventId: 200 + i,
-          subjectId: 20,
-          status: AttendanceStatus.ABSENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+            7,
+            (i) => AttendanceRecord(
+              id: 20 + i,
+              eventId: 20 + i,
+              subjectId: 20,
+              status: AttendanceStatus.PRESENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ) +
+          List.generate(
+            3,
+            (i) => AttendanceRecord(
+              id: 200 + i,
+              eventId: 200 + i,
+              subjectId: 20,
+              status: AttendanceStatus.ABSENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
 
       // CHEM101: 23 present, 7 absent -> 76.67% (Warning status: 76.67 - 75 = 1.67 <= 2.5)
       attendanceRepository.records[30] = List.generate(
-        23,
-        (i) => AttendanceRecord(
-          id: 30 + i,
-          eventId: 30 + i,
-          subjectId: 30,
-          status: AttendanceStatus.PRESENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ) + List.generate(
-        7,
-        (i) => AttendanceRecord(
-          id: 300 + i,
-          eventId: 300 + i,
-          subjectId: 30,
-          status: AttendanceStatus.ABSENT,
-          markedAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+            23,
+            (i) => AttendanceRecord(
+              id: 30 + i,
+              eventId: 30 + i,
+              subjectId: 30,
+              status: AttendanceStatus.PRESENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ) +
+          List.generate(
+            7,
+            (i) => AttendanceRecord(
+              id: 300 + i,
+              eventId: 300 + i,
+              subjectId: 30,
+              status: AttendanceStatus.ABSENT,
+              markedAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
 
       final report = await reportService.generateSemesterReport();
       expect(report, isNotNull);
@@ -235,15 +242,18 @@ void main() {
       expect(report.totalAbsent, 12); // 2 + 3 + 7
       expect(report.overallPercentage, closeTo(76.0, 0.01)); // 38 / 50 * 100
 
-      final mathReport = report.subjectReports.firstWhere((s) => s.subjectName == 'Mathematics');
+      final mathReport = report.subjectReports
+          .firstWhere((s) => s.subjectName == 'Mathematics');
       expect(mathReport.percentage, 80.0);
       expect(mathReport.riskStatus, RiskStatus.SAFE);
 
-      final physReport = report.subjectReports.firstWhere((s) => s.subjectName == 'Physics');
+      final physReport =
+          report.subjectReports.firstWhere((s) => s.subjectName == 'Physics');
       expect(physReport.percentage, 70.0);
       expect(physReport.riskStatus, RiskStatus.CRITICAL);
 
-      final chemReport = report.subjectReports.firstWhere((s) => s.subjectName == 'Chemistry');
+      final chemReport =
+          report.subjectReports.firstWhere((s) => s.subjectName == 'Chemistry');
       expect(chemReport.percentage, closeTo(76.67, 0.1));
       expect(chemReport.riskStatus, RiskStatus.WARNING);
     });

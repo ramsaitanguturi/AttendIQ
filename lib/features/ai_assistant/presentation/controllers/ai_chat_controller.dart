@@ -60,14 +60,16 @@ class AIChatController extends _$AIChatController {
   @override
   FutureOr<AIChatState> build() async {
     final initialMessage = ChatMessage(
-      text: "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
+      text:
+          "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
       sender: MessageSender.assistant,
       timestamp: DateTime.now(),
     );
 
     final connectivityResult = await Connectivity().checkConnectivity();
     // Checks if none of the active networks are connected, meaning offline.
-    final isOffline = connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty;
+    final isOffline = connectivityResult.contains(ConnectivityResult.none) ||
+        connectivityResult.isEmpty;
 
     return AIChatState(
       messages: [initialMessage],
@@ -95,10 +97,11 @@ class AIChatController extends _$AIChatController {
     try {
       final context = await ref.read(aiContextProvider.future);
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isOffline = connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty;
-      
+      final isOffline = connectivityResult.contains(ConnectivityResult.none) ||
+          connectivityResult.isEmpty;
+
       const String envApiKey = String.fromEnvironment('GEMINI_API_KEY');
-      
+
       AIProvider provider;
       if (isOffline || envApiKey.isEmpty) {
         provider = const LocalAdvisorService();
@@ -106,7 +109,23 @@ class AIChatController extends _$AIChatController {
         provider = GeminiAIProvider(apiKey: envApiKey);
       }
 
-      final response = await provider.askQuestion(context: context, question: question);
+      AIResponse response;
+      try {
+        response =
+            await provider.askQuestion(context: context, question: question);
+      } catch (geminiError) {
+        // BUG-015: If Gemini API fails (timeout, network error, 5xx, quota), fall back to LocalAdvisorService
+        if (provider is! LocalAdvisorService) {
+          try {
+            response = await const LocalAdvisorService()
+                .askQuestion(context: context, question: question);
+          } catch (_) {
+            rethrow;
+          }
+        } else {
+          rethrow;
+        }
+      }
 
       final assistantMsg = ChatMessage(
         text: response.answer,
@@ -136,12 +155,14 @@ class AIChatController extends _$AIChatController {
 
   Future<void> clearChat() async {
     final initialMessage = ChatMessage(
-      text: "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
+      text:
+          "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
       sender: MessageSender.assistant,
       timestamp: DateTime.now(),
     );
     final connectivityResult = await Connectivity().checkConnectivity();
-    final isOffline = connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty;
+    final isOffline = connectivityResult.contains(ConnectivityResult.none) ||
+        connectivityResult.isEmpty;
 
     state = AsyncData(AIChatState(
       messages: [initialMessage],
