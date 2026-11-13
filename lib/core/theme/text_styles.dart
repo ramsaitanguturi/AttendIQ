@@ -4,8 +4,8 @@ class AppTextStyles {
   AppTextStyles._();
 
   // Font family names as defined in design system
-  static const String primaryFont = 'Outfit';
-  static const String fallbackFont = 'Inter';
+  static const String primaryFont = 'Roboto';
+  static const String fallbackFont = 'Roboto';
 
   // Base TextStyle definitions
   static const TextStyle displayLarge = TextStyle(

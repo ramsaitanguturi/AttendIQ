@@ -835,7 +835,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                           const SizedBox(height: 4),
                           Text(
                             isCritical
-                                ? 'Need ${stats.requiredClasses} consecutive classes'
+                                ? (stats.requiredClasses != null
+                                    ? 'Need ${stats.requiredClasses} consecutive classes'
+                                    : 'Target ${stats.subject.attendanceTarget.toStringAsFixed(0)}% unreachable (N/A)')
                                 : 'Safe bunks: ${stats.safeBunks}',
                             style: TextStyle(
                               fontSize: 12.0,

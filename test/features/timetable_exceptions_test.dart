@@ -107,6 +107,11 @@ class FakeScheduleExceptionLocalDataSource
   }
 
   @override
+  Future<List<ScheduleExceptionLocal>> getAllExceptions() async {
+    return exceptions.values.where((e) => !e.isDeleted).toList();
+  }
+
+  @override
   Future<ScheduleExceptionLocal?> getExceptionById(int id) async =>
       exceptions[id];
 

@@ -57,6 +57,12 @@ class ScheduleExceptionRepositoryImpl implements ScheduleExceptionRepository {
   }
 
   @override
+  Future<List<ScheduleException>> getAllExceptions() async {
+    final list = await _localDataSource.getAllExceptions();
+    return list.map(_toEntity).toList();
+  }
+
+  @override
   Future<ScheduleException?> getExceptionById(int id) async {
     final local = await _localDataSource.getExceptionById(id);
     if (local != null && !local.isDeleted) {

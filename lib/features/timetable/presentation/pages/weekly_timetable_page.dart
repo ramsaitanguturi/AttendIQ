@@ -84,7 +84,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
           if (subjects.isEmpty) {
             _showNoSubjectsAlert(context);
           } else {
-            AddEditSubjectDialog.show(context);
+            AddExtraClassDialog.show(context);
           }
         },
         backgroundColor: AppColors.primary,

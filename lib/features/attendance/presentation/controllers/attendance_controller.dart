@@ -261,6 +261,7 @@ class AttendanceController extends _$AttendanceController {
     ref.invalidate(analyticsControllerProvider);
     ref.invalidate(attendanceAnalyticsProvider);
     ref.invalidate(reportsControllerProvider);
+    ref.invalidate(allDailyOccurrencesProvider);
     ref.invalidate(monthlyCalendarDataProvider);
     try {
       ref.read(widgetRefreshServiceProvider).refreshAllWidgets();

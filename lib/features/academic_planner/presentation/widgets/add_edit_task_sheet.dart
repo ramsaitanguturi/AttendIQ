@@ -50,9 +50,15 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
     _selectedTaskType = task?.taskType ?? TaskType.ASSIGNMENT;
     _selectedSubjectId = task?.subjectId;
 
-    _startDate = task?.startDate ?? widget.initialDate ?? now;
-    _dueDate =
+    final rawStart = task?.startDate ?? widget.initialDate ?? now;
+    final rawDue =
         task?.dueDate ?? widget.initialDate ?? now.add(const Duration(days: 1));
+
+    _startDate = DateTime(rawStart.year, rawStart.month, rawStart.day);
+    _dueDate = DateTime(rawDue.year, rawDue.month, rawDue.day);
+    if (_dueDate.isBefore(_startDate)) {
+      _dueDate = _startDate;
+    }
     _dueTime = task != null
         ? TimeOfDay.fromDateTime(task.dueDate)
         : const TimeOfDay(hour: 23, minute: 59);
@@ -87,14 +93,18 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
       lastDate: DateTime(2035),
     );
     if (picked != null) {
+      final clean = DateTime(picked.year, picked.month, picked.day);
       setState(() {
         if (isStart) {
-          _startDate = picked;
+          _startDate = clean;
           if (_dueDate.isBefore(_startDate)) {
             _dueDate = _startDate;
           }
         } else {
-          _dueDate = picked;
+          _dueDate = clean;
+          if (_dueDate.isBefore(_startDate)) {
+            _startDate = _dueDate;
+          }
         }
       });
     }

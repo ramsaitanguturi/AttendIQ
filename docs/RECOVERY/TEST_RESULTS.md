@@ -1034,3 +1034,49 @@ FINAL RESULT: 5 / 5 TEST SUITES PASSED ON ANDROID 14 (API 34)
   I/flutter:   ✓ API key redaction verified: error does not expose SECRET_API_KEY_12345
   I/flutter: [PASS] TEST E: Local advisor fallback and API key sanitization.
   ```
+
+---
+
+## Section 6: Priority 2 Bug Fixes Verification
+
+### 6.1 Objective & Defects Addressed
+All Priority 2 defects across Groups A, B, C, and D were systematically diagnosed and resolved without regressing P0 or P1 behaviors:
+
+| Defect ID | Group | Component | Summary of Root Cause & Fix |
+|---|---|---|---|
+| **BUG-020** | Group A | Subject Lifecycle & Cascade Integrity | `createSubject` now returns populated `Subject` with ID directly. `deleteSubject` cascades soft-deletion to active recurring `WeeklyScheduleRule`s and future `DailyScheduleOccurrence`s (`date >= today`), while strictly preserving `AttendanceRecordLocal` historical attendance records. Prefills target from `UserPreferences.defaultAttendanceTarget`. Added case-insensitive duplicate subject code checks and intra-dialog/semester-wide time slot overlap validation. |
+| **BUG-022** | Group A | Timetable & Calendar Integrity | Timetable occurrence editing cleanly passes normalized date from `ScheduleClassSlot.date`. Weekly Timetable FAB checks for active subjects and opens `AddExtraClassDialog.show(context)` to add extra classes. Added `getAllExceptions()` to repository and updated `ScheduleExceptionController.build()` removing arbitrary 30d/90d truncation. Integrated `DailyScheduleOccurrence` extra classes into `monthlyCalendarDataProvider` with dot indicator `hasExtraClass = true` and calendar day items. |
+| **BUG-025** | Group B | Analytics & Dashboard Unreachable Targets | Guarded against `null` required classes when 100% target is mathematically unreachable. Replaced literal `"null"` string interpolation with descriptive `'Target ${target.toStringAsFixed(0)}% unreachable (N/A)'` across both Analytics and Dashboard screens. Preserved 1-point trend bounds and single-day chart safety. |
+| **BUG-028** | Group B | Router Error Route & Protected Redirects | Added explicit `/error` route with Retry button when `hasActiveSemesterProvider.hasError`, preventing database or provider errors from silently converting into `hasSemester = false`. Preserved deep links on valid active semester. Replaced dead `/onboarding` destination text in Dashboard empty state with actionable "Add Subject" CTA button. Gated `debugLogDiagnostics: kDebugMode`. |
+| **BUG-029** / **NEW-BUG-11** | Group C | Attendance Status Visual Styling | Added neutral grey styling (`AppColors.statusCancelled = Color(0xFF6B7280)`) for `CANCELLED` status in `ClassScheduleCard`, distinct from red `ABSENT` (`AppColors.attendanceLow`), green `PRESENT` (`AppColors.attendanceHigh`), and amber `LATE` (`AppColors.attendanceMid`). |
+| **NEW-BUG-10** | Group C | Typography & System Fonts | Replaced unbundled font family references (`'Outfit'`, `'Inter'`) in `AppTextStyles` with standard platform-supported `'Roboto'` for clean and consistent cross-platform typography. |
+| **NEW-BUG-06** | Group D | Academic Planner Task Date Validation | Added strict `ArgumentError` validation in `TaskListController.addTask` and `updateTask` when `startDate.isAfter(dueDate)`. Implemented auto-adjustment in `AddEditTaskSheet` when date pickers change. Guarded saving with error SnackBar while strictly preserving user inputs in the sheet on validation failures. |
+
+### 6.2 Test Results
+- **Dedicated P2 Regression Suite**: `test/features/p2_bugs_regression_test.dart`
+  - 19/19 tests passed (100% pass rate).
+- **Full Project Regression Test Suite**: `flutter test --no-pub -j 1`
+  - Total Tests: **334 passed, 0 failed, 0 skipped**.
+  - All P0 and P1 regression suites preserved and passing (widgets, backup/restore, notifications, attendance engine, AI fallback).
+
+### 6.3 Static Analysis
+- **Command**: `flutter analyze --no-pub --no-fatal-infos`
+- **Result**: **0 errors, 0 warnings** (exit code `0`).
+
+### 6.4 Build Artifacts
+All four APK variants built successfully via Gradle:
+
+| Variant | Target Path | File Size | Build Status |
+|---|---|---|---|
+| `prodDebug` | `build/app/outputs/apk/prod/debug/app-prod-debug.apk` | 463.3 MB | **SUCCESS** |
+| `betaDebug` | `build/app/outputs/apk/beta/debug/app-beta-debug.apk` | 448.0 MB | **SUCCESS** |
+| `prodRelease` | `build/app/outputs/apk/prod/release/app-prod-release.apk` | 66.5 MB | **SUCCESS** |
+| `betaRelease` | `build/app/outputs/apk/beta/release/app-beta-release.apk` | 66.5 MB | **SUCCESS** |
+
+### 6.5 Android 14 (API 34) Runtime Verification
+- **Device**: `emulator-5554`
+- **Android OS**: Android 14 (`ro.build.version.release = 14`, `ro.build.version.sdk = 34`, product `sdk_gphone64_x86_64`)
+- **Package**: `com.ramsa.attendiq.attend_iq` (`prodDebug`)
+- **Installation**: Streamed install via `adb -s emulator-5554 install -r build/app/outputs/apk/prod/debug/app-prod-debug.apk` -> `Success`.
+- **Runtime Launch**: `adb shell am start -n com.ramsa.attendiq.attend_iq/.MainActivity` -> Dart VM service listening, zero crashes, zero runtime exceptions.
+- **Screenshot Evidence**: Captured and saved to `build/app_screenshot.png`.

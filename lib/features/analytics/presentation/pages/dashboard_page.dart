@@ -16,6 +16,7 @@ import '../controllers/analytics_controller.dart';
 import '../../../academic_planner/presentation/controllers/task_controller.dart';
 import '../../../academic_planner/presentation/widgets/task_card_widget.dart';
 import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart';
+import '../../../subject/presentation/widgets/add_edit_subject_dialog.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   final String? initialSection;
@@ -476,7 +477,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         const SizedBox(height: 4),
                         Text(
                           isCritical
-                              ? 'Must attend ${stats.requiredClasses} consecutive classes'
+                              ? (stats.requiredClasses != null
+                                  ? 'Must attend ${stats.requiredClasses} consecutive classes'
+                                  : 'Target ${stats.subject.attendanceTarget.toStringAsFixed(0)}% unreachable (N/A)')
                               : 'Warning margin! Only ${stats.safeBunks} safe skips left',
                           style: const TextStyle(
                             fontSize: 11,
@@ -615,11 +618,43 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               ),
             ),
-            child: const Center(
-              child: Text(
-                'No subjects added yet. Tap Onboarding or Timetable to add.',
-                style: TextStyle(color: Colors.grey),
-                textAlign: TextAlign.center,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.library_books_outlined,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No subjects added yet',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Add your subjects to start tracking attendance.',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => AddEditSubjectDialog.show(context),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add Subject'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -645,7 +680,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             if (stats.bunkAnalysis.status == BunkStatus.CRITICAL) {
               alertBadgeColor = AppColors.attendanceLow;
               final req = stats.requiredClasses;
-              alertBadgeText = req == null ? 'Critical' : 'Must Attend: $req';
+              alertBadgeText = req == null
+                  ? 'Target Unreachable (N/A)'
+                  : 'Must Attend: $req';
             } else if (stats.bunkAnalysis.status == BunkStatus.WARNING) {
               alertBadgeColor = AppColors.attendanceMid;
               alertBadgeText = 'Warning skips: ${stats.safeBunks}';

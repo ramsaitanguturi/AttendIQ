@@ -19,6 +19,7 @@ import '../features/ai_assistant/presentation/pages/ai_assistant_page.dart';
 
 import '../features/academic_planner/presentation/pages/academic_planner_page.dart';
 import '../features/widgets/presentation/pages/widget_settings_page.dart';
+import '../core/theme/colors.dart';
 
 part 'app_router.g.dart';
 
@@ -52,9 +53,22 @@ GoRouter appRouter(AppRouterRef ref) {
         return '/splash';
       }
 
-      final hasSemester = hasSemesterAsync.valueOrNull ?? false;
       final location = state.uri.path;
 
+      if (hasSemesterAsync.hasError) {
+        if (location == '/error') {
+          return null;
+        }
+        final err = hasSemesterAsync.error?.toString() ??
+            'Failed to load active semester.';
+        return '/error?message=${Uri.encodeComponent(err)}';
+      }
+
+      if (location == '/error') {
+        return '/splash';
+      }
+
+      final hasSemester = hasSemesterAsync.valueOrNull ?? false;
       final isSplash = location == '/splash';
       final isOnboarding = location == '/onboarding';
 
@@ -71,6 +85,53 @@ GoRouter appRouter(AppRouterRef ref) {
       return null;
     },
     routes: <RouteBase>[
+      GoRoute(
+        path: '/error',
+        builder: (BuildContext context, GoRouterState state) {
+          final errorMsg = state.uri.queryParameters['message'] ??
+              'A database or initialization error occurred.';
+          return Scaffold(
+            appBar: AppBar(title: const Text('Error')),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppColors.attendanceLow,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Failed to initialize semester data',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      errorMsg,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref.invalidate(hasActiveSemesterProvider);
+                        ref.invalidate(activeSemesterProvider);
+                        context.go('/splash');
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
       GoRoute(
         path: '/splash',
         builder: (BuildContext context, GoRouterState state) {

@@ -79,6 +79,9 @@ class _FakeScheduleExceptionRepository extends Fake
       exceptions;
 
   @override
+  Future<List<ScheduleException>> getAllExceptions() async => exceptions;
+
+  @override
   Stream<void> watchExceptions() => const Stream<void>.empty();
 }
 

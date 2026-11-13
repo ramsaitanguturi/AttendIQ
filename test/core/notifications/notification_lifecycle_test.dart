@@ -357,7 +357,7 @@ class _FakeSettingsRepository implements SettingsRepository {
 
 class _FakeSubjectRepository implements SubjectRepository {
   @override
-  Future<void> createSubject(Subject subject) async {}
+  Future<Subject> createSubject(Subject subject) async => subject;
 
   @override
   Future<void> deleteSubject(int id) async {}

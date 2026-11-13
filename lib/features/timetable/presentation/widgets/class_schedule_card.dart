@@ -143,30 +143,46 @@ class ClassScheduleCard extends StatelessWidget {
                       ),
                     )
                   else if (slot.status != 'UNMARKED')
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: slot.status == 'PRESENT'
-                            ? Colors.green.withOpacity(0.2)
-                            : Colors.red.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: slot.status == 'PRESENT'
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                      child: Text(
-                        slot.status,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: slot.status == 'PRESENT'
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final st = slot.status.toUpperCase();
+                        Color pillColor;
+                        Color pillBg;
+
+                        if (st == 'PRESENT' || st == 'EXTRA_PRESENT') {
+                          pillColor = AppColors.attendanceHigh;
+                          pillBg = AppColors.attendanceHigh.withOpacity(0.18);
+                        } else if (st == 'CANCELLED' ||
+                            st == 'CANCELLED_CLASS') {
+                          pillColor = AppColors.statusCancelled;
+                          pillBg = AppColors.statusCancelled.withOpacity(0.18);
+                        } else if (st == 'LATE') {
+                          pillColor = AppColors.attendanceMid;
+                          pillBg = AppColors.attendanceMid.withOpacity(0.18);
+                        } else {
+                          // ABSENT / EXTRA_ABSENT
+                          pillColor = AppColors.attendanceLow;
+                          pillBg = AppColors.attendanceLow.withOpacity(0.18);
+                        }
+
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: pillBg,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: pillColor),
+                          ),
+                          child: Text(
+                            slot.status,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: pillColor,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                 ],
               ),

@@ -64,7 +64,7 @@ class SubjectRepositoryImpl implements SubjectRepository {
   }
 
   @override
-  Future<void> createSubject(Subject subject) async {
+  Future<Subject> createSubject(Subject subject) async {
     final serverId = subject.serverId ?? generateUuid();
     final now = DateTime.now().toUtc();
 
@@ -76,6 +76,7 @@ class SubjectRepositoryImpl implements SubjectRepository {
       ..isDeleted = false;
 
     await _localDataSource.saveSubject(localSubject);
+    return _toEntity(localSubject);
   }
 
   @override
@@ -96,15 +97,7 @@ class SubjectRepositoryImpl implements SubjectRepository {
 
   @override
   Future<void> deleteSubject(int id) async {
-    final local = await _localDataSource.getSubjectById(id);
-    if (local != null) {
-      final now = DateTime.now().toUtc();
-      local.isDeleted = true;
-      local.isDirty = false;
-      local.updatedAt = now;
-
-      await _localDataSource.saveSubject(local);
-    }
+    await _localDataSource.deleteSubject(id);
   }
 
   @override

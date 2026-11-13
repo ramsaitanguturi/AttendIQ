@@ -130,6 +130,8 @@ class FakeScheduleExceptionRepository implements ScheduleExceptionRepository {
   ) async =>
       exceptions;
   @override
+  Future<List<ScheduleException>> getAllExceptions() async => exceptions;
+  @override
   Future<ScheduleException?> getExceptionById(int id) async =>
       exceptions.where((e) => e.id == id).firstOrNull;
   @override
@@ -210,7 +212,7 @@ class FakeSubjectRepository implements SubjectRepository {
   @override
   Future<Subject?> getSubjectById(int id) async => subjects.firstOrNull;
   @override
-  Future<void> createSubject(Subject subject) async {}
+  Future<Subject> createSubject(Subject subject) async => subject;
   @override
   Future<void> updateSubject(Subject subject) async {}
   @override

@@ -37,4 +37,6 @@ class AppColors {
       Color(0xFFF59E0B); // hsl(38, 90%, 50%) - Warning
   static const Color attendanceLow =
       Color(0xFFEF4444); // hsl(0, 85%, 55%) - Danger
+  static const Color statusCancelled =
+      Color(0xFF6B7280); // Neutral grey for cancelled classes
 }

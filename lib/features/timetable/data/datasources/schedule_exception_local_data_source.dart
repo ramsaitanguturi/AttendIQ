@@ -5,6 +5,7 @@ abstract class ScheduleExceptionLocalDataSource {
   Future<List<ScheduleExceptionLocal>> getExceptionsForDate(DateTime date);
   Future<List<ScheduleExceptionLocal>> getExceptionsForRange(
       DateTime startDate, DateTime endDate);
+  Future<List<ScheduleExceptionLocal>> getAllExceptions();
   Future<ScheduleExceptionLocal?> getExceptionById(int id);
   Future<void> saveException(ScheduleExceptionLocal exception);
   Future<void> deleteException(int id);
@@ -46,6 +47,14 @@ class ScheduleExceptionLocalDataSourceImpl
       return (date.isAfter(start) || date.isAtSameMomentAs(start)) &&
           (date.isBefore(end) || date.isAtSameMomentAs(end));
     }).toList();
+  }
+
+  @override
+  Future<List<ScheduleExceptionLocal>> getAllExceptions() async {
+    return _isar.scheduleExceptionLocals
+        .where()
+        .isDeletedEqualTo(false)
+        .findAll();
   }
 
   @override

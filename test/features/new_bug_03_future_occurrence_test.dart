@@ -88,6 +88,10 @@ class _InMemoryExceptionRepo implements ScheduleExceptionRepository {
   }
 
   @override
+  Future<List<ScheduleException>> getAllExceptions() async =>
+      List.unmodifiable(exceptions);
+
+  @override
   Future<ScheduleException?> getExceptionById(int id) async =>
       exceptions.where((e) => e.id == id).firstOrNull;
 

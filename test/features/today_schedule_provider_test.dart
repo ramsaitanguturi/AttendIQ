@@ -470,6 +470,9 @@ class _FakeScheduleExceptionRepository implements ScheduleExceptionRepository {
       _exceptions;
 
   @override
+  Future<List<ScheduleException>> getAllExceptions() async => _exceptions;
+
+  @override
   Future<ScheduleException?> getExceptionById(int id) async =>
       _exceptions.where((e) => e.id == id).firstOrNull;
 

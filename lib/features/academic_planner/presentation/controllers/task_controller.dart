@@ -53,6 +53,10 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
     required TaskPriority priority,
     required TaskReminder reminder,
   }) async {
+    if (startDate.isAfter(dueDate)) {
+      throw ArgumentError('Task start date cannot be after due date.');
+    }
+
     final repository = ref.read(taskRepositoryProvider);
     final scheduler = ref.read(taskNotificationSchedulerProvider);
     final now = DateTime.now().toUtc();
@@ -107,6 +111,10 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
   }
 
   Future<void> updateTask(AcademicTask task) async {
+    if (task.startDate.isAfter(task.dueDate)) {
+      throw ArgumentError('Task start date cannot be after due date.');
+    }
+
     final repository = ref.read(taskRepositoryProvider);
     final scheduler = ref.read(taskNotificationSchedulerProvider);
 

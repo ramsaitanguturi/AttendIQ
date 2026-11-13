@@ -197,7 +197,7 @@ class _NoOpWidgetRefreshService extends Fake implements WidgetRefreshService {
 
 class _FakeSubjectRepository implements SubjectRepository {
   @override
-  Future<void> createSubject(Subject subject) async {}
+  Future<Subject> createSubject(Subject subject) async => subject;
 
   @override
   Future<void> deleteSubject(int id) async {}

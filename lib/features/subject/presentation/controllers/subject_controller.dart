@@ -78,7 +78,7 @@ class SubjectListController extends _$SubjectListController {
     return subjects;
   }
 
-  Future<void> addSubject({
+  Future<Subject> addSubject({
     required String name,
     required String code,
     String? faculty,
@@ -107,7 +107,7 @@ class SubjectListController extends _$SubjectListController {
     );
 
     final repo = ref.read(subjectRepositoryProvider);
-    await repo.createSubject(subject);
+    final createdSubject = await repo.createSubject(subject);
 
     final updatedList = await repo.getSubjectsBySemester(semester.localId!);
     state = AsyncValue.data(updatedList);
@@ -120,6 +120,7 @@ class SubjectListController extends _$SubjectListController {
           '[SubjectListController] Added subject ${subject.code}. Updated Subject count: ${updatedList.length}',
           name: 'SubjectListController');
     }
+    return createdSubject;
   }
 
   Future<void> updateSubjectDetails(Subject subject) async {

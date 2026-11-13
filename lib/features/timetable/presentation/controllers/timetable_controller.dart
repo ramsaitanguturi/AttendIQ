@@ -297,10 +297,7 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
   @override
   FutureOr<List<ScheduleException>> build() async {
     final repo = ref.watch(scheduleExceptionRepositoryProvider);
-    final now = DateTime.now();
-    final start = now.subtract(const Duration(days: 30));
-    final end = now.add(const Duration(days: 90));
-    final exceptions = await repo.getExceptionsForRange(start, end);
+    final exceptions = await repo.getAllExceptions();
 
     var isDisposed = false;
     ref.onDispose(() => isDisposed = true);
@@ -308,7 +305,7 @@ class ScheduleExceptionController extends _$ScheduleExceptionController {
     final stream = repo.watchExceptions();
     final sub = stream.listen((_) async {
       if (isDisposed) return;
-      final updated = await repo.getExceptionsForRange(start, end);
+      final updated = await repo.getAllExceptions();
       if (isDisposed) return;
       state = AsyncValue.data(updated);
       try {

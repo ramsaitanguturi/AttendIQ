@@ -32,6 +32,14 @@ class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
   }
 
   @override
+  Future<void> deleteSubject(int id) async {
+    final sub = subjects[id];
+    if (sub != null) {
+      sub.isDeleted = true;
+    }
+  }
+
+  @override
   Stream<void> watchSubjects(int semesterId) {
     return const Stream.empty();
   }
@@ -49,7 +57,8 @@ void main() {
   });
 
   group('Subject CRUD Operations', () {
-    test('Create Subject saves locally', () async {
+    test('Create Subject saves locally and returns created entity with ID',
+        () async {
       final subject = Subject(
         semesterId: 1,
         name: 'Mathematics IV',
@@ -61,7 +70,10 @@ void main() {
         updatedAt: DateTime.now(),
       );
 
-      await repository.createSubject(subject);
+      final created = await repository.createSubject(subject);
+      expect(created.id, 1);
+      expect(created.name, 'Mathematics IV');
+      expect(created.serverId, isNotNull);
 
       final list = await repository.getSubjectsBySemester(1);
       expect(list.length, 1);

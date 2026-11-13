@@ -5,7 +5,10 @@ import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/academic_event.dart';
 import '../../domain/entities/schedule_exception.dart';
+import '../../domain/entities/daily_schedule_occurrence.dart';
+import '../../domain/repositories/daily_schedule_occurrence_repository.dart';
 import 'timetable_controller.dart';
+import 'today_schedule_provider.dart';
 
 import '../../../academic_planner/presentation/controllers/task_controller.dart';
 
@@ -118,6 +121,12 @@ final selectedMonthProvider = StateProvider<DateTime>((ref) {
 
 final isCalendarExpandedProvider = StateProvider<bool>((ref) => true);
 
+final allDailyOccurrencesProvider =
+    FutureProvider<List<DailyScheduleOccurrence>>((ref) async {
+  final repo = ref.watch(dailyScheduleOccurrenceRepositoryProvider);
+  return repo.getAllOccurrences();
+});
+
 final monthlyCalendarDataProvider =
     Provider<AsyncValue<List<CalendarDayData>>>((ref) {
   final selectedMonth = ref.watch(selectedMonthProvider);
@@ -127,12 +136,14 @@ final monthlyCalendarDataProvider =
   final academicEventsAsync = ref.watch(academicEventControllerProvider);
   final subjectsAsync = ref.watch(subjectListControllerProvider);
   final tasks = ref.watch(allTasksProvider);
+  final occurrencesAsync = ref.watch(allDailyOccurrencesProvider);
 
   final semester = semesterAsync.valueOrNull;
   final rules = rulesAsync.valueOrNull ?? [];
   final exceptions = exceptionsAsync.valueOrNull ?? [];
   final academicEvents = academicEventsAsync.valueOrNull ?? [];
   final subjects = subjectsAsync.valueOrNull ?? [];
+  final occurrences = occurrencesAsync.valueOrNull ?? [];
   final subjectMap = {
     for (final s in subjects)
       if (s.id != null) s.id!: s
@@ -306,6 +317,31 @@ final monthlyCalendarDataProvider =
             subjectId: rule.subjectId,
           ));
         }
+      }
+    }
+
+    // 5. Daily Schedule Occurrences (Extra Classes) on date
+    final dayOccurrences = occurrences.where((o) {
+      final od = DateTime.utc(o.date.year, o.date.month, o.date.day);
+      return od.isAtSameMomentAs(cleanDate);
+    }).toList();
+
+    for (final occ in dayOccurrences) {
+      if (occ.type == OccurrenceType.EXTRA_CLASS) {
+        final sub = occ.subjectId != null ? subjectMap[occ.subjectId] : null;
+        dayItems.add(CalendarItem(
+          id: 'extra_class_${occ.id}_${cleanDate.toIso8601String()}',
+          title: occ.title.isNotEmpty
+              ? occ.title
+              : (sub?.name ?? 'Extra Class'),
+          subtitle: 'Extra Class',
+          startTime: occ.startTime,
+          endTime: occ.endTime,
+          type: CalendarItemType.EXTRA_CLASS,
+          subjectId: occ.subjectId,
+          status: occ.status.toShortString(),
+          description: occ.reason,
+        ));
       }
     }
 

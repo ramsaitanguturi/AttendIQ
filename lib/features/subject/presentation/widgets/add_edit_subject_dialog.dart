@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/subject.dart';
 import '../controllers/subject_controller.dart';
+import '../../../semester/presentation/controllers/semester_controller.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../timetable/domain/entities/weekly_schedule_rule.dart';
 import '../../../timetable/presentation/controllers/timetable_controller.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
 import '../../../timetable/presentation/controllers/weekly_schedule_view_controller.dart';
+import '../../../timetable/presentation/controllers/academic_calendar_controller.dart';
 import '../../../widgets/services/widget_refresh_service.dart';
 import '../../../../core/theme/colors.dart';
 
@@ -90,6 +93,28 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
     '#78909C', // Blue Grey
   ];
 
+  int _timeToMinutes(String time) {
+    final parts = time.split(':');
+    if (parts.length < 2) return 0;
+    final h = int.tryParse(parts[0]) ?? 0;
+    final m = int.tryParse(parts[1]) ?? 0;
+    return h * 60 + m;
+  }
+
+  String _dayName(int day) {
+    const days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
+    if (day >= 1 && day <= 7) return days[day - 1];
+    return 'Day $day';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -104,6 +129,13 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
       _selectedColor = s.color;
       _loadExistingScheduleRules(s.id!);
     } else {
+      final defaultTarget = ref
+              .read(settingsControllerProvider)
+              .asData
+              ?.value
+              .defaultAttendanceTarget ??
+          75.0;
+      _attendanceTargetController.text = defaultTarget.toStringAsFixed(1);
       _slots.add(
         _ScheduleSlotInput(
           dayOfWeek: 1, // Monday
@@ -232,11 +264,30 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
       return;
     }
 
+    final inputCode = _codeController.text.trim().toUpperCase();
+
+    // Subject Code collision check across active semester
+    final activeSubjects =
+        ref.read(subjectListControllerProvider).valueOrNull ?? [];
+    final hasDuplicateCode = activeSubjects.any((s) =>
+        s.code.toUpperCase() == inputCode &&
+        s.id != widget.existingSubject?.id);
+    if (hasDuplicateCode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('A subject with code "$inputCode" already exists.'),
+          backgroundColor: AppColors.attendanceLow,
+        ),
+      );
+      return;
+    }
+
+    // Time ordering check
     for (int i = 0; i < _slots.length; i++) {
       final slot = _slots[i];
       final start = slot.startTimeController.text.trim();
       final end = slot.endTimeController.text.trim();
-      if (start.compareTo(end) >= 0) {
+      if (_timeToMinutes(end) <= _timeToMinutes(start)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -245,6 +296,73 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
           ),
         );
         return;
+      }
+    }
+
+    // Intra-dialog time slot collision check
+    for (int i = 0; i < _slots.length; i++) {
+      final slotA = _slots[i];
+      final startA = _timeToMinutes(slotA.startTimeController.text.trim());
+      final endA = _timeToMinutes(slotA.endTimeController.text.trim());
+
+      for (int j = i + 1; j < _slots.length; j++) {
+        final slotB = _slots[j];
+        if (slotA.dayOfWeek == slotB.dayOfWeek) {
+          final startB = _timeToMinutes(slotB.startTimeController.text.trim());
+          final endB = _timeToMinutes(slotB.endTimeController.text.trim());
+
+          if (startA < endB && endA > startB) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'Time slot conflict on ${_dayName(slotA.dayOfWeek)} between Slot ${i + 1} and Slot ${j + 1}.'),
+                backgroundColor: AppColors.attendanceLow,
+              ),
+            );
+            return;
+          }
+        }
+      }
+    }
+
+    // Semester-wide collision check against other subjects' active rules
+    final activeSemester = ref.read(activeSemesterProvider).valueOrNull;
+    if (activeSemester != null && activeSemester.localId != null) {
+      final ruleRepo = ref.read(weeklyScheduleRuleRepositoryProvider);
+      final allSemesterRules =
+          await ruleRepo.getRulesForSemester(activeSemester.localId!);
+      final otherRules = allSemesterRules
+          .where((r) => r.isActive && r.subjectId != widget.existingSubject?.id)
+          .toList();
+
+      for (int i = 0; i < _slots.length; i++) {
+        final slot = _slots[i];
+        final slotStart = _timeToMinutes(slot.startTimeController.text.trim());
+        final slotEnd = _timeToMinutes(slot.endTimeController.text.trim());
+
+        for (final rule in otherRules) {
+          if (rule.dayOfWeek == slot.dayOfWeek) {
+            final ruleStart = _timeToMinutes(rule.startTime);
+            final ruleEnd = _timeToMinutes(rule.endTime);
+
+            if (slotStart < ruleEnd && slotEnd > ruleStart) {
+              final otherSub = activeSubjects
+                  .where((s) => s.id == rule.subjectId)
+                  .firstOrNull;
+              final otherName = otherSub?.name ?? 'another subject';
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        'Time slot conflict on ${_dayName(slot.dayOfWeek)} with $otherName (${rule.startTime} - ${rule.endTime}).'),
+                    backgroundColor: AppColors.attendanceLow,
+                  ),
+                );
+              }
+              return;
+            }
+          }
+        }
       }
     }
 
@@ -261,7 +379,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
       if (widget.existingSubject != null) {
         final updated = widget.existingSubject!.copyWith(
           name: _nameController.text.trim(),
-          code: _codeController.text.trim().toUpperCase(),
+          code: inputCode,
           faculty: _facultyController.text.trim().isEmpty
               ? null
               : _facultyController.text.trim(),
@@ -274,9 +392,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
         await notifier.updateSubjectDetails(updated);
         subjectId = widget.existingSubject!.id!;
       } else {
-        await notifier.addSubject(
+        final created = await notifier.addSubject(
           name: _nameController.text.trim(),
-          code: _codeController.text.trim().toUpperCase(),
+          code: inputCode,
           faculty: _facultyController.text.trim().isEmpty
               ? null
               : _facultyController.text.trim(),
@@ -285,9 +403,6 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
           color: _selectedColor,
           type: _selectedType,
         );
-        final subjects = await ref.read(subjectListControllerProvider.future);
-        final created = subjects.firstWhere(
-            (s) => s.code == _codeController.text.trim().toUpperCase());
         subjectId = created.id!;
       }
 
@@ -319,6 +434,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
       ref.invalidate(weeklyScheduleRuleListControllerProvider);
       ref.invalidate(todayScheduleProvider);
       ref.invalidate(dayScheduleByKeyProvider);
+      ref.invalidate(monthlyCalendarDataProvider);
       await ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
 
       if (mounted) {
