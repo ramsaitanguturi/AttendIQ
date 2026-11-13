@@ -10,7 +10,6 @@ import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/timetable/data/datasources/daily_schedule_occurrence_local_data_source.dart';
 import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
 import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
-import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
 import 'package:attend_iq/features/timetable/data/repositories/daily_schedule_occurrence_repository_impl.dart';
 import 'package:attend_iq/features/timetable/domain/entities/daily_schedule_occurrence.dart';
 import '../../test_helpers/test_isar_helper.dart';

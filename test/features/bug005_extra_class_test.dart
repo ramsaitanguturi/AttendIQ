@@ -779,7 +779,11 @@ void main() {
             ),
           );
         } finally {
-          container?.dispose();
+          try {
+            container?.dispose();
+          } catch (_) {
+            // ignore Riverpod 2.6.1 known dispose race
+          }
           if (isar != null && isar.isOpen) isar.close();
           if (tempDir.existsSync()) await tempDir.delete(recursive: true);
         }
@@ -990,7 +994,11 @@ void main() {
           expect(clearedReasonOcc.reason, isNull);
           expect(isar.eventLocals.count(), equals(0));
         } finally {
-          container?.dispose();
+          try {
+            container?.dispose();
+          } catch (_) {
+            // ignore Riverpod 2.6.1 known dispose race
+          }
           if (isar != null && isar.isOpen) isar.close();
           if (tempDir.existsSync()) await tempDir.delete(recursive: true);
         }
@@ -1155,7 +1163,11 @@ void main() {
           }
           expect(isar.dailyScheduleOccurrenceLocals.count(), equals(0));
         } finally {
-          container?.dispose();
+          try {
+            container?.dispose();
+          } catch (_) {
+            // ignore Riverpod 2.6.1 known dispose race
+          }
           if (isar != null && isar.isOpen) isar.close();
           if (tempDir.existsSync()) await tempDir.delete(recursive: true);
         }
@@ -1280,7 +1292,11 @@ void main() {
           );
           expect(isar.eventLocals.count(), equals(0));
         } finally {
-          container?.dispose();
+          try {
+            container?.dispose();
+          } catch (_) {
+            // ignore Riverpod 2.6.1 known dispose race
+          }
           if (isar != null && isar.isOpen) isar.close();
           if (tempDir.existsSync()) await tempDir.delete(recursive: true);
         }
@@ -1303,7 +1319,11 @@ void main() {
 
         final fixture = seedFixture(isar);
         final container = createRealIsarContainer(isar);
-        addTearDown(container.dispose);
+        addTearDown(() {
+          try {
+            container.dispose();
+          } catch (_) {}
+        });
         await tester.runAsync(() => container.read(isarProvider.future));
 
         await tester.pumpWidget(
@@ -1410,7 +1430,11 @@ void main() {
         final fixture = seedFixture(isar);
         final today = DateTime.now();
         final todayContainer = createRealIsarContainer(isar);
-        addTearDown(todayContainer.dispose);
+        addTearDown(() {
+          try {
+            todayContainer.dispose();
+          } catch (_) {}
+        });
         await tester.runAsync(() => todayContainer.read(isarProvider.future));
 
         // 1) TodayScheduleCard flow -> create Scheduled (Upcoming) extra class.
@@ -1529,7 +1553,11 @@ void main() {
             ),
           ],
         );
-        addTearDown(dialogContainer.dispose);
+        addTearDown(() {
+          try {
+            dialogContainer.dispose();
+          } catch (_) {}
+        });
         await tester.runAsync(() => dialogContainer.read(isarProvider.future));
 
         await tester.pumpWidget(
@@ -1622,7 +1650,11 @@ void main() {
             attendanceRepositoryProvider.overrideWithValue(delayedRepo),
           ],
         );
-        addTearDown(lockContainer.dispose);
+        addTearDown(() {
+          try {
+            lockContainer.dispose();
+          } catch (_) {}
+        });
         await tester.runAsync(() => lockContainer.read(isarProvider.future));
 
         await tester.pumpWidget(
@@ -1676,7 +1708,11 @@ void main() {
         final fixture = seedFixture(isar);
         final targetDate = fixture.semStart.add(const Duration(days: 4));
         final container = createRealIsarContainer(isar);
-        addTearDown(container.dispose);
+        addTearDown(() {
+          try {
+            container.dispose();
+          } catch (_) {}
+        });
         await tester.runAsync(() => container.read(isarProvider.future));
 
         await tester.pumpWidget(

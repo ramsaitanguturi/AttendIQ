@@ -110,15 +110,13 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   // Calculate effective attended based on user preferences
   double lateWeight = 0.5;
   try {
-    final prefs = ref.watch(settingsControllerProvider).valueOrNull;
-    if (prefs != null) {
-      if (prefs.lateAttendancePolicy == 'present') {
-        lateWeight = 1.0;
-      } else if (prefs.lateAttendancePolicy == 'absent') {
-        lateWeight = 0.0;
-      } else {
-        lateWeight = prefs.lateAttendanceWeight;
-      }
+    final prefs = await ref.watch(settingsControllerProvider.future);
+    if (prefs.lateAttendancePolicy == 'present') {
+      lateWeight = 1.0;
+    } else if (prefs.lateAttendancePolicy == 'absent') {
+      lateWeight = 0.0;
+    } else {
+      lateWeight = prefs.lateAttendanceWeight;
     }
   } catch (_) {}
 
@@ -291,15 +289,13 @@ Future<double> overallAttendancePercentage(
   if (totalClasses == 0) return 100.0;
   double lateWeight = 0.5;
   try {
-    final prefs = ref.watch(settingsControllerProvider).valueOrNull;
-    if (prefs != null) {
-      if (prefs.lateAttendancePolicy == 'present') {
-        lateWeight = 1.0;
-      } else if (prefs.lateAttendancePolicy == 'absent') {
-        lateWeight = 0.0;
-      } else {
-        lateWeight = prefs.lateAttendanceWeight;
-      }
+    final prefs = await ref.watch(settingsControllerProvider.future);
+    if (prefs.lateAttendancePolicy == 'present') {
+      lateWeight = 1.0;
+    } else if (prefs.lateAttendancePolicy == 'absent') {
+      lateWeight = 0.0;
+    } else {
+      lateWeight = prefs.lateAttendanceWeight;
     }
   } catch (_) {}
 

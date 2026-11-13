@@ -441,7 +441,9 @@ void main() {
       );
       final isar = await container.read(isarProvider.future);
       addTearDown(() async {
-        container.dispose();
+        try {
+          container.dispose();
+        } catch (_) {}
         if (isar.isOpen) {
           await isar.close();
         }

@@ -56,6 +56,7 @@ class SubjectDetailsPage extends ConsumerWidget {
         ],
       ),
       body: statsAsync.when(
+        skipLoadingOnReload: true,
         data: (stats) {
           if (stats == null) {
             return const Center(child: Text('Subject not found'));
@@ -127,6 +128,7 @@ class SubjectDetailsPage extends ConsumerWidget {
 
                   // Occurrence history list
                   occurrencesAsync.when(
+                    skipLoadingOnReload: true,
                     data: (occurrences) {
                       if (occurrences.isEmpty) {
                         return Container(
