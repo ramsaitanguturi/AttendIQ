@@ -20,6 +20,7 @@ import '../../../academic_planner/presentation/widgets/task_card_widget.dart';
 import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart';
 import '../../../subject/presentation/widgets/add_edit_subject_dialog.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   final String? initialSection;
@@ -68,13 +69,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     const userName = 'Student';
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     final analyticsAsync = ref.watch(analyticsControllerProvider);
     final statsListAsync = ref.watch(allSubjectAttendanceStatsProvider);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isGlassy
+          ? const Color(0xFF0A0C11)
+          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -159,7 +162,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         ),
                       ],
                     ),
-                    _buildSyncStatusPill(isDark),
+                    _buildSyncStatusPill(isDark, isGlassy),
                   ],
                 ),
                 const SizedBox(height: 24.0),
@@ -187,13 +190,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 const SizedBox(height: 28.0),
 
                 // 4. Overall Attendance Summary Card (with quick analytics button)
-                _buildOverallProgressCard(context, analyticsAsync, isDark),
+                _buildOverallProgressCard(
+                    context, analyticsAsync, isDark, isGlassy),
                 const SizedBox(height: 24.0),
 
                 // 4. Danger Subjects
                 statsListAsync.when(
-                  data: (stats) =>
-                      _buildDangerSubjectsSection(context, stats, isDark),
+                  data: (stats) => _buildDangerSubjectsSection(
+                      context, stats, isDark, isGlassy),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
@@ -202,7 +206,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 analyticsAsync.when(
                   data: (analytics) => analytics == null
                       ? const SizedBox.shrink()
-                      : _buildTrendPreviewSection(context, analytics, isDark),
+                      : _buildTrendPreviewSection(
+                          context, analytics, isDark, isGlassy),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
@@ -226,7 +231,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ],
                 ),
                 const SizedBox(height: 8.0),
-                _buildSubjectsGrid(context, statsListAsync, isDark),
+                _buildSubjectsGrid(context, statsListAsync, isDark, isGlassy),
                 const SizedBox(height: 28.0),
 
                 // 7. Academic Calendar
@@ -234,7 +239,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 const SizedBox(height: 28.0),
 
                 // 8. Upcoming Tasks Section
-                _buildUpcomingTasksSection(context, ref, isDark),
+                _buildUpcomingTasksSection(context, ref, isDark, isGlassy),
                 const SizedBox(height: 32.0),
               ],
             ),
@@ -261,14 +266,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  Widget _buildSyncStatusPill(bool isDark) {
+  Widget _buildSyncStatusPill(bool isDark, bool isGlassy) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: isGlassy
+            ? const Color(0xB8141822)
+            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          color: isGlassy
+              ? const Color(0x38E2E8F0)
+              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
       ),
       child: const Row(
@@ -290,17 +299,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     BuildContext context,
     AsyncValue<AttendanceAnalytics?> analyticsAsync,
     bool isDark,
+    bool isGlassy,
   ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(20.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(
+              fillColor: const Color(0xD9141824),
+              borderColor: const Color(0x38E2E8F0),
+              borderRadius: BorderRadius.circular(20.0),
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(20.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: analyticsAsync.when(
         data: (analytics) {
           if (analytics == null) {
@@ -445,6 +461,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     BuildContext context,
     List<SubjectAttendanceStats> statsList,
     bool isDark,
+    bool isGlassy,
   ) {
     final dangerList = statsList.where((stats) {
       final percentage = stats.attendancePercentage;
@@ -482,13 +499,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                ),
-              ),
+              decoration: isGlassy
+                  ? GlassTokens.glassBoxDecoration(
+                      fillColor: const Color(0xD9141824),
+                      borderColor: const Color(0x38E2E8F0),
+                      borderRadius: BorderRadius.circular(16),
+                    )
+                  : BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurface
+                          : AppColors.lightSurface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder,
+                      ),
+                    ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -551,6 +578,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     BuildContext context,
     AttendanceAnalytics analytics,
     bool isDark,
+    bool isGlassy,
   ) {
     final points = analytics.attendanceTrend.weekly;
     if (points.isEmpty || points.length < 2) {
@@ -573,13 +601,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           width: double.infinity,
           height: 130,
           padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-            ),
-          ),
+          decoration: isGlassy
+              ? GlassTokens.glassBoxDecoration(
+                  fillColor: const Color(0xD9141824),
+                  borderColor: const Color(0x38E2E8F0),
+                  borderRadius: BorderRadius.circular(20),
+                )
+              : BoxDecoration(
+                  color:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  ),
+                ),
           child: LineChart(
             LineChartData(
               gridData: const FlGridData(show: false),
@@ -635,6 +671,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     BuildContext context,
     AsyncValue<List<SubjectAttendanceStats>> statsListAsync,
     bool isDark,
+    bool isGlassy,
   ) {
     return statsListAsync.when(
       data: (statsList) {
@@ -642,13 +679,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           return Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 40.0),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              ),
-            ),
+            decoration: isGlassy
+                ? GlassTokens.glassBoxDecoration(
+                    fillColor: const Color(0xD9141824),
+                    borderColor: const Color(0x38E2E8F0),
+                    borderRadius: BorderRadius.circular(16.0),
+                  )
+                : BoxDecoration(
+                    color:
+                        isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                    borderRadius: BorderRadius.circular(16.0),
+                    border: Border.all(
+                      color:
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                  ),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -721,11 +766,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
             return Card(
               elevation: 0,
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              color: isGlassy
+                  ? const Color(0xD9141824)
+                  : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
                 side: BorderSide(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  color: isGlassy
+                      ? const Color(0x38E2E8F0)
+                      : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
                 ),
               ),
               child: InkWell(
@@ -832,6 +881,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     BuildContext context,
     WidgetRef ref,
     bool isDark,
+    bool isGlassy,
   ) {
     final upcomingTasks = ref.watch(dashboardUpcomingTasksProvider);
 
@@ -870,13 +920,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20.0),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              ),
-            ),
+            decoration: isGlassy
+                ? GlassTokens.glassBoxDecoration(
+                    fillColor: const Color(0xD9141824),
+                    borderColor: const Color(0x38E2E8F0),
+                    borderRadius: BorderRadius.circular(16.0),
+                  )
+                : BoxDecoration(
+                    color:
+                        isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                    borderRadius: BorderRadius.circular(16.0),
+                    border: Border.all(
+                      color:
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                  ),
             child: Row(
               children: [
                 Icon(

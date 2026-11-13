@@ -1,6 +1,6 @@
-# Features Catalog: AttendIQ
+# Features Catalog: ACEDRA
 
-This document lists the detailed feature set, functionalities, user behaviors, inputs, and outputs for the AttendIQ application.
+This document lists the detailed feature set, functionalities, user behaviors, inputs, and outputs for the ACEDRA application.
 
 ---
 

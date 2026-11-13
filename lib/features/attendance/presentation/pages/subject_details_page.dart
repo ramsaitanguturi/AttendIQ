@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 import '../../../../core/attendance_engine/bunk_analyzer.dart';
 import '../../../timetable/domain/entities/daily_schedule_occurrence.dart';
 import '../../../timetable/presentation/widgets/add_extra_class_dialog.dart';
@@ -22,10 +23,12 @@ class SubjectDetailsPage extends ConsumerWidget {
     final statsAsync = ref.watch(subjectAttendanceStatsProvider(subjectId));
     final occurrencesAsync = ref.watch(subjectOccurrencesProvider(subjectId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isGlassy
+          ? const Color(0xFF0A0C11)
+          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -74,11 +77,12 @@ class SubjectDetailsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Hero Card
-                  _buildHeroCard(context, stats, subjectColor, isDark),
+                  _buildHeroCard(
+                      context, stats, subjectColor, isDark, isGlassy),
                   const SizedBox(height: 20),
 
                   // Status and Recommendation Alert
-                  _buildRecommendationAlert(stats, isDark),
+                  _buildRecommendationAlert(stats, isDark, isGlassy),
                   const SizedBox(height: 20),
 
                   // Metrics Row
@@ -92,6 +96,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                           valueColor: AppColors.primary,
                           icon: Icons.check_circle_outline,
                           isDark: isDark,
+                          isGlassy: isGlassy,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -107,6 +112,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                               : AppColors.attendanceLow,
                           icon: Icons.warning_amber_rounded,
                           isDark: isDark,
+                          isGlassy: isGlassy,
                         ),
                       ),
                     ],
@@ -114,7 +120,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                   const SizedBox(height: 20),
 
                   // Summary Statistics
-                  _buildStatsSection(context, stats, isDark),
+                  _buildStatsSection(context, stats, isDark, isGlassy),
                   const SizedBox(height: 24),
 
                   // Class Logs Header
@@ -135,17 +141,20 @@ class SubjectDetailsPage extends ConsumerWidget {
                         return Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(32.0),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurface
-                                : AppColors.lightSurface,
-                            borderRadius: BorderRadius.circular(16.0),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.lightBorder,
-                            ),
-                          ),
+                          decoration: isGlassy
+                              ? GlassTokens.glassBoxDecoration(
+                                  borderRadius: 16.0)
+                              : BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.darkSurface
+                                      : AppColors.lightSurface,
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.darkBorder
+                                        : AppColors.lightBorder,
+                                  ),
+                                ),
                           child: const Column(
                             children: [
                               Icon(Icons.history_toggle_off,
@@ -168,8 +177,8 @@ class SubjectDetailsPage extends ConsumerWidget {
                             const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final occurrence = occurrences[index];
-                          return _buildOccurrenceItem(
-                              context, ref, occurrence, subjectColor, isDark);
+                          return _buildOccurrenceItem(context, ref, occurrence,
+                              subjectColor, isDark, isGlassy);
                         },
                       );
                     },
@@ -222,17 +231,23 @@ class SubjectDetailsPage extends ConsumerWidget {
     SubjectAttendanceStats stats,
     Color subjectColor,
     bool isDark,
+    bool isGlassy,
   ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(20.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(
+              borderRadius: 20.0,
+              customBorderColor: subjectColor.withOpacity(0.35),
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(20.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Row(
         children: [
           Expanded(
@@ -331,7 +346,8 @@ class SubjectDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecommendationAlert(SubjectAttendanceStats stats, bool isDark) {
+  Widget _buildRecommendationAlert(
+      SubjectAttendanceStats stats, bool isDark, bool isGlassy) {
     Color alertBg;
     Color alertBorder;
     Color alertText;
@@ -339,20 +355,28 @@ class SubjectDetailsPage extends ConsumerWidget {
 
     switch (stats.bunkAnalysis.status) {
       case BunkStatus.CRITICAL:
-        alertBg = AppColors.attendanceLow.withOpacity(0.08);
+        alertBg = isGlassy
+            ? AppColors.attendanceLow.withOpacity(0.14)
+            : AppColors.attendanceLow.withOpacity(0.08);
         alertBorder = AppColors.attendanceLow.withOpacity(0.3);
         alertText = AppColors.attendanceLow;
         alertIcon = Icons.error_outline;
         break;
       case BunkStatus.WARNING:
-        alertBg = AppColors.attendanceMid.withOpacity(0.08);
+        alertBg = isGlassy
+            ? AppColors.attendanceMid.withOpacity(0.14)
+            : AppColors.attendanceMid.withOpacity(0.08);
         alertBorder = AppColors.attendanceMid.withOpacity(0.3);
         alertText = AppColors.attendanceMid;
         alertIcon = Icons.warning_amber_rounded;
         break;
       case BunkStatus.NORMAL:
-        alertBg = AppColors.primary.withOpacity(0.08);
-        alertBorder = AppColors.primary.withOpacity(0.3);
+        alertBg = isGlassy
+            ? const Color(0xB8141822)
+            : AppColors.primary.withOpacity(0.08);
+        alertBorder = isGlassy
+            ? GlassTokens.silverBorder
+            : AppColors.primary.withOpacity(0.3);
         alertText = AppColors.primary;
         alertIcon = Icons.check_circle_outline;
         break;
@@ -365,6 +389,7 @@ class SubjectDetailsPage extends ConsumerWidget {
         color: alertBg,
         borderRadius: BorderRadius.circular(14.0),
         border: Border.all(color: alertBorder),
+        boxShadow: isGlassy ? GlassTokens.cardShadows(isGlassy: true) : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,16 +434,19 @@ class SubjectDetailsPage extends ConsumerWidget {
     required Color valueColor,
     required IconData icon,
     required bool isDark,
+    required bool isGlassy,
   }) {
     return Container(
       padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 16.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -450,17 +478,23 @@ class SubjectDetailsPage extends ConsumerWidget {
   }
 
   Widget _buildStatsSection(
-      BuildContext context, SubjectAttendanceStats stats, bool isDark) {
+    BuildContext context,
+    SubjectAttendanceStats stats,
+    bool isDark,
+    bool isGlassy,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 20.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -515,6 +549,7 @@ class SubjectDetailsPage extends ConsumerWidget {
     DailyScheduleOccurrence occurrence,
     Color subjectColor,
     bool isDark,
+    bool isGlassy,
   ) {
     final lateEnabled = ref.watch(isLateAttendanceEnabledProvider);
     Color statusColor = Colors.grey;
@@ -549,13 +584,15 @@ class SubjectDetailsPage extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 14.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(12.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Row(
         children: [
           Container(

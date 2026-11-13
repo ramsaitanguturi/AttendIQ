@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
-import 'package:attend_iq/core/attendance_engine/calculator.dart';
 import 'package:attend_iq/core/analytics/calculators/analytics_calculator.dart';
 import 'package:attend_iq/core/analytics/models/risk_status.dart';
 import 'package:attend_iq/features/attendance/data/datasources/attendance_local_data_source.dart';

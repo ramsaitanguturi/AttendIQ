@@ -12,6 +12,8 @@ import '../../../../core/reports/models/attendance_report.dart';
 import '../../../../core/reports/models/subject_report.dart';
 import '../../../../core/reports/generators/pdf_report_generator.dart';
 import '../../../../core/reports/exporters/csv_report_exporter.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/reports_controller.dart';
 
 class ReportsPage extends ConsumerWidget {
@@ -21,10 +23,12 @@ class ReportsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(reportsControllerProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isGlassy
+          ? const Color(0xFF0A0C11)
+          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -73,11 +77,11 @@ class ReportsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 1. Overall Summary Card
-                  _buildSummaryCard(report, isDark),
+                  _buildSummaryCard(report, isDark, isGlassy),
                   const SizedBox(height: 24),
 
                   // 2. Action Buttons (Export PDF / CSV)
-                  _buildExportActions(context, report, isDark),
+                  _buildExportActions(context, report, isDark, isGlassy),
                   const SizedBox(height: 24),
 
                   // 3. Subject-wise Preview List
@@ -90,7 +94,7 @@ class ReportsPage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildSubjectList(report.subjectReports, isDark),
+                  _buildSubjectList(report.subjectReports, isDark, isGlassy),
                   const SizedBox(height: 24),
 
                   // 4. Generate Report Button
@@ -137,7 +141,8 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryCard(AttendanceReport report, bool isDark) {
+  Widget _buildSummaryCard(
+      AttendanceReport report, bool isDark, bool isGlassy) {
     final double percentage = report.overallPercentage;
     final Color riskColor =
         percentage >= 75.0 ? AppColors.primary : AppColors.attendanceLow;
@@ -145,13 +150,19 @@ class ReportsPage extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(
+              fillColor: const Color(0xD9141824),
+              borderColor: const Color(0x38E2E8F0),
+              borderRadius: BorderRadius.circular(20),
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -223,7 +234,9 @@ class ReportsPage extends ConsumerWidget {
               Container(
                 width: 1,
                 height: 50,
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                color: isGlassy
+                    ? const Color(0x38E2E8F0)
+                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
               ),
               _buildMetric('Total', '${report.totalClasses}', isDark),
               _buildMetric('Present', '${report.totalPresent}', isDark),
@@ -259,18 +272,22 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildExportActions(
-      BuildContext context, AttendanceReport report, bool isDark) {
+  Widget _buildExportActions(BuildContext context, AttendanceReport report,
+      bool isDark, bool isGlassy) {
     return Row(
       children: [
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () => _exportPdf(context, report),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+              backgroundColor: isGlassy
+                  ? const Color(0xB8141822)
+                  : (isDark ? AppColors.darkSurface : Colors.white),
               foregroundColor: AppColors.secondary,
               side: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                color: isGlassy
+                    ? const Color(0x38E2E8F0)
+                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -292,10 +309,14 @@ class ReportsPage extends ConsumerWidget {
           child: ElevatedButton.icon(
             onPressed: () => _exportCsv(context, report),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+              backgroundColor: isGlassy
+                  ? const Color(0xB8141822)
+                  : (isDark ? AppColors.darkSurface : Colors.white),
               foregroundColor: AppColors.secondary,
               side: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                color: isGlassy
+                    ? const Color(0x38E2E8F0)
+                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -316,18 +337,25 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSubjectList(List<SubjectReport> reports, bool isDark) {
+  Widget _buildSubjectList(
+      List<SubjectReport> reports, bool isDark, bool isGlassy) {
     if (reports.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-          ),
-        ),
+        decoration: isGlassy
+            ? GlassTokens.glassBoxDecoration(
+                fillColor: const Color(0xD9141824),
+                borderColor: const Color(0x38E2E8F0),
+                borderRadius: BorderRadius.circular(16),
+              )
+            : BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
+              ),
         child: Center(
           child: Text(
             'No subjects registered in this semester.',
@@ -353,13 +381,21 @@ class ReportsPage extends ConsumerWidget {
 
         return Container(
           padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-            ),
-          ),
+          decoration: isGlassy
+              ? GlassTokens.glassBoxDecoration(
+                  fillColor: const Color(0xD9141824),
+                  borderColor: const Color(0x38E2E8F0),
+                  borderRadius: BorderRadius.circular(16),
+                )
+              : BoxDecoration(
+                  color:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  ),
+                ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

@@ -74,15 +74,23 @@ class GlassTokens {
   }
 
   static BoxDecoration glassBoxDecoration({
-    double borderRadius = 20.0,
+    dynamic borderRadius = 20.0,
     bool isElevated = false,
     Color? customBorderColor,
+    Color? borderColor,
+    Color? fillColor,
   }) {
+    final BorderRadiusGeometry radius = borderRadius is BorderRadiusGeometry
+        ? borderRadius
+        : BorderRadius.circular((borderRadius as num).toDouble());
     return BoxDecoration(
-      gradient: isElevated ? elevatedSurfaceGradient : surfaceGradient,
-      borderRadius: BorderRadius.circular(borderRadius),
+      color: fillColor,
+      gradient: fillColor != null
+          ? null
+          : (isElevated ? elevatedSurfaceGradient : surfaceGradient),
+      borderRadius: radius,
       border: Border.all(
-        color: customBorderColor ?? silverBorder,
+        color: customBorderColor ?? borderColor ?? silverBorder,
         width: 1.1,
       ),
       boxShadow: cardShadows(isGlassy: true),

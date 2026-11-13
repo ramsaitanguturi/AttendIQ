@@ -5,11 +5,13 @@ import '../controllers/weekly_schedule_view_controller.dart';
 class ClassScheduleCard extends StatelessWidget {
   final ScheduleClassSlot slot;
   final VoidCallback? onTap;
+  final bool isGlassy;
 
   const ClassScheduleCard({
     super.key,
     required this.slot,
     this.onTap,
+    this.isGlassy = false,
   });
 
   Color _parseColor(String hex) {
@@ -37,21 +39,28 @@ class ClassScheduleCard extends StatelessWidget {
     final isEvent = slot.type == ScheduleSlotType.event;
     final textColor = _adaptiveTextColor(context);
 
+    final borderColor = isExam
+        ? Colors.redAccent.withOpacity(0.5)
+        : (isEvent
+            ? Colors.blueAccent.withOpacity(0.5)
+            : (isGlassy
+                ? const Color(0x38E2E8F0)
+                : cardColor.withOpacity(0.3)));
+
+    final cardBgColor =
+        isGlassy ? const Color(0xD9141824) : cardColor.withOpacity(0.12);
+
     return Card(
-      elevation: 2,
+      elevation: isGlassy ? 4 : 2,
       margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14.0),
         side: BorderSide(
-          color: isExam
-              ? Colors.redAccent.withOpacity(0.5)
-              : (isEvent
-                  ? Colors.blueAccent.withOpacity(0.5)
-                  : cardColor.withOpacity(0.3)),
+          color: borderColor,
           width: 1.2,
         ),
       ),
-      color: cardColor.withOpacity(0.12),
+      color: cardBgColor,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14.0),

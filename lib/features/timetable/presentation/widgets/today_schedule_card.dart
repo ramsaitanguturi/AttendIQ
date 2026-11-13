@@ -24,6 +24,7 @@ class TodayScheduleCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final date = targetDate ?? DateTime.now();
     final normalizedParam = targetDate != null
         ? DateTime(targetDate!.year, targetDate!.month, targetDate!.day)
@@ -139,15 +140,23 @@ class TodayScheduleCard extends ConsumerWidget {
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(28.0),
-                decoration: BoxDecoration(
-                  color:
-                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                  borderRadius: BorderRadius.circular(20.0),
-                  border: Border.all(
-                    color:
-                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                  ),
-                ),
+                decoration: isGlassy
+                    ? GlassTokens.glassBoxDecoration(
+                        borderRadius: BorderRadius.circular(20.0),
+                        fillColor: const Color(0xD9141824),
+                        borderColor: const Color(0x38E2E8F0),
+                      )
+                    : BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(20.0),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
+                        ),
+                      ),
                 child: Column(
                   children: [
                     Icon(Icons.event_available,

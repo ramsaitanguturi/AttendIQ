@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:attend_iq/core/theme/colors.dart';
 import 'package:attend_iq/features/subject/presentation/controllers/subject_controller.dart';
+import 'package:attend_iq/features/settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/academic_task.dart';
 import '../../domain/entities/task_enums.dart';
 import '../controllers/task_controller.dart';
@@ -196,6 +197,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final subjects = ref.watch(subjectListControllerProvider).valueOrNull ?? [];
     final isEditing = widget.taskToEdit != null;
 
@@ -206,10 +208,27 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
         right: 20.0,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
       ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24.0)),
-      ),
+      decoration: isGlassy
+          ? BoxDecoration(
+              color: const Color(0xF010141D),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24.0)),
+              border: Border.all(
+                color: const Color(0x3DE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24.0)),
+            ),
       child: SingleChildScrollView(
         child: Form(
           key: _formKey,

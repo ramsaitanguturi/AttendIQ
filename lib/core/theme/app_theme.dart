@@ -86,6 +86,22 @@ class AppTheme {
           side: BorderSide(color: AppColors.silverBorderSubtle, width: 1.0),
         ),
       ),
+      dialogTheme: const DialogTheme(
+        backgroundColor: AppColors.darkSurface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+          side: BorderSide(color: AppColors.silverBorderSubtle, width: 1.0),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.darkSurface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
+          side: BorderSide(color: AppColors.silverBorderSubtle, width: 1.0),
+        ),
+      ),
     );
   }
 }

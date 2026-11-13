@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 import '../../../../core/analytics/models/attendance_analytics.dart';
 import '../../../../core/analytics/models/risk_status.dart';
 import '../controllers/analytics_controller.dart';
 import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 
 class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
@@ -22,10 +24,12 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   Widget build(BuildContext context) {
     final analyticsAsync = ref.watch(analyticsControllerProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isGlassy
+          ? const Color(0xFF0A0C11)
+          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -61,29 +65,31 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 1. Overall Statistics Hero Card
-                  _buildOverallHeroCard(analytics, isDark),
+                  _buildOverallHeroCard(analytics, isDark, isGlassy),
                   const SizedBox(height: 24.0),
 
                   // 2. Streaks Card
-                  _buildStreakCard(analytics.attendanceStreak, isDark),
+                  _buildStreakCard(
+                      analytics.attendanceStreak, isDark, isGlassy),
                   const SizedBox(height: 24.0),
 
                   // 3. Attendance Trend Chart (Line Chart)
-                  _buildTrendChartSection(analytics.attendanceTrend, isDark),
+                  _buildTrendChartSection(
+                      analytics.attendanceTrend, isDark, isGlassy),
                   const SizedBox(height: 24.0),
 
                   // 4. Subject Comparison Chart (Bar Chart)
                   _buildSubjectComparisonChartSection(
-                      analytics.subjectComparison, isDark),
+                      analytics.subjectComparison, isDark, isGlassy),
                   const SizedBox(height: 24.0),
 
                   // 5. Subject Ranking Summary Card
                   _buildComparisonRankingCard(
-                      analytics.subjectComparison, isDark),
+                      analytics.subjectComparison, isDark, isGlassy),
                   const SizedBox(height: 24.0),
 
                   // 6. Risk Level Subjects Section
-                  _buildRiskSubjectsSection(analytics, isDark),
+                  _buildRiskSubjectsSection(analytics, isDark, isGlassy),
                   const SizedBox(height: 32.0),
                 ],
               ),
@@ -101,7 +107,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     );
   }
 
-  Widget _buildOverallHeroCard(AttendanceAnalytics analytics, bool isDark) {
+  Widget _buildOverallHeroCard(
+      AttendanceAnalytics analytics, bool isDark, bool isGlassy) {
     Color riskColor = AppColors.primary;
     String riskTitle = 'Safe';
     if (analytics.riskLevel == RiskStatus.CRITICAL) {
@@ -115,13 +122,15 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -220,20 +229,31 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     );
   }
 
-  Widget _buildStreakCard(AttendanceStreak streak, bool isDark) {
+  Widget _buildStreakCard(AttendanceStreak streak, bool isDark, bool isGlassy) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1E3C72), const Color(0xFF2A5298)]
-              : [const Color(0xFFE0EAFC), const Color(0xFFCFDEF3)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20.0),
-      ),
+      decoration: isGlassy
+          ? BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xD91E283D), Color(0xB8121622)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20.0),
+              border: Border.all(color: const Color(0x38E2E8F0)),
+              boxShadow: GlassTokens.cardShadows(isGlassy: true),
+            )
+          : BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF1E3C72), const Color(0xFF2A5298)]
+                    : [const Color(0xFFE0EAFC), const Color(0xFFCFDEF3)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20.0),
+            ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -307,7 +327,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     );
   }
 
-  Widget _buildTrendChartSection(AttendanceTrend trend, bool isDark) {
+  Widget _buildTrendChartSection(
+      AttendanceTrend trend, bool isDark, bool isGlassy) {
     List<TrendPoint> points = [];
     if (_trendPeriod == 'daily') {
       points = trend.daily;
@@ -320,13 +341,15 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -504,6 +527,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   Widget _buildSubjectComparisonChartSection(
     SubjectComparison comparison,
     bool isDark,
+    bool isGlassy,
   ) {
     // Collect all subjects
     final refStats = ref.watch(allSubjectAttendanceStatsProvider);
@@ -512,13 +536,15 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -648,17 +674,19 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   }
 
   Widget _buildComparisonRankingCard(
-      SubjectComparison comparison, bool isDark) {
+      SubjectComparison comparison, bool isDark, bool isGlassy) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -750,7 +778,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     );
   }
 
-  Widget _buildRiskSubjectsSection(AttendanceAnalytics analytics, bool isDark) {
+  Widget _buildRiskSubjectsSection(
+      AttendanceAnalytics analytics, bool isDark, bool isGlassy) {
     // Let's watch all subjects analytics from the provider and list the Warning/Critical ones
     final refStats = ref.watch(allSubjectAttendanceStatsProvider);
     final statsList = refStats.valueOrNull ?? [];
@@ -777,13 +806,17 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             width: double.infinity,
             padding:
                 const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              ),
-            ),
+            decoration: isGlassy
+                ? GlassTokens.glassBoxDecoration(borderRadius: 16.0)
+                : BoxDecoration(
+                    color:
+                        isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                    borderRadius: BorderRadius.circular(16.0),
+                    border: Border.all(
+                      color:
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                  ),
             child: const Center(
               child: Text(
                 '🎉 All subjects are in the safe zone!',
@@ -811,15 +844,19 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
 
               return Container(
                 padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color:
-                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color:
-                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                  ),
-                ),
+                decoration: isGlassy
+                    ? GlassTokens.glassBoxDecoration(borderRadius: 16.0)
+                    : BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
+                        ),
+                      ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

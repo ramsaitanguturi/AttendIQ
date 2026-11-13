@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:attend_iq/core/theme/colors.dart';
+import 'package:attend_iq/core/theme/glass/glass_theme_tokens.dart';
+import 'package:attend_iq/features/settings/presentation/controllers/settings_controller.dart';
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/academic_task.dart';
@@ -23,6 +25,7 @@ class TaskCardWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final now = DateTime.now();
     final urgency = task.urgencyAt(now);
     final isCompleted = task.status == TaskStatus.COMPLETED;
@@ -53,22 +56,28 @@ class TaskCardWidget extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: isGlassy
+            ? const Color(0xD9141824)
+            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
           color: isCompleted
               ? (isDark ? Colors.grey[800]! : Colors.grey[300]!)
-              : urgency.color.withOpacity(0.5),
+              : (isGlassy
+                  ? urgency.color.withOpacity(0.7)
+                  : urgency.color.withOpacity(0.5)),
           width: isCompleted ? 1.0 : 1.5,
         ),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-        ],
+        boxShadow: isGlassy
+            ? GlassTokens.cardShadows(isGlassy: true)
+            : [
+                if (!isDark)
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,

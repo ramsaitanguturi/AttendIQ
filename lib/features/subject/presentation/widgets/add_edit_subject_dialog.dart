@@ -466,13 +466,31 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final isEdit = widget.existingSubject != null;
 
     return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28.0)),
-      ),
+      decoration: isGlassy
+          ? BoxDecoration(
+              color: const Color(0xF010141D),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28.0)),
+              border: Border.all(
+                color: const Color(0x3DE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28.0)),
+            ),
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
       child: Form(
         key: _formKey,
@@ -631,14 +649,18 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                   return Container(
                     padding: const EdgeInsets.all(14.0),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkBackground
-                          : Colors.grey.shade100,
+                      color: isGlassy
+                          ? const Color(0xB8141822)
+                          : (isDark
+                              ? AppColors.darkBackground
+                              : Colors.grey.shade100),
                       borderRadius: BorderRadius.circular(16.0),
                       border: Border.all(
-                        color: isDark
-                            ? AppColors.darkBorder
-                            : Colors.grey.shade300,
+                        color: isGlassy
+                            ? const Color(0x38E2E8F0)
+                            : (isDark
+                                ? AppColors.darkBorder
+                                : Colors.grey.shade300),
                       ),
                     ),
                     child: Column(

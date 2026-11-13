@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/ai_chat_controller.dart';
 
 class AIAssistantPage extends ConsumerStatefulWidget {
@@ -51,6 +52,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final chatStateAsync = ref.watch(aIChatControllerProvider);
 
     // Listen to changes to scroll to bottom when new messages arrive
@@ -61,8 +63,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
     });
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isGlassy
+          ? const Color(0xFF0A0C11)
+          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -167,7 +170,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                   itemCount: chatState.messages.length,
                   itemBuilder: (context, index) {
                     final message = chatState.messages[index];
-                    return _buildMessageBubble(message, isDark);
+                    return _buildMessageBubble(message, isDark, isGlassy);
                   },
                 ),
               ),
@@ -209,7 +212,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       horizontal: 16.0, vertical: 8.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: _buildTypingIndicator(isDark),
+                    child: _buildTypingIndicator(isDark, isGlassy),
                   ),
                 ),
 
@@ -250,14 +253,18 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                             style: const TextStyle(
                                 fontSize: 12, fontWeight: FontWeight.w600),
                           ),
-                          backgroundColor: isDark
-                              ? AppColors.darkSurface
-                              : AppColors.lightSurface,
+                          backgroundColor: isGlassy
+                              ? const Color(0xB8141822)
+                              : (isDark
+                                  ? AppColors.darkSurface
+                                  : AppColors.lightSurface),
                           surfaceTintColor: Colors.transparent,
                           side: BorderSide(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder,
+                            color: isGlassy
+                                ? const Color(0x38E2E8F0)
+                                : (isDark
+                                    ? AppColors.darkBorder
+                                    : AppColors.lightBorder),
                           ),
                           onPressed: () => _handleSubmit(question),
                         ),
@@ -270,7 +277,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
               const SizedBox(height: 12),
 
               // Chat Input text field
-              _buildInputArea(isDark, chatState.isLoading),
+              _buildInputArea(isDark, isGlassy, chatState.isLoading),
             ],
           );
         },
@@ -292,7 +299,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, bool isDark) {
+  Widget _buildMessageBubble(ChatMessage message, bool isDark, bool isGlassy) {
     final isUser = message.sender == MessageSender.user;
     final details = message.responseDetails;
 
@@ -326,9 +333,11 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                   decoration: BoxDecoration(
                     color: isUser
                         ? Colors.deepPurpleAccent
-                        : (isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface),
+                        : (isGlassy
+                            ? const Color(0xD9141824)
+                            : (isDark
+                                ? AppColors.darkSurface
+                                : AppColors.lightSurface)),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
@@ -338,9 +347,20 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                     border: isUser
                         ? null
                         : Border.all(
-                            color: isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder),
+                            color: isGlassy
+                                ? const Color(0x38E2E8F0)
+                                : (isDark
+                                    ? AppColors.darkBorder
+                                    : AppColors.lightBorder)),
+                    boxShadow: isGlassy && !isUser
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Text(
                     message.text,
@@ -396,15 +416,28 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       constraints: const BoxConstraints(maxWidth: 320),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface,
+                        color: isGlassy
+                            ? const Color(0xD9141824)
+                            : (isDark
+                                ? AppColors.darkSurface
+                                : AppColors.lightSurface),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder,
+                          color: isGlassy
+                              ? const Color(0x38E2E8F0)
+                              : (isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder),
                         ),
+                        boxShadow: isGlassy
+                            ? [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,11 +500,13 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
     );
   }
 
-  Widget _buildTypingIndicator(bool isDark) {
+  Widget _buildTypingIndicator(bool isDark, bool isGlassy) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: isGlassy
+            ? const Color(0xD9141824)
+            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
@@ -479,7 +514,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
           bottomRight: Radius.circular(16),
         ),
         border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            color: isGlassy
+                ? const Color(0x38E2E8F0)
+                : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -501,14 +538,18 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
     );
   }
 
-  Widget _buildInputArea(bool isDark, bool isLoading) {
+  Widget _buildInputArea(bool isDark, bool isGlassy, bool isLoading) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: isGlassy
+            ? const Color(0xD910141D)
+            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         border: Border(
           top: BorderSide(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+              color: isGlassy
+                  ? const Color(0x38E2E8F0)
+                  : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
         ),
       ),
       child: SafeArea(
@@ -517,13 +558,18 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkBackground
-                      : AppColors.lightBackground,
+                  color: isGlassy
+                      ? const Color(0xB8141822)
+                      : (isDark
+                          ? AppColors.darkBackground
+                          : AppColors.lightBackground),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color:
-                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: isGlassy
+                        ? const Color(0x38E2E8F0)
+                        : (isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder),
                   ),
                 ),
                 child: Padding(

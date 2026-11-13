@@ -10,6 +10,7 @@ import '../../../semester/domain/entities/semester.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../subject/domain/entities/subject.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../data/utils/occurrence_identity.dart';
 
 class AddExtraClassDialog extends ConsumerStatefulWidget {
@@ -439,14 +440,22 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final subjectsAsync = ref.watch(subjectListControllerProvider);
     final dateError = _selectedDateRangeError();
     final timeError = _timeRangeError();
     final bounds = _validSemesterBounds();
 
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: isGlassy
+            ? const BorderSide(color: Color(0x3DE2E8F0))
+            : BorderSide.none,
+      ),
+      backgroundColor: isGlassy
+          ? const Color(0xF010141D)
+          : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
       title: const Row(
         children: [
           Icon(Icons.add_task, color: AppColors.primary),

@@ -1,6 +1,6 @@
-# Database Architecture: AttendIQ
+# Database Architecture: ACEDRA
 
-AttendIQ implements a 100% offline-first storage mechanism using **Isar** as the high-performance local database engine. All user data resides on-device without cloud database dependencies. Data export and restoration is managed via structured `.attendiq` JSON backup files.
+ACEDRA implements a 100% offline-first storage mechanism using **Isar** as the high-performance local database engine. All user data resides on-device without cloud database dependencies. Data export and restoration is managed via structured `.attendiq` JSON backup files.
 
 ---
 

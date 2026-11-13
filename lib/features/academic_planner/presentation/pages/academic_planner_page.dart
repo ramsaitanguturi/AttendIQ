@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:attend_iq/core/theme/colors.dart';
+import 'package:attend_iq/features/settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/academic_task.dart';
 import '../controllers/task_controller.dart';
 import '../widgets/add_edit_task_sheet.dart';
@@ -48,6 +49,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     final allTasks = _filterTasks(ref.watch(allTasksProvider));
     final todayTasks = _filterTasks(ref.watch(todayTasksProvider));
@@ -56,7 +58,12 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
     final completedTasks = _filterTasks(ref.watch(completedTasksProvider));
 
     return Scaffold(
+      backgroundColor: isGlassy
+          ? const Color(0xFF0A0C11)
+          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text(
           'Academic Planner',
           style: TextStyle(fontWeight: FontWeight.bold),
