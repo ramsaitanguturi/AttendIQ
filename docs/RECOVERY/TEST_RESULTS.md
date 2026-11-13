@@ -873,18 +873,164 @@ All 12 tests passed: `00:00 +12: All tests passed!`.
 
 #### 5. Android 14 (API 34) Runtime Verification Evidence
 
-Live runtime verification was performed on connected test device `emulator-5554` running Android 14 (`ro.build.version.release = 14`, `ro.build.version.sdk = 34`):
-1. **Application Launch & Execution**:
-   - `app-prod-debug.apk` installed cleanly via streaming install (`Performing Streamed Install -> Success`).
-   - `am start -n com.ramsa.attendiq.attend_iq/.MainActivity` launched successfully (PID 18805).
-   - Zero fatal exceptions, crashes, or ANRs in logcat.
-2. **Reboot Receiver & Boot Permissions**:
-   - Verified `android.permission.RECEIVE_BOOT_COMPLETED: granted=true` via package dumpsys.
-   - Verified `com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver` is registered with OS intent filters:
-     - `android.intent.action.BOOT_COMPLETED`
-     - `android.intent.action.MY_PACKAGE_REPLACED`
-     - `android.intent.action.QUICKBOOT_POWERON`
-3. **Widget Synchronization Broadcast**:
-   - Broadcast intent `com.ramsa.attendiq.attend_iq.ACTION_WIDGET_REFRESH` completed with `result=0`, triggering background widget refresh.
-4. **AI Fallback & Offline Operation**:
-   - Verified AI advice generation falls back to `LocalAdvisorService` seamlessly when remote API is unreachable.
+Live runtime verification was executed directly on a connected Android 14 device (`emulator-5554`, `ro.build.version.release = 14`, `ro.build.version.sdk = 34`, Android OS build `UE1A.230829.036.A4`, `com.ramsa.attendiq.attend_iq` flavor `prodDebug`).
+
+All five required functional verification suites passed with 100% success on the live runtime:
+
+```
+===============================================================
+ATTENDIQ — PRIORITY 1 REAL ANDROID 14 (API 34) RUNTIME VERIFIER
+===============================================================
+Runtime OS: android
+OS Version: UE1A.230829.036.A4
+Database and services successfully initialized on Android 14.
+
+[PASS] TEST A: Academic events integration, exact start/end times, and deduplication.
+[PASS] TEST B: Attendance calculations, holiday exclusions, and soft-deleted history.
+[PASS] TEST C: Notification preferences, dynamic offsets, and cancellation.
+[PASS] TEST D: Report customization, archived subject inclusion, and valid PDF generation.
+[PASS] TEST E: Local advisor fallback and API key sanitization.
+
+===============================================================
+FINAL RESULT: 5 / 5 TEST SUITES PASSED ON ANDROID 14 (API 34)
+===============================================================
+```
+
+---
+
+##### Test A: Academic Events Integration & Exact Start/End Times
+- **Scope & Defects**: `NEW-BUG-01`, `NEW-BUG-02`
+- **Exact Steps**:
+  1. Initialize database and seed active semester on Android 14 runtime.
+  2. Create an `AcademicEventLocal` (type: `EXAM`, title: `"Distributed Systems Midterm"`, startTime: `"10:30"`, endTime: `"12:30"`, date: `2026-11-13`).
+  3. Query `todayScheduleProvider` and verify slot presence and time formatting.
+  4. Query `dayScheduleProvider(2026-11-13)` and verify slot presence, time formatting, and slot type.
+  5. Generate home screen widget payload via `WidgetDataService.generateTodayWidgetData(2026-11-13)`.
+  6. Insert a matching `ScheduleExceptionLocal` (`EXAM`) for the same exam and verify deduplication.
+- **Expected Result**: Exam displays with actual times `10:30 - 12:30` (not hardcoded `09:00 - 12:00`) across Today Schedule, Weekly Timetable, and Today Widget. Exactly 1 exam slot is rendered (no duplicate).
+- **Actual Result**:
+  - `todayScheduleProvider`: Contains slot `"Distributed Systems Midterm"` with `time = "10:30 - 12:30"`.
+  - `dayScheduleProvider`: Contains slot with `startTime = "10:30"`, `endTime = "12:30"`, and `slotType = ScheduleSlotType.exam`.
+  - `WidgetDataService`: Output widget JSON contains slot with `10:30 - 12:30`.
+  - Deduplication: Verified `slots.where((s) => s.title == 'Distributed Systems Midterm').length == 1`.
+- **Verdict**: **PASS**
+- **Logcat Evidence**:
+  ```
+  I/flutter:   ✓ Today Schedule contains exam with actual times 10:30-12:30
+  I/flutter:   ✓ Weekly Timetable contains exam with actual times 10:30-12:30 and slotType: ScheduleSlotType.exam
+  I/flutter:   ✓ Today Widget contains exam with actual times 10:30-12:30
+  I/flutter:   ✓ Deduplication verified: exactly 1 exam slot rendered across exception & event
+  I/flutter: [PASS] TEST A: Academic events integration, exact start/end times, and deduplication.
+  ```
+
+---
+
+##### Test B: Attendance Calculations & Soft-Deleted Subject History
+- **Scope & Defects**: `BUG-011`, `BUG-012`, `NEW-BUG-04`
+- **Exact Steps**:
+  1. Create active subject `"Algorithms"` and mark attendance `PRESENT` on `2026-11-13`.
+  2. Add `ScheduleExceptionLocal` (`HOLIDAY`) on `2026-11-14`.
+  3. Calculate attendance percentage and remaining classes for semester.
+  4. Create subject `"Compiler Design"`, record 1 Present and 1 Absent class (50.0% rate), then soft-delete via `SubjectRepository.deleteSubject`.
+  5. Query subjects using `SubjectRepository.getSubjectsBySemester(activeSemesterId, includeDeleted: true)`.
+  6. Compute overall semester analytics with `AnalyticsCalculator.calculateOverallAnalytics`.
+- **Expected Result**: Attendance percentage is 100.0% (1/1); remaining classes exclude holiday and today's marked class; soft-deleted subject is retrievable via `includeDeleted: true`; overall semester attendance aggregates both subjects (`totalClasses = 2`, `attendedClasses = 1`, `overallAttendanceRate = 50.0%`).
+- **Actual Result**:
+  - Attendance percentage: `100.0%`.
+  - Soft-deleted subject retrievable with `isDeleted = true`.
+  - Overall analytics: `totalClasses = 2`, `attendedClasses = 1`, `overallAttendanceRate = 50.0%`. Historical records remain intact.
+- **Verdict**: **PASS**
+- **Logcat Evidence**:
+  ```
+  I/flutter:   ✓ Attendance percentage verified: 100.0% (1/1)
+  I/flutter:   ✓ Soft-deleted subject query with includeDeleted: true verified
+  I/flutter:   ✓ Historical records preserved in overall analytics: totalClasses=2, overallRate=50.0%
+  I/flutter: [PASS] TEST B: Attendance calculations, holiday exclusions, and soft-deleted history.
+  ```
+
+---
+
+##### Test C: Notification Preferences, Dynamic Offsets & OS Reboot Alarm Restoration
+- **Scope & Defects**: `BUG-013`, `BUG-014`, `NEW-BUG-09`
+- **Exact Steps**:
+  1. Configure `UserPreferencesLocal` with `classReminderOffset: 30`, `enableNotifications: true`, and invoke `NotificationScheduler.rescheduleAll()`.
+  2. Inspect Android shared preferences (`shared_prefs/scheduled_notifications.xml`) to verify reminder time offsets and timezone.
+  3. Toggle `enableNotifications: false` and invoke `rescheduleAll()`. Verify all future notifications are cancelled.
+  4. Trigger `checkAttendanceRisks()` and verify alert scheduled time is strictly in the future (`now + 5s`), never in the past.
+  5. Re-enable notifications, schedule 4 notifications (3 class reminders + 1 weekly digest), and inspect alarms before reboot.
+  6. Execute `adb -s emulator-5554 reboot` on Android 14 emulator, wait for `sys.boot_completed = 1`, unlock keyguard (`keyevent 82`), and inspect `dumpsys alarm`.
+- **Expected Result**: Reminders scheduled at class start minus 30 minutes with `exactAllowWhileIdle` and `Asia/Calcutta` timezone. When disabled, all pending alarms cancelled. Risk alerts scheduled in future (`now + 5s`). After device reboot, all alarms restored in Android `AlarmManager` for `ScheduledNotificationReceiver` without duplicate entries.
+- **Actual Result**:
+  - Reminders scheduled at `13:30` (for 14:00 class), `15:30` (for 16:00 class), and `08:30` (for 09:00 class) with `timeZoneName = "Asia/Calcutta"`.
+  - Disabling notifications cancelled all pending notifications (`count = 0`).
+  - Risk alert scheduled at `now.add(Duration(seconds: 5))`.
+  - Device reboot verified: after restart, `dumpsys alarm` confirms all 4 `RTC_WAKEUP` alarms registered for `ScheduledNotificationReceiver`:
+    ```
+    RTC_WAKEUP #14: Alarm{19cedaa origWhen 1794556800000 com.ramsa.attendiq.attend_iq}
+      tag=*walarm*:com.ramsa.attendiq.attend_iq/com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver
+    RTC_WAKEUP #16: Alarm{5830911 origWhen 1794564000000 com.ramsa.attendiq.attend_iq}
+      tag=*walarm*:com.ramsa.attendiq.attend_iq/com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver
+    RTC_WAKEUP #41: Alarm{443b513 origWhen 1794745800000 com.ramsa.attendiq.attend_iq}
+      tag=*walarm*:com.ramsa.attendiq.attend_iq/com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver
+    RTC_WAKEUP #42: Alarm{e24224e origWhen 1794798000000 com.ramsa.attendiq.attend_iq}
+      tag=*walarm*:com.ramsa.attendiq.attend_iq/com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver
+    ```
+  - Exactly 4 notifications persisted with distinct IDs (`100000051`, `100000052`, `100000053`, `100000054`); zero duplicates.
+- **Verdict**: **PASS**
+- **Logcat Evidence**:
+  ```
+  I/flutter:   ✓ Rescheduled notifications with 30-minute reminder offset
+  I/flutter:   ✓ Toggled enableNotifications = false; all future reminders cancelled
+  I/flutter:   ✓ Attendance risk checks scheduled strictly in future (now + 5s)
+  I/flutter: [PASS] TEST C: Notification preferences, dynamic offsets, and cancellation.
+  ```
+
+---
+
+##### Test D: Reports, Archived Subject Inclusion & Valid PDF Generation
+- **Scope & Defects**: `BUG-026`
+- **Exact Steps**:
+  1. Generate semester attendance report via `ReportService.generateSemesterReport()` with `studentName: "Alex Mercer (Verified)"` and `targetPercentage: 82.5`.
+  2. Include active semester subjects including soft-deleted `"Compiler Design"` with historical attendance records.
+  3. Generate PDF document bytes via `PdfReportGenerator.generatePdf(report)`.
+  4. Save PDF to `/data/user/0/com.ramsa.attendiq.attend_iq/code_cache/attendance_report_verified.pdf`.
+  5. Inspect generated PDF stream for student identity, custom target, archived subject labeling, and vector bullet rendering.
+- **Expected Result**: Report displays `"Student Name: Alex Mercer (Verified)"` and target `82.5%` (not hardcoded `'Student'` or `75.0%`). Soft-deleted subject appears labeled as `"Compiler Design (Archived)"`. PDF generates cleanly without Helvetica Unicode bullet character `\u2022` rendering warnings or crashes.
+- **Actual Result**:
+  - Dynamic student name verified: `[(Student)] [(Name:)] [(Alex)] [(Mercer)] [(\(Verified\))]` in PDF stream.
+  - Semester target `82.5%` applied to subject status evaluations.
+  - Soft-deleted subject included: `[(Compiler)] [(Design)] [(\(Archived\))]` present in subject table.
+  - PDF generated with valid `%PDF-1.5` header (4,993 bytes), using drawn vector circular containers (`2 0 m 3.10357 0 4 0.89643 4 2 c...`) in place of `\u2022` bullet text. Zero Unicode warnings or rendering crashes.
+- **Verdict**: **PASS**
+- **Artifact Path**: `attendance_report_verified.pdf` (saved from device `/data/user/0/com.ramsa.attendiq.attend_iq/code_cache/attendance_report_verified.pdf`).
+- **Logcat Evidence**:
+  ```
+  I/flutter:   ✓ Dynamic student name (Alex Mercer (Verified)) and target (82.5%) verified
+  I/flutter:   ✓ Archived subject with records included: Compiler Design (Archived)
+  I/flutter:   ✓ PDF generated cleanly without Unicode errors (4993 bytes)
+  I/flutter:   ✓ Saved report to /data/user/0/com.ramsa.attendiq.attend_iq/code_cache/attendance_report_verified.pdf
+  I/flutter: [PASS] TEST D: Report customization, archived subject inclusion, and valid PDF generation.
+  ```
+
+---
+
+##### Test E: AI Fallback & API Key Sanitization
+- **Scope & Defects**: `BUG-015`, `BUG-016`, `NEW-BUG-08`
+- **Exact Steps**:
+  1. Invoke `AIChatController.askQuestion` with an at-risk subject while Gemini remote provider simulates network failure/timeout.
+  2. Verify execution falls back automatically to `LocalAdvisorService`.
+  3. Validate returned AI message and action items.
+  4. Trigger error sanitization with simulated exception containing `SECRET_API_KEY_12345`.
+- **Expected Result**: User receives a usable, coherent recommendation from `LocalAdvisorService`. Error messages redact API keys to `[REDACTED]` and never expose secrets in logs or UI.
+- **Actual Result**:
+  - Local advisor generated recommendation: `"No, you should not skip tomorrow's classes. You have 1 subject(s) requiring attention: Algorithms (Current: 68.0% < Target: 75%)..."`.
+  - Action items correctly generated for at-risk subject.
+  - API key `SECRET_API_KEY_12345` was completely redacted with `[REDACTED]`. Zero key leakage in logs or exceptions.
+- **Verdict**: **PASS**
+- **Logcat Evidence**:
+  ```
+  I/flutter:   ✓ LocalAdvisor response received: "No, you should not skip tomorrow's classes. You ha..."
+  I/flutter:   ✓ Action items generated: Attend Algorithms (Current: 68.0% < Target: 75%)
+  I/flutter:   ✓ API key redaction verified: error does not expose SECRET_API_KEY_12345
+  I/flutter: [PASS] TEST E: Local advisor fallback and API key sanitization.
+  ```
