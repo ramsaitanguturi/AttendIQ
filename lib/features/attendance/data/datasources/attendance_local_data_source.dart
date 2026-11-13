@@ -55,9 +55,16 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
   Future<AttendanceRecordLocal?> getAttendanceForOccurrence(
       int occurrenceId) async {
     if (occurrenceId <= 0) return null;
-    return _isar.attendanceRecordLocals
+    final byOccurrence = _isar.attendanceRecordLocals
         .where()
         .occurrenceIdEqualTo(occurrenceId)
+        .isDeletedEqualTo(false)
+        .findFirst();
+    if (byOccurrence != null) return byOccurrence;
+
+    return _isar.attendanceRecordLocals
+        .where()
+        .eventIdEqualTo(occurrenceId)
         .isDeletedEqualTo(false)
         .findFirst();
   }
@@ -66,9 +73,15 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
   Future<AttendanceRecordLocal?> getAttendanceForOccurrenceAnyStatus(
       int occurrenceId) async {
     if (occurrenceId <= 0) return null;
-    return _isar.attendanceRecordLocals
+    final byOccurrence = _isar.attendanceRecordLocals
         .where()
         .occurrenceIdEqualTo(occurrenceId)
+        .findFirst();
+    if (byOccurrence != null) return byOccurrence;
+
+    return _isar.attendanceRecordLocals
+        .where()
+        .eventIdEqualTo(occurrenceId)
         .findFirst();
   }
 
@@ -87,7 +100,7 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
 
   @override
   Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
-    await _isar.writeAsync((isar) {
+    final assignedId = await _isar.writeAsync((isar) {
       final occId = record.occurrenceId;
       if (occId != null && occId > 0) {
         record.eventId = occId;
@@ -109,7 +122,9 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
         }
       }
       isar.attendanceRecordLocals.put(record);
+      return record.id;
     });
+    record.id = assignedId;
   }
 
   @override

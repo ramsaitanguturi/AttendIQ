@@ -40,12 +40,14 @@ class SubjectLocalDataSourceImpl implements SubjectLocalDataSource {
 
   @override
   Future<void> saveSubject(SubjectLocal subject) async {
-    await _isar.writeAsync((isar) {
+    final assignedId = await _isar.writeAsync((isar) {
       if (subject.id == 0) {
         subject.id = isar.subjectLocals.autoIncrement();
       }
       isar.subjectLocals.put(subject);
+      return subject.id;
     });
+    subject.id = assignedId;
   }
 
   @override

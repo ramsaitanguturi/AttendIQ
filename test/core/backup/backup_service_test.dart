@@ -1,13 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:isar/isar.dart';
 
 import 'package:attend_iq/core/backup/backup_models.dart';
 import 'package:attend_iq/core/backup/backup_importer.dart';
-
-class FakeIsar extends Fake implements Isar {}
+import '../../test_helpers/test_isar_helper.dart';
 
 void main() {
-  group('Backup & Restore Unit Tests', () {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late TestIsarInstance testDb;
+
+  setUpAll(() async {
+    await ensureIsarInitialized();
+  });
+
+  setUp(() {
+    testDb = openTestIsar(prefix: 'backup_service_test');
+  });
+
+  tearDown(() async {
+    await testDb.dispose();
+  });
+
+  group('Backup & Restore Unit Tests (Real Isar Database)', () {
     test('BackupMetadata serialization and deserialization', () {
       final meta = BackupMetadata(
         appVersion: '1.1.0',
@@ -94,7 +108,7 @@ void main() {
     });
 
     test('BackupImporter throws FormatException on corrupted JSON', () {
-      final importer = BackupImporter(FakeIsar());
+      final importer = BackupImporter(testDb.isar);
       expect(
         () => importer.parseAndValidateJson('invalid-json-string{{'),
         throwsA(isA<FormatException>()),
@@ -104,7 +118,7 @@ void main() {
     test(
         'BackupImporter throws FormatException on higher unsupported backupVersion',
         () {
-      final importer = BackupImporter(FakeIsar());
+      final importer = BackupImporter(testDb.isar);
       const invalidVersionJson = '''
       {
         "metadata": {

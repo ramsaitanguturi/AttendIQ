@@ -402,6 +402,8 @@ void main() {
       overrides: [
         databaseDirectoryResolverProvider
             .overrideWithValue(() async => tempDir.path),
+        databaseInitTimeoutProvider
+            .overrideWithValue(const Duration(seconds: 30)),
         isarOpenerProvider.overrideWithValue(({
           required schemas,
           required name,

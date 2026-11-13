@@ -1,13 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:isar/isar.dart';
 
 // App imports
 import 'package:attend_iq/features/semester/data/models/semester_local.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
-import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
-import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
-import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
-import 'package:attend_iq/features/timetable/data/models/academic_event_local.dart';
 import 'package:attend_iq/core/ai/services/local_advisor_service.dart';
 import 'package:attend_iq/core/ai/context/attendance_ai_context.dart';
 import 'package:attend_iq/core/notifications/scheduler/notification_scheduler.dart';
@@ -15,74 +12,16 @@ import 'package:attend_iq/core/notifications/scheduler/notification_database.dar
 import 'package:attend_iq/core/notifications/services/notification_service.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
 import 'package:attend_iq/features/settings/data/models/user_preferences_local.dart';
-
-class FakeNotificationDatabase implements NotificationDatabase {
-  SemesterLocal? activeSemester;
-  UserPreferencesLocal? userPreferences;
-  List<NotificationItem> notifications = [];
-
-  @override
-  Future<SemesterLocal?> getActiveSemester() async => activeSemester;
-
-  @override
-  Future<UserPreferencesLocal?> getUserPreferences() async => userPreferences;
-
-  @override
-  Future<List<NotificationItem>> getFutureNotifications(DateTime now) async =>
-      notifications;
-
-  @override
-  Future<List<SubjectLocal>> getSubjects() async => [];
-
-  @override
-  Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
-          DateTime start, DateTime end) async =>
-      [];
-
-  @override
-  Future<List<AcademicEventLocal>> getAcademicEvents(
-          DateTime start, DateTime end) async =>
-      [];
-
-  @override
-  Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules() async => [];
-
-  @override
-  Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
-          DateTime start, DateTime end) async =>
-      [];
-
-  @override
-  Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
-          int subjectId) async =>
-      [];
-
-  @override
-  Future<List<AttendanceRecordLocal>> getAllAttendanceRecords() async => [];
-
-  @override
-  Future<List<NotificationItem>> getFutureNotificationsByType(
-          String type, DateTime now) async =>
-      [];
-
-  @override
-  Future<NotificationItem?> getLastNotification(
-          String type, String relatedId) async =>
-      null;
-
-  @override
-  Future<void> deleteNotification(int id) async {}
-
-  @override
-  Future<void> saveNotification(NotificationItem item) async {}
-}
+import '../test_helpers/test_isar_helper.dart';
 
 class FakeNotificationService implements NotificationService {
   bool shouldThrow = false;
+  final List<NotificationItem> scheduledItems = [];
 
   @override
   Future<void> scheduleNotification(NotificationItem item) async {
     if (shouldThrow) throw Exception('Notification platform channel failed');
+    scheduledItems.add(item);
   }
 
   @override
@@ -90,6 +29,12 @@ class FakeNotificationService implements NotificationService {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    await ensureIsarInitialized();
+  });
+
   group('Production Readiness - AI Fallback Heuristics', () {
     test(
         'LocalAdvisorService fallback generates mathematically correct suggestions when offline',
@@ -143,34 +88,94 @@ void main() {
     });
   });
 
-  group('Production Readiness - Notification Failures', () {
-    late FakeNotificationDatabase mockDb;
+  group('Production Readiness - Notification Failures (Real Isar Database)',
+      () {
+    late TestIsarInstance testDb;
+    late IsarNotificationDatabaseImpl notificationDb;
     late FakeNotificationService mockService;
     late NotificationScheduler scheduler;
 
     setUp(() {
-      mockDb = FakeNotificationDatabase();
+      testDb = openTestIsar(prefix: 'prod_notif');
+      notificationDb = IsarNotificationDatabaseImpl(testDb.isar);
       mockService = FakeNotificationService();
-      scheduler = NotificationScheduler(mockDb, mockService);
+      scheduler = NotificationScheduler(notificationDb, mockService);
+
+      testDb.isar.write((isar) {
+        isar.semesterLocals.put(
+          SemesterLocal()
+            ..id = 1
+            ..name = 'Spring 2026'
+            ..startDate = DateTime.now().subtract(const Duration(days: 30))
+            ..endDate = DateTime.now().add(const Duration(days: 60))
+            ..requiredAttendanceRate = 75.0
+            ..isActive = true
+            ..status = 'active'
+            ..createdAt = DateTime.now()
+            ..updatedAt = DateTime.now(),
+        );
+        isar.userPreferencesLocals.put(
+          UserPreferencesLocal()
+            ..themeMode = 'system'
+            ..defaultAttendanceTarget = 75.0
+            ..classReminderOffset = 15
+            ..enableNotifications = true
+            ..enableAttendanceWarnings = true
+            ..weeklyReportEnabled = true
+            ..updatedAt = DateTime.now(),
+        );
+        isar.subjectLocals.put(
+          SubjectLocal()
+            ..id = 1
+            ..semesterId = 1
+            ..name = 'Operating Systems'
+            ..code = 'CS301'
+            ..credits = 4
+            ..attendanceTarget = 75.0
+            ..color = '#FF0000'
+            ..type = 'THEORY'
+            ..createdAt = DateTime.now()
+            ..updatedAt = DateTime.now(),
+        );
+        isar.attendanceRecordLocals.put(
+          AttendanceRecordLocal()
+            ..eventId = 1
+            ..subjectId = 1
+            ..status = 'ABSENT'
+            ..markedAt = DateTime.now()
+            ..createdAt = DateTime.now()
+            ..updatedAt = DateTime.now(),
+        );
+      });
+    });
+
+    tearDown(() async {
+      await testDb.dispose();
     });
 
     test(
-        'Scheduler handles notification service failures gracefully without crashing',
+        'Scheduler handles notification service failures gracefully without crashing on active risk subjects',
         () async {
-      final semester = SemesterLocal()
-        ..name = 'Spring 2026'
-        ..startDate = DateTime.now()
-        ..endDate = DateTime.now().add(const Duration(days: 90))
-        ..requiredAttendanceRate = 75.0;
-
-      mockDb.activeSemester = semester;
-      mockDb.notifications = [];
       mockService.shouldThrow = true;
 
       await expectLater(
         scheduler.checkAttendanceRisks(customNow: DateTime.now()),
         completes,
       );
+    });
+
+    test(
+        'Scheduler schedules and persists notification item to real Isar when service succeeds',
+        () async {
+      mockService.shouldThrow = false;
+
+      await scheduler.checkAttendanceRisks(customNow: DateTime.now());
+
+      expect(mockService.scheduledItems.length, 1);
+      final persisted = testDb.isar.notificationItems.where().findAll();
+      expect(persisted.length, 1);
+      expect(persisted.first.type, 'LOW_ATTENDANCE_ALERT');
+      expect(persisted.first.title, contains('Low Attendance Alert'));
     });
   });
 }

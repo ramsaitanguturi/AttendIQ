@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:attend_iq/features/academic_planner/domain/entities/academic_task.dart';
 import 'package:attend_iq/features/academic_planner/domain/entities/task_enums.dart';
-import 'package:attend_iq/features/academic_planner/domain/repositories/task_repository.dart';
+import 'package:attend_iq/features/academic_planner/data/datasources/task_local_datasource.dart';
+import 'package:attend_iq/features/academic_planner/data/repositories/task_repository_impl.dart';
 import 'package:attend_iq/features/academic_planner/presentation/controllers/task_controller.dart';
 import 'package:attend_iq/features/academic_planner/services/task_notification_scheduler.dart';
 import 'package:attend_iq/features/timetable/presentation/controllers/academic_calendar_controller.dart';
@@ -12,53 +12,7 @@ import 'package:attend_iq/features/semester/domain/entities/semester.dart';
 import 'package:attend_iq/features/semester/presentation/controllers/semester_controller.dart';
 import 'package:attend_iq/core/notifications/services/notification_service.dart';
 import 'package:attend_iq/core/notifications/models/notification_item.dart';
-
-class FakeTaskRepository implements TaskRepository {
-  final List<AcademicTask> _tasks = [];
-  final StreamController<void> _controller = StreamController<void>.broadcast();
-
-  @override
-  Future<List<AcademicTask>> getAllTasks() async =>
-      List.from(_tasks.where((t) => !t.isDeleted));
-
-  @override
-  Future<AcademicTask?> getTaskById(int id) async {
-    try {
-      return _tasks.firstWhere((t) => t.id == id && !t.isDeleted);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  @override
-  Future<void> saveTask(AcademicTask task) async {
-    if (task.id == null || task.id == 0) {
-      final newId = _tasks.length + 1;
-      final savedTask = task.copyWith(id: newId);
-      _tasks.add(savedTask);
-    } else {
-      final index = _tasks.indexWhere((t) => t.id == task.id);
-      if (index != -1) {
-        _tasks[index] = task;
-      } else {
-        _tasks.add(task);
-      }
-    }
-    _controller.add(null);
-  }
-
-  @override
-  Future<void> deleteTask(int id) async {
-    final index = _tasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      _tasks[index] = _tasks[index].copyWith(isDeleted: true);
-    }
-    _controller.add(null);
-  }
-
-  @override
-  Stream<void> watchTasks() => _controller.stream;
-}
+import '../test_helpers/test_isar_helper.dart';
 
 class FakeNotificationService implements NotificationService {
   final List<NotificationItem> scheduledItems = [];
@@ -89,12 +43,24 @@ class FakeNotificationService implements NotificationService {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late FakeTaskRepository fakeRepo;
+  late TestIsarInstance testDb;
+  late TaskLocalDataSourceImpl localDataSource;
+  late TaskRepositoryImpl repository;
   late FakeNotificationService fakeNotifService;
 
+  setUpAll(() async {
+    await ensureIsarInitialized();
+  });
+
   setUp(() {
-    fakeRepo = FakeTaskRepository();
+    testDb = openTestIsar(prefix: 'tasks_crud');
+    localDataSource = TaskLocalDataSourceImpl(testDb.isar);
+    repository = TaskRepositoryImpl(localDataSource);
     fakeNotifService = FakeNotificationService();
+  });
+
+  tearDown(() async {
+    await testDb.dispose();
   });
 
   test(
@@ -165,10 +131,11 @@ void main() {
     expect(normalTask.urgencyAt(now), equals(TaskUrgency.NORMAL));
   });
 
-  test('Creating and editing tasks via TaskListController', () async {
+  test('Creating and editing tasks via TaskListController (Real Isar Database)',
+      () async {
     final container = ProviderContainer(
       overrides: [
-        taskRepositoryProvider.overrideWithValue(fakeRepo),
+        taskRepositoryProvider.overrideWithValue(repository),
         taskNotificationSchedulerProvider
             .overrideWithValue(TaskNotificationScheduler(fakeNotifService)),
       ],
@@ -209,10 +176,12 @@ void main() {
     expect(tasks.first.priority, equals(TaskPriority.CRITICAL));
   });
 
-  test('Completing task toggles status and updates provider filters', () async {
+  test(
+      'Completing task toggles status and updates provider filters (Real Isar Database)',
+      () async {
     final container = ProviderContainer(
       overrides: [
-        taskRepositoryProvider.overrideWithValue(fakeRepo),
+        taskRepositoryProvider.overrideWithValue(repository),
         taskNotificationSchedulerProvider
             .overrideWithValue(TaskNotificationScheduler(fakeNotifService)),
       ],

@@ -26,12 +26,14 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
 
   @override
   Future<void> saveTask(AcademicTaskLocal task) async {
-    await _isar.writeAsync((isar) {
+    final assignedId = await _isar.writeAsync((isar) {
       if (task.id == 0) {
         task.id = isar.academicTaskLocals.autoIncrement();
       }
       isar.academicTaskLocals.put(task);
+      return task.id;
     });
+    task.id = assignedId;
   }
 
   @override

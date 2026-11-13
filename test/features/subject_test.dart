@@ -1,62 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
-import 'package:attend_iq/features/subject/data/models/subject_local.dart';
 import 'package:attend_iq/features/subject/data/datasources/subject_local_data_source.dart';
 import 'package:attend_iq/features/subject/data/repositories/subject_repository_impl.dart';
-
-class FakeSubjectLocalDataSource implements SubjectLocalDataSource {
-  final Map<int, SubjectLocal> subjects = {};
-  int _nextId = 1;
-
-  @override
-  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId,
-      {bool includeDeleted = false}) async {
-    return subjects.values
-        .where((s) =>
-            s.semesterId == semesterId && (includeDeleted || !s.isDeleted))
-        .toList();
-  }
-
-  @override
-  Future<SubjectLocal?> getSubjectById(int id) async {
-    return subjects[id];
-  }
-
-  @override
-  Future<void> saveSubject(SubjectLocal subject) async {
-    if (subject.id == 0) {
-      subject.id = _nextId++;
-    }
-    subjects[subject.id] = subject;
-  }
-
-  @override
-  Future<void> deleteSubject(int id) async {
-    final sub = subjects[id];
-    if (sub != null) {
-      sub.isDeleted = true;
-    }
-  }
-
-  @override
-  Stream<void> watchSubjects(int semesterId) {
-    return const Stream.empty();
-  }
-}
+import '../test_helpers/test_isar_helper.dart';
 
 void main() {
-  late FakeSubjectLocalDataSource localDataSource;
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late TestIsarInstance testDb;
+  late SubjectLocalDataSourceImpl localDataSource;
   late SubjectRepositoryImpl repository;
 
+  setUpAll(() async {
+    await ensureIsarInitialized();
+  });
+
   setUp(() {
-    localDataSource = FakeSubjectLocalDataSource();
+    testDb = openTestIsar(prefix: 'subject_crud');
+    localDataSource = SubjectLocalDataSourceImpl(testDb.isar);
     repository = SubjectRepositoryImpl(
       localDataSource: localDataSource,
     );
   });
 
-  group('Subject CRUD Operations', () {
+  tearDown(() async {
+    await testDb.dispose();
+  });
+
+  group('Subject CRUD Operations (Real Isar Database)', () {
     test('Create Subject saves locally and returns created entity with ID',
         () async {
       final subject = Subject(

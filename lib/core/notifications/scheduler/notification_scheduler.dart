@@ -682,7 +682,13 @@ class NotificationScheduler {
             ..isRead = false;
 
           await _db.saveNotification(item);
-          await _notificationService.scheduleNotification(item);
+          try {
+            await _notificationService.scheduleNotification(item);
+          } catch (e, stack) {
+            debugPrint(
+                'Failed to schedule risk notification with platform service: $e');
+            debugPrint(stack.toString());
+          }
         }
       }
     }

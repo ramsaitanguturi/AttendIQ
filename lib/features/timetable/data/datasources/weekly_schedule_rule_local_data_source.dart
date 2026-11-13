@@ -73,24 +73,32 @@ class WeeklyScheduleRuleLocalDataSourceImpl
 
   @override
   Future<void> saveRule(WeeklyScheduleRuleLocal rule) async {
-    await _isar.writeAsync((isar) {
+    final assignedId = await _isar.writeAsync((isar) {
       if (rule.id == 0) {
         rule.id = isar.weeklyScheduleRuleLocals.autoIncrement();
       }
       isar.weeklyScheduleRuleLocals.put(rule);
+      return rule.id;
     });
+    rule.id = assignedId;
   }
 
   @override
   Future<void> saveRules(List<WeeklyScheduleRuleLocal> rules) async {
-    await _isar.writeAsync((isar) {
+    final ids = await _isar.writeAsync((isar) {
+      final assigned = <int>[];
       for (final rule in rules) {
         if (rule.id == 0) {
           rule.id = isar.weeklyScheduleRuleLocals.autoIncrement();
         }
         isar.weeklyScheduleRuleLocals.put(rule);
+        assigned.add(rule.id);
       }
+      return assigned;
     });
+    for (var i = 0; i < rules.length && i < ids.length; i++) {
+      rules[i].id = ids[i];
+    }
   }
 
   @override

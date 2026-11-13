@@ -51,12 +51,14 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
 
   @override
   Future<void> saveTemplate(TimetableTemplateLocal template) async {
-    await _isar.writeAsync((isar) {
+    final assignedId = await _isar.writeAsync((isar) {
       if (template.id == 0) {
         template.id = isar.timetableTemplateLocals.autoIncrement();
       }
       isar.timetableTemplateLocals.put(template);
+      return template.id;
     });
+    template.id = assignedId;
   }
 
   @override

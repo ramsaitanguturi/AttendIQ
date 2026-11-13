@@ -65,12 +65,14 @@ class ScheduleExceptionLocalDataSourceImpl
   @override
   Future<void> saveException(ScheduleExceptionLocal exception) async {
     exception.date = _cleanDate(exception.date);
-    await _isar.writeAsync((isar) {
+    final assignedId = await _isar.writeAsync((isar) {
       if (exception.id == 0) {
         exception.id = isar.scheduleExceptionLocals.autoIncrement();
       }
       isar.scheduleExceptionLocals.put(exception);
+      return exception.id;
     });
+    exception.id = assignedId;
   }
 
   @override

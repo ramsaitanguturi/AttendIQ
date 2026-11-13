@@ -1,180 +1,70 @@
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:attend_iq/features/timetable/domain/entities/weekly_schedule_rule.dart';
 import 'package:attend_iq/features/timetable/domain/entities/schedule_exception.dart';
-import 'package:attend_iq/features/timetable/data/models/weekly_schedule_rule_local.dart';
-import 'package:attend_iq/features/timetable/data/models/schedule_exception_local.dart';
 import 'package:attend_iq/features/timetable/data/datasources/weekly_schedule_rule_local_data_source.dart';
 import 'package:attend_iq/features/timetable/data/datasources/schedule_exception_local_data_source.dart';
 import 'package:attend_iq/features/timetable/data/repositories/weekly_schedule_rule_repository_impl.dart';
 import 'package:attend_iq/features/timetable/data/repositories/schedule_exception_repository_impl.dart';
 import 'package:attend_iq/features/subject/data/models/subject_local.dart';
-
-class FakeWeeklyScheduleRuleLocalDataSource
-    implements WeeklyScheduleRuleLocalDataSource {
-  final Map<int, WeeklyScheduleRuleLocal> rules = {};
-  final List<SubjectLocal> subjects = [];
-  int _nextId = 1;
-
-  @override
-  Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(
-      int subjectId) async {
-    return rules.values
-        .where((r) => r.subjectId == subjectId && !r.isDeleted)
-        .toList();
-  }
-
-  @override
-  Future<List<WeeklyScheduleRuleLocal>> getRulesForSemester(
-      int semesterId) async {
-    final subjectIds = subjects
-        .where((s) => s.semesterId == semesterId && !s.isDeleted)
-        .map((s) => s.id)
-        .toSet();
-    if (subjectIds.isEmpty) return [];
-    return rules.values
-        .where((r) => subjectIds.contains(r.subjectId) && !r.isDeleted)
-        .toList();
-  }
-
-  @override
-  Future<WeeklyScheduleRuleLocal?> getRuleById(int id) async => rules[id];
-
-  @override
-  Future<void> saveRule(WeeklyScheduleRuleLocal rule) async {
-    if (rule.id == 0) {
-      rule.id = _nextId++;
-    }
-    rules[rule.id] = rule;
-  }
-
-  @override
-  Future<void> saveRules(List<WeeklyScheduleRuleLocal> ruleList) async {
-    for (final r in ruleList) {
-      if (r.id == 0) {
-        r.id = _nextId++;
-      }
-      rules[r.id] = r;
-    }
-  }
-
-  @override
-  Future<void> deleteRule(int id) async {
-    if (rules.containsKey(id)) {
-      rules[id]!.isDeleted = true;
-    }
-  }
-
-  @override
-  Future<void> deleteRulesForSubject(int subjectId) async {
-    for (final r in rules.values) {
-      if (r.subjectId == subjectId) {
-        r.isDeleted = true;
-      }
-    }
-  }
-
-  @override
-  Stream<void> watchRules(int semesterId) => const Stream.empty();
-}
-
-class FakeScheduleExceptionLocalDataSource
-    implements ScheduleExceptionLocalDataSource {
-  final Map<int, ScheduleExceptionLocal> exceptions = {};
-  int _nextId = 1;
-
-  DateTime _cleanDate(DateTime dt) => DateTime.utc(dt.year, dt.month, dt.day);
-
-  @override
-  Future<List<ScheduleExceptionLocal>> getExceptionsForDate(
-      DateTime date) async {
-    final target = _cleanDate(date);
-    return exceptions.values
-        .where((e) => _cleanDate(e.date) == target && !e.isDeleted)
-        .toList();
-  }
-
-  @override
-  Future<List<ScheduleExceptionLocal>> getExceptionsForRange(
-      DateTime startDate, DateTime endDate) async {
-    final start = _cleanDate(startDate);
-    final end = _cleanDate(endDate);
-    return exceptions.values.where((e) {
-      final date = _cleanDate(e.date);
-      return !e.isDeleted &&
-          (date.isAfter(start) || date.isAtSameMomentAs(start)) &&
-          (date.isBefore(end) || date.isAtSameMomentAs(end));
-    }).toList();
-  }
-
-  @override
-  Future<List<ScheduleExceptionLocal>> getAllExceptions() async {
-    return exceptions.values.where((e) => !e.isDeleted).toList();
-  }
-
-  @override
-  Future<ScheduleExceptionLocal?> getExceptionById(int id) async =>
-      exceptions[id];
-
-  @override
-  Future<void> saveException(ScheduleExceptionLocal exception) async {
-    if (exception.id == 0) {
-      exception.id = _nextId++;
-    }
-    exceptions[exception.id] = exception;
-  }
-
-  @override
-  Future<void> deleteException(int id) async {
-    if (exceptions.containsKey(id)) {
-      exceptions[id]!.isDeleted = true;
-    }
-  }
-
-  @override
-  Stream<void> watchExceptions() => const Stream.empty();
-}
+import '../test_helpers/test_isar_helper.dart';
 
 void main() {
-  late FakeWeeklyScheduleRuleLocalDataSource ruleDataSource;
-  late FakeScheduleExceptionLocalDataSource exceptionDataSource;
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late TestIsarInstance testDb;
+  late WeeklyScheduleRuleLocalDataSourceImpl ruleDataSource;
+  late ScheduleExceptionLocalDataSourceImpl exceptionDataSource;
   late WeeklyScheduleRuleRepositoryImpl ruleRepository;
   late ScheduleExceptionRepositoryImpl exceptionRepository;
 
+  setUpAll(() async {
+    await ensureIsarInitialized();
+  });
+
   setUp(() {
-    ruleDataSource = FakeWeeklyScheduleRuleLocalDataSource();
-    exceptionDataSource = FakeScheduleExceptionLocalDataSource();
+    testDb = openTestIsar(prefix: 'exceptions_rules');
+    ruleDataSource = WeeklyScheduleRuleLocalDataSourceImpl(testDb.isar);
+    exceptionDataSource = ScheduleExceptionLocalDataSourceImpl(testDb.isar);
     ruleRepository =
         WeeklyScheduleRuleRepositoryImpl(localDataSource: ruleDataSource);
     exceptionRepository =
         ScheduleExceptionRepositoryImpl(localDataSource: exceptionDataSource);
 
-    ruleDataSource.subjects.addAll([
-      SubjectLocal()
-        ..id = 101
-        ..semesterId = 1
-        ..name = 'Operating Systems'
-        ..code = 'CS301'
-        ..credits = 4
-        ..color = '#4ECDC4'
-        ..attendanceTarget = 75.0
-        ..type = 'THEORY'
-        ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now(),
-      SubjectLocal()
-        ..id = 102
-        ..semesterId = 1
-        ..name = 'Data Structures'
-        ..code = 'CS302'
-        ..credits = 3
-        ..color = '#FF6B6B'
-        ..attendanceTarget = 75.0
-        ..type = 'THEORY'
-        ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now(),
-    ]);
+    testDb.isar.write((isar) {
+      isar.subjectLocals.putAll([
+        SubjectLocal()
+          ..id = 101
+          ..semesterId = 1
+          ..name = 'Operating Systems'
+          ..code = 'CS301'
+          ..credits = 4
+          ..color = '#4ECDC4'
+          ..attendanceTarget = 75.0
+          ..type = 'THEORY'
+          ..createdAt = DateTime.now()
+          ..updatedAt = DateTime.now(),
+        SubjectLocal()
+          ..id = 102
+          ..semesterId = 1
+          ..name = 'Data Structures'
+          ..code = 'CS302'
+          ..credits = 3
+          ..color = '#FF6B6B'
+          ..attendanceTarget = 75.0
+          ..type = 'THEORY'
+          ..createdAt = DateTime.now()
+          ..updatedAt = DateTime.now(),
+      ]);
+    });
   });
 
-  group('AttendIQ Timetable & Calendar Exceptions Tests', () {
+  tearDown(() async {
+    await testDb.dispose();
+  });
+
+  group('AttendIQ Timetable & Calendar Exceptions Tests (Real Isar Database)',
+      () {
     test('1. Subject with multiple days appears correctly', () async {
       // Operating Systems on Monday (1), Tuesday (2), Friday (5)
       final days = [1, 2, 5];

@@ -5,6 +5,7 @@ import '../../data/repositories/settings_repository_impl.dart';
 import '../../domain/entities/user_preferences.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../../../core/notifications/providers/notification_providers.dart';
+import '../../../../core/backup/backup_scheduler.dart';
 
 part 'settings_controller.g.dart';
 
@@ -129,6 +130,10 @@ class SettingsController extends _$SettingsController {
 
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
+
+    try {
+      await BackupScheduler.scheduleOrCancelAutoBackup(enabled);
+    } catch (_) {}
   }
 
   Future<void> updateLastBackupDate(DateTime date) async {

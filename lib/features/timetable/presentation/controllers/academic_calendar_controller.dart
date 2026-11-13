@@ -8,7 +8,6 @@ import '../../domain/entities/schedule_exception.dart';
 import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../../domain/repositories/daily_schedule_occurrence_repository.dart';
 import 'timetable_controller.dart';
-import 'today_schedule_provider.dart';
 
 import '../../../academic_planner/presentation/controllers/task_controller.dart';
 
@@ -331,9 +330,8 @@ final monthlyCalendarDataProvider =
         final sub = occ.subjectId != null ? subjectMap[occ.subjectId] : null;
         dayItems.add(CalendarItem(
           id: 'extra_class_${occ.id}_${cleanDate.toIso8601String()}',
-          title: occ.title.isNotEmpty
-              ? occ.title
-              : (sub?.name ?? 'Extra Class'),
+          title:
+              occ.title.isNotEmpty ? occ.title : (sub?.name ?? 'Extra Class'),
           subtitle: 'Extra Class',
           startTime: occ.startTime,
           endTime: occ.endTime,

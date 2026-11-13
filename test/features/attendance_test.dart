@@ -1,125 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:isar/isar.dart';
+
 import 'package:attend_iq/features/attendance/domain/entities/attendance_record.dart';
 import 'package:attend_iq/features/attendance/data/models/attendance_record_local.dart';
 import 'package:attend_iq/features/attendance/data/datasources/attendance_local_data_source.dart';
 import 'package:attend_iq/features/attendance/data/repositories/attendance_repository_impl.dart';
-import 'package:attend_iq/features/timetable/data/models/daily_schedule_occurrence_local.dart';
-
-class FakeAttendanceLocalDataSource implements AttendanceLocalDataSource {
-  final Map<int, AttendanceRecordLocal> records = {};
-  int _nextId = 1;
-
-  @override
-  Future<List<AttendanceRecordLocal>> getAttendanceForSubject(
-      int subjectId) async {
-    return records.values
-        .where((r) => r.subjectId == subjectId && !r.isDeleted)
-        .toList();
-  }
-
-  @override
-  Future<AttendanceRecordLocal?> getAttendanceForOccurrence(
-      int occurrenceId) async {
-    if (occurrenceId <= 0) return null;
-    try {
-      return records.values.firstWhere(
-        (r) => (r.occurrenceId ?? r.eventId) == occurrenceId && !r.isDeleted,
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  @override
-  Future<AttendanceRecordLocal?> getAttendanceForOccurrenceAnyStatus(
-      int occurrenceId) async {
-    if (occurrenceId <= 0) return null;
-    try {
-      return records.values.firstWhere(
-        (r) => (r.occurrenceId ?? r.eventId) == occurrenceId,
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  @override
-  Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId) =>
-      getAttendanceForOccurrence(eventId);
-
-  @override
-  Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId) =>
-      getAttendanceForOccurrenceAnyStatus(eventId);
-
-  @override
-  Future<AttendanceRecordLocal?> getAttendanceRecordById(int id) async {
-    return records[id];
-  }
-
-  @override
-  Future<void> saveAttendanceRecord(AttendanceRecordLocal record) async {
-    final targetId = record.occurrenceId ?? record.eventId;
-    if (record.id == 0) {
-      if (targetId > 0) {
-        final existing = records.values
-            .where((r) => (r.occurrenceId ?? r.eventId) == targetId)
-            .firstOrNull;
-        if (existing != null) {
-          record.id = existing.id;
-        } else {
-          record.id = _nextId++;
-        }
-      } else {
-        record.id = _nextId++;
-      }
-    }
-    records[record.id] = record;
-  }
-
-  @override
-  Future<void> deleteAttendanceRecord(int id) async {
-    final record = records[id];
-    if (record != null) {
-      record.isDeleted = true;
-      record.isDirty = true;
-      record.updatedAt = DateTime.now();
-    }
-  }
-
-  @override
-  Stream<void> watchAttendance(int subjectId) {
-    return const Stream.empty();
-  }
-
-  @override
-  Future<void> updateEventStatus(int eventId, String status) async {}
-
-  @override
-  Future<DailyScheduleOccurrenceLocal> saveExtraClassWithAttendance({
-    int? occurrenceId,
-    required int subjectId,
-    required DateTime date,
-    String? subjectTitle,
-    String? startTime,
-    String? endTime,
-    String? reason,
-    String? attendanceStatus,
-    bool autoAllocateSlot = false,
-  }) {
-    throw UnimplementedError();
-  }
-}
+import '../test_helpers/test_isar_helper.dart';
 
 void main() {
-  group('Attendance Repository Implementation Tests', () {
-    late FakeAttendanceLocalDataSource fakeLocalDataSource;
-    late AttendanceRepositoryImpl repository;
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    setUp(() {
-      fakeLocalDataSource = FakeAttendanceLocalDataSource();
-      repository = AttendanceRepositoryImpl(fakeLocalDataSource);
-    });
+  late TestIsarInstance testDb;
+  late AttendanceLocalDataSourceImpl localDataSource;
+  late AttendanceRepositoryImpl repository;
 
+  setUpAll(() async {
+    await ensureIsarInitialized();
+  });
+
+  setUp(() {
+    testDb = openTestIsar(prefix: 'attendance_crud');
+    localDataSource = AttendanceLocalDataSourceImpl(testDb.isar);
+    repository = AttendanceRepositoryImpl(localDataSource);
+  });
+
+  tearDown(() async {
+    await testDb.dispose();
+  });
+
+  group('Attendance Repository Implementation Tests (Real Isar Database)', () {
     test('saveAttendanceRecord persists and maps correctly', () async {
       final record = AttendanceRecord(
         eventId: 10,
@@ -131,8 +40,9 @@ void main() {
 
       await repository.saveAttendanceRecord(record);
 
-      expect(fakeLocalDataSource.records.length, 1);
-      final savedLocal = fakeLocalDataSource.records.values.first;
+      final records = testDb.isar.attendanceRecordLocals.where().findAll();
+      expect(records.length, 1);
+      final savedLocal = records.first;
       expect(savedLocal.eventId, 10);
       expect(savedLocal.subjectId, 5);
       expect(savedLocal.status, 'PRESENT');
@@ -140,7 +50,7 @@ void main() {
     });
 
     test('getAttendanceForSubject fetches active records only', () async {
-      await fakeLocalDataSource.saveAttendanceRecord(
+      await localDataSource.saveAttendanceRecord(
         AttendanceRecordLocal()
           ..id = 1
           ..eventId = 101
@@ -153,7 +63,7 @@ void main() {
           ..isDeleted = false,
       );
 
-      await fakeLocalDataSource.saveAttendanceRecord(
+      await localDataSource.saveAttendanceRecord(
         AttendanceRecordLocal()
           ..id = 2
           ..eventId = 102
@@ -173,7 +83,7 @@ void main() {
     });
 
     test('getAttendanceForEvent returns matching entity', () async {
-      await fakeLocalDataSource.saveAttendanceRecord(
+      await localDataSource.saveAttendanceRecord(
         AttendanceRecordLocal()
           ..id = 1
           ..eventId = 200
@@ -202,11 +112,11 @@ void main() {
       );
 
       await repository.saveAttendanceRecord(record);
-      final created = fakeLocalDataSource.records.values.first;
+      final created = testDb.isar.attendanceRecordLocals.where().findFirst()!;
 
       await repository.deleteAttendanceRecord(created.id);
 
-      final finalLocal = fakeLocalDataSource.records[created.id];
+      final finalLocal = testDb.isar.attendanceRecordLocals.get(created.id);
       expect(finalLocal, isNotNull);
       expect(finalLocal!.isDeleted, isTrue);
     });
@@ -224,8 +134,9 @@ void main() {
       );
 
       await repository.saveAttendanceRecord(recordPresent);
-      expect(fakeLocalDataSource.records.length, 1);
-      expect(fakeLocalDataSource.records.values.first.status, 'PRESENT');
+      var allRecords = testDb.isar.attendanceRecordLocals.where().findAll();
+      expect(allRecords.length, 1);
+      expect(allRecords.first.status, 'PRESENT');
 
       // 2. Edit to Absent
       final recordAbsent = AttendanceRecord(
@@ -237,15 +148,17 @@ void main() {
       );
 
       await repository.saveAttendanceRecord(recordAbsent);
-      expect(fakeLocalDataSource.records.length, 1); // No duplicates
-      expect(fakeLocalDataSource.records.values.first.status, 'ABSENT');
+      allRecords = testDb.isar.attendanceRecordLocals.where().findAll();
+      expect(allRecords.length, 1); // No duplicates
+      expect(allRecords.first.status, 'ABSENT');
 
       // 3. Edit to Cancelled (Soft Delete)
       final existing = await repository.getAttendanceForEventAnyStatus(500);
       expect(existing, isNotNull);
       await repository.deleteAttendanceRecord(existing!.id!);
-      expect(fakeLocalDataSource.records.length, 1);
-      expect(fakeLocalDataSource.records.values.first.isDeleted, isTrue);
+      allRecords = testDb.isar.attendanceRecordLocals.where().findAll();
+      expect(allRecords.length, 1);
+      expect(allRecords.first.isDeleted, isTrue);
 
       // 4. Edit back to Present
       final recordBackPresent = AttendanceRecord(
@@ -257,9 +170,10 @@ void main() {
       );
 
       await repository.saveAttendanceRecord(recordBackPresent);
-      expect(fakeLocalDataSource.records.length, 1); // Reused row
-      expect(fakeLocalDataSource.records.values.first.isDeleted, isFalse);
-      expect(fakeLocalDataSource.records.values.first.status, 'PRESENT');
+      allRecords = testDb.isar.attendanceRecordLocals.where().findAll();
+      expect(allRecords.length, 1); // Reused row
+      expect(allRecords.first.isDeleted, isFalse);
+      expect(allRecords.first.status, 'PRESENT');
     });
   });
 }

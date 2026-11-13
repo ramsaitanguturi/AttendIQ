@@ -1080,3 +1080,108 @@ All four APK variants built successfully via Gradle:
 - **Installation**: Streamed install via `adb -s emulator-5554 install -r build/app/outputs/apk/prod/debug/app-prod-debug.apk` -> `Success`.
 - **Runtime Launch**: `adb shell am start -n com.ramsa.attendiq.attend_iq/.MainActivity` -> Dart VM service listening, zero crashes, zero runtime exceptions.
 - **Screenshot Evidence**: Captured and saved to `build/app_screenshot.png`.
+
+---
+
+## Section 7: Final Outstanding Defects Verification and Remediation
+
+### 7.1 Scope & Objective
+This remediation phase resolved or formally classified the three remaining issues identified in the Priority 2 report:
+- **BUG-024**: WorkManager auto-backup initialization and runtime behavior.
+- **BUG-031**: Remaining mock-based test infrastructure replacement with real temporary in-memory Isar databases.
+- **BUG-018**: Late attendance status and weighting rules ($W_l$) domain decision analysis per `DOMAIN_RULES.md` §1.1–1.2.
+
+### 7.2 BUG-024: WorkManager Auto-Backup Implementation & Verification
+1. **Root Cause Analysis**:
+   - `BackupScheduler.scheduleOrCancelAutoBackup(enabled)` called WorkManager APIs without awaiting `WidgetBackgroundScheduler.initialize()` first.
+   - `SettingsController.updateEnableAutoBackup(enabled)` updated database preferences without calling `BackupScheduler.scheduleOrCancelAutoBackup(enabled)`.
+2. **Remediations Applied**:
+   - **`lib/core/backup/backup_scheduler.dart`**: Made `scheduleOrCancelAutoBackup(bool enabled)` explicitly await `WidgetBackgroundScheduler.initialize()` before registering the unique periodic task (`workManagerAutoBackupUniqueTaskName`) or cancelling it.
+   - **`lib/features/settings/presentation/controllers/settings_controller.dart`**: Updated `updateEnableAutoBackup` to invoke `await BackupScheduler.scheduleOrCancelAutoBackup(enabled)` immediately after saving preferences to ensure Android WorkManager / JobScheduler task state mirrors user settings.
+   - **Background Worker & Entry Point**: Confirmed top-level `@pragma('vm:entry-point') void callbackDispatcher()` in `lib/core/background/background_worker.dart` is correctly annotated, survives release tree-shaking, and executes `WorkManagerAutoBackupTask` in an independent Dart background isolate with standalone Isar open/close lifecycle, creating timestamped `.attendiq` backup files in app-private storage.
+3. **Verification**:
+   - WorkManager periodic auto-backup registers uniquely (`ExistingWorkPolicy.update` / `ExistingPeriodicWorkPolicy.update`).
+   - Disabling auto-backup cancels the unique periodic task.
+   - Restoring preferences reschedules or cancels the task correctly.
+   - Background execution verified on Android 14 / API 34 (`emulator-5554`).
+
+### 7.3 BUG-031: Test Infrastructure Migration & Real Isar Verification
+1. **Root Cause Analysis**:
+   - Core repository tests relied on artificial in-memory fakes (`FakeSubjectLocalDataSource`, `FakeAttendanceLocalDataSource`, `FakeTimetableLocalDataSource`, `FakeWeeklyScheduleRuleLocalDataSource`, `FakeScheduleExceptionLocalDataSource`, `FakeTaskLocalDataSource`, `FakeIsar`).
+   - These fakes masked critical Isar runtime bugs, most notably that mutations inside `writeAsync` (like `entity.id = isar.autoIncrement()`) run in a separate background isolate and do not mutate the object in the caller's isolate.
+2. **Remediations Applied**:
+   - **`test/test_helpers/test_isar_helper.dart`**: Created a standardized, leak-free test helper that initializes `isar.dll`, creates isolated temporary directories with microsecond timestamps, registers all 13 active Isar schemas, and safely disposes instances with retry handling for Windows file locks.
+   - **Data Layer Isar Bug Fixes**:
+     - `SubjectLocalDataSourceImpl.saveSubject`: Captured the returned auto-increment ID from `writeAsync` and assigned `subject.id = assignedId`.
+     - `AttendanceLocalDataSourceImpl.saveAttendanceRecord`: Captured returned ID and assigned `record.id = assignedId`.
+     - `AttendanceLocalDataSourceImpl.getAttendanceForOccurrence` / `getAttendanceForOccurrenceAnyStatus`: Added fallback query by `eventId` when `occurrenceId == null` to support legacy event records.
+     - `TaskLocalDataSourceImpl.saveTask`: Captured returned ID and assigned `task.id = assignedId`.
+     - `TimetableLocalDataSourceImpl.saveTemplate`: Captured returned ID and assigned `template.id = assignedId`.
+     - `WeeklyScheduleRuleLocalDataSourceImpl.saveRule`: Captured returned ID and assigned `rule.id = assignedId`.
+     - `ScheduleExceptionLocalDataSourceImpl.saveException`: Captured returned ID and assigned `exception.id = assignedId`.
+     - `NotificationScheduler.checkAttendanceRisks`: Added try-catch and logging for platform channel errors to match `rescheduleRollingWindow`.
+   - **Test Suite Migration (8 suites migrated from fakes to real Isar)**:
+     1. `test/features/subject_test.dart` (3/3 passed on real Isar)
+     2. `test/features/attendance_test.dart` (5/5 passed on real Isar)
+     3. `test/features/timetable_test.dart` (2/2 passed on real Isar)
+     4. `test/features/timetable_exceptions_test.dart` (6/6 passed on real Isar)
+     5. `test/features/academic_planner_test.dart` (5/5 passed on real Isar)
+     6. `test/features/production_readiness_test.dart` (3/3 passed on real Isar)
+     7. `test/features/reports_test.dart` (5/5 passed on real Isar)
+     8. `test/core/backup/backup_service_test.dart` (4/4 passed on real Isar)
+
+### 7.4 BUG-018: Domain-Rule Decision Analysis & Formal Classification
+1. **Domain Specification Audit (`DOMAIN_RULES.md` §1.1–1.2)**:
+   - Rule §1.1 specifies `Late` attendance status with numerical weight $W_l$ (Configurable), counting towards Attended (Fractional) and Total.
+   - Rule §1.2 specifies arithmetic: $A_{attended} = A_p + A_{ep} + (A_l \times W_l)$, where $0.0 \le W_l \le 1.0$, default $1.0$.
+2. **Ambiguities Identified**:
+   - **Storage Scope**: `DOMAIN_RULES.md` does not specify whether $W_l$ is stored globally in `UserPreferences`, per-semester in `Semester`, or per-course in `Subject`.
+   - **Historical Immutability Conflict**: Rule §2 explicitly mandates that archived semesters are read-only and immutable. Storing $W_l$ in global preferences would retroactively alter attendance percentages of archived past semesters.
+   - **UI Representation of Fractional Attendance**: Throughout AttendIQ, UI components render attendance counts as integer ratios (`24 / 30`). No specification exists for rendering fractional attended counts (`24.5 / 30`) in badges, circular progress widgets, or reports.
+   - **Persistence & Serialization**: Altering `UserPreferencesLocal` requires Isar schema regeneration and migration whitelist adjustments.
+3. **Formal Decision**:
+   - In accordance with the project directives ("If the specification is ambiguous, report the precise missing decision and leave existing attendance calculations unchanged"), no default weighting was invented, and attendance calculations were left unchanged.
+   - BUG-018 is formally classified as **Closed (Deferred)** pending a formal product specification resolving the storage scope, historical immutability guarantees, and fractional UI presentation.
+
+### 7.5 Test Suite Results
+- **Command**: `flutter test --no-pub -j 1`
+- **Result**: **335 passed, 0 failed, 0 skipped** across all test suites (exit code `0`).
+- **Isar Database Tests**: 100% of migrated real Isar tests (`subject_test.dart`, `attendance_test.dart`, `timetable_test.dart`, `timetable_exceptions_test.dart`, `academic_planner_test.dart`, `production_readiness_test.dart`, `reports_test.dart`, `backup_service_test.dart`) passed on real native in-memory Isar database instances with zero fake mocks.
+
+### 7.6 Static Analysis
+- **Command**: `flutter analyze --no-pub --no-fatal-infos`
+- **Result**: **0 errors, 0 warnings** (exit code `0`).
+
+### 7.7 Build Artifacts & Four-Variant Compilation
+All four application variants built cleanly via Flutter and Gradle with release tree-shaking and ProGuard/R8 compatibility:
+
+| Variant | Target Path | File Size | Build Status |
+|---|---|---|---|
+| `prodDebug` | `build/app/outputs/flutter-apk/app-prod-debug.apk` | 463.3 MB | **SUCCESS** |
+| `betaDebug` | `build/app/outputs/flutter-apk/app-beta-debug.apk` | 448.0 MB | **SUCCESS** |
+| `prodRelease` | `build/app/outputs/flutter-apk/app-prod-release.apk` | 65.8 MB | **SUCCESS** |
+| `betaRelease` | `build/app/outputs/flutter-apk/app-beta-release.apk` | 65.8 MB | **SUCCESS** |
+
+### 7.8 Android 14 (API 34) Runtime Verification
+- **Target Device**: `emulator-5554`
+- **OS Version**: Android 14 (`ro.build.version.release = 14`, `ro.build.version.sdk = 34`, product `sdk_gphone64_x86_64`)
+- **Package Under Test**: `com.ramsa.attendiq.attend_iq` (`prodDebug`)
+- **Installation**: Streamed APK install via `adb -s emulator-5554 install -r build/app/outputs/flutter-apk/app-prod-debug.apk` -> `Success`.
+- **WorkManager Entry Point Verification**:
+  - `files/flutter_callback_cache.json` confirms registration of `@pragma('vm:entry-point') void callbackDispatcher()`:
+    ```json
+    [{"handle":-7522513761817801827,"representation":{"name":"callbackDispatcher","class_name":"","library_path":"package:attend_iq/core/background/background_worker.dart"}}]
+    ```
+- **JobScheduler Service Verification**:
+  - Android WorkManager registered system job:
+    ```
+    JOB #u0a219/12: com.ramsa.attendiq.attend_iq/androidx.work.impl.background.systemjob.SystemJobService
+    ```
+- **Background Auto-Backup Execution**:
+  - Background isolate executed cleanly without requiring foreground application presence.
+  - Verified valid, uncorrupted v2 `.attendiq` backup file creation in app-private storage:
+    - Path: `app_flutter/backups/AttendIQ_Backup_Spring_2026__2026-11-13.attendiq`
+    - Size: 1,294 bytes
+    - Content: Complete restorable JSON structure with `backupVersion: 2`, `metadata`, `userPreferences`, `semesters`, and collections.
+- **Runtime UI Verification**:
+  - Screenshot captured at `build/app_screenshot_final.png`. Zero crashes, zero unhandled platform exceptions.

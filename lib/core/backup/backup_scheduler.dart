@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:workmanager/workmanager.dart';
 import '../../features/settings/data/models/user_preferences_local.dart';
+import '../background/background_worker.dart';
 import 'backup_service.dart';
 
 class BackupScheduler {
@@ -98,6 +99,7 @@ class BackupScheduler {
     if (!Platform.isAndroid && !Platform.isIOS) return;
 
     try {
+      await WidgetBackgroundScheduler.initialize();
       if (enabled) {
         await Workmanager().registerPeriodicTask(
           weeklyAutoBackupTaskKey,

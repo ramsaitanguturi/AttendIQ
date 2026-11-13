@@ -784,7 +784,11 @@ void main() {
           openedIsar.close();
         }
         if (tempDir.existsSync()) {
-          await tempDir.delete(recursive: true);
+          try {
+            await tempDir.delete(recursive: true);
+          } catch (_) {
+            // Windows file locking may briefly hold .isar lock
+          }
         }
       }
     });

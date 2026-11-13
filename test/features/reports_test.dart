@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:isar/isar.dart';
 
 import 'package:attend_iq/features/semester/domain/entities/semester.dart';
+import 'package:attend_iq/features/semester/data/models/semester_local.dart';
 import 'package:attend_iq/features/semester/domain/repositories/semester_repository.dart';
 import 'package:attend_iq/features/subject/domain/entities/subject.dart';
 import 'package:attend_iq/features/subject/domain/repositories/subject_repository.dart';
@@ -15,9 +15,9 @@ import 'package:attend_iq/core/reports/generators/pdf_report_generator.dart';
 import 'package:attend_iq/core/reports/exporters/csv_report_exporter.dart';
 import 'package:attend_iq/core/analytics/models/risk_status.dart';
 
-// Fakes
-class FakeIsar extends Fake implements Isar {}
+import '../test_helpers/test_isar_helper.dart';
 
+// Fakes
 class FakeSemesterRepository implements SemesterRepository {
   Semester? activeSemester;
 
@@ -55,40 +55,52 @@ class FakeAttendanceRepository implements AttendanceRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class TestReportService extends ReportService {
-  final int? mockSemesterId;
-
-  TestReportService({
-    required this.mockSemesterId,
-    required super.semesterRepository,
-    required super.subjectRepository,
-    required super.attendanceRepository,
-  }) : super(isar: FakeIsar());
-
-  @override
-  Future<int?> getActiveSemesterLocalId() async {
-    return mockSemesterId;
-  }
-}
-
 void main() {
-  group('Reports System Unit Tests', () {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late TestIsarInstance testDb;
+
+  setUpAll(() async {
+    await ensureIsarInitialized();
+  });
+
+  group('Reports System Unit Tests (Real Isar Database)', () {
     late FakeSemesterRepository semesterRepository;
     late FakeSubjectRepository subjectRepository;
     late FakeAttendanceRepository attendanceRepository;
-    late TestReportService reportService;
+    late ReportService reportService;
 
     setUp(() {
+      testDb = openTestIsar(prefix: 'reports_real_isar');
       semesterRepository = FakeSemesterRepository();
       subjectRepository = FakeSubjectRepository();
       attendanceRepository = FakeAttendanceRepository();
 
-      reportService = TestReportService(
-        mockSemesterId: 1,
+      testDb.isar.write((isar) {
+        isar.semesterLocals.put(
+          SemesterLocal()
+            ..id = 1
+            ..name = 'Fall 2026'
+            ..startDate = DateTime.utc(2026, 8, 1)
+            ..endDate = DateTime.utc(2026, 12, 1)
+            ..requiredAttendanceRate = 75.0
+            ..isActive = true
+            ..status = 'active'
+            ..createdAt = DateTime.utc(2026, 8, 1)
+            ..updatedAt = DateTime.utc(2026, 8, 1),
+        );
+      });
+
+      reportService = ReportService(
+        isar: testDb.isar,
         semesterRepository: semesterRepository,
         subjectRepository: subjectRepository,
         attendanceRepository: attendanceRepository,
       );
+    });
+
+    tearDown(() async {
+      await testDb.dispose();
     });
 
     test('generateSemesterReport returns null if no active semester', () async {
