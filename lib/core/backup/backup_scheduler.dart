@@ -6,7 +6,8 @@ import '../../features/settings/data/models/user_preferences_local.dart';
 import 'backup_service.dart';
 
 class BackupScheduler {
-  static const String weeklyAutoBackupTaskKey = 'com.ramsa.attendiq.weekly_auto_backup';
+  static const String weeklyAutoBackupTaskKey =
+      'com.ramsa.attendiq.weekly_auto_backup';
   static const String weeklyAutoBackupTag = 'attendiq_auto_backup';
 
   /// Computes the next scheduled backup date (defaulting to upcoming Sunday at 2:00 AM).
@@ -21,7 +22,8 @@ class BackupScheduler {
     while (candidate.weekday != targetWeekday || candidate.isBefore(now)) {
       candidate = candidate.add(const Duration(days: 1));
       if (candidate.weekday == targetWeekday) {
-        candidate = DateTime(candidate.year, candidate.month, candidate.day, targetHour, 0);
+        candidate = DateTime(
+            candidate.year, candidate.month, candidate.day, targetHour, 0);
         if (candidate.isAfter(now)) {
           break;
         }
@@ -102,7 +104,7 @@ class BackupScheduler {
           weeklyAutoBackupTaskKey,
           tag: weeklyAutoBackupTag,
           frequency: const Duration(days: 7),
-          existingWorkPolicy: ExistingWorkPolicy.keep,
+          existingWorkPolicy: ExistingWorkPolicy.replace,
           constraints: Constraints(
             networkType: NetworkType.not_required,
             requiresBatteryNotLow: true,
@@ -110,6 +112,7 @@ class BackupScheduler {
         );
       } else {
         await Workmanager().cancelByTag(weeklyAutoBackupTag);
+        await Workmanager().cancelByUniqueName(weeklyAutoBackupTaskKey);
       }
     } catch (_) {
       // Ignore background registration errors on unsupported target platforms

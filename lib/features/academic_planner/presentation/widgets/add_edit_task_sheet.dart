@@ -35,6 +35,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
   late TimeOfDay _dueTime;
   late TaskPriority _selectedPriority;
   late TaskReminder _selectedReminder;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -43,13 +44,15 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
     final now = DateTime.now();
 
     _titleController = TextEditingController(text: task?.title ?? '');
-    _descriptionController = TextEditingController(text: task?.description ?? '');
+    _descriptionController =
+        TextEditingController(text: task?.description ?? '');
 
     _selectedTaskType = task?.taskType ?? TaskType.ASSIGNMENT;
     _selectedSubjectId = task?.subjectId;
 
     _startDate = task?.startDate ?? widget.initialDate ?? now;
-    _dueDate = task?.dueDate ?? widget.initialDate ?? now.add(const Duration(days: 1));
+    _dueDate =
+        task?.dueDate ?? widget.initialDate ?? now.add(const Duration(days: 1));
     _dueTime = task != null
         ? TimeOfDay.fromDateTime(task.dueDate)
         : const TimeOfDay(hour: 23, minute: 59);
@@ -109,44 +112,73 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
     }
   }
 
-  void _saveTask() {
+  Future<void> _saveTask() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
 
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
     final finalDue = _combinedDueDateTime;
 
-    if (widget.taskToEdit != null) {
-      final updated = widget.taskToEdit!.copyWith(
-        title: title,
-        description: description.isEmpty ? null : description,
-        taskType: _selectedTaskType,
-        subjectId: _selectedSubjectId,
-        startDate: _startDate,
-        dueDate: finalDue,
-        priority: _selectedPriority,
-        reminder: _selectedReminder,
+    if (_startDate.isAfter(finalDue)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Start date cannot be after due date.'),
+          backgroundColor: Colors.red,
+        ),
       );
-      ref.read(taskListControllerProvider.notifier).updateTask(updated);
-    } else {
-      ref.read(taskListControllerProvider.notifier).addTask(
-            title: title,
-            description: description.isEmpty ? null : description,
-            taskType: _selectedTaskType,
-            subjectId: _selectedSubjectId,
-            startDate: _startDate,
-            dueDate: finalDue,
-            priority: _selectedPriority,
-            reminder: _selectedReminder,
-          );
+      return;
     }
 
-    Navigator.of(context).pop();
+    setState(() => _isSaving = true);
+
+    try {
+      if (widget.taskToEdit != null) {
+        final updated = widget.taskToEdit!.copyWith(
+          title: title,
+          description: description.isEmpty ? null : description,
+          taskType: _selectedTaskType,
+          subjectId: _selectedSubjectId,
+          startDate: _startDate,
+          dueDate: finalDue,
+          priority: _selectedPriority,
+          reminder: _selectedReminder,
+        );
+        await ref.read(taskListControllerProvider.notifier).updateTask(updated);
+      } else {
+        await ref.read(taskListControllerProvider.notifier).addTask(
+              title: title,
+              description: description.isEmpty ? null : description,
+              taskType: _selectedTaskType,
+              subjectId: _selectedSubjectId,
+              startDate: _startDate,
+              dueDate: finalDue,
+              priority: _selectedPriority,
+              reminder: _selectedReminder,
+            );
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save task: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _deleteTask() {
     if (widget.taskToEdit?.id != null) {
-      ref.read(taskListControllerProvider.notifier).deleteTask(widget.taskToEdit!.id!);
+      ref
+          .read(taskListControllerProvider.notifier)
+          .deleteTask(widget.taskToEdit!.id!);
       Navigator.of(context).pop();
     }
   }
@@ -201,7 +233,8 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   ),
                   if (isEditing)
                     IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      icon: const Icon(Icons.delete_outline,
+                          color: Colors.redAccent),
                       onPressed: _deleteTask,
                     )
                   else
@@ -237,6 +270,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   Expanded(
                     child: DropdownButtonFormField<TaskType>(
                       value: _selectedTaskType,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Category',
                         prefixIcon: Icon(Icons.category),
@@ -248,7 +282,8 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                               ))
                           .toList(),
                       onChanged: (val) {
-                        if (val != null) setState(() => _selectedTaskType = val);
+                        if (val != null)
+                          setState(() => _selectedTaskType = val);
                       },
                     ),
                   ),
@@ -258,6 +293,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   Expanded(
                     child: DropdownButtonFormField<int?>(
                       value: _selectedSubjectId,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Subject',
                         prefixIcon: Icon(Icons.book),
@@ -267,14 +303,29 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                           value: null,
                           child: Text('None'),
                         ),
+                        if (_selectedSubjectId != null &&
+                            !subjects.any((s) => s.id == _selectedSubjectId))
+                          DropdownMenuItem<int?>(
+                            value: _selectedSubjectId,
+                            child: Text(
+                              'Deleted Subject (#$_selectedSubjectId)',
+                              style: const TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ...subjects.map(
                           (s) => DropdownMenuItem<int?>(
                             value: s.id,
-                            child: Text(s.name, overflow: TextOverflow.ellipsis),
+                            child:
+                                Text(s.name, overflow: TextOverflow.ellipsis),
                           ),
                         ),
                       ],
-                      onChanged: (val) => setState(() => _selectedSubjectId = val),
+                      onChanged: (val) =>
+                          setState(() => _selectedSubjectId = val),
                     ),
                   ),
                 ],
@@ -344,6 +395,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   Expanded(
                     child: DropdownButtonFormField<TaskPriority>(
                       value: _selectedPriority,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Priority',
                         prefixIcon: Icon(Icons.flag),
@@ -353,7 +405,8 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                                 value: p,
                                 child: Row(
                                   children: [
-                                    Icon(Icons.circle, size: 10, color: p.color),
+                                    Icon(Icons.circle,
+                                        size: 10, color: p.color),
                                     const SizedBox(width: 6),
                                     Text(p.displayName),
                                   ],
@@ -361,7 +414,8 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                               ))
                           .toList(),
                       onChanged: (val) {
-                        if (val != null) setState(() => _selectedPriority = val);
+                        if (val != null)
+                          setState(() => _selectedPriority = val);
                       },
                     ),
                   ),
@@ -372,6 +426,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
               // Reminder Dropdown
               DropdownButtonFormField<TaskReminder>(
                 value: _selectedReminder,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Reminder',
                   prefixIcon: Icon(Icons.notifications_active),
@@ -413,14 +468,24 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: Icon(isEditing ? Icons.save : Icons.add),
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(isEditing ? Icons.save : Icons.add),
                     label: Text(isEditing ? 'Save Changes' : 'Create Task'),
-                    onPressed: _saveTask,
+                    onPressed: _isSaving ? null : _saveTask,
                   ),
                 ],
               ),

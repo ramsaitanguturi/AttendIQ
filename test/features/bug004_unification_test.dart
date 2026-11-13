@@ -437,14 +437,18 @@ void main() {
         dbName: dbName,
         notificationService: spyNotif,
       );
+      final isar = await container.read(isarProvider.future);
       addTearDown(() async {
         container.dispose();
+        if (isar.isOpen) {
+          await isar.close();
+        }
         if (tempDir.existsSync()) {
-          await tempDir.delete(recursive: true);
+          try {
+            await tempDir.delete(recursive: true);
+          } catch (_) {}
         }
       });
-
-      final isar = await container.read(isarProvider.future);
       final now = DateTime.now();
       final todayUtc = DateTime.utc(now.year, now.month, now.day);
       final tomorrow = now.add(const Duration(days: 1));

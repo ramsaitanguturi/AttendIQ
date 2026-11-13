@@ -17,12 +17,13 @@ class SemesterWeeklyCalendarView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SemesterWeeklyCalendarView> createState() => _SemesterWeeklyCalendarViewState();
+  ConsumerState<SemesterWeeklyCalendarView> createState() =>
+      _SemesterWeeklyCalendarViewState();
 }
 
-class _SemesterWeeklyCalendarViewState extends ConsumerState<SemesterWeeklyCalendarView> {
-  late PageController _weekPageController;
-  late PageController _dayPageController;
+class _SemesterWeeklyCalendarViewState
+    extends ConsumerState<SemesterWeeklyCalendarView> {
+  late final PageController _weekPageController;
   int _selectedWeekIndex = 0;
   int _selectedDayIndex = 0; // 0 = Mon, 6 = Sun
   bool _isInitialized = false;
@@ -34,27 +35,49 @@ class _SemesterWeeklyCalendarViewState extends ConsumerState<SemesterWeeklyCalen
     final todayWeekday = DateTime.now().weekday;
     _selectedDayIndex = (todayWeekday - 1).clamp(0, 6);
 
-    _weekPageController = PageController(initialPage: 0);
-    _dayPageController = PageController(initialPage: _selectedDayIndex);
+    final initialWeeks = ref.read(semesterWeeksProvider).valueOrNull ?? [];
+    if (initialWeeks.isNotEmpty) {
+      _selectedWeekIndex = SemesterWeekCalculator.getWeekIndexForDate(
+          initialWeeks, DateTime.now());
+      _isInitialized = true;
+    }
+    _weekPageController = PageController(initialPage: _selectedWeekIndex);
   }
 
   @override
   void dispose() {
     _weekPageController.dispose();
-    _dayPageController.dispose();
     super.dispose();
   }
 
   void _initInitialWeek(List<SemesterWeek> weeks) {
     if (_isInitialized || weeks.isEmpty) return;
     _isInitialized = true;
-    final initialIndex = SemesterWeekCalculator.getWeekIndexForDate(weeks, DateTime.now());
+    final initialIndex =
+        SemesterWeekCalculator.getWeekIndexForDate(weeks, DateTime.now());
     _selectedWeekIndex = initialIndex;
-    _weekPageController = PageController(initialPage: initialIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _weekPageController.hasClients) {
+        _weekPageController.jumpToPage(initialIndex);
+      }
+    });
   }
 
   String _formatDate(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]}';
   }
 
@@ -101,7 +124,8 @@ class _SemesterWeeklyCalendarViewState extends ConsumerState<SemesterWeeklyCalen
             weekNumber: 1,
             startDate: activeSemester.startDate,
             endDate: activeSemester.startDate.add(const Duration(days: 6)),
-            dates: List.generate(7, (d) => activeSemester.startDate.add(Duration(days: d))),
+            dates: List.generate(
+                7, (d) => activeSemester.startDate.add(Duration(days: d))),
           );
 
     return Column(
@@ -150,61 +174,109 @@ class _SemesterWeeklyCalendarViewState extends ConsumerState<SemesterWeeklyCalen
                   ? weeks[weekIdx]
                   : currentWeek;
 
-              return Column(
-                children: [
-                  // Day Header Strip (MON - SUN tabs)
-                  DayHeaderStrip(
-                    weekDates: week.dates,
-                    selectedIndex: _selectedDayIndex,
-                    onDaySelected: (dayIdx) {
-                      setState(() {
-                        _selectedDayIndex = dayIdx;
-                      });
-                      _dayPageController.animateToPage(
-                        dayIdx,
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                      );
-                    },
+              return _WeekPageView(
+                key: ValueKey('week_${week.weekIndex}'),
+                week: week,
+                initialDayIndex: _selectedDayIndex,
+                onSlotTap: widget.onSlotTap,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WeekPageView extends ConsumerStatefulWidget {
+  final SemesterWeek week;
+  final int initialDayIndex;
+  final void Function(ScheduleClassSlot)? onSlotTap;
+
+  const _WeekPageView({
+    super.key,
+    required this.week,
+    required this.initialDayIndex,
+    this.onSlotTap,
+  });
+
+  @override
+  ConsumerState<_WeekPageView> createState() => _WeekPageViewState();
+}
+
+class _WeekPageViewState extends ConsumerState<_WeekPageView> {
+  late final PageController _dayPageController;
+  late int _selectedDayIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDayIndex = widget.initialDayIndex;
+    _dayPageController = PageController(initialPage: _selectedDayIndex);
+  }
+
+  @override
+  void dispose() {
+    _dayPageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Day Header Strip (MON - SUN tabs)
+        DayHeaderStrip(
+          weekDates: widget.week.dates,
+          selectedIndex: _selectedDayIndex,
+          onDaySelected: (dayIdx) {
+            setState(() {
+              _selectedDayIndex = dayIdx;
+            });
+            if (_dayPageController.hasClients) {
+              _dayPageController.animateToPage(
+                dayIdx,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+              );
+            }
+          },
+        ),
+
+        const SizedBox(height: 8),
+
+        // Day Timeline PageView (swappable MON-SUN)
+        Expanded(
+          child: PageView.builder(
+            controller: _dayPageController,
+            itemCount: 7,
+            onPageChanged: (dayIdx) {
+              if (mounted && _selectedDayIndex != dayIdx) {
+                setState(() {
+                  _selectedDayIndex = dayIdx;
+                });
+              }
+            },
+            itemBuilder: (context, dayIdx) {
+              final date = widget.week.dates[dayIdx];
+              final dayScheduleAsync = ref.watch(dayScheduleProvider(date));
+
+              return dayScheduleAsync.when(
+                data: (dayData) {
+                  return DayTimelineView(
+                    dayData: dayData,
+                    onSlotTap: widget.onSlotTap,
+                  );
+                },
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+                error: (e, s) => Center(
+                  child: Text(
+                    'Error loading timetable: $e',
+                    style: const TextStyle(color: Colors.red),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  // Day Timeline PageView (swappable MON-SUN)
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _dayPageController,
-                      itemCount: 7,
-                      onPageChanged: (dayIdx) {
-                        setState(() {
-                          _selectedDayIndex = dayIdx;
-                        });
-                      },
-                      itemBuilder: (context, dayIdx) {
-                        final date = week.dates[dayIdx];
-                        final dayScheduleAsync = ref.watch(dayScheduleProvider(date));
-
-                        return dayScheduleAsync.when(
-                          data: (dayData) {
-                            return DayTimelineView(
-                              dayData: dayData,
-                              onSlotTap: widget.onSlotTap,
-                            );
-                          },
-                          loading: () => const Center(
-                            child: CircularProgressIndicator(color: AppColors.primary),
-                          ),
-                          error: (e, s) => Center(
-                            child: Text(
-                              'Error loading timetable: $e',
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                ),
               );
             },
           ),

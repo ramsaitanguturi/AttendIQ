@@ -3,14 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:isar/isar.dart';
+
 import '../../../../core/backup/backup_importer.dart';
 import '../../../../core/backup/backup_path_helper.dart';
 import '../../../../core/backup/backup_providers.dart';
 import '../../../../core/backup/backup_scheduler.dart';
+import '../../../../core/database/isar_provider.dart';
+import '../../../../core/notifications/providers/notification_providers.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/export_success_dialog.dart';
+import '../../../academic_planner/presentation/controllers/task_controller.dart';
+import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
+import '../../../settings/data/models/user_preferences_local.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../../subject/presentation/controllers/subject_controller.dart';
+import '../../../timetable/presentation/controllers/academic_calendar_controller.dart';
+import '../../../timetable/presentation/controllers/timetable_controller.dart';
+import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
+import '../../../timetable/presentation/controllers/weekly_schedule_view_controller.dart';
 import '../../../widgets/services/widget_refresh_service.dart';
 
 class BackupPage extends ConsumerStatefulWidget {
@@ -329,13 +341,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final service = ref.read(backupServiceProvider);
       await service.importManagedBackupFile(filePath, strategy: strategy);
       if (!mounted) return;
-      ref.invalidate(hasActiveSemesterProvider);
-      ref.invalidate(activeSemesterProvider);
-      ref.invalidate(allSemestersProvider);
-      try {
-        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
-      } catch (_) {}
-      await _refreshBackupList();
+      await _handlePostRestoreSuccess(strategy);
       if (!mounted) return;
       setState(() {
         _statusMessage =
@@ -610,13 +616,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final service = ref.read(backupServiceProvider);
       await service.importFromBackupString(jsonString, strategy: strategy);
       if (!mounted) return;
-      ref.invalidate(hasActiveSemesterProvider);
-      ref.invalidate(activeSemesterProvider);
-      ref.invalidate(allSemestersProvider);
-      try {
-        ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
-      } catch (_) {}
-      await _refreshBackupList();
+      await _handlePostRestoreSuccess(strategy);
       if (!mounted) return;
       setState(() {
         _statusMessage =
@@ -650,6 +650,56 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         });
       }
     }
+  }
+
+  Future<void> _handlePostRestoreSuccess(ImportStrategy strategy) async {
+    if (!mounted) return;
+
+    // 1. Invalidate semester providers
+    ref.invalidate(hasActiveSemesterProvider);
+    ref.invalidate(activeSemesterProvider);
+    ref.invalidate(allSemestersProvider);
+
+    // 2. Invalidate settings controller so UI reflects restored preferences immediately
+    ref.invalidate(settingsControllerProvider);
+
+    // 3. Invalidate subjects & timetable rules
+    ref.invalidate(subjectListControllerProvider);
+    ref.invalidate(weeklyScheduleRuleListControllerProvider);
+    ref.invalidate(todayScheduleProvider);
+    ref.invalidate(semesterWeeksProvider);
+    ref.invalidate(scheduleExceptionControllerProvider);
+    ref.invalidate(academicEventControllerProvider);
+    ref.invalidate(monthlyCalendarDataProvider);
+
+    // 4. Invalidate attendance & analytics
+    ref.invalidate(allSubjectAttendanceStatsProvider);
+
+    // 5. Invalidate planner tasks
+    ref.invalidate(taskListControllerProvider);
+
+    // 6. Refresh home screen widgets
+    try {
+      ref.read(widgetRefreshServiceProvider).refreshAllWidgets();
+    } catch (_) {}
+
+    // 7. Safely reschedule notifications for restored timetable
+    try {
+      final scheduler = ref.read(notificationSchedulerProvider);
+      await scheduler.rescheduleAll();
+    } catch (_) {}
+
+    // 8. Apply auto-backup preferences to WorkManager scheduler
+    try {
+      final isar = await ref.read(isarProvider.future);
+      final prefs = isar.userPreferencesLocals.where().findAll();
+      final autoBackupEnabled =
+          prefs.isNotEmpty && prefs.first.enableAutoBackup;
+      await BackupScheduler.scheduleOrCancelAutoBackup(autoBackupEnabled);
+    } catch (_) {}
+
+    // 9. Refresh backup file list in UI
+    await _refreshBackupList();
   }
 
   @override

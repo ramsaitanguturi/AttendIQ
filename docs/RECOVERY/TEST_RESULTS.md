@@ -745,3 +745,57 @@ All 12 tests passed: `00:00 +12: All tests passed!`.
 | `compileBetaDebugKotlin` | **PASS** | `BUILD SUCCESSFUL in 1m 11s` (verified Android Kotlin compilation for beta flavor). |
 | Android Home Screen Widgets | **VERIFIED** | BUG-027 widget implementation fully preserved; `widgets_test.dart` passes 12 / 12 tests. |
 | APK Build Evaluation | **SKIPPED** | Android native files (`android/**`) were untouched; existing APK artifacts remain valid. |
+
+### 5.15 Priority 0 Bug Fix Batch Verification (`NEW-BUG-03`, `BUG-021`, `BUG-019`, `BUG-023`)
+
+- **Execution Date:** 2026-11-13
+- **Baseline Commit:** `6852e7c`
+- **Scope:** Four Priority 0 data-integrity and crash-prevention defects.
+
+#### 1. Implementation Summary
+
+| Bug ID | Module | Root Cause | Exact Implementation | Affected Files |
+|---|---|---|---|---|
+| **NEW-BUG-03** | Timetable Occurrence Editing | `ScheduleClassSlot` lacked the occurrence date property, causing `weekly_timetable_page.dart` to default to `DateTime.now()` for single-occurrence exception handlers, corrupting today's schedule when editing future/past occurrences. | Added `final DateTime? date;` to `ScheduleClassSlot`; populated it with `date: utcDate` across all slot factories (exam, regular, and extra classes) in `weekly_schedule_view_controller.dart`. In `weekly_timetable_page.dart`, imported `occurrence_identity.dart` and replaced hardcoded `DateTime.now()` with `slot.date != null ? normalizeUtcDate(slot.date!) : normalizeUtcDate(DateTime.now())` for occurrence exception creation. | `lib/features/timetable/presentation/controllers/weekly_schedule_view_controller.dart`<br>`lib/features/timetable/presentation/pages/weekly_timetable_page.dart` |
+| **BUG-021** | Weekly Calendar PageController | Outer `PageView.builder` in `SemesterWeeklyCalendarView` shared a single `_dayPageController` across all rendered week pages, throwing `ScrollController attached to multiple scroll views` upon swiping. Additionally, `_weekPageController` was instantiated inside `build()` without disposing the previous controller. | Extracted inner week page into an encapsulated `_WeekPageView` stateful widget managing and disposing its own private `_dayPageController` and `_selectedDayIndex`. Prevented `_weekPageController` reallocation in `build()` by computing the initial page in `initState()` and scheduling `jumpToPage` via `addPostFrameCallback`. | `lib/features/timetable/presentation/widgets/semester_weekly_calendar_view.dart` |
+| **BUG-019** | Task List Filtering & Crashes | Unsafe `firstWhere` and `last` lookups threw `StateError` when subjects were empty; overdue tasks appeared in Upcoming due to `|| t.dueDate.isBefore(now)`; `AddEditTaskSheet` popped before asynchronous save completion and crashed when editing tasks referencing deleted subjects. | Replaced unsafe collection indexing with `firstOrNull` lookups and safe null checks; excluded past-due tasks from `upcomingTasksProvider` and added dedicated `overdueTasksProvider` with UI tab; converted `_saveTask` to async with `_isSaving` state guard, date interval validation, and error SnackBar on failure; added fallback `DropdownMenuItem` preserving deleted subject IDs (`Deleted Subject (#id)`) with `isExpanded: true`. | `lib/features/academic_planner/presentation/controllers/task_controller.dart`<br>`lib/features/academic_planner/presentation/widgets/add_edit_task_sheet.dart`<br>`lib/features/academic_planner/presentation/pages/academic_planner_page.dart` |
+| **BUG-023** | Backup & Restore Integrity | `BackupExporter` and `BackupImporter` omitted `UserPreferencesLocal` auto-backup fields (`enableAutoBackup`, `autoBackupDay`, `autoBackupHour`, `lastBackupDate`), and `BackupPage` only invalidated semester providers upon restore, leaving settings, timetable, attendance, planner, and notifications stale. | Serialized all 4 auto-backup fields in `BackupExporter`; restored auto-backup fields in `BackupImporter` on Replace and Merge with backward-compatibility for older payloads lacking these fields (preserving user settings on Merge, safe defaults on Replace); implemented `_handlePostRestoreSuccess` in `BackupPage` invalidating all 9 domains of providers, rescheduling WorkManager auto-backup tasks, and safely rescheduling notifications via `NotificationScheduler.rescheduleAll()`. | `lib/core/backup/backup_exporter.dart`<br>`lib/core/backup/backup_importer.dart`<br>`lib/core/backup/backup_scheduler.dart`<br>`lib/features/backup/presentation/pages/backup_page.dart` |
+
+#### 2. Regression Test Suites Added (21 Tests)
+
+1. **`test/features/new_bug_03_future_occurrence_test.dart` (4 tests — ALL PASS)**:
+   - ScheduleClassSlot carries correct occurrence date populated from `DayScheduleData.date`.
+   - Cancelling future occurrence affects only that date and does not corrupt today.
+   - Editing past occurrence leaves neighboring dates and recurring weekly rules unchanged.
+   - Adding Exam exception on future occurrence populates exam slot on that date only.
+2. **`test/features/bug_021_weekly_calendar_controller_test.dart` (5 tests — ALL PASS)**:
+   - Renders multiple week pages without multiple attachment assertion.
+   - Swiping between weeks repeatedly does not throw ScrollController multi-attach.
+   - Navigating between dates updates selected day correctly across weeks.
+   - Rebuilding the widget repeatedly does not leak controllers or reallocate in `build()`.
+   - Disposing the widget cleans up all controllers cleanly.
+3. **`test/features/bug_019_task_list_regression_test.dart` (5 tests — ALL PASS)**:
+   - Empty-list safety: adding task with `subjectId` when subjects list is empty does not throw `StateError`.
+   - Overdue task filtering: overdue tasks appear in `overdueTasksProvider`, NOT in `upcomingTasksProvider`.
+   - Completed tasks appear only in `completedTasksProvider` and not in upcoming or overdue.
+   - Deleted subject handling: editing a task referencing a deleted subject does not crash dropdown.
+   - Task editing: save failure preserves user input and displays error SnackBar.
+4. **`test/features/bug_023_backup_restore_integrity_test.dart` (7 tests — ALL PASS)**:
+   - Auto-backup preference preservation: export serializes auto-backup preferences (`enableAutoBackup`, `autoBackupDay`, `autoBackupHour`, `lastBackupDate`).
+   - Auto-backup preference preservation: Replace restore restores enabled settings.
+   - Older backup compatibility on Merge: preserves existing target auto-backup configuration without overwrite.
+   - Older backup compatibility on Replace: safely uses fallback defaults (`false`, `7`, `2`, `null`).
+   - Malformed restore safety: corrupt JSON throws and database remains untouched (atomicity).
+   - Scheduled backup behavior: `getNextScheduledBackup` and `scheduleOrCancelAutoBackup` function reliably.
+   - Restore provider invalidation: active providers reflect restored database state immediately across settings and subjects.
+
+#### 3. Full Verification Results
+
+| Check / Command | Result | Details |
+|---|:---:|---|
+| `flutter analyze --no-pub --no-fatal-infos` | **PASS** | **0 errors, 0 warnings**, 343 infos (pre-existing formatting trailing commas and domain enum constant names; 0 warnings or compile errors). |
+| `flutter test --no-pub -j 1` | **PASS** | **293 / 293 tests passed** across all 27 test files (100% pass rate, 0 failures, 0 flakes). |
+| `dart format --output=none --set-exit-if-changed` | **PASS** | Formatted all 16 modified and newly added Dart files cleanly. |
+| `git diff --check` | **PASS** | Zero whitespace errors or conflict markers across working tree. |
+| Isar Schema Preservation | **VERIFIED** | Zero Isar schema alterations; 100% backward-compatible persistence. |
+| Android Home Screen Widgets | **VERIFIED** | BUG-027 widget implementation fully preserved; `widgets_test.dart` passes 12 / 12 tests. |

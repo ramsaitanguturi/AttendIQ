@@ -9,6 +9,7 @@ import '../controllers/weekly_schedule_view_controller.dart';
 import '../../../subject/domain/entities/subject.dart';
 import '../../../../core/theme/colors.dart';
 
+import '../../data/utils/occurrence_identity.dart';
 import '../widgets/semester_weekly_calendar_view.dart';
 
 import '../widgets/add_extra_class_dialog.dart';
@@ -17,7 +18,8 @@ class WeeklyTimetablePage extends ConsumerStatefulWidget {
   const WeeklyTimetablePage({super.key});
 
   @override
-  ConsumerState<WeeklyTimetablePage> createState() => _WeeklyTimetablePageState();
+  ConsumerState<WeeklyTimetablePage> createState() =>
+      _WeeklyTimetablePageState();
 }
 
 class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
@@ -29,10 +31,12 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
     final activeSemester = semesterAsync.valueOrNull;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+        backgroundColor:
+            isDark ? AppColors.darkBackground : AppColors.lightBackground,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,7 +79,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          final subjects = ref.read(subjectListControllerProvider).valueOrNull ?? [];
+          final subjects =
+              ref.read(subjectListControllerProvider).valueOrNull ?? [];
           if (subjects.isEmpty) {
             _showNoSubjectsAlert(context);
           } else {
@@ -105,7 +110,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+            padding:
+                const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -120,7 +126,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                 const SizedBox(height: 16),
                 Text(
                   '${slot.code} - ${slot.title}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 Text(
                   '${slot.startTime} – ${slot.endTime}',
@@ -128,41 +135,53 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                 ),
                 const SizedBox(height: 20),
                 ListTile(
-                  leading: const Icon(Icons.event_busy_outlined, color: Colors.orange),
+                  leading: const Icon(Icons.event_busy_outlined,
+                      color: Colors.orange),
                   title: const Text('Edit this occurrence only'),
-                  subtitle: const Text('Remove or set exception for this date without changing weekly rule'),
+                  subtitle: const Text(
+                      'Remove or set exception for this date without changing weekly rule'),
                   onTap: () {
                     Navigator.pop(context);
+                    final occurrenceDate = slot.date != null
+                        ? normalizeUtcDate(slot.date!)
+                        : normalizeUtcDate(DateTime.now());
                     _showOccurrenceExceptionDialog(
                       context: context,
                       subject: subject,
-                      date: DateTime.now(),
+                      date: occurrenceDate,
                     );
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.calendar_month_outlined, color: AppColors.primary),
+                  leading: const Icon(Icons.calendar_month_outlined,
+                      color: AppColors.primary),
                   title: const Text('Edit entire subject schedule'),
-                  subtitle: const Text('Modify weekly recurring days and times'),
+                  subtitle:
+                      const Text('Modify weekly recurring days and times'),
                   onTap: () {
                     Navigator.pop(context);
-                    AddEditSubjectDialog.show(context, existingSubject: subject);
+                    AddEditSubjectDialog.show(context,
+                        existingSubject: subject);
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: AppColors.attendanceLow),
-                  title: const Text('Delete Class Slot', style: TextStyle(color: AppColors.attendanceLow)),
+                  leading: const Icon(Icons.delete_outline,
+                      color: AppColors.attendanceLow),
+                  title: const Text('Delete Class Slot',
+                      style: TextStyle(color: AppColors.attendanceLow)),
                   onTap: () async {
                     Navigator.pop(context);
                     if (slot.type == ScheduleSlotType.classSlot) {
                       final targetRuleId = slot.ruleId ?? slot.id;
                       if (targetRuleId > 0) {
                         await ref
-                            .read(weeklyScheduleRuleListControllerProvider.notifier)
+                            .read(weeklyScheduleRuleListControllerProvider
+                                .notifier)
                             .removeRule(targetRuleId);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Class slot deleted.')),
+                            const SnackBar(
+                                content: Text('Class slot deleted.')),
                           );
                         }
                       }
@@ -183,7 +202,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
     required DateTime date,
   }) {
     ScheduleExceptionType selectedType = ScheduleExceptionType.CANCELLED_CLASS;
-    final titleController = TextEditingController(text: '${subject.code} Class Cancelled');
+    final titleController =
+        TextEditingController(text: '${subject.code} Class Cancelled');
     final descController = TextEditingController();
 
     showDialog<void>(
@@ -227,7 +247,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                         setState(() {
                           selectedType = val;
                           if (val == ScheduleExceptionType.CANCELLED_CLASS) {
-                            titleController.text = '${subject.code} Class Cancelled';
+                            titleController.text =
+                                '${subject.code} Class Cancelled';
                           } else if (val == ScheduleExceptionType.EXAM) {
                             titleController.text = '${subject.code} Exam';
                           } else if (val == ScheduleExceptionType.HOLIDAY) {
@@ -263,12 +284,19 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                 ElevatedButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    await ref.read(scheduleExceptionControllerProvider.notifier).addException(
-                          date: date,
-                          subjectId: selectedType == ScheduleExceptionType.HOLIDAY ? null : subject.id,
+                    await ref
+                        .read(scheduleExceptionControllerProvider.notifier)
+                        .addException(
+                          date: normalizeUtcDate(date),
+                          subjectId:
+                              selectedType == ScheduleExceptionType.HOLIDAY
+                                  ? null
+                                  : subject.id,
                           type: selectedType,
                           title: titleController.text.trim(),
-                          description: descController.text.trim().isEmpty ? null : descController.text.trim(),
+                          description: descController.text.trim().isEmpty
+                              ? null
+                              : descController.text.trim(),
                         );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -279,8 +307,11 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                       );
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                  child: const Text('Save Exception', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary),
+                  child: const Text('Save Exception',
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -310,13 +341,15 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                 Navigator.pop(context);
                 AddEditSubjectDialog.show(context);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Register Subject', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Register Subject',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
         );
       },
     );
   }
-
 }

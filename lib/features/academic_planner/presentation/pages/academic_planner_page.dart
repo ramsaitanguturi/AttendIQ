@@ -11,7 +11,8 @@ class AcademicPlannerPage extends ConsumerStatefulWidget {
   const AcademicPlannerPage({super.key});
 
   @override
-  ConsumerState<AcademicPlannerPage> createState() => _AcademicPlannerPageState();
+  ConsumerState<AcademicPlannerPage> createState() =>
+      _AcademicPlannerPageState();
 }
 
 class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
@@ -23,7 +24,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -38,7 +39,8 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
     final query = _searchQuery.toLowerCase();
     return tasks.where((t) {
       return t.title.toLowerCase().contains(query) ||
-          (t.description != null && t.description!.toLowerCase().contains(query)) ||
+          (t.description != null &&
+              t.description!.toLowerCase().contains(query)) ||
           t.taskType.displayName.toLowerCase().contains(query);
     }).toList();
   }
@@ -50,6 +52,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
     final allTasks = _filterTasks(ref.watch(allTasksProvider));
     final todayTasks = _filterTasks(ref.watch(todayTasksProvider));
     final upcomingTasks = _filterTasks(ref.watch(upcomingTasksProvider));
+    final overdueTasks = _filterTasks(ref.watch(overdueTasksProvider));
     final completedTasks = _filterTasks(ref.watch(completedTasksProvider));
 
     return Scaffold(
@@ -68,6 +71,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
             Tab(text: 'All Tasks (${allTasks.length})'),
             Tab(text: 'Today (${todayTasks.length})'),
             Tab(text: 'Upcoming (${upcomingTasks.length})'),
+            Tab(text: 'Overdue (${overdueTasks.length})'),
             Tab(text: 'Completed (${completedTasks.length})'),
           ],
         ),
@@ -91,7 +95,8 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
                         },
                       )
                     : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -113,6 +118,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
                 _buildTaskList(allTasks, 'No tasks found. Tap + to add one!'),
                 _buildTaskList(todayTasks, 'No tasks due today!'),
                 _buildTaskList(upcomingTasks, 'No upcoming tasks scheduled!'),
+                _buildTaskList(overdueTasks, 'No overdue tasks!'),
                 _buildTaskList(completedTasks, 'No completed tasks yet!'),
               ],
             ),

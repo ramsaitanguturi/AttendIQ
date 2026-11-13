@@ -167,6 +167,42 @@ class BackupImporter {
                 ? map['id'] as int
                 : isar.userPreferencesLocals.autoIncrement());
 
+        final bool enableAutoBackup;
+        if (map.containsKey('enableAutoBackup')) {
+          enableAutoBackup = map['enableAutoBackup'] as bool? ?? false;
+        } else if (strategy == ImportStrategy.merge && matched != null) {
+          enableAutoBackup = matched.enableAutoBackup;
+        } else {
+          enableAutoBackup = false;
+        }
+
+        final int autoBackupDay;
+        if (map.containsKey('autoBackupDay')) {
+          autoBackupDay = (map['autoBackupDay'] as num?)?.toInt() ?? 7;
+        } else if (strategy == ImportStrategy.merge && matched != null) {
+          autoBackupDay = matched.autoBackupDay;
+        } else {
+          autoBackupDay = 7;
+        }
+
+        final int autoBackupHour;
+        if (map.containsKey('autoBackupHour')) {
+          autoBackupHour = (map['autoBackupHour'] as num?)?.toInt() ?? 2;
+        } else if (strategy == ImportStrategy.merge && matched != null) {
+          autoBackupHour = matched.autoBackupHour;
+        } else {
+          autoBackupHour = 2;
+        }
+
+        final DateTime? lastBackupDate;
+        if (map.containsKey('lastBackupDate')) {
+          lastBackupDate = _parseValidatedIsoDate(map['lastBackupDate']);
+        } else if (strategy == ImportStrategy.merge && matched != null) {
+          lastBackupDate = matched.lastBackupDate;
+        } else {
+          lastBackupDate = null;
+        }
+
         final pref = UserPreferencesLocal()
           ..id = targetId
           ..serverId = _claimUniqueServerId(
@@ -184,6 +220,10 @@ class BackupImporter {
               map['enableAttendanceWarnings'] as bool? ?? true
           ..weeklyReportEnabled = map['weeklyReportEnabled'] as bool? ?? true
           ..lastSyncTime = _parseValidatedIsoDate(map['lastSyncTime'])
+          ..enableAutoBackup = enableAutoBackup
+          ..lastBackupDate = lastBackupDate
+          ..autoBackupDay = autoBackupDay
+          ..autoBackupHour = autoBackupHour
           ..updatedAt = _parseValidatedIsoDate(map['updatedAt']) ?? nowUtc
           ..isDirty = map['isDirty'] as bool? ?? false
           ..isDeleted = isDeleted;

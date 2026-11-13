@@ -28,6 +28,7 @@ class ScheduleClassSlot {
   final String? description;
   final String colorHex;
   final String status; // 'PRESENT', 'ABSENT', 'CANCELLED', 'UNMARKED'
+  final DateTime? date;
 
   const ScheduleClassSlot({
     required this.id,
@@ -45,6 +46,7 @@ class ScheduleClassSlot {
     this.description,
     this.colorHex = '#4F46E5',
     this.status = 'UNMARKED',
+    this.date,
   });
 
   String get uniqueKey => slotKey ?? '${type.name}:$id';
@@ -84,7 +86,8 @@ final semesterWeeksProvider = FutureProvider<List<SemesterWeek>>((ref) async {
   return SemesterWeekCalculator.calculateWeeks(activeSem);
 });
 
-final dayScheduleProvider = FutureProvider.family<DayScheduleData, DateTime>((ref, date) {
+final dayScheduleProvider =
+    FutureProvider.family<DayScheduleData, DateTime>((ref, date) {
   return ref.watch(dayScheduleByKeyProvider(formatUtcDateKey(date)).future);
 });
 
@@ -97,7 +100,9 @@ final dayScheduleByKeyProvider =
   final exceptionRepo = ref.watch(scheduleExceptionRepositoryProvider);
   final exceptions = await exceptionRepo.getExceptionsForDate(utcDate);
 
-  final holiday = exceptions.where((e) => e.type == ScheduleExceptionType.HOLIDAY).firstOrNull;
+  final holiday = exceptions
+      .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+      .firstOrNull;
   if (holiday != null) {
     return DayScheduleData(
       date: utcDate,
@@ -110,19 +115,23 @@ final dayScheduleByKeyProvider =
   }
 
   final cancelledSubjectIds = exceptions
-      .where((e) => e.type == ScheduleExceptionType.CANCELLED_CLASS && e.subjectId != null)
+      .where((e) =>
+          e.type == ScheduleExceptionType.CANCELLED_CLASS &&
+          e.subjectId != null)
       .map((e) => e.subjectId!)
       .toSet();
 
-  final examExceptions = exceptions
-      .where((e) => e.type == ScheduleExceptionType.EXAM)
-      .toList();
+  final examExceptions =
+      exceptions.where((e) => e.type == ScheduleExceptionType.EXAM).toList();
 
   final ruleRepo = ref.watch(weeklyScheduleRuleRepositoryProvider);
   final occurrenceRepo = ref.watch(dailyScheduleOccurrenceRepositoryProvider);
   final attendanceRepo = ref.watch(attendanceRepositoryProvider);
   final subjects = await ref.watch(subjectListControllerProvider.future);
-  final subjectMap = {for (var s in subjects) if (s.id != null) s.id!: s};
+  final subjectMap = {
+    for (var s in subjects)
+      if (s.id != null) s.id!: s
+  };
 
   final activeSemester = await ref.watch(activeSemesterProvider.future);
   if (activeSemester == null || activeSemester.localId == null) {
@@ -204,6 +213,7 @@ final dayScheduleByKeyProvider =
         endTime: '12:00',
         description: exam.description ?? 'Exam Event',
         colorHex: '#EF4444',
+        date: utcDate,
       ),
     );
   }
@@ -236,7 +246,8 @@ final dayScheduleByKeyProvider =
       final records = recordsCache[rule.subjectId] ??=
           await attendanceRepo.getAttendanceForSubject(rule.subjectId);
       final unlinkedOnDate = records.where((r) {
-        if (!normalizeUtcDate(r.markedAt).isAtSameMomentAs(utcDate)) return false;
+        if (!normalizeUtcDate(r.markedAt).isAtSameMomentAs(utcDate))
+          return false;
         final occId = r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
         return occId == null || !savedOccIds.contains(occId);
       }).toList();
@@ -272,6 +283,7 @@ final dayScheduleByKeyProvider =
         faculty: saved?.faculty ?? rule.faculty ?? sub.faculty,
         colorHex: sub.color,
         status: status,
+        date: utcDate,
       ),
     );
   }
@@ -302,6 +314,7 @@ final dayScheduleByKeyProvider =
         status: extra.status == OccurrenceStatus.UPCOMING
             ? 'UNMARKED'
             : extra.status.toShortString(),
+        date: utcDate,
       ),
     );
   }
@@ -329,11 +342,12 @@ String _attendanceToSlotStatus(AttendanceStatus status) {
   }
 }
 
-final weekScheduleProvider = FutureProvider.family<WeekScheduleData, SemesterWeek>((ref, week) async {
+final weekScheduleProvider =
+    FutureProvider.family<WeekScheduleData, SemesterWeek>((ref, week) async {
   final dayResults = <DayScheduleData>[];
   for (final date in week.dates) {
-    final dayData =
-        await ref.watch(dayScheduleByKeyProvider(formatUtcDateKey(date)).future);
+    final dayData = await ref
+        .watch(dayScheduleByKeyProvider(formatUtcDateKey(date)).future);
     dayResults.add(dayData);
   }
   return WeekScheduleData(week: week, days: dayResults);

@@ -17,7 +17,8 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepositoryImpl(dataSource);
 });
 
-final taskNotificationSchedulerProvider = Provider<TaskNotificationScheduler>((ref) {
+final taskNotificationSchedulerProvider =
+    Provider<TaskNotificationScheduler>((ref) {
   final notificationService = ref.watch(notificationServiceProvider);
   return TaskNotificationScheduler(notificationService);
 });
@@ -75,25 +76,34 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
     state = await AsyncValue.guard(() async {
       await repository.saveTask(task);
       final updatedList = await repository.getAllTasks();
-      
-      // Get saved task to have valid id
-      final savedTask = updatedList.firstWhere(
-        (t) => t.title == title && t.dueDate == dueDate,
-        orElse: () => updatedList.last,
-      );
 
-      // Schedule notification
+      // Get saved task to have valid id
+      final savedTask = updatedList
+              .where(
+                (t) => t.title == title && t.dueDate == dueDate,
+              )
+              .firstOrNull ??
+          (updatedList.isNotEmpty ? updatedList.last : null);
+
+      // Schedule notification safely without assuming subjects is non-empty
       String? subjectName;
       if (subjectId != null) {
-        final subjects = ref.read(subjectListControllerProvider).valueOrNull ?? [];
-        final sub = subjects.firstWhere((s) => s.id == subjectId, orElse: () => subjects.first);
-        subjectName = sub.name;
+        final subjects =
+            ref.read(subjectListControllerProvider).valueOrNull ?? [];
+        final sub = subjects.where((s) => s.id == subjectId).firstOrNull;
+        subjectName = sub?.name;
       }
-      await scheduler.scheduleTaskNotification(savedTask, subjectName: subjectName);
+      if (savedTask != null) {
+        await scheduler.scheduleTaskNotification(savedTask,
+            subjectName: subjectName);
+      }
 
       updatedList.sort((a, b) => a.dueDate.compareTo(b.dueDate));
       return updatedList;
     });
+    if (state.hasError) {
+      throw state.error!;
+    }
   }
 
   Future<void> updateTask(AcademicTask task) async {
@@ -108,19 +118,25 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await repository.saveTask(updatedTask);
-      
+
       String? subjectName;
       if (updatedTask.subjectId != null) {
-        final subjects = ref.read(subjectListControllerProvider).valueOrNull ?? [];
-        final sub = subjects.firstWhere((s) => s.id == updatedTask.subjectId, orElse: () => subjects.first);
-        subjectName = sub.name;
+        final subjects =
+            ref.read(subjectListControllerProvider).valueOrNull ?? [];
+        final sub =
+            subjects.where((s) => s.id == updatedTask.subjectId).firstOrNull;
+        subjectName = sub?.name;
       }
-      await scheduler.scheduleTaskNotification(updatedTask, subjectName: subjectName);
+      await scheduler.scheduleTaskNotification(updatedTask,
+          subjectName: subjectName);
 
       final list = await repository.getAllTasks();
       list.sort((a, b) => a.dueDate.compareTo(b.dueDate));
       return list;
     });
+    if (state.hasError) {
+      throw state.error!;
+    }
   }
 
   Future<void> toggleTaskCompletion(int taskId) async {
@@ -158,7 +174,8 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
   }
 }
 
-final taskListControllerProvider = AsyncNotifierProvider<TaskListController, List<AcademicTask>>(() {
+final taskListControllerProvider =
+    AsyncNotifierProvider<TaskListController, List<AcademicTask>>(() {
   return TaskListController();
 });
 
@@ -190,7 +207,18 @@ final upcomingTasksProvider = Provider<List<AcademicTask>>((ref) {
   return tasks.where((t) {
     if (t.status == TaskStatus.COMPLETED) return false;
     final dueClean = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
-    return dueClean.isAfter(todayClean) || dueClean.isAtSameMomentAs(todayClean) || t.dueDate.isBefore(now);
+    return dueClean.isAfter(todayClean) ||
+        (dueClean.isAtSameMomentAs(todayClean) && !t.dueDate.isBefore(now));
+  }).toList();
+});
+
+final overdueTasksProvider = Provider<List<AcademicTask>>((ref) {
+  final tasks = ref.watch(allTasksProvider);
+  final now = DateTime.now();
+
+  return tasks.where((t) {
+    if (t.status == TaskStatus.COMPLETED) return false;
+    return t.dueDate.isBefore(now);
   }).toList();
 });
 

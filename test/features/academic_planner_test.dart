@@ -18,7 +18,8 @@ class FakeTaskRepository implements TaskRepository {
   final StreamController<void> _controller = StreamController<void>.broadcast();
 
   @override
-  Future<List<AcademicTask>> getAllTasks() async => List.from(_tasks.where((t) => !t.isDeleted));
+  Future<List<AcademicTask>> getAllTasks() async =>
+      List.from(_tasks.where((t) => !t.isDeleted));
 
   @override
   Future<AcademicTask?> getTaskById(int id) async {
@@ -96,7 +97,9 @@ void main() {
     fakeNotifService = FakeNotificationService();
   });
 
-  test('Urgency Calculation test (Overdue, Urgent <3d, Warning 3-7d, Normal 7+d)', () {
+  test(
+      'Urgency Calculation test (Overdue, Urgent <3d, Warning 3-7d, Normal 7+d)',
+      () {
     final now = DateTime(2026, 7, 20, 10, 0);
 
     // Overdue
@@ -166,7 +169,8 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         taskRepositoryProvider.overrideWithValue(fakeRepo),
-        taskNotificationSchedulerProvider.overrideWithValue(TaskNotificationScheduler(fakeNotifService)),
+        taskNotificationSchedulerProvider
+            .overrideWithValue(TaskNotificationScheduler(fakeNotifService)),
       ],
     );
     addTearDown(container.dispose);
@@ -209,7 +213,8 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         taskRepositoryProvider.overrideWithValue(fakeRepo),
-        taskNotificationSchedulerProvider.overrideWithValue(TaskNotificationScheduler(fakeNotifService)),
+        taskNotificationSchedulerProvider
+            .overrideWithValue(TaskNotificationScheduler(fakeNotifService)),
       ],
     );
     addTearDown(container.dispose);
@@ -220,8 +225,8 @@ void main() {
     await controller.addTask(
       title: 'DBMS Assignment',
       taskType: TaskType.ASSIGNMENT,
-      startDate: DateTime(2026, 7, 20),
-      dueDate: DateTime(2026, 7, 21, 18, 0),
+      startDate: DateTime.now(),
+      dueDate: DateTime.now().add(const Duration(days: 2)),
       priority: TaskPriority.MEDIUM,
       reminder: TaskReminder.HOURS_2,
     );
@@ -239,7 +244,8 @@ void main() {
     await container.read(taskListControllerProvider.future);
     expect(container.read(completedTasksProvider).length, equals(1));
     expect(container.read(upcomingTasksProvider).length, equals(0));
-    expect(container.read(completedTasksProvider).first.status, equals(TaskStatus.COMPLETED));
+    expect(container.read(completedTasksProvider).first.status,
+        equals(TaskStatus.COMPLETED));
 
     // Toggle back to pending
     await controller.toggleTaskCompletion(taskId);
@@ -249,7 +255,8 @@ void main() {
     expect(container.read(upcomingTasksProvider).length, equals(1));
   });
 
-  test('Notification Scheduling calculates time and cancels on completion', () async {
+  test('Notification Scheduling calculates time and cancels on completion',
+      () async {
     final scheduler = TaskNotificationScheduler(fakeNotifService);
 
     // Future due date 3 days from now
@@ -271,7 +278,8 @@ void main() {
     await scheduler.scheduleTaskNotification(task, subjectName: 'DBMS');
 
     expect(fakeNotifService.scheduledItems.length, equals(1));
-    expect(fakeNotifService.scheduledItems.first.body, contains('DBMS Assignment deadline tomorrow'));
+    expect(fakeNotifService.scheduledItems.first.body,
+        contains('DBMS Assignment deadline tomorrow'));
 
     // Cancel notification on complete
     final completedTask = task.copyWith(status: TaskStatus.COMPLETED);
@@ -280,7 +288,9 @@ void main() {
     expect(fakeNotifService.cancelledIds, contains(800010));
   });
 
-  test('Academic Calendar includes Task Deadline items and displays hasTask indicator', () async {
+  test(
+      'Academic Calendar includes Task Deadline items and displays hasTask indicator',
+      () async {
     final testSemester = Semester(
       id: 'sem_1',
       localId: 1,
@@ -306,7 +316,8 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         allTasksProvider.overrideWith((ref) => [testTask]),
-        activeSemesterProvider.overrideWith((ref) => Future.value(testSemester)),
+        activeSemesterProvider
+            .overrideWith((ref) => Future.value(testSemester)),
         selectedMonthProvider.overrideWith((ref) => DateTime(2026, 7, 1)),
       ],
     );
@@ -315,8 +326,13 @@ void main() {
     final daysAsync = container.read(monthlyCalendarDataProvider);
     final days = daysAsync.value!;
 
-    final july25 = days.firstWhere((d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 25);
+    final july25 = days.firstWhere(
+        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 25);
     expect(july25.hasTask, isTrue);
-    expect(july25.items.any((i) => i.type == CalendarItemType.TASK && i.title == 'Algorithm Submission'), isTrue);
+    expect(
+        july25.items.any((i) =>
+            i.type == CalendarItemType.TASK &&
+            i.title == 'Algorithm Submission'),
+        isTrue);
   });
 }
