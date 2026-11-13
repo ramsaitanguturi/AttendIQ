@@ -850,6 +850,8 @@ class WidgetDataService {
         return 'CANCELLED';
       case OccurrenceStatus.UPCOMING:
         return 'UPCOMING';
+      case OccurrenceStatus.LATE:
+        return 'LATE';
     }
   }
 
@@ -863,6 +865,8 @@ class WidgetDataService {
         return 'ABSENT';
       case AttendanceStatus.CANCELLED:
         return 'CANCELLED';
+      case AttendanceStatus.LATE:
+        return 'LATE';
     }
   }
 }

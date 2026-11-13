@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/notifications/presentation/widgets/pending_check_ins_banner.dart';
 import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
 import '../../../timetable/presentation/widgets/semester_weekly_calendar_view.dart';
@@ -158,11 +159,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ),
                 const SizedBox(height: 28.0),
 
-                // 2. Today's Schedule Card with Attendance Actions
+                // 2. Pending Check-Ins Banner (if any unanswered past check-ins)
+                const PendingCheckInsBanner(),
+
+                // 3. Today's Schedule Card with Attendance Actions
                 const TodayScheduleCard(),
                 const SizedBox(height: 28.0),
 
-                // 3. Overall Attendance Summary Card (with quick analytics button)
+                // 4. Overall Attendance Summary Card (with quick analytics button)
                 _buildOverallProgressCard(context, analyticsAsync, isDark),
                 const SizedBox(height: 24.0),
 

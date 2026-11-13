@@ -533,6 +533,10 @@ class SubjectDetailsPage extends ConsumerWidget {
         statusColor = AppColors.attendanceMid;
         statusIcon = Icons.radio_button_unchecked;
         break;
+      case OccurrenceStatus.LATE:
+        statusColor = AppColors.attendanceMid;
+        statusIcon = Icons.access_time_outlined;
+        break;
     }
 
     final subtitleText = occurrence.type == OccurrenceType.EXTRA_CLASS

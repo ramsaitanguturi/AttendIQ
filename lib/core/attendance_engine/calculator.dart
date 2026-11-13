@@ -5,8 +5,8 @@ class AttendanceCalculator {
   /// P = (A_attended / A_total) * 100
   /// If A_total is 0, returns 100.0.
   static double calculatePercentage({
-    required int attended,
-    required int total,
+    required num attended,
+    required num total,
   }) {
     if (total <= 0) return 100.0;
     final percentage = (attended / total) * 100.0;
@@ -18,8 +18,8 @@ class AttendanceCalculator {
   /// B_safe = max(0, floor((100 * A_attended - T * A_total) / T))
   /// If A_total = 0, returns 0.
   static int calculateSafeBunks({
-    required int attended,
-    required int total,
+    required num attended,
+    required num total,
     required double target,
   }) {
     if (total <= 0) return 0;
@@ -37,8 +37,8 @@ class AttendanceCalculator {
   /// If T = 100 and A_attended < A_total, it returns null (representing N/A).
   /// If current percentage is already above or equal to T, returns 0.
   static int? calculateRequiredClasses({
-    required int attended,
-    required int total,
+    required num attended,
+    required num total,
     required double target,
   }) {
     final currentPercentage =

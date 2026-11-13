@@ -41,7 +41,7 @@ final subjectRepositoryProvider =
 
 typedef SubjectRepositoryRef = AutoDisposeProviderRef<SubjectRepository>;
 String _$subjectListControllerHash() =>
-    r'2e50d3d6e9f00619f20b19039f0f0feb8bc90673';
+    r'73cbcdf7c6fd063ae1a81af3e1d2f380527f74a7';
 
 /// See also [SubjectListController].
 @ProviderFor(SubjectListController)

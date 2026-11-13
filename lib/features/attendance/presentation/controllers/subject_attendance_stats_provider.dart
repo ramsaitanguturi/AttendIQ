@@ -9,6 +9,7 @@ import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/attendance_record.dart';
 import 'attendance_controller.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../timetable/data/models/daily_schedule_occurrence_local.dart';
 import '../../../timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../../timetable/data/utils/occurrence_identity.dart';
@@ -25,6 +26,7 @@ class SubjectAttendanceStats {
   final double attendancePercentage;
   final int presentCount;
   final int absentCount;
+  final int lateCount;
   final int totalClasses;
   final int safeBunks;
   final int? requiredClasses;
@@ -36,6 +38,7 @@ class SubjectAttendanceStats {
     required this.attendancePercentage,
     required this.presentCount,
     required this.absentCount,
+    this.lateCount = 0,
     required this.totalClasses,
     required this.safeBunks,
     this.requiredClasses,
@@ -88,9 +91,10 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   // 3. Fetch all attendance records for this subject
   final records = await attendanceRepo.getAttendanceForSubject(subjectId);
 
-  // 4. Calculate present, absent counts
+  // 4. Calculate present, absent, and late counts
   int present = 0;
   int absent = 0;
+  int lateCount = 0;
   for (final r in records) {
     if (r.status == AttendanceStatus.PRESENT ||
         r.status == AttendanceStatus.EXTRA_PRESENT) {
@@ -98,18 +102,37 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
     } else if (r.status == AttendanceStatus.ABSENT ||
         r.status == AttendanceStatus.EXTRA_ABSENT) {
       absent++;
+    } else if (r.status == AttendanceStatus.LATE) {
+      lateCount++;
     }
   }
-  final total = present + absent;
+
+  // Calculate effective attended based on user preferences
+  double lateWeight = 0.5;
+  try {
+    final prefs = ref.watch(settingsControllerProvider).valueOrNull;
+    if (prefs != null) {
+      if (prefs.lateAttendancePolicy == 'present') {
+        lateWeight = 1.0;
+      } else if (prefs.lateAttendancePolicy == 'absent') {
+        lateWeight = 0.0;
+      } else {
+        lateWeight = prefs.lateAttendanceWeight;
+      }
+    }
+  } catch (_) {}
+
+  final effectiveAttended = present + (lateCount * lateWeight);
+  final total = present + absent + lateCount;
 
   // 5. Calculate percentage, safe bunks, must-attend
   final target = subject.attendanceTarget;
   final percentage =
-      AttendanceCalculator.calculatePercentage(attended: present, total: total);
+      AttendanceCalculator.calculatePercentage(attended: effectiveAttended, total: total);
   final safeBunks = AttendanceCalculator.calculateSafeBunks(
-      attended: present, total: total, target: target);
+      attended: effectiveAttended, total: total, target: target);
   final requiredClasses = AttendanceCalculator.calculateRequiredClasses(
-      attended: present, total: total, target: target);
+      attended: effectiveAttended, total: total, target: target);
 
   // 6. Calculate remaining classes using canonical WeeklyScheduleRuleRepository,
   // accounting for schedule exceptions (holidays, cancelled classes) and already-marked classes today
@@ -220,6 +243,7 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
     attendancePercentage: percentage,
     presentCount: present,
     absentCount: absent,
+    lateCount: lateCount,
     totalClasses: total,
     safeBunks: safeBunks,
     requiredClasses: requiredClasses,
@@ -255,15 +279,32 @@ Future<double> overallAttendancePercentage(
   if (statsList.isEmpty) return 100.0;
 
   int totalPresent = 0;
+  int totalLate = 0;
   int totalClasses = 0;
 
   for (final stats in statsList) {
     totalPresent += stats.presentCount;
+    totalLate += stats.lateCount;
     totalClasses += stats.totalClasses;
   }
 
   if (totalClasses == 0) return 100.0;
-  return (totalPresent / totalClasses) * 100.0;
+  double lateWeight = 0.5;
+  try {
+    final prefs = ref.watch(settingsControllerProvider).valueOrNull;
+    if (prefs != null) {
+      if (prefs.lateAttendancePolicy == 'present') {
+        lateWeight = 1.0;
+      } else if (prefs.lateAttendancePolicy == 'absent') {
+        lateWeight = 0.0;
+      } else {
+        lateWeight = prefs.lateAttendanceWeight;
+      }
+    }
+  } catch (_) {}
+
+  final effectiveAttended = totalPresent + (totalLate * lateWeight);
+  return (effectiveAttended / totalClasses) * 100.0;
 }
 
 @riverpod

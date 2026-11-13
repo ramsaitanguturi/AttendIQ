@@ -55,6 +55,9 @@ Future<bool> _runWidgetRefreshTask() {
   });
 }
 
+Future<bool> runWithBackgroundIsar(Future<bool> Function(Isar isar) action) =>
+    _runWithIsar(action);
+
 Future<bool> _runWithIsar(Future<bool> Function(Isar isar) action) async {
   Isar? isar;
   var openedHere = false;

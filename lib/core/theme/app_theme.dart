@@ -42,15 +42,32 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      primaryColor: AppColors.primary,
+      primaryColor: AppColors.silverReflect,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
+        primary: AppColors.silverReflect,
+        secondary: AppColors.silverReflect,
         surface: AppColors.darkSurface,
         error: AppColors.attendanceLow,
+        outline: AppColors.silverBorderSubtle,
       ),
-      dividerColor: AppColors.darkBorder,
+      dividerColor: AppColors.silverBorderSubtle,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: IconThemeData(color: AppColors.silverReflect),
+        titleTextStyle: TextStyle(
+          color: AppColors.darkTextPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.darkSurface,
+        selectedItemColor: AppColors.silverReflect,
+        unselectedItemColor: AppColors.darkTextSecondary,
+      ),
       textTheme: TextTheme(
         displayLarge: AppTextStyles.displayLarge
             .copyWith(color: AppColors.darkTextPrimary),
@@ -62,10 +79,11 @@ class AppTheme {
             .copyWith(color: AppColors.darkTextSecondary),
       ),
       cardTheme: const CardTheme(
-        color: AppColors.darkSurface,
+        color: AppColors.darkCard,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16.0)),
-          side: BorderSide(color: AppColors.darkBorder, width: 1.0),
+          side: BorderSide(color: AppColors.silverBorderSubtle, width: 1.0),
         ),
       ),
     );

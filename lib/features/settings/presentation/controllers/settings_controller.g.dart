@@ -38,7 +38,7 @@ final appThemeModeProvider = AutoDisposeProvider<ThemeMode>.internal(
 
 typedef AppThemeModeRef = AutoDisposeProviderRef<ThemeMode>;
 String _$settingsControllerHash() =>
-    r'98fb8ec8bf9b5cc2481777a38c4e9efd7a5d26b9';
+    r'c8764f5e78679e686464da91ca2eccbf6b106562';
 
 /// See also [SettingsController].
 @ProviderFor(SettingsController)

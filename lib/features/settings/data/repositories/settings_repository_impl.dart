@@ -23,6 +23,17 @@ class SettingsRepositoryImpl implements SettingsRepository {
       lastBackupDate: local.lastBackupDate,
       autoBackupDay: local.autoBackupDay,
       autoBackupHour: local.autoBackupHour,
+      lateAttendanceWeight: local.lateAttendanceWeight,
+      lateAttendancePolicy: local.lateAttendancePolicy,
+      quietHoursEnabled: local.quietHoursEnabled,
+      quietHoursStartHour: local.quietHoursStartHour,
+      quietHoursEndHour: local.quietHoursEndHour,
+      notificationSound: local.notificationSound,
+      notificationVibration: local.notificationVibration,
+      missedAttendanceReminderEnabled: local.missedAttendanceReminderEnabled,
+      missedAttendanceReminderOffset: local.missedAttendanceReminderOffset,
+      enableCloudSync: local.enableCloudSync,
+      cloudSyncConsentGiven: local.cloudSyncConsentGiven,
     );
   }
 
@@ -38,7 +49,20 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ..enableAutoBackup = preferences.enableAutoBackup
       ..lastBackupDate = preferences.lastBackupDate
       ..autoBackupDay = preferences.autoBackupDay
-      ..autoBackupHour = preferences.autoBackupHour;
+      ..autoBackupHour = preferences.autoBackupHour
+      ..lateAttendanceWeight = preferences.lateAttendanceWeight
+      ..lateAttendancePolicy = preferences.lateAttendancePolicy
+      ..quietHoursEnabled = preferences.quietHoursEnabled
+      ..quietHoursStartHour = preferences.quietHoursStartHour
+      ..quietHoursEndHour = preferences.quietHoursEndHour
+      ..notificationSound = preferences.notificationSound
+      ..notificationVibration = preferences.notificationVibration
+      ..missedAttendanceReminderEnabled =
+          preferences.missedAttendanceReminderEnabled
+      ..missedAttendanceReminderOffset =
+          preferences.missedAttendanceReminderOffset
+      ..enableCloudSync = preferences.enableCloudSync
+      ..cloudSyncConsentGiven = preferences.cloudSyncConsentGiven;
     return local;
   }
 

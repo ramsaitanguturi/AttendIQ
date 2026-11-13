@@ -24,9 +24,11 @@ class AnalyticsCalculator {
   static SubjectAnalytics calculateSubjectAnalytics({
     required Subject subject,
     required List<AttendanceRecord> records,
+    double lateWeight = 0.5,
   }) {
     int present = 0;
     int absent = 0;
+    int lateCount = 0;
 
     for (final record in records) {
       if (record.isDeleted) continue;
@@ -36,24 +38,27 @@ class AnalyticsCalculator {
       } else if (record.status == AttendanceStatus.ABSENT ||
           record.status == AttendanceStatus.EXTRA_ABSENT) {
         absent++;
+      } else if (record.status == AttendanceStatus.LATE) {
+        lateCount++;
       }
     }
 
-    final totalClasses = present + absent;
+    final effectiveAttended = present + (lateCount * lateWeight);
+    final totalClasses = present + absent + lateCount;
     final percentage = AttendanceCalculator.calculatePercentage(
-      attended: present,
+      attended: effectiveAttended,
       total: totalClasses,
     );
 
     final target = subject.attendanceTarget;
     final safeBunks = AttendanceCalculator.calculateSafeBunks(
-      attended: present,
+      attended: effectiveAttended,
       total: totalClasses,
       target: target,
     );
 
     final classesNeeded = AttendanceCalculator.calculateRequiredClasses(
-      attended: present,
+      attended: effectiveAttended,
       total: totalClasses,
       target: target,
     );
@@ -77,6 +82,7 @@ class AnalyticsCalculator {
       percentage: percentage,
       present: present,
       absent: absent,
+      lateCount: lateCount,
       totalClasses: totalClasses,
       safeBunks: safeBunks,
       classesNeeded: classesNeeded,
@@ -89,6 +95,7 @@ class AnalyticsCalculator {
     required List<Subject> subjects,
     required List<AttendanceRecord> records,
     required List<LoggedOccurrence> occurrences,
+    double lateWeight = 0.5,
   }) {
     // 1. Calculate subject analytics
     final List<SubjectAnalytics> subjectAnalyticsList = [];
@@ -108,6 +115,7 @@ class AnalyticsCalculator {
         calculateSubjectAnalytics(
           subject: sub,
           records: recordsBySubject[sub.id!] ?? [],
+          lateWeight: lateWeight,
         ),
       );
     }
@@ -115,13 +123,16 @@ class AnalyticsCalculator {
     // 2. Overall statistics
     int totalPresent = 0;
     int totalAbsent = 0;
+    int totalLate = 0;
     for (final subAnalytic in subjectAnalyticsList) {
       totalPresent += subAnalytic.present;
       totalAbsent += subAnalytic.absent;
+      totalLate += subAnalytic.lateCount;
     }
-    final totalClasses = totalPresent + totalAbsent;
+    final effectiveAttended = totalPresent + (totalLate * lateWeight);
+    final totalClasses = totalPresent + totalAbsent + totalLate;
     final overallPercentage = AttendanceCalculator.calculatePercentage(
-      attended: totalPresent,
+      attended: effectiveAttended,
       total: totalClasses,
     );
 
@@ -202,6 +213,7 @@ class AnalyticsCalculator {
       totalClasses: totalClasses,
       totalPresent: totalPresent,
       totalAbsent: totalAbsent,
+      totalLate: totalLate,
       attendanceTrend: attendanceTrend,
       subjectComparison: subjectComparison,
       attendanceStreak: attendanceStreak,

@@ -18,7 +18,8 @@ enum OccurrenceStatus {
   UPCOMING,
   PRESENT,
   ABSENT,
-  CANCELLED;
+  CANCELLED,
+  LATE;
 
   String toShortString() => name;
 

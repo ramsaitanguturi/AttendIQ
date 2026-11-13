@@ -109,6 +109,8 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
         return AttendanceStatus.EXTRA_ABSENT;
       case AttendanceStatus.CANCELLED:
         return null;
+      case AttendanceStatus.LATE:
+        return AttendanceStatus.LATE;
     }
   }
 

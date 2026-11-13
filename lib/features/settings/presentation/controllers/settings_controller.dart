@@ -146,6 +146,104 @@ class SettingsController extends _$SettingsController {
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
   }
+
+  Future<void> updateLateAttendanceSettings({
+    required double weight,
+    required String policy,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(
+      lateAttendanceWeight: weight.clamp(0.0, 1.0),
+      lateAttendancePolicy: policy,
+    );
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+
+  Future<void> updateQuietHours({
+    required bool enabled,
+    required int startHour,
+    required int endHour,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(
+      quietHoursEnabled: enabled,
+      quietHoursStartHour: startHour,
+      quietHoursEndHour: endHour,
+    );
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+
+  Future<void> updateNotificationAudioVibration({
+    required bool sound,
+    required bool vibration,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(
+      notificationSound: sound,
+      notificationVibration: vibration,
+    );
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+
+  Future<void> updateMissedAttendanceReminder({
+    required bool enabled,
+    required int offsetMinutes,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(
+      missedAttendanceReminderEnabled: enabled,
+      missedAttendanceReminderOffset: offsetMinutes,
+    );
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+
+  Future<void> updateCloudSyncSettings({
+    required bool enabled,
+    required bool consentGiven,
+  }) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(
+      enableCloudSync: enabled,
+      cloudSyncConsentGiven: consentGiven,
+    );
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+
+  Future<void> updateLastSyncTime(DateTime time) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(lastSyncTime: time);
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
 }
 
 @riverpod

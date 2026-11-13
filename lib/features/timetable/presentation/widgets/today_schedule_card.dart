@@ -435,6 +435,18 @@ class _OccurrenceCard extends ConsumerWidget {
         const SizedBox(width: 8),
         Expanded(
           child: _ActionButton(
+            label: 'Late',
+            color: const Color(0xFFFFB300),
+            icon: Icons.access_time,
+            isSelected: currentStatus == OccurrenceStatus.LATE,
+            onPressed: () => ref
+                .read(attendanceControllerProvider.notifier)
+                .markOccurrenceLate(occurrence),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _ActionButton(
             label: 'Absent',
             color: AppColors.attendanceLow,
             icon: Icons.cancel_outlined,

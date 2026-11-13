@@ -66,6 +66,7 @@ class AttendanceAnalytics {
   final int totalClasses;
   final int totalPresent;
   final int totalAbsent;
+  final int totalLate;
   final AttendanceTrend attendanceTrend;
   final SubjectComparison subjectComparison;
   final AttendanceStreak attendanceStreak;
@@ -76,6 +77,7 @@ class AttendanceAnalytics {
     required this.totalClasses,
     required this.totalPresent,
     required this.totalAbsent,
+    this.totalLate = 0,
     required this.attendanceTrend,
     required this.subjectComparison,
     required this.attendanceStreak,

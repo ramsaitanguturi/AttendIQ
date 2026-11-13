@@ -57,10 +57,10 @@ android {
 
     signingConfigs {
         release {
-            keyAlias = keystoreProperties['keyAlias']
-            keyPassword = keystoreProperties['keyPassword']
-            storeFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword = keystoreProperties['storePassword']
+            keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties['keyAlias']
+            keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProperties['keyPassword']
+            storeFile = System.getenv("STORE_FILE") ? file(System.getenv("STORE_FILE")) : (keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null)
+            storePassword = System.getenv("STORE_PASSWORD") ?: keystoreProperties['storePassword']
         }
     }
 
@@ -91,8 +91,10 @@ android {
 
     buildTypes {
         release {
-            // Signing with the release keys if configured, otherwise fallback to debug.
-            if (keystorePropertiesFile.exists()) {
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            // Signing with release keys if configured via key.properties or env vars
+            if (keystorePropertiesFile.exists() || System.getenv("STORE_FILE") != null) {
                 signingConfig = signingConfigs.release
             } else {
                 signingConfig = signingConfigs.debug

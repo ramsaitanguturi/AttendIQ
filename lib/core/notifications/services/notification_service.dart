@@ -2,7 +2,31 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
+import '../handlers/notification_action_handler.dart';
 import '../models/notification_item.dart';
+
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) async {
+  final actionId = response.actionId;
+  final payload = response.payload;
+  if (actionId != null && actionId.isNotEmpty && payload != null) {
+    await NotificationActionHandler.handleAction(
+      actionId: actionId,
+      payload: payload,
+    );
+  }
+}
+
+void onNotificationResponseForeground(NotificationResponse response) async {
+  final actionId = response.actionId;
+  final payload = response.payload;
+  if (actionId != null && actionId.isNotEmpty && payload != null) {
+    await NotificationActionHandler.handleAction(
+      actionId: actionId,
+      payload: payload,
+    );
+  }
+}
 
 abstract class NotificationService {
   Future<void> initialize();
@@ -64,6 +88,8 @@ class LocalNotificationServiceImpl implements NotificationService {
 
     await _plugin.initialize(
       initializationSettings,
+      onDidReceiveNotificationResponse: onNotificationResponseForeground,
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
     // Set up Android notification channels
@@ -220,6 +246,30 @@ class LocalNotificationServiceImpl implements NotificationService {
         enableVibrate = false;
     }
 
+    List<AndroidNotificationAction>? actions;
+    if (type == NotificationType.CLASS_REMINDER) {
+      actions = const [
+        AndroidNotificationAction(
+          NotificationActionHandler.actionPresent,
+          'PRESENT',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+        AndroidNotificationAction(
+          NotificationActionHandler.actionAbsent,
+          'ABSENT',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+        AndroidNotificationAction(
+          NotificationActionHandler.actionCancelled,
+          'CANCELLED',
+          showsUserInterface: false,
+          cancelNotification: true,
+        ),
+      ];
+    }
+
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
       channelId,
@@ -229,6 +279,7 @@ class LocalNotificationServiceImpl implements NotificationService {
       priority: Priority.high,
       playSound: playSound,
       enableVibration: enableVibrate,
+      actions: actions,
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(

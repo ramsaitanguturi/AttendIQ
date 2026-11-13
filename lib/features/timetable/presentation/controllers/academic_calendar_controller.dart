@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -67,9 +68,14 @@ class CalendarItem {
   final String? endTime;
   final CalendarItemType type;
   final int? subjectId;
-  final String?
-      status; // PRESENT, ABSENT, CANCELLED, UPCOMING, PENDING, COMPLETED
+  final int? occurrenceId;
+  final int? ruleId;
+  final String? slotKey;
+  final String? room;
+  final String? status; // PRESENT, ABSENT, LATE, CANCELLED, UPCOMING, UNMARKED, etc.
+  final String? originalStatus;
   final String? description;
+  final DateTime? updatedAt;
 
   const CalendarItem({
     required this.id,
@@ -79,8 +85,14 @@ class CalendarItem {
     this.endTime,
     required this.type,
     this.subjectId,
+    this.occurrenceId,
+    this.ruleId,
+    this.slotKey,
+    this.room,
     this.status,
+    this.originalStatus,
     this.description,
+    this.updatedAt,
   });
 }
 
@@ -278,7 +290,13 @@ final monthlyCalendarDataProvider =
       ));
     }
 
-    // 4. Regular Recurring Classes (WeeklyScheduleRule) if within semester and not holiday
+    // 4. Daily Schedule Occurrences on date
+    final dayOccurrences = occurrences.where((o) {
+      final od = DateTime.utc(o.date.year, o.date.month, o.date.day);
+      return od.isAtSameMomentAs(cleanDate);
+    }).toList();
+
+    // 5. Regular Recurring Classes (WeeklyScheduleRule) if within semester and not holiday
     if (isInSemesterRange && !isHoliday) {
       final dayOfWeek = cleanDate.weekday; // 1=Mon ... 7=Sun
       final matchingRules =
@@ -292,7 +310,17 @@ final monthlyCalendarDataProvider =
         final sub = subjectMap[rule.subjectId];
         final subName = sub?.name ?? 'Subject';
 
-        if (isCancelled) {
+        // Check if there is already a materialized occurrence for this date and rule/slot
+        final matchingOcc = dayOccurrences.firstWhereOrNull((o) =>
+            !o.isDeleted &&
+            o.subjectId == rule.subjectId &&
+            o.startTime == rule.startTime);
+
+        final effectiveStatus = matchingOcc != null
+            ? matchingOcc.status.toShortString()
+            : (isCancelled ? 'CANCELLED' : 'UNMARKED');
+
+        if (isCancelled && matchingOcc == null) {
           dayItems.add(CalendarItem(
             id: 'cancelled_rule_${rule.id}_${cleanDate.toIso8601String()}',
             title: subName,
@@ -301,30 +329,39 @@ final monthlyCalendarDataProvider =
             endTime: rule.endTime,
             type: CalendarItemType.CANCELLED_CLASS,
             subjectId: rule.subjectId,
+            ruleId: rule.id,
+            room: rule.room,
             status: 'CANCELLED',
+            originalStatus: 'CANCELLED',
           ));
         } else {
           dayItems.add(CalendarItem(
-            id: 'regular_rule_${rule.id}_${cleanDate.toIso8601String()}',
+            id: matchingOcc != null
+                ? 'occ_${matchingOcc.id}'
+                : 'regular_rule_${rule.id}_${cleanDate.toIso8601String()}',
             title: subName,
             subtitle: rule.room != null && rule.room!.isNotEmpty
                 ? 'Room ${rule.room}'
                 : 'Regular Class',
             startTime: rule.startTime,
             endTime: rule.endTime,
-            type: CalendarItemType.REGULAR_CLASS,
+            type: (matchingOcc?.status == OccurrenceStatus.CANCELLED || isCancelled)
+                ? CalendarItemType.CANCELLED_CLASS
+                : CalendarItemType.REGULAR_CLASS,
             subjectId: rule.subjectId,
+            occurrenceId: matchingOcc?.id,
+            ruleId: rule.id,
+            slotKey: matchingOcc?.slotKey,
+            room: matchingOcc?.room ?? rule.room,
+            status: effectiveStatus,
+            originalStatus: matchingOcc?.status.toShortString() ?? 'UNMARKED',
+            updatedAt: matchingOcc?.updatedAt,
           ));
         }
       }
     }
 
-    // 5. Daily Schedule Occurrences (Extra Classes) on date
-    final dayOccurrences = occurrences.where((o) {
-      final od = DateTime.utc(o.date.year, o.date.month, o.date.day);
-      return od.isAtSameMomentAs(cleanDate);
-    }).toList();
-
+    // 6. Daily Schedule Occurrences (Extra Classes) on date
     for (final occ in dayOccurrences) {
       if (occ.type == OccurrenceType.EXTRA_CLASS) {
         final sub = occ.subjectId != null ? subjectMap[occ.subjectId] : null;
@@ -337,8 +374,13 @@ final monthlyCalendarDataProvider =
           endTime: occ.endTime,
           type: CalendarItemType.EXTRA_CLASS,
           subjectId: occ.subjectId,
+          occurrenceId: occ.id,
+          slotKey: occ.slotKey,
+          room: occ.room,
           status: occ.status.toShortString(),
+          originalStatus: occ.status.toShortString(),
           description: occ.reason,
+          updatedAt: occ.updatedAt,
         ));
       }
     }

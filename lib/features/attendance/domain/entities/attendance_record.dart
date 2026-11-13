@@ -3,7 +3,8 @@ enum AttendanceStatus {
   ABSENT,
   CANCELLED,
   EXTRA_PRESENT,
-  EXTRA_ABSENT;
+  EXTRA_ABSENT,
+  LATE;
 
   String toShortString() => name;
 

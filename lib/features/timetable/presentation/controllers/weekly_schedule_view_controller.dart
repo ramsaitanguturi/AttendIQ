@@ -428,6 +428,8 @@ String _attendanceToSlotStatus(AttendanceStatus status) {
       return 'ABSENT';
     case AttendanceStatus.CANCELLED:
       return 'CANCELLED';
+    case AttendanceStatus.LATE:
+      return 'LATE';
   }
 }
 

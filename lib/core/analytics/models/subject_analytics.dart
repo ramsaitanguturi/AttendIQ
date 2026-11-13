@@ -6,6 +6,7 @@ class SubjectAnalytics {
   final double percentage;
   final int present;
   final int absent;
+  final int lateCount;
   final int totalClasses;
   final int safeBunks;
   final int? classesNeeded;
@@ -17,6 +18,7 @@ class SubjectAnalytics {
     required this.percentage,
     required this.present,
     required this.absent,
+    this.lateCount = 0,
     required this.totalClasses,
     required this.safeBunks,
     this.classesNeeded,
@@ -33,6 +35,7 @@ class SubjectAnalytics {
           percentage == other.percentage &&
           present == other.present &&
           absent == other.absent &&
+          lateCount == other.lateCount &&
           totalClasses == other.totalClasses &&
           safeBunks == other.safeBunks &&
           classesNeeded == other.classesNeeded &&
@@ -45,6 +48,7 @@ class SubjectAnalytics {
       percentage.hashCode ^
       present.hashCode ^
       absent.hashCode ^
+      lateCount.hashCode ^
       totalClasses.hashCode ^
       safeBunks.hashCode ^
       classesNeeded.hashCode ^
@@ -52,6 +56,6 @@ class SubjectAnalytics {
 
   @override
   String toString() {
-    return 'SubjectAnalytics(subjectId: $subjectId, subjectName: $subjectName, percentage: $percentage, present: $present, absent: $absent, totalClasses: $totalClasses, safeBunks: $safeBunks, classesNeeded: $classesNeeded, riskStatus: $riskStatus)';
+    return 'SubjectAnalytics(subjectId: $subjectId, subjectName: $subjectName, percentage: $percentage, present: $present, absent: $absent, lateCount: $lateCount, totalClasses: $totalClasses, safeBunks: $safeBunks, classesNeeded: $classesNeeded, riskStatus: $riskStatus)';
   }
 }

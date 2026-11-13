@@ -1,9 +1,12 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/colors.dart';
+import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../domain/entities/academic_event.dart';
+import '../../domain/entities/daily_schedule_occurrence.dart';
 import '../../domain/entities/schedule_exception.dart';
 import '../controllers/academic_calendar_controller.dart';
 import '../controllers/timetable_controller.dart';
@@ -22,25 +25,34 @@ class DateDetailsBottomSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final formattedDate = DateFormat('EEEE, MMMM d, yyyy').format(dayData.date);
+    final calendarDaysAsync = ref.watch(monthlyCalendarDataProvider);
+    final activeDayData = calendarDaysAsync.valueOrNull?.firstWhereOrNull(
+          (d) =>
+              d.date.year == dayData.date.year &&
+              d.date.month == dayData.date.month &&
+              d.date.day == dayData.date.day,
+        ) ??
+        dayData;
+    final formattedDate =
+        DateFormat('EEEE, MMMM d, yyyy').format(activeDayData.date);
 
-    final regularClasses = dayData.items
+    final regularClasses = activeDayData.items
         .where((i) => i.type == CalendarItemType.REGULAR_CLASS)
         .toList();
-    final cancelledClasses = dayData.items
+    final cancelledClasses = activeDayData.items
         .where((i) => i.type == CalendarItemType.CANCELLED_CLASS)
         .toList();
-    final extraClasses = dayData.items
+    final extraClasses = activeDayData.items
         .where((i) => i.type == CalendarItemType.EXTRA_CLASS)
         .toList();
     final exams =
-        dayData.items.where((i) => i.type == CalendarItemType.EXAM).toList();
+        activeDayData.items.where((i) => i.type == CalendarItemType.EXAM).toList();
     final holidays =
-        dayData.items.where((i) => i.type == CalendarItemType.HOLIDAY).toList();
+        activeDayData.items.where((i) => i.type == CalendarItemType.HOLIDAY).toList();
     final events =
-        dayData.items.where((i) => i.type == CalendarItemType.EVENT).toList();
+        activeDayData.items.where((i) => i.type == CalendarItemType.EVENT).toList();
     final tasks =
-        dayData.items.where((i) => i.type == CalendarItemType.TASK).toList();
+        activeDayData.items.where((i) => i.type == CalendarItemType.TASK).toList();
 
     return Container(
       padding: const EdgeInsets.only(
@@ -128,14 +140,14 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               const SizedBox(height: 16),
             ],
 
-            // Regular Classes
+            // Regular Classes & Cancelled Classes (with interactive historical editing)
             if (regularClasses.isNotEmpty || cancelledClasses.isNotEmpty) ...[
               _buildSectionHeader(
                   context, 'Classes', Icons.class_, Colors.green),
               ...regularClasses
-                  .map((item) => _buildItemTile(context, item, isDark)),
+                  .map((item) => _buildClassItemCard(context, ref, item, activeDayData.date, isDark)),
               ...cancelledClasses
-                  .map((item) => _buildItemTile(context, item, isDark)),
+                  .map((item) => _buildClassItemCard(context, ref, item, activeDayData.date, isDark)),
               const SizedBox(height: 16),
             ],
 
@@ -144,7 +156,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               _buildSectionHeader(
                   context, 'Extra Classes', Icons.more_time, Colors.blueAccent),
               ...extraClasses
-                  .map((item) => _buildItemTile(context, item, isDark)),
+                  .map((item) => _buildClassItemCard(context, ref, item, activeDayData.date, isDark)),
               const SizedBox(height: 16),
             ],
 
@@ -165,7 +177,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             ],
 
             // Empty state if no items exist on this day
-            if (dayData.items.isEmpty) ...[
+            if (activeDayData.items.isEmpty) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20.0),
                 child: Center(
@@ -370,6 +382,291 @@ class DateDetailsBottomSheet extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildClassItemCard(
+    BuildContext context,
+    WidgetRef ref,
+    CalendarItem item,
+    DateTime classDate,
+    bool isDark,
+  ) {
+    final currentStatus = item.status?.toUpperCase() ?? 'UNMARKED';
+    final isPresent = currentStatus == 'PRESENT';
+    final isAbsent = currentStatus == 'ABSENT';
+    final isLate = currentStatus == 'LATE';
+    final isCancelled = currentStatus == 'CANCELLED';
+    final isUnmarked = !isPresent && !isAbsent && !isLate && !isCancelled;
+
+    Color statusColor;
+    String statusLabel;
+    if (isPresent) {
+      statusColor = const Color(0xFF4CAF50);
+      statusLabel = 'PRESENT';
+    } else if (isAbsent) {
+      statusColor = const Color(0xFFEF5350);
+      statusLabel = 'ABSENT';
+    } else if (isLate) {
+      statusColor = const Color(0xFFFFB300);
+      statusLabel = 'LATE';
+    } else if (isCancelled) {
+      statusColor = const Color(0xFF9E9E9E);
+      statusLabel = 'CANCELLED';
+    } else {
+      statusColor = const Color(0xFF90A4AE);
+      statusLabel = 'UNMARKED';
+    }
+
+    final hasModified = item.originalStatus != null &&
+        item.originalStatus!.toUpperCase() != currentStatus &&
+        item.originalStatus!.toUpperCase() != 'UNMARKED';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF16161D) : AppColors.lightBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.0,
+                        decoration: isCancelled
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      [
+                        if (item.startTime != null && item.startTime!.isNotEmpty)
+                          item.endTime != null && item.endTime!.isNotEmpty
+                              ? '${item.startTime} - ${item.endTime}'
+                              : item.startTime!,
+                        if (item.room != null && item.room!.isNotEmpty)
+                          'Room ${item.room}',
+                        if (item.type == CalendarItemType.EXTRA_CLASS)
+                          'Extra Class',
+                      ].join(' • '),
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: statusColor.withOpacity(0.3)),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (hasModified) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 14.0),
+              child: Text(
+                'Original status: ${item.originalStatus}',
+                style: const TextStyle(
+                  fontSize: 11.0,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          // Action Buttons for Historical Attendance Mutation
+          Row(
+            children: [
+              _buildAttendanceButton(
+                label: 'Present',
+                isSelected: isPresent,
+                activeColor: const Color(0xFF4CAF50),
+                onTap: item.subjectId == null
+                    ? null
+                    : () => _updateAttendance(
+                          context,
+                          ref,
+                          item,
+                          classDate,
+                          OccurrenceStatus.PRESENT,
+                        ),
+              ),
+              const SizedBox(width: 6),
+              _buildAttendanceButton(
+                label: 'Late',
+                isSelected: isLate,
+                activeColor: const Color(0xFFFFB300),
+                onTap: item.subjectId == null
+                    ? null
+                    : () => _updateAttendance(
+                          context,
+                          ref,
+                          item,
+                          classDate,
+                          OccurrenceStatus.LATE,
+                        ),
+              ),
+              const SizedBox(width: 6),
+              _buildAttendanceButton(
+                label: 'Absent',
+                isSelected: isAbsent,
+                activeColor: const Color(0xFFEF5350),
+                onTap: item.subjectId == null
+                    ? null
+                    : () => _updateAttendance(
+                          context,
+                          ref,
+                          item,
+                          classDate,
+                          OccurrenceStatus.ABSENT,
+                        ),
+              ),
+              const SizedBox(width: 6),
+              _buildAttendanceButton(
+                label: 'Cancel',
+                isSelected: isCancelled,
+                activeColor: const Color(0xFF9E9E9E),
+                onTap: item.subjectId == null
+                    ? null
+                    : () => _updateAttendance(
+                          context,
+                          ref,
+                          item,
+                          classDate,
+                          OccurrenceStatus.CANCELLED,
+                        ),
+              ),
+              if (!isUnmarked) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'Reset to unmarked',
+                  icon: const Icon(Icons.undo, size: 16, color: Colors.grey),
+                  onPressed: item.subjectId == null
+                      ? null
+                      : () => _updateAttendance(
+                            context,
+                            ref,
+                            item,
+                            classDate,
+                            OccurrenceStatus.UPCOMING,
+                          ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceButton({
+    required String label,
+    required bool isSelected,
+    required Color activeColor,
+    VoidCallback? onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color:
+                isSelected ? activeColor.withOpacity(0.2) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? activeColor : Colors.grey.withOpacity(0.3),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.0,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? activeColor : Colors.grey,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateAttendance(
+    BuildContext context,
+    WidgetRef ref,
+    CalendarItem item,
+    DateTime classDate,
+    OccurrenceStatus targetStatus,
+  ) async {
+    try {
+      await ref
+          .read(attendanceControllerProvider.notifier)
+          .markHistoricalAttendance(
+            date: classDate,
+            subjectId: item.subjectId!,
+            occurrenceId: item.occurrenceId,
+            ruleId: item.ruleId,
+            startTime: item.startTime ?? '09:00',
+            endTime: item.endTime ?? '10:00',
+            title: item.title,
+            room: item.room,
+            targetStatus: targetStatus,
+            type: item.type == CalendarItemType.EXTRA_CLASS
+                ? OccurrenceType.EXTRA_CLASS
+                : OccurrenceType.REGULAR_CLASS,
+          );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update attendance: $e')),
+        );
+      }
+    }
   }
 
   int? _toMinutes(TimeOfDay? time) {

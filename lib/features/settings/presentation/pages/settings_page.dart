@@ -144,6 +144,89 @@ class SettingsPage extends ConsumerWidget {
                                   .updateDefaultAttendanceTarget(val);
                             },
                           ),
+                          const SizedBox(height: 8),
+                          _buildDivider(isDark),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Late Attendance Policy',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    settings.lateAttendancePolicy == 'present'
+                                        ? 'Counts as Present'
+                                        : (settings.lateAttendancePolicy ==
+                                                'absent'
+                                            ? 'Counts as Absent'
+                                            : 'Weighted (${(settings.lateAttendanceWeight * 100).round()}%)'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.darkTextSecondary
+                                          : AppColors.lightTextSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              DropdownButton<String>(
+                                value: settings.lateAttendancePolicy,
+                                dropdownColor: isDark
+                                    ? const Color(0xFF1E1E26)
+                                    : Colors.white,
+                                underline: const SizedBox.shrink(),
+                                items: const [
+                                  DropdownMenuItem(
+                                      value: 'weighted',
+                                      child: Text('Weighted')),
+                                  DropdownMenuItem(
+                                      value: 'present',
+                                      child: Text('Full Present')),
+                                  DropdownMenuItem(
+                                      value: 'absent', child: Text('Absent')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    ref
+                                        .read(
+                                            settingsControllerProvider.notifier)
+                                        .updateLateAttendanceSettings(
+                                          weight: settings.lateAttendanceWeight,
+                                          policy: val,
+                                        );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          if (settings.lateAttendancePolicy == 'weighted') ...[
+                            const SizedBox(height: 4),
+                            Slider(
+                              value: settings.lateAttendanceWeight,
+                              min: 0.1,
+                              max: 0.9,
+                              divisions: 8,
+                              activeColor: const Color(0xFFFFB300),
+                              inactiveColor: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
+                              onChanged: (val) {
+                                ref
+                                    .read(settingsControllerProvider.notifier)
+                                    .updateLateAttendanceSettings(
+                                      weight: val,
+                                      policy: 'weighted',
+                                    );
+                              },
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -159,7 +242,7 @@ class SettingsPage extends ConsumerWidget {
                       children: [
                         _buildSwitchTile(
                           title: 'Class Reminders',
-                          subtitle: 'Alert 5 minutes before scheduled classes',
+                          subtitle: 'Alert before scheduled classes',
                           value: settings.enableNotifications,
                           onChanged: (val) {
                             ref
@@ -168,10 +251,126 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
+                        if (settings.enableNotifications) ...[
+                          _buildDivider(isDark),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Reminder Offset',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14),
+                                ),
+                                DropdownButton<int>(
+                                  value: settings.classReminderOffset > 0
+                                      ? settings.classReminderOffset
+                                      : 15,
+                                  dropdownColor: isDark
+                                      ? const Color(0xFF1E1E26)
+                                      : Colors.white,
+                                  underline: const SizedBox.shrink(),
+                                  items: const [
+                                    DropdownMenuItem(
+                                        value: 5,
+                                        child: Text('5 minutes before')),
+                                    DropdownMenuItem(
+                                        value: 10,
+                                        child: Text('10 minutes before')),
+                                    DropdownMenuItem(
+                                        value: 15,
+                                        child: Text('15 minutes before')),
+                                    DropdownMenuItem(
+                                        value: 30,
+                                        child: Text('30 minutes before')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      ref
+                                          .read(settingsControllerProvider
+                                              .notifier)
+                                          .updateClassReminderOffset(val);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        _buildDivider(isDark),
+                        _buildSwitchTile(
+                          title: 'Notification Sound',
+                          subtitle:
+                              'Play sound for class alerts and reports',
+                          value: settings.notificationSound,
+                          onChanged: (val) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .updateNotificationAudioVibration(
+                                  sound: val,
+                                  vibration: settings.notificationVibration,
+                                );
+                          },
+                          isDark: isDark,
+                        ),
+                        _buildDivider(isDark),
+                        _buildSwitchTile(
+                          title: 'Vibration',
+                          subtitle: 'Vibrate device on incoming reminders',
+                          value: settings.notificationVibration,
+                          onChanged: (val) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .updateNotificationAudioVibration(
+                                  sound: settings.notificationSound,
+                                  vibration: val,
+                                );
+                          },
+                          isDark: isDark,
+                        ),
+                        _buildDivider(isDark),
+                        _buildSwitchTile(
+                          title: 'Quiet Hours',
+                          subtitle: settings.quietHoursEnabled
+                              ? 'Mute from ${settings.quietHoursStartHour}:00 to ${settings.quietHoursEndHour}:00'
+                              : 'Disabled',
+                          value: settings.quietHoursEnabled,
+                          onChanged: (val) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .updateQuietHours(
+                                  enabled: val,
+                                  startHour: settings.quietHoursStartHour,
+                                  endHour: settings.quietHoursEndHour,
+                                );
+                          },
+                          isDark: isDark,
+                        ),
+                        _buildDivider(isDark),
+                        _buildSwitchTile(
+                          title: 'Missed Attendance Reminders',
+                          subtitle:
+                              'Follow-up notification if class check-in is pending',
+                          value: settings.missedAttendanceReminderEnabled,
+                          onChanged: (val) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .updateMissedAttendanceReminder(
+                                  enabled: val,
+                                  offsetMinutes: settings
+                                      .missedAttendanceReminderOffset,
+                                );
+                          },
+                          isDark: isDark,
+                        ),
                         _buildDivider(isDark),
                         _buildSwitchTile(
                           title: 'Attendance Warnings',
-                          subtitle: 'Notify if attendance falls near threshold',
+                          subtitle:
+                              'Notify if attendance falls near threshold',
                           value: settings.enableAttendanceWarnings,
                           onChanged: (val) {
                             ref
@@ -183,7 +382,8 @@ class SettingsPage extends ConsumerWidget {
                         _buildDivider(isDark),
                         _buildSwitchTile(
                           title: 'Weekly Digest',
-                          subtitle: 'Summary of the week\'s attendance metrics',
+                          subtitle:
+                              'Summary of the week\'s attendance metrics',
                           value: settings.weeklyReportEnabled,
                           onChanged: (val) {
                             ref
@@ -251,6 +451,23 @@ class SettingsPage extends ConsumerWidget {
                           title: const Text('Attendance Reports'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push('/reports'),
+                        ),
+                        _buildDivider(isDark),
+                        _buildSwitchTile(
+                          title: 'Cloud Synchronization (Opt-In)',
+                          subtitle: settings.enableCloudSync
+                              ? 'Encrypted cloud backup enabled'
+                              : 'Disabled (100% Offline-First)',
+                          value: settings.enableCloudSync,
+                          onChanged: (val) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .updateCloudSyncSettings(
+                                  enabled: val,
+                                  consentGiven: val,
+                                );
+                          },
+                          isDark: isDark,
                         ),
                       ],
                     ),

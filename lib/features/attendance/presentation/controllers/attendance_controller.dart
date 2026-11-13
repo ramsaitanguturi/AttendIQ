@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/entities/attendance_record.dart';
 import '../../domain/repositories/attendance_repository.dart';
+import '../../domain/services/historical_attendance_service.dart';
 import '../../data/datasources/attendance_local_data_source.dart';
 import '../../data/repositories/attendance_repository_impl.dart';
 import '../../../../core/database/isar_provider.dart';
@@ -111,6 +112,45 @@ class AttendanceController extends _$AttendanceController {
         eventId: occId,
         subjectId: savedOccurrence.subjectId!,
         status: status,
+        markedAt: savedOccurrence.date,
+        updatedAt: DateTime.now().toUtc(),
+        isDirty: false,
+        isDeleted: false,
+      );
+      await attendanceRepo.saveAttendanceRecord(record);
+    }
+
+    _invalidateProviders();
+    return savedOccurrence;
+  }
+
+  Future<DailyScheduleOccurrence> markOccurrenceLate(
+      DailyScheduleOccurrence occurrence) async {
+    final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
+    final attendanceRepo = ref.read(attendanceRepositoryProvider);
+
+    final updatedOccurrence = occurrence.copyWith(
+      status: OccurrenceStatus.LATE,
+      updatedAt: DateTime.now().toUtc(),
+    );
+
+    final savedOccurrence =
+        await occurrenceRepo.saveOccurrence(updatedOccurrence);
+
+    if (savedOccurrence.subjectId != null &&
+        savedOccurrence.id != null &&
+        savedOccurrence.id! > 0) {
+      final occId = savedOccurrence.id!;
+      final existingRecord =
+          await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
+
+      final record = AttendanceRecord(
+        id: existingRecord?.id,
+        serverId: existingRecord?.serverId,
+        occurrenceId: occId,
+        eventId: occId,
+        subjectId: savedOccurrence.subjectId!,
+        status: AttendanceStatus.LATE,
         markedAt: savedOccurrence.date,
         updatedAt: DateTime.now().toUtc(),
         isDirty: false,
@@ -245,6 +285,35 @@ class AttendanceController extends _$AttendanceController {
     return saved;
   }
 
+  Future<DailyScheduleOccurrence> markHistoricalAttendance({
+    required DateTime date,
+    required int subjectId,
+    int? occurrenceId,
+    int? ruleId,
+    required String startTime,
+    required String endTime,
+    required String title,
+    String? room,
+    required OccurrenceStatus targetStatus,
+    OccurrenceType type = OccurrenceType.REGULAR_CLASS,
+  }) async {
+    final service = ref.read(historicalAttendanceServiceProvider);
+    final result = await service.setAttendanceStatus(
+      date: date,
+      subjectId: subjectId,
+      occurrenceId: occurrenceId,
+      ruleId: ruleId,
+      startTime: startTime,
+      endTime: endTime,
+      title: title,
+      room: room,
+      targetStatus: targetStatus,
+      type: type,
+    );
+    _invalidateProviders(subjectId: subjectId);
+    return result;
+  }
+
   void _invalidateProviders({int? subjectId}) {
     ref.invalidate(todayScheduleProvider);
     ref.invalidate(todayOccurrencesProvider);
@@ -278,6 +347,8 @@ class AttendanceController extends _$AttendanceController {
         return 'ABSENT';
       case AttendanceStatus.CANCELLED:
         return 'CANCELLED';
+      case AttendanceStatus.LATE:
+        return 'LATE';
     }
   }
 }
