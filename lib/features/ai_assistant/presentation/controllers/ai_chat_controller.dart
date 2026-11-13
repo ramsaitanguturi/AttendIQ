@@ -61,7 +61,7 @@ class AIChatController extends _$AIChatController {
   FutureOr<AIChatState> build() async {
     final initialMessage = ChatMessage(
       text:
-          "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
+          "Hello! I am the ACEDRA Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
       sender: MessageSender.assistant,
       timestamp: DateTime.now(),
     );
@@ -156,7 +156,7 @@ class AIChatController extends _$AIChatController {
   Future<void> clearChat() async {
     final initialMessage = ChatMessage(
       text:
-          "Hello! I am the AttendIQ Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
+          "Hello! I am the ACEDRA Advisor, your personal academic counselor. Ask me questions like:\n• 'Can I skip tomorrow's classes?'\n• 'Which subjects are risky?'\n• 'How many classes do I need to attend?'",
       sender: MessageSender.assistant,
       timestamp: DateTime.now(),
     );

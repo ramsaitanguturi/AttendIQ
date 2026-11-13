@@ -7,7 +7,7 @@ part of 'subject_attendance_stats_provider.dart';
 // **************************************************************************
 
 String _$subjectAttendanceStatsHash() =>
-    r'457eb6b3ccde6eac50f8c0d5717c6c6a5a40b44d';
+    r'd27cf50c17bc199170e80a7d8c0b033e0bf1c916';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -182,7 +182,7 @@ final allSubjectAttendanceStatsProvider =
 typedef AllSubjectAttendanceStatsRef
     = AutoDisposeFutureProviderRef<List<SubjectAttendanceStats>>;
 String _$overallAttendancePercentageHash() =>
-    r'8dff7f3e3c57f822671265a23130abedc438ceb5';
+    r'37957560f875741bd3fcba5471598191fc190e9a';
 
 /// See also [overallAttendancePercentage].
 @ProviderFor(overallAttendancePercentage)

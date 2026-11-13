@@ -18,8 +18,15 @@ class UserPreferencesLocal {
   DateTime? lastSyncTime;
 
   // Late Attendance Configuration
+  bool enableLateAttendance = false;
   double lateAttendanceWeight = 0.5;
   String lateAttendancePolicy = 'weighted'; // 'present', 'absent', 'weighted'
+
+  // Glassy Interface Theme (Default: OFF)
+  bool enableGlassyTheme = false;
+
+  // AI Advisor (Default: ON)
+  bool enableAiAdvisor = true;
 
   // Advanced Notification Preferences
   bool quietHoursEnabled = false;

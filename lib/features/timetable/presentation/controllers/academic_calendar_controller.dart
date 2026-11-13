@@ -72,7 +72,8 @@ class CalendarItem {
   final int? ruleId;
   final String? slotKey;
   final String? room;
-  final String? status; // PRESENT, ABSENT, LATE, CANCELLED, UPCOMING, UNMARKED, etc.
+  final String?
+      status; // PRESENT, ABSENT, LATE, CANCELLED, UPCOMING, UNMARKED, etc.
   final String? originalStatus;
   final String? description;
   final DateTime? updatedAt;
@@ -345,7 +346,8 @@ final monthlyCalendarDataProvider =
                 : 'Regular Class',
             startTime: rule.startTime,
             endTime: rule.endTime,
-            type: (matchingOcc?.status == OccurrenceStatus.CANCELLED || isCancelled)
+            type: (matchingOcc?.status == OccurrenceStatus.CANCELLED ||
+                    isCancelled)
                 ? CalendarItemType.CANCELLED_CLASS
                 : CalendarItemType.REGULAR_CLASS,
             subjectId: rule.subjectId,

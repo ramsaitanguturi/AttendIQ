@@ -101,13 +101,12 @@ class PendingCheckInService {
     int lookbackDays = 7,
   }) async {
     final now = customNow ?? DateTime.now();
-    final startUtc = normalizeUtcDate(now.subtract(Duration(days: lookbackDays)));
+    final startUtc =
+        normalizeUtcDate(now.subtract(Duration(days: lookbackDays)));
     final endUtc = normalizeUtcDate(now);
 
-    final subjects = await _isar.subjectLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final subjects =
+        await _isar.subjectLocals.where().isDeletedEqualTo(false).findAll();
     final subjectMap = {for (final s in subjects) s.id: s};
 
     final exceptions = await _isar.scheduleExceptionLocals
@@ -146,8 +145,7 @@ class PendingCheckInService {
     };
 
     final recordedSubjectDates = <String>{
-      for (final r in records)
-        '${r.subjectId}_${formatUtcDateKey(r.markedAt)}',
+      for (final r in records) '${r.subjectId}_${formatUtcDateKey(r.markedAt)}',
     };
 
     final pendingList = <PendingCheckInItem>[];
@@ -230,7 +228,8 @@ class PendingCheckInService {
       for (final rule in rules) {
         if (!rule.isActive) continue;
         if (rule.dayOfWeek != dateUtc.weekday) continue;
-        if (cancelledSubjectsByDate[dateKey]?.contains(rule.subjectId) ?? false) {
+        if (cancelledSubjectsByDate[dateKey]?.contains(rule.subjectId) ??
+            false) {
           continue;
         }
 
@@ -265,7 +264,8 @@ class PendingCheckInService {
         );
 
         if (consumedSlotKeys.contains(canonicalKey)) continue;
-        if (recordedSubjectDates.contains('${rule.subjectId}_$dateKey')) continue;
+        if (recordedSubjectDates.contains('${rule.subjectId}_$dateKey'))
+          continue;
 
         consumedSlotKeys.add(canonicalKey);
         pendingList.add(PendingCheckInItem(

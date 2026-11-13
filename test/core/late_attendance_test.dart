@@ -6,7 +6,8 @@ import 'package:attend_iq/features/attendance/domain/entities/attendance_record.
 
 void main() {
   group('Late Attendance Math & Calculations', () {
-    test('calculatePercentage supports fractional attended from late weighting', () {
+    test('calculatePercentage supports fractional attended from late weighting',
+        () {
       // 10 present, 2 late at 0.5 weight = 11.0 attended out of 12 total = 91.666...%
       final percentage = AttendanceCalculator.calculatePercentage(
         attended: 11.0,
@@ -47,7 +48,9 @@ void main() {
       expect(needed, equals(12));
     });
 
-    test('AnalyticsCalculator calculates SubjectAnalytics with configurable lateWeight', () {
+    test(
+        'AnalyticsCalculator calculates SubjectAnalytics with configurable lateWeight',
+        () {
       final now = DateTime.now().toUtc();
       final subject = Subject(
         id: 1,

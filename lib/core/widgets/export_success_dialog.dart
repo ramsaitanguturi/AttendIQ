@@ -73,7 +73,7 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
           !sharePath.trim().toLowerCase().startsWith('content://') &&
           await File(sharePath).exists()) {
         final isBeta = await BackupPathHelper.isBetaApp();
-        final appName = isBeta ? 'AttendIQ Beta' : 'AttendIQ';
+        final appName = isBeta ? 'ACEDRA Beta' : 'ACEDRA';
         final files = [XFile(sharePath, mimeType: mimeType)];
         if (shareHandler != null) {
           await shareHandler(
@@ -334,7 +334,7 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
               const SizedBox(height: 10),
               const _BackupDetailRow(
                 label: 'Format',
-                value: 'AttendIQ Backup (.attendiq JSON)',
+                value: 'ACEDRA Backup (.attendiq JSON)',
               ),
               const SizedBox(height: 10),
               _BackupDetailRow(label: 'Size', value: sizeLabel),
@@ -342,7 +342,7 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
               _BackupDetailRow(label: 'Location', value: locationLines),
               const SizedBox(height: 14),
               const Text(
-                'This backup is formatted specifically for AttendIQ. '
+                'This backup is formatted specifically for ACEDRA. '
                 'To restore it, select it from Backup Manager or tap '
                 'Import Backup / Data File.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),

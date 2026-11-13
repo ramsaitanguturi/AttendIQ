@@ -125,8 +125,8 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 
   // 5. Calculate percentage, safe bunks, must-attend
   final target = subject.attendanceTarget;
-  final percentage =
-      AttendanceCalculator.calculatePercentage(attended: effectiveAttended, total: total);
+  final percentage = AttendanceCalculator.calculatePercentage(
+      attended: effectiveAttended, total: total);
   final safeBunks = AttendanceCalculator.calculateSafeBunks(
       attended: effectiveAttended, total: total, target: target);
   final requiredClasses = AttendanceCalculator.calculateRequiredClasses(

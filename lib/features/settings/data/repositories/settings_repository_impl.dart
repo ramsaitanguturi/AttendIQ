@@ -23,8 +23,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
       lastBackupDate: local.lastBackupDate,
       autoBackupDay: local.autoBackupDay,
       autoBackupHour: local.autoBackupHour,
+      enableLateAttendance: local.enableLateAttendance,
       lateAttendanceWeight: local.lateAttendanceWeight,
       lateAttendancePolicy: local.lateAttendancePolicy,
+      enableGlassyTheme: local.enableGlassyTheme,
+      enableAiAdvisor: local.enableAiAdvisor,
       quietHoursEnabled: local.quietHoursEnabled,
       quietHoursStartHour: local.quietHoursStartHour,
       quietHoursEndHour: local.quietHoursEndHour,
@@ -50,8 +53,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
       ..lastBackupDate = preferences.lastBackupDate
       ..autoBackupDay = preferences.autoBackupDay
       ..autoBackupHour = preferences.autoBackupHour
+      ..enableLateAttendance = preferences.enableLateAttendance
       ..lateAttendanceWeight = preferences.lateAttendanceWeight
       ..lateAttendancePolicy = preferences.lateAttendancePolicy
+      ..enableGlassyTheme = preferences.enableGlassyTheme
+      ..enableAiAdvisor = preferences.enableAiAdvisor
       ..quietHoursEnabled = preferences.quietHoursEnabled
       ..quietHoursStartHour = preferences.quietHoursStartHour
       ..quietHoursEndHour = preferences.quietHoursEndHour

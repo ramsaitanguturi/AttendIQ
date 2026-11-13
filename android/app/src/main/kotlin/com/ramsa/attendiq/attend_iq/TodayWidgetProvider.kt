@@ -146,7 +146,7 @@ class TodayWidgetProvider : HomeWidgetProvider() {
             views.setViewVisibility(R.id.layout_next_class, View.GONE)
             views.setViewVisibility(R.id.tv_status, View.GONE)
             views.setViewVisibility(R.id.tv_empty_small, View.VISIBLE)
-            views.setTextViewText(R.id.tv_empty_small, "Tap to open AttendIQ")
+            views.setTextViewText(R.id.tv_empty_small, "Tap to open ACEDRA")
         }
 
         return views
@@ -230,7 +230,7 @@ class TodayWidgetProvider : HomeWidgetProvider() {
             views.setTextViewText(R.id.tv_date, "Today")
             views.setViewVisibility(R.id.layout_classes, View.GONE)
             views.setViewVisibility(R.id.tv_empty, View.VISIBLE)
-            views.setTextViewText(R.id.tv_empty, "Tap to open AttendIQ")
+            views.setTextViewText(R.id.tv_empty, "Tap to open ACEDRA")
             views.setTextColor(R.id.tv_empty, Color.parseColor("#A0A5BD"))
         }
 

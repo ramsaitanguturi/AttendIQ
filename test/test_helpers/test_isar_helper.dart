@@ -88,4 +88,3 @@ TestIsarInstance openTestIsar({
   );
   return TestIsarInstance(isar: isar, tempDir: tempDir);
 }
-

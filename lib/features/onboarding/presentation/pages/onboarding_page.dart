@@ -182,7 +182,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       backgroundColor:
           isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
-        title: const Text('Welcome to AttendIQ'),
+        title: const Text('Welcome to ACEDRA'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: savedSemesters.isNotEmpty

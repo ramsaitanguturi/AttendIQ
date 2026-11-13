@@ -21,7 +21,7 @@ class PdfReportGenerator {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'AttendIQ Attendance Report',
+                      'ACEDRA Attendance Report',
                       style: pw.TextStyle(
                         fontSize: 24,
                         fontWeight: pw.FontWeight.bold,

@@ -13,8 +13,15 @@ class UserPreferences {
   final int autoBackupHour; // 0-23, default 2
 
   // Late Attendance Configuration
+  final bool enableLateAttendance;
   final double lateAttendanceWeight;
   final String lateAttendancePolicy; // 'present', 'absent', 'weighted'
+
+  // Glassy Interface Configuration
+  final bool enableGlassyTheme;
+
+  // AI Advisor Configuration
+  final bool enableAiAdvisor;
 
   // Advanced Notification Preferences
   final bool quietHoursEnabled;
@@ -42,8 +49,11 @@ class UserPreferences {
     this.lastBackupDate,
     this.autoBackupDay = 7,
     this.autoBackupHour = 2,
+    this.enableLateAttendance = false,
     this.lateAttendanceWeight = 0.5,
     this.lateAttendancePolicy = 'weighted',
+    this.enableGlassyTheme = false,
+    this.enableAiAdvisor = true,
     this.quietHoursEnabled = false,
     this.quietHoursStartHour = 22,
     this.quietHoursEndHour = 7,
@@ -68,8 +78,11 @@ class UserPreferences {
     DateTime? lastBackupDate,
     int? autoBackupDay,
     int? autoBackupHour,
+    bool? enableLateAttendance,
     double? lateAttendanceWeight,
     String? lateAttendancePolicy,
+    bool? enableGlassyTheme,
+    bool? enableAiAdvisor,
     bool? quietHoursEnabled,
     int? quietHoursStartHour,
     int? quietHoursEndHour,
@@ -95,16 +108,19 @@ class UserPreferences {
       lastBackupDate: lastBackupDate ?? this.lastBackupDate,
       autoBackupDay: autoBackupDay ?? this.autoBackupDay,
       autoBackupHour: autoBackupHour ?? this.autoBackupHour,
+      enableLateAttendance: enableLateAttendance ?? this.enableLateAttendance,
       lateAttendanceWeight: lateAttendanceWeight ?? this.lateAttendanceWeight,
       lateAttendancePolicy: lateAttendancePolicy ?? this.lateAttendancePolicy,
+      enableGlassyTheme: enableGlassyTheme ?? this.enableGlassyTheme,
+      enableAiAdvisor: enableAiAdvisor ?? this.enableAiAdvisor,
       quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
       quietHoursStartHour: quietHoursStartHour ?? this.quietHoursStartHour,
       quietHoursEndHour: quietHoursEndHour ?? this.quietHoursEndHour,
       notificationSound: notificationSound ?? this.notificationSound,
       notificationVibration:
           notificationVibration ?? this.notificationVibration,
-      missedAttendanceReminderEnabled:
-          missedAttendanceReminderEnabled ?? this.missedAttendanceReminderEnabled,
+      missedAttendanceReminderEnabled: missedAttendanceReminderEnabled ??
+          this.missedAttendanceReminderEnabled,
       missedAttendanceReminderOffset:
           missedAttendanceReminderOffset ?? this.missedAttendanceReminderOffset,
       enableCloudSync: enableCloudSync ?? this.enableCloudSync,
@@ -130,8 +146,11 @@ class UserPreferences {
           lastBackupDate == other.lastBackupDate &&
           autoBackupDay == other.autoBackupDay &&
           autoBackupHour == other.autoBackupHour &&
+          enableLateAttendance == other.enableLateAttendance &&
           lateAttendanceWeight == other.lateAttendanceWeight &&
           lateAttendancePolicy == other.lateAttendancePolicy &&
+          enableGlassyTheme == other.enableGlassyTheme &&
+          enableAiAdvisor == other.enableAiAdvisor &&
           quietHoursEnabled == other.quietHoursEnabled &&
           quietHoursStartHour == other.quietHoursStartHour &&
           quietHoursEndHour == other.quietHoursEndHour &&
@@ -158,8 +177,11 @@ class UserPreferences {
       lastBackupDate.hashCode ^
       autoBackupDay.hashCode ^
       autoBackupHour.hashCode ^
+      enableLateAttendance.hashCode ^
       lateAttendanceWeight.hashCode ^
       lateAttendancePolicy.hashCode ^
+      enableGlassyTheme.hashCode ^
+      enableAiAdvisor.hashCode ^
       quietHoursEnabled.hashCode ^
       quietHoursStartHour.hashCode ^
       quietHoursEndHour.hashCode ^
@@ -172,6 +194,6 @@ class UserPreferences {
 
   @override
   String toString() {
-    return 'UserPreferences(id: $id, themeMode: $themeMode, defaultAttendanceTarget: $defaultAttendanceTarget, classReminderOffset: $classReminderOffset, enableNotifications: $enableNotifications, enableAttendanceWarnings: $enableAttendanceWarnings, weeklyReportEnabled: $weeklyReportEnabled, lastSyncTime: $lastSyncTime, enableAutoBackup: $enableAutoBackup, lastBackupDate: $lastBackupDate, autoBackupDay: $autoBackupDay, autoBackupHour: $autoBackupHour, lateAttendanceWeight: $lateAttendanceWeight, lateAttendancePolicy: $lateAttendancePolicy, quietHoursEnabled: $quietHoursEnabled, quietHoursStartHour: $quietHoursStartHour, quietHoursEndHour: $quietHoursEndHour, notificationSound: $notificationSound, notificationVibration: $notificationVibration, missedAttendanceReminderEnabled: $missedAttendanceReminderEnabled, missedAttendanceReminderOffset: $missedAttendanceReminderOffset, enableCloudSync: $enableCloudSync, cloudSyncConsentGiven: $cloudSyncConsentGiven)';
+    return 'UserPreferences(id: $id, themeMode: $themeMode, defaultAttendanceTarget: $defaultAttendanceTarget, classReminderOffset: $classReminderOffset, enableNotifications: $enableNotifications, enableAttendanceWarnings: $enableAttendanceWarnings, weeklyReportEnabled: $weeklyReportEnabled, lastSyncTime: $lastSyncTime, enableAutoBackup: $enableAutoBackup, lastBackupDate: $lastBackupDate, autoBackupDay: $autoBackupDay, autoBackupHour: $autoBackupHour, lateAttendanceWeight: $lateAttendanceWeight, lateAttendancePolicy: $lateAttendancePolicy, enableLateAttendance: $enableLateAttendance, enableGlassyTheme: $enableGlassyTheme, enableAiAdvisor: $enableAiAdvisor, quietHoursEnabled: $quietHoursEnabled, quietHoursStartHour: $quietHoursStartHour, quietHoursEndHour: $quietHoursEndHour, notificationSound: $notificationSound, notificationVibration: $notificationVibration, missedAttendanceReminderEnabled: $missedAttendanceReminderEnabled, missedAttendanceReminderOffset: $missedAttendanceReminderOffset, enableCloudSync: $enableCloudSync, cloudSyncConsentGiven: $cloudSyncConsentGiven)';
   }
 }

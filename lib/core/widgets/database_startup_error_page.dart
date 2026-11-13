@@ -71,7 +71,7 @@ class DatabaseStartupErrorPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12.0),
                   Text(
-                    'AttendIQ could not open its offline database. Please verify device storage is available and retry.',
+                    'ACEDRA could not open its offline database. Please verify device storage is available and retry.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: secondaryTextColor,

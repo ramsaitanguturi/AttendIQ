@@ -294,7 +294,7 @@ class BackupService {
     );
 
     final isBeta = await BackupPathHelper.isBetaApp();
-    final appName = isBeta ? 'AttendIQ Beta' : 'AttendIQ';
+    final appName = isBeta ? 'ACEDRA Beta' : 'ACEDRA';
     final shareHandler = _shareFilesOverride;
     if (shareHandler != null) {
       await shareHandler(

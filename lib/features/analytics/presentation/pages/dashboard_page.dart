@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/acedra_logo.dart';
 import '../../../../core/notifications/presentation/widgets/pending_check_ins_banner.dart';
 import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
 import '../../../timetable/presentation/controllers/today_schedule_provider.dart';
@@ -18,6 +19,7 @@ import '../../../academic_planner/presentation/controllers/task_controller.dart'
 import '../../../academic_planner/presentation/widgets/task_card_widget.dart';
 import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart';
 import '../../../subject/presentation/widgets/add_edit_subject_dialog.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   final String? initialSection;
@@ -76,9 +78,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'AttendIQ Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AcedraLogo(size: 26),
+            const SizedBox(width: 10),
+            Text(
+              'ACEDRA',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.0,
+                fontSize: 18,
+                color: isDark
+                    ? AppColors.darkTextPrimary
+                    : AppColors.lightTextPrimary,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -108,8 +124,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+            padding: const EdgeInsets.only(
+              left: 20.0,
+              right: 20.0,
+              top: 12.0,
+              bottom: 120.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -221,16 +241,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/ai-assistant'),
-        backgroundColor: Colors.deepPurpleAccent,
-        elevation: 6,
-        tooltip: 'Ask AI Advisor',
-        child: const Icon(
-          Icons.auto_awesome,
-          color: Colors.black,
-        ),
-      ),
+      floatingActionButton: ref.watch(isAiAdvisorEnabledProvider)
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 76.0),
+              child: FloatingActionButton(
+                onPressed: () => context.push('/ai-assistant'),
+                backgroundColor: ref.watch(isGlassyThemeEnabledProvider)
+                    ? const Color(0xFF1E2330)
+                    : Colors.deepPurpleAccent,
+                elevation: 6,
+                tooltip: 'Ask ACEDRA Advisor',
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : null,
     );
   }
 

@@ -69,20 +69,20 @@ android {
         prod {
             dimension "default"
             applicationId "com.ramsa.attendiq.attend_iq"
-            resValue "string", "app_name", "AttendIQ"
+            resValue "string", "app_name", "ACEDRA"
             resValue "string", "deep_link_scheme", "attendiq"
             manifestPlaceholders = [
-                appName: "AttendIQ",
+                appName: "ACEDRA",
                 deepLinkScheme: "attendiq"
             ]
         }
         beta {
             dimension "default"
             applicationId "com.ramsa.attendiq.attend_iq.beta"
-            resValue "string", "app_name", "AttendIQ Beta"
+            resValue "string", "app_name", "ACEDRA Beta"
             resValue "string", "deep_link_scheme", "attendiq-beta"
             manifestPlaceholders = [
-                appName: "AttendIQ Beta",
+                appName: "ACEDRA Beta",
                 deepLinkScheme: "attendiq-beta"
             ]
         }
@@ -108,6 +108,15 @@ android {
                     from "${rootProject.buildDir}/app/outputs/flutter-apk/app-prod-release.apk"
                     into "${rootProject.buildDir}/app/outputs/flutter-apk/"
                     rename { 'app-release.apk' }
+                }
+            }
+        }
+        if (variant.name == 'prodDebug') {
+            variant.assembleProvider.get().doLast {
+                copy {
+                    from "${rootProject.buildDir}/app/outputs/flutter-apk/app-prod-debug.apk"
+                    into "${rootProject.buildDir}/app/outputs/flutter-apk/"
+                    rename { 'app-debug.apk' }
                 }
             }
         }

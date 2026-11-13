@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_bottom_sheet.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../domain/entities/academic_event.dart';
 import '../../domain/entities/daily_schedule_occurrence.dart';
@@ -45,22 +47,20 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     final extraClasses = activeDayData.items
         .where((i) => i.type == CalendarItemType.EXTRA_CLASS)
         .toList();
-    final exams =
-        activeDayData.items.where((i) => i.type == CalendarItemType.EXAM).toList();
-    final holidays =
-        activeDayData.items.where((i) => i.type == CalendarItemType.HOLIDAY).toList();
-    final events =
-        activeDayData.items.where((i) => i.type == CalendarItemType.EVENT).toList();
-    final tasks =
-        activeDayData.items.where((i) => i.type == CalendarItemType.TASK).toList();
+    final exams = activeDayData.items
+        .where((i) => i.type == CalendarItemType.EXAM)
+        .toList();
+    final holidays = activeDayData.items
+        .where((i) => i.type == CalendarItemType.HOLIDAY)
+        .toList();
+    final events = activeDayData.items
+        .where((i) => i.type == CalendarItemType.EVENT)
+        .toList();
+    final tasks = activeDayData.items
+        .where((i) => i.type == CalendarItemType.TASK)
+        .toList();
 
-    return Container(
-      padding: const EdgeInsets.only(
-          top: 16.0, left: 20.0, right: 20.0, bottom: 24.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24.0)),
-      ),
+    return GlassBottomSheetContainer(
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -144,10 +144,10 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             if (regularClasses.isNotEmpty || cancelledClasses.isNotEmpty) ...[
               _buildSectionHeader(
                   context, 'Classes', Icons.class_, Colors.green),
-              ...regularClasses
-                  .map((item) => _buildClassItemCard(context, ref, item, activeDayData.date, isDark)),
-              ...cancelledClasses
-                  .map((item) => _buildClassItemCard(context, ref, item, activeDayData.date, isDark)),
+              ...regularClasses.map((item) => _buildClassItemCard(
+                  context, ref, item, activeDayData.date, isDark)),
+              ...cancelledClasses.map((item) => _buildClassItemCard(
+                  context, ref, item, activeDayData.date, isDark)),
               const SizedBox(height: 16),
             ],
 
@@ -155,8 +155,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             if (extraClasses.isNotEmpty) ...[
               _buildSectionHeader(
                   context, 'Extra Classes', Icons.more_time, Colors.blueAccent),
-              ...extraClasses
-                  .map((item) => _buildClassItemCard(context, ref, item, activeDayData.date, isDark)),
+              ...extraClasses.map((item) => _buildClassItemCard(
+                  context, ref, item, activeDayData.date, isDark)),
               const SizedBox(height: 16),
             ],
 
@@ -391,6 +391,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     DateTime classDate,
     bool isDark,
   ) {
+    final lateEnabled = ref.watch(isLateAttendanceEnabledProvider);
     final currentStatus = item.status?.toUpperCase() ?? 'UNMARKED';
     final isPresent = currentStatus == 'PRESENT';
     final isAbsent = currentStatus == 'ABSENT';
@@ -464,7 +465,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       [
-                        if (item.startTime != null && item.startTime!.isNotEmpty)
+                        if (item.startTime != null &&
+                            item.startTime!.isNotEmpty)
                           item.endTime != null && item.endTime!.isNotEmpty
                               ? '${item.startTime} - ${item.endTime}'
                               : item.startTime!,
@@ -533,21 +535,23 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                           OccurrenceStatus.PRESENT,
                         ),
               ),
-              const SizedBox(width: 6),
-              _buildAttendanceButton(
-                label: 'Late',
-                isSelected: isLate,
-                activeColor: const Color(0xFFFFB300),
-                onTap: item.subjectId == null
-                    ? null
-                    : () => _updateAttendance(
-                          context,
-                          ref,
-                          item,
-                          classDate,
-                          OccurrenceStatus.LATE,
-                        ),
-              ),
+              if (lateEnabled) ...[
+                const SizedBox(width: 6),
+                _buildAttendanceButton(
+                  label: 'Late',
+                  isSelected: isLate,
+                  activeColor: const Color(0xFFFFB300),
+                  onTap: item.subjectId == null
+                      ? null
+                      : () => _updateAttendance(
+                            context,
+                            ref,
+                            item,
+                            classDate,
+                            OccurrenceStatus.LATE,
+                          ),
+                ),
+              ],
               const SizedBox(width: 6),
               _buildAttendanceButton(
                 label: 'Absent',

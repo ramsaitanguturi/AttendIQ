@@ -27,7 +27,8 @@ void main() {
   });
 
   group('NotificationActionHandler Tests', () {
-    test('ACTION_PRESENT materializes occurrence and records attendance', () async {
+    test('ACTION_PRESENT materializes occurrence and records attendance',
+        () async {
       final date = DateTime.utc(2026, 11, 15);
       final payload = NotificationActionPayload(
         date: date,
@@ -114,7 +115,9 @@ void main() {
       expect(records.first.status, equals('LATE'));
     });
 
-    test('ACTION_CANCELLED updates occurrence and soft-deletes attendance record', () async {
+    test(
+        'ACTION_CANCELLED updates occurrence and soft-deletes attendance record',
+        () async {
       final date = DateTime.utc(2026, 11, 15);
       final payload = NotificationActionPayload(
         date: date,
@@ -131,7 +134,9 @@ void main() {
         isarInstance: isar,
       );
 
-      expect(isar.attendanceRecordLocals.where().isDeletedEqualTo(false).count(), equals(1));
+      expect(
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).count(),
+          equals(1));
 
       // Now cancel
       final cancelResult = await NotificationActionHandler.handleAction(
@@ -147,12 +152,14 @@ void main() {
       expect(occurrences.first.status, equals('CANCELLED'));
 
       // Active attendance records should be 0
-      final activeRecords = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      final activeRecords =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.isEmpty, isTrue);
     });
 
     test('Decodes canonical slot: string payload correctly', () {
-      const slotKeyPayload = 'slot:2026-11-15_105_1_09:00_10:00_REGULAR_CLASS_AI_Lab';
+      const slotKeyPayload =
+          'slot:2026-11-15_105_1_09:00_10:00_REGULAR_CLASS_AI_Lab';
       final decoded = NotificationActionPayload.decode(slotKeyPayload);
 
       expect(decoded, isNotNull);

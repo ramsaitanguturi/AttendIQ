@@ -14,11 +14,13 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final settingsAsync = ref.watch(settingsControllerProvider);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      backgroundColor: isGlassy
+          ? const Color(0xFF090D16)
+          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -44,14 +46,15 @@ class SettingsPage extends ConsumerWidget {
                   // Semester Management Section
                   _buildSectionHeader('Semester Management', isDark),
                   const SizedBox(height: 10),
-                  _SemesterManagementCard(isDark: isDark),
+                  _SemesterManagementCard(isDark: isDark, isGlassy: isGlassy),
                   const SizedBox(height: 24),
 
-                  // Appearance Section
+                  // 1. APPEARANCE SECTION
                   _buildSectionHeader('Appearance', isDark),
                   const SizedBox(height: 10),
                   _buildCard(
-                    isDark,
+                    isDark: isDark,
+                    isGlassy: isGlassy,
                     child: Column(
                       children: [
                         _buildRadioTile(
@@ -67,7 +70,7 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildRadioTile(
                           title: 'Light Mode',
                           value: 'light',
@@ -81,7 +84,7 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildRadioTile(
                           title: 'Dark Mode',
                           value: 'dark',
@@ -95,19 +98,33 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
+                        _buildDivider(isDark, isGlassy),
+                        _buildSwitchTile(
+                          title: 'Glassy Interface',
+                          subtitle:
+                              'Smoked glass surfaces and platinum reflections',
+                          value: settings.enableGlassyTheme,
+                          onChanged: (val) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .updateEnableGlassyTheme(val);
+                          },
+                          isDark: isDark,
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Attendance Section
+                  // 2. ATTENDANCE SECTION
                   _buildSectionHeader('Attendance Settings', isDark),
                   const SizedBox(height: 10),
                   _buildCard(
-                    isDark,
+                    isDark: isDark,
+                    isGlassy: isGlassy,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 16.0),
+                          vertical: 12.0, horizontal: 16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -117,7 +134,9 @@ class SettingsPage extends ConsumerWidget {
                               const Text(
                                 'Default Attendance Target',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w600, fontSize: 15),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
                               ),
                               Text(
                                 '${settings.defaultAttendanceTarget.toStringAsFixed(0)}%',
@@ -144,88 +163,106 @@ class SettingsPage extends ConsumerWidget {
                                   .updateDefaultAttendanceTarget(val);
                             },
                           ),
-                          const SizedBox(height: 8),
-                          _buildDivider(isDark),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Late Attendance Policy',
-                                    style: TextStyle(
+                          _buildDivider(isDark, isGlassy),
+                          const SizedBox(height: 6),
+                          _buildSwitchTile(
+                            title: 'Enable Late Attendance',
+                            subtitle:
+                                'Allow Late as an additional attendance status',
+                            value: settings.enableLateAttendance,
+                            onChanged: (val) {
+                              ref
+                                  .read(settingsControllerProvider.notifier)
+                                  .updateEnableLateAttendance(val);
+                            },
+                            isDark: isDark,
+                          ),
+                          if (settings.enableLateAttendance) ...[
+                            _buildDivider(isDark, isGlassy),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Late Attendance Policy',
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 15),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    settings.lateAttendancePolicy == 'present'
-                                        ? 'Counts as Present'
-                                        : (settings.lateAttendancePolicy ==
-                                                'absent'
-                                            ? 'Counts as Absent'
-                                            : 'Weighted (${(settings.lateAttendanceWeight * 100).round()}%)'),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark
-                                          ? AppColors.darkTextSecondary
-                                          : AppColors.lightTextSecondary,
+                                        fontSize: 15,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              DropdownButton<String>(
-                                value: settings.lateAttendancePolicy,
-                                dropdownColor: isDark
-                                    ? const Color(0xFF1E1E26)
-                                    : Colors.white,
-                                underline: const SizedBox.shrink(),
-                                items: const [
-                                  DropdownMenuItem(
-                                      value: 'weighted',
-                                      child: Text('Weighted')),
-                                  DropdownMenuItem(
-                                      value: 'present',
-                                      child: Text('Full Present')),
-                                  DropdownMenuItem(
-                                      value: 'absent', child: Text('Absent')),
-                                ],
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      settings.lateAttendancePolicy == 'present'
+                                          ? 'Counts as Present'
+                                          : (settings.lateAttendancePolicy ==
+                                                  'absent'
+                                              ? 'Counts as Absent'
+                                              : 'Weighted (${(settings.lateAttendanceWeight * 100).round()}%)'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? AppColors.darkTextSecondary
+                                            : AppColors.lightTextSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                DropdownButton<String>(
+                                  value: settings.lateAttendancePolicy,
+                                  dropdownColor: isDark
+                                      ? const Color(0xFF1E1E26)
+                                      : Colors.white,
+                                  underline: const SizedBox.shrink(),
+                                  items: const [
+                                    DropdownMenuItem(
+                                        value: 'weighted',
+                                        child: Text('Weighted')),
+                                    DropdownMenuItem(
+                                        value: 'present',
+                                        child: Text('Full Present')),
+                                    DropdownMenuItem(
+                                        value: 'absent', child: Text('Absent')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      ref
+                                          .read(settingsControllerProvider
+                                              .notifier)
+                                          .updateLateAttendanceSettings(
+                                            weight:
+                                                settings.lateAttendanceWeight,
+                                            policy: val,
+                                          );
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                            if (settings.lateAttendancePolicy ==
+                                'weighted') ...[
+                              const SizedBox(height: 4),
+                              Slider(
+                                value: settings.lateAttendanceWeight,
+                                min: 0.1,
+                                max: 0.9,
+                                divisions: 8,
+                                activeColor: const Color(0xFFFFB300),
+                                inactiveColor: isDark
+                                    ? AppColors.darkBorder
+                                    : AppColors.lightBorder,
                                 onChanged: (val) {
-                                  if (val != null) {
-                                    ref
-                                        .read(
-                                            settingsControllerProvider.notifier)
-                                        .updateLateAttendanceSettings(
-                                          weight: settings.lateAttendanceWeight,
-                                          policy: val,
-                                        );
-                                  }
+                                  ref
+                                      .read(settingsControllerProvider.notifier)
+                                      .updateLateAttendanceSettings(
+                                        weight: val,
+                                        policy: 'weighted',
+                                      );
                                 },
                               ),
                             ],
-                          ),
-                          if (settings.lateAttendancePolicy == 'weighted') ...[
-                            const SizedBox(height: 4),
-                            Slider(
-                              value: settings.lateAttendanceWeight,
-                              min: 0.1,
-                              max: 0.9,
-                              divisions: 8,
-                              activeColor: const Color(0xFFFFB300),
-                              inactiveColor: isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.lightBorder,
-                              onChanged: (val) {
-                                ref
-                                    .read(settingsControllerProvider.notifier)
-                                    .updateLateAttendanceSettings(
-                                      weight: val,
-                                      policy: 'weighted',
-                                    );
-                              },
-                            ),
                           ],
                         ],
                       ),
@@ -233,16 +270,18 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Notifications Section
+                  // 3. NOTIFICATIONS SECTION
                   _buildSectionHeader('Notifications', isDark),
                   const SizedBox(height: 10),
                   _buildCard(
-                    isDark,
+                    isDark: isDark,
+                    isGlassy: isGlassy,
                     child: Column(
                       children: [
                         _buildSwitchTile(
                           title: 'Class Reminders',
-                          subtitle: 'Alert before scheduled classes',
+                          subtitle:
+                              'Separate notifications for every scheduled class',
                           value: settings.enableNotifications,
                           onChanged: (val) {
                             ref
@@ -252,7 +291,7 @@ class SettingsPage extends ConsumerWidget {
                           isDark: isDark,
                         ),
                         if (settings.enableNotifications) ...[
-                          _buildDivider(isDark),
+                          _buildDivider(isDark, isGlassy),
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16.0, vertical: 8.0),
@@ -262,8 +301,9 @@ class SettingsPage extends ConsumerWidget {
                                 const Text(
                                   'Reminder Offset',
                                   style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14),
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
                                 ),
                                 DropdownButton<int>(
                                   value: settings.classReminderOffset > 0
@@ -300,11 +340,10 @@ class SettingsPage extends ConsumerWidget {
                             ),
                           ),
                         ],
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildSwitchTile(
                           title: 'Notification Sound',
-                          subtitle:
-                              'Play sound for class alerts and reports',
+                          subtitle: 'Play sound for class alerts and reports',
                           value: settings.notificationSound,
                           onChanged: (val) {
                             ref
@@ -316,7 +355,7 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildSwitchTile(
                           title: 'Vibration',
                           subtitle: 'Vibrate device on incoming reminders',
@@ -331,7 +370,7 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildSwitchTile(
                           title: 'Quiet Hours',
                           subtitle: settings.quietHoursEnabled
@@ -349,7 +388,7 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildSwitchTile(
                           title: 'Missed Attendance Reminders',
                           subtitle:
@@ -360,17 +399,17 @@ class SettingsPage extends ConsumerWidget {
                                 .read(settingsControllerProvider.notifier)
                                 .updateMissedAttendanceReminder(
                                   enabled: val,
-                                  offsetMinutes: settings
-                                      .missedAttendanceReminderOffset,
+                                  offsetMinutes:
+                                      settings.missedAttendanceReminderOffset,
                                 );
                           },
                           isDark: isDark,
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildSwitchTile(
                           title: 'Attendance Warnings',
                           subtitle:
-                              'Notify if attendance falls near threshold',
+                              'Notify if attendance falls near or below threshold',
                           value: settings.enableAttendanceWarnings,
                           onChanged: (val) {
                             ref
@@ -379,11 +418,10 @@ class SettingsPage extends ConsumerWidget {
                           },
                           isDark: isDark,
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildSwitchTile(
                           title: 'Weekly Digest',
-                          subtitle:
-                              'Summary of the week\'s attendance metrics',
+                          subtitle: 'Summary of the week\'s attendance metrics',
                           value: settings.weeklyReportEnabled,
                           onChanged: (val) {
                             ref
@@ -397,30 +435,49 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Widgets Section
-                  _buildSectionHeader('Home Screen Widgets', isDark),
+                  // 4. AI INTELLIGENCE SECTION
+                  _buildSectionHeader('AI Intelligence', isDark),
                   const SizedBox(height: 10),
                   _buildCard(
-                    isDark,
-                    child: ListTile(
-                      leading: const Icon(Icons.widgets_outlined,
-                          color: AppColors.primary),
-                      title: const Text('Widgets Configuration'),
-                      subtitle: const Text(
-                          'Configure Today, Weekly, and Calendar widgets'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.push('/widget-settings'),
+                    isDark: isDark,
+                    isGlassy: isGlassy,
+                    child: Column(
+                      children: [
+                        _buildSwitchTile(
+                          title: 'Enable AI Advisor',
+                          subtitle:
+                              'Intelligent attendance forecasting and advisor prompts',
+                          value: settings.enableAiAdvisor,
+                          onChanged: (val) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .updateEnableAiAdvisor(val);
+                          },
+                          isDark: isDark,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Backup & Data Section
-                  _buildSectionHeader('Data Management', isDark),
+                  // 5. APPLICATION & DATA SECTION
+                  _buildSectionHeader('Application & Data', isDark),
                   const SizedBox(height: 10),
                   _buildCard(
-                    isDark,
+                    isDark: isDark,
+                    isGlassy: isGlassy,
                     child: Column(
                       children: [
+                        ListTile(
+                          leading: const Icon(Icons.widgets_outlined,
+                              color: AppColors.primary),
+                          title: const Text('Home Screen Widgets'),
+                          subtitle: const Text(
+                              'Configure Today, Weekly, and Calendar widgets'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push('/widget-settings'),
+                        ),
+                        _buildDivider(isDark, isGlassy),
                         ListTile(
                           leading: const Icon(Icons.backup_outlined,
                               color: AppColors.primary),
@@ -430,29 +487,16 @@ class SettingsPage extends ConsumerWidget {
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push('/backup'),
                         ),
-                        _buildDivider(isDark),
-                        ListTile(
-                          leading: const Icon(Icons.download_outlined,
-                              color: AppColors.secondary),
-                          title: const Text('Export Data'),
-                          onTap: () => context.push('/backup'),
-                        ),
-                        _buildDivider(isDark),
-                        ListTile(
-                          leading: const Icon(Icons.upload_outlined,
-                              color: AppColors.secondary),
-                          title: const Text('Import Data'),
-                          onTap: () => context.push('/backup'),
-                        ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         ListTile(
                           leading: const Icon(Icons.picture_as_pdf_outlined,
                               color: AppColors.secondary),
                           title: const Text('Attendance Reports'),
+                          subtitle: const Text('Generate PDF & CSV reports'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push('/reports'),
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         _buildSwitchTile(
                           title: 'Cloud Synchronization (Opt-In)',
                           subtitle: settings.enableCloudSync
@@ -472,29 +516,28 @@ class SettingsPage extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // About & Info Section
-                  _buildSectionHeader('App & Privacy', isDark),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   _buildCard(
-                    isDark,
+                    isDark: isDark,
+                    isGlassy: isGlassy,
                     child: Column(
                       children: [
                         ListTile(
                           leading: const Icon(Icons.info_outline,
                               color: AppColors.primary),
-                          title: const Text('App Info'),
-                          subtitle: const Text('Version 1.1.0 (Offline-First)'),
+                          title: const Text('About ACEDRA'),
+                          subtitle: const Text(
+                              'Version 1.1.0 • Academic & Attendance Intelligence'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push('/about'),
                         ),
-                        _buildDivider(isDark),
+                        _buildDivider(isDark, isGlassy),
                         ListTile(
                           leading: const Icon(Icons.privacy_tip_outlined,
                               color: AppColors.primary),
                           title: const Text('Privacy Commitment'),
-                          subtitle: const Text('100% On-Device Data Privacy'),
+                          subtitle: const Text(
+                              '100% On-Device Data Privacy & Local Storage'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => context.push('/about'),
                         ),
@@ -524,14 +567,22 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildCard(bool isDark, {required Widget child}) {
+  Widget _buildCard({
+    required bool isDark,
+    required bool isGlassy,
+    required Widget child,
+  }) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: isGlassy
+            ? const Color(0xB8141822)
+            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          color: isGlassy
+              ? const Color(0x33E2E8F0)
+              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
       ),
       child: ClipRRect(
@@ -541,11 +592,13 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildDivider(bool isDark) {
+  Widget _buildDivider(bool isDark, bool isGlassy) {
     return Divider(
       height: 1,
       thickness: 1,
-      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+      color: isGlassy
+          ? const Color(0x20E2E8F0)
+          : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
     );
   }
 
@@ -593,8 +646,12 @@ class SettingsPage extends ConsumerWidget {
 
 class _SemesterManagementCard extends ConsumerWidget {
   final bool isDark;
+  final bool isGlassy;
 
-  const _SemesterManagementCard({required this.isDark});
+  const _SemesterManagementCard({
+    required this.isDark,
+    required this.isGlassy,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -612,10 +669,14 @@ class _SemesterManagementCard extends ConsumerWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: isGlassy
+            ? const Color(0xB8141822)
+            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          color: isGlassy
+              ? const Color(0x33E2E8F0)
+              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
       ),
       child: ClipRRect(
@@ -656,7 +717,9 @@ class _SemesterManagementCard extends ConsumerWidget {
             Divider(
               height: 1,
               thickness: 1,
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              color: isGlassy
+                  ? const Color(0x20E2E8F0)
+                  : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

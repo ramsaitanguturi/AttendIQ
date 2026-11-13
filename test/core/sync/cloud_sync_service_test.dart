@@ -48,10 +48,12 @@ void main() {
 
     test('Conflict detection halts sync when remote backup is newer', () async {
       // Enable cloud sync with consent
-      await container.read(settingsControllerProvider.notifier).updateCloudSyncSettings(
-        enabled: true,
-        consentGiven: true,
-      );
+      await container
+          .read(settingsControllerProvider.notifier)
+          .updateCloudSyncSettings(
+            enabled: true,
+            consentGiven: true,
+          );
 
       final notifier = container.read(cloudSyncStateProvider.notifier);
 
@@ -72,11 +74,14 @@ void main() {
       expect(state.message, contains('Cloud backup is newer'));
     });
 
-    test('Sync completes successfully when authorized and no conflicts', () async {
-      await container.read(settingsControllerProvider.notifier).updateCloudSyncSettings(
-        enabled: true,
-        consentGiven: true,
-      );
+    test('Sync completes successfully when authorized and no conflicts',
+        () async {
+      await container
+          .read(settingsControllerProvider.notifier)
+          .updateCloudSyncSettings(
+            enabled: true,
+            consentGiven: true,
+          );
 
       final notifier = container.read(cloudSyncStateProvider.notifier);
 

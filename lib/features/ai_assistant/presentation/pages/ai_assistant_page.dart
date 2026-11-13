@@ -92,7 +92,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'AttendIQ Advisor',
+                  'ACEDRA Advisor',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 chatStateAsync.when(

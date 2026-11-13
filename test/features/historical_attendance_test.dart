@@ -28,7 +28,8 @@ void main() {
     isar = testDb.isar;
 
     final occDataSource = DailyScheduleOccurrenceLocalDataSourceImpl(isar);
-    occurrenceRepo = DailyScheduleOccurrenceRepositoryImpl(localDataSource: occDataSource);
+    occurrenceRepo =
+        DailyScheduleOccurrenceRepositoryImpl(localDataSource: occDataSource);
 
     final attDataSource = AttendanceLocalDataSourceImpl(isar);
     attendanceRepo = AttendanceRepositoryImpl(attDataSource);
@@ -70,7 +71,9 @@ void main() {
       expect(records.first.occurrenceId, equals(occ.id));
     });
 
-    test('Full status transition cycle: Present -> Absent -> Late -> Cancelled -> Present', () async {
+    test(
+        'Full status transition cycle: Present -> Absent -> Late -> Cancelled -> Present',
+        () async {
       final pastDate = DateTime.utc(2026, 10, 12);
 
       // 1. Unmarked -> Present
@@ -84,7 +87,8 @@ void main() {
         targetStatus: OccurrenceStatus.PRESENT,
       );
       expect(occ1.status, equals(OccurrenceStatus.PRESENT));
-      var activeRecords = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      var activeRecords =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
       expect(activeRecords.first.status, equals('PRESENT'));
 
@@ -99,7 +103,8 @@ void main() {
         targetStatus: OccurrenceStatus.ABSENT,
       );
       expect(occ2.status, equals(OccurrenceStatus.ABSENT));
-      activeRecords = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      activeRecords =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
       expect(activeRecords.first.status, equals('ABSENT'));
 
@@ -114,7 +119,8 @@ void main() {
         targetStatus: OccurrenceStatus.LATE,
       );
       expect(occ3.status, equals(OccurrenceStatus.LATE));
-      activeRecords = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      activeRecords =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
       expect(activeRecords.first.status, equals('LATE'));
 
@@ -129,8 +135,10 @@ void main() {
         targetStatus: OccurrenceStatus.CANCELLED,
       );
       expect(occ4.status, equals(OccurrenceStatus.CANCELLED));
-      activeRecords = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
-      expect(activeRecords.isEmpty, isTrue); // Cancelled classes have no active attendance records
+      activeRecords =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      expect(activeRecords.isEmpty,
+          isTrue); // Cancelled classes have no active attendance records
 
       // 5. Cancelled -> Present
       final occ5 = await historicalService.setAttendanceStatus(
@@ -143,12 +151,14 @@ void main() {
         targetStatus: OccurrenceStatus.PRESENT,
       );
       expect(occ5.status, equals(OccurrenceStatus.PRESENT));
-      activeRecords = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      activeRecords =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
       expect(activeRecords.first.status, equals('PRESENT'));
     });
 
-    test('Unrecorded past class modifies directly to ABSENT or CANCELLED', () async {
+    test('Unrecorded past class modifies directly to ABSENT or CANCELLED',
+        () async {
       final pastDate = DateTime.utc(2026, 10, 14);
 
       // Unrecorded -> Cancelled
@@ -162,7 +172,8 @@ void main() {
         targetStatus: OccurrenceStatus.CANCELLED,
       );
       expect(occCancel.status, equals(OccurrenceStatus.CANCELLED));
-      var records = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      var records =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(records.isEmpty, isTrue);
 
       // Unrecorded -> Absent
@@ -176,13 +187,15 @@ void main() {
         targetStatus: OccurrenceStatus.ABSENT,
       );
       expect(occAbsent.status, equals(OccurrenceStatus.ABSENT));
-      records = isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
+      records =
+          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(records.length, equals(1));
       expect(records.first.status, equals('ABSENT'));
     });
 
     test('Modification timestamps are accurately recorded', () async {
-      final beforeTime = DateTime.now().toUtc().subtract(const Duration(seconds: 1));
+      final beforeTime =
+          DateTime.now().toUtc().subtract(const Duration(seconds: 1));
       final pastDate = DateTime.utc(2026, 10, 15);
 
       final occ = await historicalService.setAttendanceStatus(
@@ -206,4 +219,3 @@ void main() {
     });
   });
 }
-

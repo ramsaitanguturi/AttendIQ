@@ -113,7 +113,8 @@ class PendingCheckInsBanner extends ConsumerWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: items.length > 3 ? 3 : items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
+                separatorBuilder: (_, __) =>
+                    const Divider(height: 1, indent: 16),
                 itemBuilder: (context, index) {
                   final item = items[index];
                   final formattedDate =

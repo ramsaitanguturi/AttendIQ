@@ -240,6 +240,12 @@ class NotificationScheduler {
       return;
     }
 
+    final isLateEnabled = prefs?.enableLateAttendance ?? false;
+    if (_notificationService is LocalNotificationServiceImpl) {
+      (_notificationService as LocalNotificationServiceImpl)
+          .enableLateAttendance = isLateEnabled;
+    }
+
     final effectiveOffsets = (prefs != null && prefs.classReminderOffset > 0)
         ? [prefs.classReminderOffset]
         : reminderOffsets;

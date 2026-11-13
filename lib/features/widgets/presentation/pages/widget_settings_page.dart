@@ -46,7 +46,7 @@ class WidgetSettingsPage extends ConsumerWidget {
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                   ),
                   subtitle: const Text(
-                    'Allow AttendIQ widgets to display live academic data on your home screen',
+                    'Allow ACEDRA widgets to display live academic data on your home screen',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   value: widgetSettings.enabled,
@@ -147,7 +147,7 @@ class WidgetSettingsPage extends ConsumerWidget {
                         child:
                             const Icon(Icons.today, color: AppColors.primary),
                       ),
-                      title: const Text('AttendIQ - Today',
+                      title: const Text('ACEDRA - Today',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: const Text(
                           'Shows today\'s classes and attendance status (Small 2x2, Medium 4x2)'),
@@ -163,7 +163,7 @@ class WidgetSettingsPage extends ConsumerWidget {
                         child: const Icon(Icons.calendar_view_week,
                             color: AppColors.secondary),
                       ),
-                      title: const Text('AttendIQ - This Week',
+                      title: const Text('ACEDRA - This Week',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: const Text(
                           'Shows complete weekly timetable with exceptions (Large 4x4)'),
@@ -179,7 +179,7 @@ class WidgetSettingsPage extends ConsumerWidget {
                         child: const Icon(Icons.calendar_month,
                             color: Colors.purple),
                       ),
-                      title: const Text('AttendIQ - Month',
+                      title: const Text('ACEDRA - Month',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: const Text(
                           'Shows upcoming academic events, exams, and task deadlines (Medium/Large)'),

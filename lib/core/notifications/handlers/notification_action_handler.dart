@@ -95,11 +95,17 @@ class NotificationActionPayload {
               if (y != null && m != null && d != null) {
                 date = DateTime.utc(y, m, d);
               }
-            } else if (seg.contains('-') && seg.split('-').length == 2 && seg.contains(':')) {
+            } else if (seg.contains('-') &&
+                seg.split('-').length == 2 &&
+                seg.contains(':')) {
               final timeParts = seg.split('-');
               start = timeParts[0];
               end = timeParts[1];
-            } else if (seg != 'REGULAR' && seg != 'EXTRA' && seg != 'EXAM' && seg != 'EVENT' && !seg.startsWith('rule:')) {
+            } else if (seg != 'REGULAR' &&
+                seg != 'EXTRA' &&
+                seg != 'EXAM' &&
+                seg != 'EVENT' &&
+                !seg.startsWith('rule:')) {
               title = seg;
             }
           }
@@ -120,7 +126,8 @@ class NotificationActionPayload {
             final endTime = parts[4];
             // Remaining parts are type and title
             final remaining = parts.sublist(5).join('_');
-            final cleanTitle = remaining.replaceFirst(RegExp(r'^(REGULAR_CLASS|EXTRA_CLASS|EXAM|EVENT)_?'), '');
+            final cleanTitle = remaining.replaceFirst(
+                RegExp(r'^(REGULAR_CLASS|EXTRA_CLASS|EXAM|EVENT)_?'), '');
             final parsedDate = DateTime.tryParse(datePart) ?? DateTime.now();
             return NotificationActionPayload(
               slotKey: slotKey,
@@ -227,10 +234,13 @@ class NotificationActionHandler {
       DailyScheduleOccurrenceLocal? occurrence;
 
       if (payload.occurrenceId != null && payload.occurrenceId! > 0) {
-        occurrence = isar.dailyScheduleOccurrenceLocals.get(payload.occurrenceId!);
+        occurrence =
+            isar.dailyScheduleOccurrenceLocals.get(payload.occurrenceId!);
       }
 
-      if (occurrence == null && payload.slotKey != null && payload.slotKey!.isNotEmpty) {
+      if (occurrence == null &&
+          payload.slotKey != null &&
+          payload.slotKey!.isNotEmpty) {
         final matches = isar.dailyScheduleOccurrenceLocals
             .where()
             .slotKeyEqualTo(payload.slotKey)
@@ -291,7 +301,8 @@ class NotificationActionHandler {
       } else {
         // Prevent redundant identical mutation within short window
         if (occurrence.status.toUpperCase() == newStatus.toShortString() &&
-            occurrence.updatedAt.isAfter(nowUtc.subtract(const Duration(seconds: 2)))) {
+            occurrence.updatedAt
+                .isAfter(nowUtc.subtract(const Duration(seconds: 2)))) {
           return NotificationActionResult(
             success: true,
             message: 'Duplicate action suppressed (already recorded)',
@@ -358,7 +369,8 @@ class NotificationActionHandler {
 
       return NotificationActionResult(
         success: true,
-        message: 'Attendance successfully marked as ${newStatus.toShortString()}',
+        message:
+            'Attendance successfully marked as ${newStatus.toShortString()}',
         appliedStatus: newStatus,
         occurrenceId: occId,
       );

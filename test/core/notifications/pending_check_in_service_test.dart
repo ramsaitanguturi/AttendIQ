@@ -31,7 +31,8 @@ void main() {
     isar = testDb.isar;
 
     final occDataSource = DailyScheduleOccurrenceLocalDataSourceImpl(isar);
-    final occRepo = DailyScheduleOccurrenceRepositoryImpl(localDataSource: occDataSource);
+    final occRepo =
+        DailyScheduleOccurrenceRepositoryImpl(localDataSource: occDataSource);
     final attDataSource = AttendanceLocalDataSourceImpl(isar);
     final attRepo = AttendanceRepositoryImpl(attDataSource);
 
@@ -103,7 +104,8 @@ void main() {
       });
 
       final service = PendingCheckInService(isar, historicalService);
-      final pending = await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
+      final pending =
+          await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
 
       expect(pending.length, equals(1));
       expect(pending.first.occurrenceId, equals(1));
@@ -142,12 +144,15 @@ void main() {
       });
 
       final service = PendingCheckInService(isar, historicalService);
-      final pending = await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
+      final pending =
+          await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
 
       expect(pending.isEmpty, isTrue);
     });
 
-    test('Resolving pending check-in marks attendance and removes from pending list', () async {
+    test(
+        'Resolving pending check-in marks attendance and removes from pending list',
+        () async {
       final now = DateTime(2026, 11, 17, 12, 0);
       final classDate = DateTime.utc(2026, 11, 17);
 
@@ -169,7 +174,8 @@ void main() {
       });
 
       final service = PendingCheckInService(isar, historicalService);
-      var pending = await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
+      var pending =
+          await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
       expect(pending.length, equals(1));
 
       // Resolve as PRESENT
@@ -179,7 +185,8 @@ void main() {
       );
 
       // Verify pending list is now empty
-      pending = await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
+      pending =
+          await service.getPendingCheckIns(customNow: now, lookbackDays: 3);
       expect(pending.isEmpty, isTrue);
 
       // Verify Isar state

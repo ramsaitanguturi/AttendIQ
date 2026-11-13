@@ -19,6 +19,9 @@ import '../features/ai_assistant/presentation/pages/ai_assistant_page.dart';
 
 import '../features/academic_planner/presentation/pages/academic_planner_page.dart';
 import '../features/widgets/presentation/pages/widget_settings_page.dart';
+import '../features/account/presentation/pages/account_page.dart';
+import '../features/settings/presentation/controllers/settings_controller.dart';
+import '../core/widgets/acedra_floating_bottom_bar.dart';
 import '../core/theme/colors.dart';
 
 part 'app_router.g.dart';
@@ -144,25 +147,75 @@ GoRouter appRouter(AppRouterRef ref) {
           return const OnboardingPage();
         },
       ),
-      GoRoute(
-        path: '/dashboard',
-        builder: (BuildContext context, GoRouterState state) {
-          return DashboardPage(
-            initialSection: state.uri.queryParameters['section'],
+      StatefulShellRoute.indexedStack(
+        builder: (BuildContext context, GoRouterState state,
+            StatefulNavigationShell navigationShell) {
+          return Scaffold(
+            body: Stack(
+              children: [
+                navigationShell,
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: AcedraFloatingBottomBar(
+                    currentIndex: navigationShell.currentIndex,
+                    onTabSelected: (index) {
+                      navigationShell.goBranch(
+                        index,
+                        initialLocation: index == navigationShell.currentIndex,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           );
         },
-      ),
-      GoRoute(
-        path: '/analytics',
-        builder: (BuildContext context, GoRouterState state) {
-          return const AnalyticsPage();
-        },
-      ),
-      GoRoute(
-        path: '/timetable',
-        builder: (BuildContext context, GoRouterState state) {
-          return const WeeklyTimetablePage();
-        },
+        branches: <StatefulShellBranch>[
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: '/dashboard',
+                builder: (BuildContext context, GoRouterState state) {
+                  return DashboardPage(
+                    initialSection: state.uri.queryParameters['section'],
+                  );
+                },
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: '/timetable',
+                builder: (BuildContext context, GoRouterState state) {
+                  return const WeeklyTimetablePage();
+                },
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: '/analytics',
+                builder: (BuildContext context, GoRouterState state) {
+                  return const AnalyticsPage();
+                },
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: '/account',
+                builder: (BuildContext context, GoRouterState state) {
+                  return const AccountPage();
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/subject/:id',
@@ -198,6 +251,13 @@ GoRouter appRouter(AppRouterRef ref) {
       ),
       GoRoute(
         path: '/ai-assistant',
+        redirect: (BuildContext context, GoRouterState state) {
+          final isEnabled = ref.read(isAiAdvisorEnabledProvider);
+          if (!isEnabled) {
+            return '/dashboard';
+          }
+          return null;
+        },
         builder: (BuildContext context, GoRouterState state) {
           return const AIAssistantPage();
         },

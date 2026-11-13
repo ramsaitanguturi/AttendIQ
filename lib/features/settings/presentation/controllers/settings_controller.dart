@@ -244,6 +244,70 @@ class SettingsController extends _$SettingsController {
     final repo = ref.read(settingsRepositoryProvider);
     await repo.savePreferences(updated);
   }
+
+  Future<void> updateEnableLateAttendance(bool enabled) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(enableLateAttendance: enabled);
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+
+    try {
+      await ref.read(notificationSchedulerProvider).rescheduleAll();
+    } catch (_) {}
+  }
+
+  Future<void> updateEnableGlassyTheme(bool enabled) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(enableGlassyTheme: enabled);
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+
+  Future<void> updateEnableAiAdvisor(bool enabled) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+
+    final updated = current.copyWith(enableAiAdvisor: enabled);
+    state = AsyncValue.data(updated);
+
+    final repo = ref.read(settingsRepositoryProvider);
+    await repo.savePreferences(updated);
+  }
+}
+
+@riverpod
+bool isGlassyThemeEnabled(IsGlassyThemeEnabledRef ref) {
+  final settingsAsync = ref.watch(settingsControllerProvider);
+  return settingsAsync.maybeWhen(
+    data: (prefs) => prefs.enableGlassyTheme,
+    orElse: () => false,
+  );
+}
+
+@riverpod
+bool isLateAttendanceEnabled(IsLateAttendanceEnabledRef ref) {
+  final settingsAsync = ref.watch(settingsControllerProvider);
+  return settingsAsync.maybeWhen(
+    data: (prefs) => prefs.enableLateAttendance,
+    orElse: () => false,
+  );
+}
+
+@riverpod
+bool isAiAdvisorEnabled(IsAiAdvisorEnabledRef ref) {
+  final settingsAsync = ref.watch(settingsControllerProvider);
+  return settingsAsync.maybeWhen(
+    data: (prefs) => prefs.enableAiAdvisor,
+    orElse: () => true,
+  );
 }
 
 @riverpod

@@ -54,12 +54,24 @@ const UserPreferencesLocalSchema = IsarGeneratedSchema(
         type: IsarType.dateTime,
       ),
       IsarPropertySchema(
+        name: 'enableLateAttendance',
+        type: IsarType.bool,
+      ),
+      IsarPropertySchema(
         name: 'lateAttendanceWeight',
         type: IsarType.double,
       ),
       IsarPropertySchema(
         name: 'lateAttendancePolicy',
         type: IsarType.string,
+      ),
+      IsarPropertySchema(
+        name: 'enableGlassyTheme',
+        type: IsarType.bool,
+      ),
+      IsarPropertySchema(
+        name: 'enableAiAdvisor',
+        type: IsarType.bool,
       ),
       IsarPropertySchema(
         name: 'quietHoursEnabled',
@@ -167,29 +179,32 @@ int serializeUserPreferencesLocal(
       8,
       object.lastSyncTime?.toUtc().microsecondsSinceEpoch ??
           -9223372036854775808);
-  IsarCore.writeDouble(writer, 9, object.lateAttendanceWeight);
-  IsarCore.writeString(writer, 10, object.lateAttendancePolicy);
-  IsarCore.writeBool(writer, 11, object.quietHoursEnabled);
-  IsarCore.writeLong(writer, 12, object.quietHoursStartHour);
-  IsarCore.writeLong(writer, 13, object.quietHoursEndHour);
-  IsarCore.writeBool(writer, 14, object.notificationSound);
-  IsarCore.writeBool(writer, 15, object.notificationVibration);
-  IsarCore.writeBool(writer, 16, object.missedAttendanceReminderEnabled);
-  IsarCore.writeLong(writer, 17, object.missedAttendanceReminderOffset);
-  IsarCore.writeBool(writer, 18, object.enableCloudSync);
-  IsarCore.writeBool(writer, 19, object.cloudSyncConsentGiven);
-  IsarCore.writeBool(writer, 20, object.enableAutoBackup);
+  IsarCore.writeBool(writer, 9, object.enableLateAttendance);
+  IsarCore.writeDouble(writer, 10, object.lateAttendanceWeight);
+  IsarCore.writeString(writer, 11, object.lateAttendancePolicy);
+  IsarCore.writeBool(writer, 12, object.enableGlassyTheme);
+  IsarCore.writeBool(writer, 13, object.enableAiAdvisor);
+  IsarCore.writeBool(writer, 14, object.quietHoursEnabled);
+  IsarCore.writeLong(writer, 15, object.quietHoursStartHour);
+  IsarCore.writeLong(writer, 16, object.quietHoursEndHour);
+  IsarCore.writeBool(writer, 17, object.notificationSound);
+  IsarCore.writeBool(writer, 18, object.notificationVibration);
+  IsarCore.writeBool(writer, 19, object.missedAttendanceReminderEnabled);
+  IsarCore.writeLong(writer, 20, object.missedAttendanceReminderOffset);
+  IsarCore.writeBool(writer, 21, object.enableCloudSync);
+  IsarCore.writeBool(writer, 22, object.cloudSyncConsentGiven);
+  IsarCore.writeBool(writer, 23, object.enableAutoBackup);
   IsarCore.writeLong(
       writer,
-      21,
+      24,
       object.lastBackupDate?.toUtc().microsecondsSinceEpoch ??
           -9223372036854775808);
-  IsarCore.writeLong(writer, 22, object.autoBackupDay);
-  IsarCore.writeLong(writer, 23, object.autoBackupHour);
+  IsarCore.writeLong(writer, 25, object.autoBackupDay);
+  IsarCore.writeLong(writer, 26, object.autoBackupHour);
   IsarCore.writeLong(
-      writer, 24, object.updatedAt.toUtc().microsecondsSinceEpoch);
-  IsarCore.writeBool(writer, 25, object.isDirty);
-  IsarCore.writeBool(writer, 26, object.isDeleted);
+      writer, 27, object.updatedAt.toUtc().microsecondsSinceEpoch);
+  IsarCore.writeBool(writer, 28, object.isDirty);
+  IsarCore.writeBool(writer, 29, object.isDeleted);
   return object.id;
 }
 
@@ -213,20 +228,23 @@ UserPreferencesLocal deserializeUserPreferencesLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.lateAttendanceWeight = IsarCore.readDouble(reader, 9);
-  object.lateAttendancePolicy = IsarCore.readString(reader, 10) ?? '';
-  object.quietHoursEnabled = IsarCore.readBool(reader, 11);
-  object.quietHoursStartHour = IsarCore.readLong(reader, 12);
-  object.quietHoursEndHour = IsarCore.readLong(reader, 13);
-  object.notificationSound = IsarCore.readBool(reader, 14);
-  object.notificationVibration = IsarCore.readBool(reader, 15);
-  object.missedAttendanceReminderEnabled = IsarCore.readBool(reader, 16);
-  object.missedAttendanceReminderOffset = IsarCore.readLong(reader, 17);
-  object.enableCloudSync = IsarCore.readBool(reader, 18);
-  object.cloudSyncConsentGiven = IsarCore.readBool(reader, 19);
-  object.enableAutoBackup = IsarCore.readBool(reader, 20);
+  object.enableLateAttendance = IsarCore.readBool(reader, 9);
+  object.lateAttendanceWeight = IsarCore.readDouble(reader, 10);
+  object.lateAttendancePolicy = IsarCore.readString(reader, 11) ?? '';
+  object.enableGlassyTheme = IsarCore.readBool(reader, 12);
+  object.enableAiAdvisor = IsarCore.readBool(reader, 13);
+  object.quietHoursEnabled = IsarCore.readBool(reader, 14);
+  object.quietHoursStartHour = IsarCore.readLong(reader, 15);
+  object.quietHoursEndHour = IsarCore.readLong(reader, 16);
+  object.notificationSound = IsarCore.readBool(reader, 17);
+  object.notificationVibration = IsarCore.readBool(reader, 18);
+  object.missedAttendanceReminderEnabled = IsarCore.readBool(reader, 19);
+  object.missedAttendanceReminderOffset = IsarCore.readLong(reader, 20);
+  object.enableCloudSync = IsarCore.readBool(reader, 21);
+  object.cloudSyncConsentGiven = IsarCore.readBool(reader, 22);
+  object.enableAutoBackup = IsarCore.readBool(reader, 23);
   {
-    final value = IsarCore.readLong(reader, 21);
+    final value = IsarCore.readLong(reader, 24);
     if (value == -9223372036854775808) {
       object.lastBackupDate = null;
     } else {
@@ -234,10 +252,10 @@ UserPreferencesLocal deserializeUserPreferencesLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.autoBackupDay = IsarCore.readLong(reader, 22);
-  object.autoBackupHour = IsarCore.readLong(reader, 23);
+  object.autoBackupDay = IsarCore.readLong(reader, 25);
+  object.autoBackupHour = IsarCore.readLong(reader, 26);
   {
-    final value = IsarCore.readLong(reader, 24);
+    final value = IsarCore.readLong(reader, 27);
     if (value == -9223372036854775808) {
       object.updatedAt =
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
@@ -246,8 +264,8 @@ UserPreferencesLocal deserializeUserPreferencesLocal(IsarReader reader) {
           DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true).toLocal();
     }
   }
-  object.isDirty = IsarCore.readBool(reader, 25);
-  object.isDeleted = IsarCore.readBool(reader, 26);
+  object.isDirty = IsarCore.readBool(reader, 28);
+  object.isDeleted = IsarCore.readBool(reader, 29);
   return object;
 }
 
@@ -281,32 +299,38 @@ dynamic deserializeUserPreferencesLocalProp(IsarReader reader, int property) {
         }
       }
     case 9:
-      return IsarCore.readDouble(reader, 9);
+      return IsarCore.readBool(reader, 9);
     case 10:
-      return IsarCore.readString(reader, 10) ?? '';
+      return IsarCore.readDouble(reader, 10);
     case 11:
-      return IsarCore.readBool(reader, 11);
+      return IsarCore.readString(reader, 11) ?? '';
     case 12:
-      return IsarCore.readLong(reader, 12);
+      return IsarCore.readBool(reader, 12);
     case 13:
-      return IsarCore.readLong(reader, 13);
+      return IsarCore.readBool(reader, 13);
     case 14:
       return IsarCore.readBool(reader, 14);
     case 15:
-      return IsarCore.readBool(reader, 15);
+      return IsarCore.readLong(reader, 15);
     case 16:
-      return IsarCore.readBool(reader, 16);
+      return IsarCore.readLong(reader, 16);
     case 17:
-      return IsarCore.readLong(reader, 17);
+      return IsarCore.readBool(reader, 17);
     case 18:
       return IsarCore.readBool(reader, 18);
     case 19:
       return IsarCore.readBool(reader, 19);
     case 20:
-      return IsarCore.readBool(reader, 20);
+      return IsarCore.readLong(reader, 20);
     case 21:
+      return IsarCore.readBool(reader, 21);
+    case 22:
+      return IsarCore.readBool(reader, 22);
+    case 23:
+      return IsarCore.readBool(reader, 23);
+    case 24:
       {
-        final value = IsarCore.readLong(reader, 21);
+        final value = IsarCore.readLong(reader, 24);
         if (value == -9223372036854775808) {
           return null;
         } else {
@@ -314,13 +338,13 @@ dynamic deserializeUserPreferencesLocalProp(IsarReader reader, int property) {
               .toLocal();
         }
       }
-    case 22:
-      return IsarCore.readLong(reader, 22);
-    case 23:
-      return IsarCore.readLong(reader, 23);
-    case 24:
+    case 25:
+      return IsarCore.readLong(reader, 25);
+    case 26:
+      return IsarCore.readLong(reader, 26);
+    case 27:
       {
-        final value = IsarCore.readLong(reader, 24);
+        final value = IsarCore.readLong(reader, 27);
         if (value == -9223372036854775808) {
           return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true).toLocal();
         } else {
@@ -328,10 +352,10 @@ dynamic deserializeUserPreferencesLocalProp(IsarReader reader, int property) {
               .toLocal();
         }
       }
-    case 25:
-      return IsarCore.readBool(reader, 25);
-    case 26:
-      return IsarCore.readBool(reader, 26);
+    case 28:
+      return IsarCore.readBool(reader, 28);
+    case 29:
+      return IsarCore.readBool(reader, 29);
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -348,8 +372,11 @@ sealed class _UserPreferencesLocalUpdate {
     bool? enableAttendanceWarnings,
     bool? weeklyReportEnabled,
     DateTime? lastSyncTime,
+    bool? enableLateAttendance,
     double? lateAttendanceWeight,
     String? lateAttendancePolicy,
+    bool? enableGlassyTheme,
+    bool? enableAiAdvisor,
     bool? quietHoursEnabled,
     int? quietHoursStartHour,
     int? quietHoursEndHour,
@@ -385,8 +412,11 @@ class _UserPreferencesLocalUpdateImpl implements _UserPreferencesLocalUpdate {
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableLateAttendance = ignore,
     Object? lateAttendanceWeight = ignore,
     Object? lateAttendancePolicy = ignore,
+    Object? enableGlassyTheme = ignore,
+    Object? enableAiAdvisor = ignore,
     Object? quietHoursEnabled = ignore,
     Object? quietHoursStartHour = ignore,
     Object? quietHoursEndHour = ignore,
@@ -417,30 +447,33 @@ class _UserPreferencesLocalUpdateImpl implements _UserPreferencesLocalUpdate {
             6: enableAttendanceWarnings as bool?,
           if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
           if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
+          if (enableLateAttendance != ignore) 9: enableLateAttendance as bool?,
           if (lateAttendanceWeight != ignore)
-            9: lateAttendanceWeight as double?,
+            10: lateAttendanceWeight as double?,
           if (lateAttendancePolicy != ignore)
-            10: lateAttendancePolicy as String?,
-          if (quietHoursEnabled != ignore) 11: quietHoursEnabled as bool?,
-          if (quietHoursStartHour != ignore) 12: quietHoursStartHour as int?,
-          if (quietHoursEndHour != ignore) 13: quietHoursEndHour as int?,
-          if (notificationSound != ignore) 14: notificationSound as bool?,
+            11: lateAttendancePolicy as String?,
+          if (enableGlassyTheme != ignore) 12: enableGlassyTheme as bool?,
+          if (enableAiAdvisor != ignore) 13: enableAiAdvisor as bool?,
+          if (quietHoursEnabled != ignore) 14: quietHoursEnabled as bool?,
+          if (quietHoursStartHour != ignore) 15: quietHoursStartHour as int?,
+          if (quietHoursEndHour != ignore) 16: quietHoursEndHour as int?,
+          if (notificationSound != ignore) 17: notificationSound as bool?,
           if (notificationVibration != ignore)
-            15: notificationVibration as bool?,
+            18: notificationVibration as bool?,
           if (missedAttendanceReminderEnabled != ignore)
-            16: missedAttendanceReminderEnabled as bool?,
+            19: missedAttendanceReminderEnabled as bool?,
           if (missedAttendanceReminderOffset != ignore)
-            17: missedAttendanceReminderOffset as int?,
-          if (enableCloudSync != ignore) 18: enableCloudSync as bool?,
+            20: missedAttendanceReminderOffset as int?,
+          if (enableCloudSync != ignore) 21: enableCloudSync as bool?,
           if (cloudSyncConsentGiven != ignore)
-            19: cloudSyncConsentGiven as bool?,
-          if (enableAutoBackup != ignore) 20: enableAutoBackup as bool?,
-          if (lastBackupDate != ignore) 21: lastBackupDate as DateTime?,
-          if (autoBackupDay != ignore) 22: autoBackupDay as int?,
-          if (autoBackupHour != ignore) 23: autoBackupHour as int?,
-          if (updatedAt != ignore) 24: updatedAt as DateTime?,
-          if (isDirty != ignore) 25: isDirty as bool?,
-          if (isDeleted != ignore) 26: isDeleted as bool?,
+            22: cloudSyncConsentGiven as bool?,
+          if (enableAutoBackup != ignore) 23: enableAutoBackup as bool?,
+          if (lastBackupDate != ignore) 24: lastBackupDate as DateTime?,
+          if (autoBackupDay != ignore) 25: autoBackupDay as int?,
+          if (autoBackupHour != ignore) 26: autoBackupHour as int?,
+          if (updatedAt != ignore) 27: updatedAt as DateTime?,
+          if (isDirty != ignore) 28: isDirty as bool?,
+          if (isDeleted != ignore) 29: isDeleted as bool?,
         }) >
         0;
   }
@@ -457,8 +490,11 @@ sealed class _UserPreferencesLocalUpdateAll {
     bool? enableAttendanceWarnings,
     bool? weeklyReportEnabled,
     DateTime? lastSyncTime,
+    bool? enableLateAttendance,
     double? lateAttendanceWeight,
     String? lateAttendancePolicy,
+    bool? enableGlassyTheme,
+    bool? enableAiAdvisor,
     bool? quietHoursEnabled,
     int? quietHoursStartHour,
     int? quietHoursEndHour,
@@ -495,8 +531,11 @@ class _UserPreferencesLocalUpdateAllImpl
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableLateAttendance = ignore,
     Object? lateAttendanceWeight = ignore,
     Object? lateAttendancePolicy = ignore,
+    Object? enableGlassyTheme = ignore,
+    Object? enableAiAdvisor = ignore,
     Object? quietHoursEnabled = ignore,
     Object? quietHoursStartHour = ignore,
     Object? quietHoursEndHour = ignore,
@@ -525,26 +564,29 @@ class _UserPreferencesLocalUpdateAllImpl
         6: enableAttendanceWarnings as bool?,
       if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
       if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
-      if (lateAttendanceWeight != ignore) 9: lateAttendanceWeight as double?,
-      if (lateAttendancePolicy != ignore) 10: lateAttendancePolicy as String?,
-      if (quietHoursEnabled != ignore) 11: quietHoursEnabled as bool?,
-      if (quietHoursStartHour != ignore) 12: quietHoursStartHour as int?,
-      if (quietHoursEndHour != ignore) 13: quietHoursEndHour as int?,
-      if (notificationSound != ignore) 14: notificationSound as bool?,
-      if (notificationVibration != ignore) 15: notificationVibration as bool?,
+      if (enableLateAttendance != ignore) 9: enableLateAttendance as bool?,
+      if (lateAttendanceWeight != ignore) 10: lateAttendanceWeight as double?,
+      if (lateAttendancePolicy != ignore) 11: lateAttendancePolicy as String?,
+      if (enableGlassyTheme != ignore) 12: enableGlassyTheme as bool?,
+      if (enableAiAdvisor != ignore) 13: enableAiAdvisor as bool?,
+      if (quietHoursEnabled != ignore) 14: quietHoursEnabled as bool?,
+      if (quietHoursStartHour != ignore) 15: quietHoursStartHour as int?,
+      if (quietHoursEndHour != ignore) 16: quietHoursEndHour as int?,
+      if (notificationSound != ignore) 17: notificationSound as bool?,
+      if (notificationVibration != ignore) 18: notificationVibration as bool?,
       if (missedAttendanceReminderEnabled != ignore)
-        16: missedAttendanceReminderEnabled as bool?,
+        19: missedAttendanceReminderEnabled as bool?,
       if (missedAttendanceReminderOffset != ignore)
-        17: missedAttendanceReminderOffset as int?,
-      if (enableCloudSync != ignore) 18: enableCloudSync as bool?,
-      if (cloudSyncConsentGiven != ignore) 19: cloudSyncConsentGiven as bool?,
-      if (enableAutoBackup != ignore) 20: enableAutoBackup as bool?,
-      if (lastBackupDate != ignore) 21: lastBackupDate as DateTime?,
-      if (autoBackupDay != ignore) 22: autoBackupDay as int?,
-      if (autoBackupHour != ignore) 23: autoBackupHour as int?,
-      if (updatedAt != ignore) 24: updatedAt as DateTime?,
-      if (isDirty != ignore) 25: isDirty as bool?,
-      if (isDeleted != ignore) 26: isDeleted as bool?,
+        20: missedAttendanceReminderOffset as int?,
+      if (enableCloudSync != ignore) 21: enableCloudSync as bool?,
+      if (cloudSyncConsentGiven != ignore) 22: cloudSyncConsentGiven as bool?,
+      if (enableAutoBackup != ignore) 23: enableAutoBackup as bool?,
+      if (lastBackupDate != ignore) 24: lastBackupDate as DateTime?,
+      if (autoBackupDay != ignore) 25: autoBackupDay as int?,
+      if (autoBackupHour != ignore) 26: autoBackupHour as int?,
+      if (updatedAt != ignore) 27: updatedAt as DateTime?,
+      if (isDirty != ignore) 28: isDirty as bool?,
+      if (isDeleted != ignore) 29: isDeleted as bool?,
     });
   }
 }
@@ -568,8 +610,11 @@ sealed class _UserPreferencesLocalQueryUpdate {
     bool? enableAttendanceWarnings,
     bool? weeklyReportEnabled,
     DateTime? lastSyncTime,
+    bool? enableLateAttendance,
     double? lateAttendanceWeight,
     String? lateAttendancePolicy,
+    bool? enableGlassyTheme,
+    bool? enableAiAdvisor,
     bool? quietHoursEnabled,
     int? quietHoursStartHour,
     int? quietHoursEndHour,
@@ -606,8 +651,11 @@ class _UserPreferencesLocalQueryUpdateImpl
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableLateAttendance = ignore,
     Object? lateAttendanceWeight = ignore,
     Object? lateAttendancePolicy = ignore,
+    Object? enableGlassyTheme = ignore,
+    Object? enableAiAdvisor = ignore,
     Object? quietHoursEnabled = ignore,
     Object? quietHoursStartHour = ignore,
     Object? quietHoursEndHour = ignore,
@@ -636,26 +684,29 @@ class _UserPreferencesLocalQueryUpdateImpl
         6: enableAttendanceWarnings as bool?,
       if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
       if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
-      if (lateAttendanceWeight != ignore) 9: lateAttendanceWeight as double?,
-      if (lateAttendancePolicy != ignore) 10: lateAttendancePolicy as String?,
-      if (quietHoursEnabled != ignore) 11: quietHoursEnabled as bool?,
-      if (quietHoursStartHour != ignore) 12: quietHoursStartHour as int?,
-      if (quietHoursEndHour != ignore) 13: quietHoursEndHour as int?,
-      if (notificationSound != ignore) 14: notificationSound as bool?,
-      if (notificationVibration != ignore) 15: notificationVibration as bool?,
+      if (enableLateAttendance != ignore) 9: enableLateAttendance as bool?,
+      if (lateAttendanceWeight != ignore) 10: lateAttendanceWeight as double?,
+      if (lateAttendancePolicy != ignore) 11: lateAttendancePolicy as String?,
+      if (enableGlassyTheme != ignore) 12: enableGlassyTheme as bool?,
+      if (enableAiAdvisor != ignore) 13: enableAiAdvisor as bool?,
+      if (quietHoursEnabled != ignore) 14: quietHoursEnabled as bool?,
+      if (quietHoursStartHour != ignore) 15: quietHoursStartHour as int?,
+      if (quietHoursEndHour != ignore) 16: quietHoursEndHour as int?,
+      if (notificationSound != ignore) 17: notificationSound as bool?,
+      if (notificationVibration != ignore) 18: notificationVibration as bool?,
       if (missedAttendanceReminderEnabled != ignore)
-        16: missedAttendanceReminderEnabled as bool?,
+        19: missedAttendanceReminderEnabled as bool?,
       if (missedAttendanceReminderOffset != ignore)
-        17: missedAttendanceReminderOffset as int?,
-      if (enableCloudSync != ignore) 18: enableCloudSync as bool?,
-      if (cloudSyncConsentGiven != ignore) 19: cloudSyncConsentGiven as bool?,
-      if (enableAutoBackup != ignore) 20: enableAutoBackup as bool?,
-      if (lastBackupDate != ignore) 21: lastBackupDate as DateTime?,
-      if (autoBackupDay != ignore) 22: autoBackupDay as int?,
-      if (autoBackupHour != ignore) 23: autoBackupHour as int?,
-      if (updatedAt != ignore) 24: updatedAt as DateTime?,
-      if (isDirty != ignore) 25: isDirty as bool?,
-      if (isDeleted != ignore) 26: isDeleted as bool?,
+        20: missedAttendanceReminderOffset as int?,
+      if (enableCloudSync != ignore) 21: enableCloudSync as bool?,
+      if (cloudSyncConsentGiven != ignore) 22: cloudSyncConsentGiven as bool?,
+      if (enableAutoBackup != ignore) 23: enableAutoBackup as bool?,
+      if (lastBackupDate != ignore) 24: lastBackupDate as DateTime?,
+      if (autoBackupDay != ignore) 25: autoBackupDay as int?,
+      if (autoBackupHour != ignore) 26: autoBackupHour as int?,
+      if (updatedAt != ignore) 27: updatedAt as DateTime?,
+      if (isDirty != ignore) 28: isDirty as bool?,
+      if (isDeleted != ignore) 29: isDeleted as bool?,
     });
   }
 }
@@ -686,8 +737,11 @@ class _UserPreferencesLocalQueryBuilderUpdateImpl
     Object? enableAttendanceWarnings = ignore,
     Object? weeklyReportEnabled = ignore,
     Object? lastSyncTime = ignore,
+    Object? enableLateAttendance = ignore,
     Object? lateAttendanceWeight = ignore,
     Object? lateAttendancePolicy = ignore,
+    Object? enableGlassyTheme = ignore,
+    Object? enableAiAdvisor = ignore,
     Object? quietHoursEnabled = ignore,
     Object? quietHoursStartHour = ignore,
     Object? quietHoursEndHour = ignore,
@@ -718,26 +772,29 @@ class _UserPreferencesLocalQueryBuilderUpdateImpl
           6: enableAttendanceWarnings as bool?,
         if (weeklyReportEnabled != ignore) 7: weeklyReportEnabled as bool?,
         if (lastSyncTime != ignore) 8: lastSyncTime as DateTime?,
-        if (lateAttendanceWeight != ignore) 9: lateAttendanceWeight as double?,
-        if (lateAttendancePolicy != ignore) 10: lateAttendancePolicy as String?,
-        if (quietHoursEnabled != ignore) 11: quietHoursEnabled as bool?,
-        if (quietHoursStartHour != ignore) 12: quietHoursStartHour as int?,
-        if (quietHoursEndHour != ignore) 13: quietHoursEndHour as int?,
-        if (notificationSound != ignore) 14: notificationSound as bool?,
-        if (notificationVibration != ignore) 15: notificationVibration as bool?,
+        if (enableLateAttendance != ignore) 9: enableLateAttendance as bool?,
+        if (lateAttendanceWeight != ignore) 10: lateAttendanceWeight as double?,
+        if (lateAttendancePolicy != ignore) 11: lateAttendancePolicy as String?,
+        if (enableGlassyTheme != ignore) 12: enableGlassyTheme as bool?,
+        if (enableAiAdvisor != ignore) 13: enableAiAdvisor as bool?,
+        if (quietHoursEnabled != ignore) 14: quietHoursEnabled as bool?,
+        if (quietHoursStartHour != ignore) 15: quietHoursStartHour as int?,
+        if (quietHoursEndHour != ignore) 16: quietHoursEndHour as int?,
+        if (notificationSound != ignore) 17: notificationSound as bool?,
+        if (notificationVibration != ignore) 18: notificationVibration as bool?,
         if (missedAttendanceReminderEnabled != ignore)
-          16: missedAttendanceReminderEnabled as bool?,
+          19: missedAttendanceReminderEnabled as bool?,
         if (missedAttendanceReminderOffset != ignore)
-          17: missedAttendanceReminderOffset as int?,
-        if (enableCloudSync != ignore) 18: enableCloudSync as bool?,
-        if (cloudSyncConsentGiven != ignore) 19: cloudSyncConsentGiven as bool?,
-        if (enableAutoBackup != ignore) 20: enableAutoBackup as bool?,
-        if (lastBackupDate != ignore) 21: lastBackupDate as DateTime?,
-        if (autoBackupDay != ignore) 22: autoBackupDay as int?,
-        if (autoBackupHour != ignore) 23: autoBackupHour as int?,
-        if (updatedAt != ignore) 24: updatedAt as DateTime?,
-        if (isDirty != ignore) 25: isDirty as bool?,
-        if (isDeleted != ignore) 26: isDeleted as bool?,
+          20: missedAttendanceReminderOffset as int?,
+        if (enableCloudSync != ignore) 21: enableCloudSync as bool?,
+        if (cloudSyncConsentGiven != ignore) 22: cloudSyncConsentGiven as bool?,
+        if (enableAutoBackup != ignore) 23: enableAutoBackup as bool?,
+        if (lastBackupDate != ignore) 24: lastBackupDate as DateTime?,
+        if (autoBackupDay != ignore) 25: autoBackupDay as int?,
+        if (autoBackupHour != ignore) 26: autoBackupHour as int?,
+        if (updatedAt != ignore) 27: updatedAt as DateTime?,
+        if (isDirty != ignore) 28: isDirty as bool?,
+        if (isDeleted != ignore) 29: isDeleted as bool?,
       });
     } finally {
       q.close();
@@ -1547,6 +1604,20 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> enableLateAttendanceEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 9,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
       QAfterFilterCondition> lateAttendanceWeightEqualTo(
     double value, {
     double epsilon = Filter.epsilon,
@@ -1554,7 +1625,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 9,
+          property: 10,
           value: value,
           epsilon: epsilon,
         ),
@@ -1570,7 +1641,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 9,
+          property: 10,
           value: value,
           epsilon: epsilon,
         ),
@@ -1586,7 +1657,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 9,
+          property: 10,
           value: value,
           epsilon: epsilon,
         ),
@@ -1602,7 +1673,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 9,
+          property: 10,
           value: value,
           epsilon: epsilon,
         ),
@@ -1618,7 +1689,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 9,
+          property: 10,
           value: value,
           epsilon: epsilon,
         ),
@@ -1635,7 +1706,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 9,
+          property: 10,
           lower: lower,
           upper: upper,
           epsilon: epsilon,
@@ -1652,7 +1723,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1668,7 +1739,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1684,7 +1755,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1700,7 +1771,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1716,7 +1787,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1733,7 +1804,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 10,
+          property: 11,
           lower: lower,
           upper: upper,
           caseSensitive: caseSensitive,
@@ -1750,7 +1821,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         StartsWithCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1766,7 +1837,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EndsWithCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1780,7 +1851,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         ContainsCondition(
-          property: 10,
+          property: 11,
           value: value,
           caseSensitive: caseSensitive,
         ),
@@ -1794,7 +1865,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         MatchesCondition(
-          property: 10,
+          property: 11,
           wildcard: pattern,
           caseSensitive: caseSensitive,
         ),
@@ -1807,7 +1878,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const EqualCondition(
-          property: 10,
+          property: 11,
           value: '',
         ),
       );
@@ -1819,8 +1890,36 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         const GreaterCondition(
-          property: 10,
+          property: 11,
           value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> enableGlassyThemeEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 12,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
+      QAfterFilterCondition> enableAiAdvisorEqualTo(
+    bool value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 13,
+          value: value,
         ),
       );
     });
@@ -1833,7 +1932,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 11,
+          property: 14,
           value: value,
         ),
       );
@@ -1847,7 +1946,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 12,
+          property: 15,
           value: value,
         ),
       );
@@ -1861,7 +1960,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 12,
+          property: 15,
           value: value,
         ),
       );
@@ -1875,7 +1974,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 12,
+          property: 15,
           value: value,
         ),
       );
@@ -1889,7 +1988,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 12,
+          property: 15,
           value: value,
         ),
       );
@@ -1903,7 +2002,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 12,
+          property: 15,
           value: value,
         ),
       );
@@ -1918,7 +2017,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 12,
+          property: 15,
           lower: lower,
           upper: upper,
         ),
@@ -1933,7 +2032,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -1947,7 +2046,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -1961,7 +2060,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -1975,7 +2074,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -1989,7 +2088,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 13,
+          property: 16,
           value: value,
         ),
       );
@@ -2004,7 +2103,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 13,
+          property: 16,
           lower: lower,
           upper: upper,
         ),
@@ -2019,7 +2118,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 14,
+          property: 17,
           value: value,
         ),
       );
@@ -2033,7 +2132,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 15,
+          property: 18,
           value: value,
         ),
       );
@@ -2047,7 +2146,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 16,
+          property: 19,
           value: value,
         ),
       );
@@ -2061,7 +2160,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 17,
+          property: 20,
           value: value,
         ),
       );
@@ -2075,7 +2174,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 17,
+          property: 20,
           value: value,
         ),
       );
@@ -2089,7 +2188,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 17,
+          property: 20,
           value: value,
         ),
       );
@@ -2103,7 +2202,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 17,
+          property: 20,
           value: value,
         ),
       );
@@ -2117,7 +2216,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 17,
+          property: 20,
           value: value,
         ),
       );
@@ -2132,7 +2231,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 17,
+          property: 20,
           lower: lower,
           upper: upper,
         ),
@@ -2147,7 +2246,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 18,
+          property: 21,
           value: value,
         ),
       );
@@ -2161,7 +2260,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 19,
+          property: 22,
           value: value,
         ),
       );
@@ -2175,7 +2274,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 20,
+          property: 23,
           value: value,
         ),
       );
@@ -2185,14 +2284,14 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
       QAfterFilterCondition> lastBackupDateIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 21));
+      return query.addFilterCondition(const IsNullCondition(property: 24));
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal,
       QAfterFilterCondition> lastBackupDateIsNotNull() {
     return QueryBuilder.apply(not(), (query) {
-      return query.addFilterCondition(const IsNullCondition(property: 21));
+      return query.addFilterCondition(const IsNullCondition(property: 24));
     });
   }
 
@@ -2203,7 +2302,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 21,
+          property: 24,
           value: value,
         ),
       );
@@ -2217,7 +2316,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 21,
+          property: 24,
           value: value,
         ),
       );
@@ -2231,7 +2330,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 21,
+          property: 24,
           value: value,
         ),
       );
@@ -2245,7 +2344,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 21,
+          property: 24,
           value: value,
         ),
       );
@@ -2259,7 +2358,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 21,
+          property: 24,
           value: value,
         ),
       );
@@ -2274,7 +2373,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 21,
+          property: 24,
           lower: lower,
           upper: upper,
         ),
@@ -2289,7 +2388,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 22,
+          property: 25,
           value: value,
         ),
       );
@@ -2303,7 +2402,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 22,
+          property: 25,
           value: value,
         ),
       );
@@ -2317,7 +2416,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 22,
+          property: 25,
           value: value,
         ),
       );
@@ -2331,7 +2430,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 22,
+          property: 25,
           value: value,
         ),
       );
@@ -2345,7 +2444,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 22,
+          property: 25,
           value: value,
         ),
       );
@@ -2360,7 +2459,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 22,
+          property: 25,
           lower: lower,
           upper: upper,
         ),
@@ -2375,7 +2474,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 23,
+          property: 26,
           value: value,
         ),
       );
@@ -2389,7 +2488,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 23,
+          property: 26,
           value: value,
         ),
       );
@@ -2403,7 +2502,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 23,
+          property: 26,
           value: value,
         ),
       );
@@ -2417,7 +2516,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 23,
+          property: 26,
           value: value,
         ),
       );
@@ -2431,7 +2530,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 23,
+          property: 26,
           value: value,
         ),
       );
@@ -2446,7 +2545,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 23,
+          property: 26,
           lower: lower,
           upper: upper,
         ),
@@ -2461,7 +2560,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 24,
+          property: 27,
           value: value,
         ),
       );
@@ -2475,7 +2574,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterCondition(
-          property: 24,
+          property: 27,
           value: value,
         ),
       );
@@ -2489,7 +2588,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         GreaterOrEqualCondition(
-          property: 24,
+          property: 27,
           value: value,
         ),
       );
@@ -2503,7 +2602,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessCondition(
-          property: 24,
+          property: 27,
           value: value,
         ),
       );
@@ -2517,7 +2616,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         LessOrEqualCondition(
-          property: 24,
+          property: 27,
           value: value,
         ),
       );
@@ -2532,7 +2631,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         BetweenCondition(
-          property: 24,
+          property: 27,
           lower: lower,
           upper: upper,
         ),
@@ -2547,7 +2646,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 25,
+          property: 28,
           value: value,
         ),
       );
@@ -2561,7 +2660,7 @@ extension UserPreferencesLocalQueryFilter on QueryBuilder<UserPreferencesLocal,
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         EqualCondition(
-          property: 26,
+          property: 29,
           value: value,
         ),
       );
@@ -2715,16 +2814,30 @@ extension UserPreferencesLocalQuerySortBy
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByLateAttendanceWeight() {
+      sortByEnableLateAttendance() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByLateAttendanceWeightDesc() {
+      sortByEnableLateAttendanceDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByLateAttendanceWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(10);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByLateAttendanceWeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(10, sort: Sort.desc);
     });
   }
 
@@ -2732,7 +2845,7 @@ extension UserPreferencesLocalQuerySortBy
       sortByLateAttendancePolicy({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        10,
+        11,
         caseSensitive: caseSensitive,
       );
     });
@@ -2742,7 +2855,7 @@ extension UserPreferencesLocalQuerySortBy
       sortByLateAttendancePolicyDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
-        10,
+        11,
         sort: Sort.desc,
         caseSensitive: caseSensitive,
       );
@@ -2750,226 +2863,254 @@ extension UserPreferencesLocalQuerySortBy
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByQuietHoursEnabled() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(11);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByQuietHoursEnabledDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(11, sort: Sort.desc);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByQuietHoursStartHour() {
+      sortByEnableGlassyTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(12);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByQuietHoursStartHourDesc() {
+      sortByEnableGlassyThemeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(12, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByQuietHoursEndHour() {
+      sortByEnableAiAdvisor() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByQuietHoursEndHourDesc() {
+      sortByEnableAiAdvisorDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(13, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByNotificationSound() {
+      sortByQuietHoursEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(14);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByNotificationSoundDesc() {
+      sortByQuietHoursEnabledDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(14, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByNotificationVibration() {
+      sortByQuietHoursStartHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(15);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByNotificationVibrationDesc() {
+      sortByQuietHoursStartHourDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(15, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByMissedAttendanceReminderEnabled() {
+      sortByQuietHoursEndHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(16);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByMissedAttendanceReminderEnabledDesc() {
+      sortByQuietHoursEndHourDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(16, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByMissedAttendanceReminderOffset() {
+      sortByNotificationSound() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(17);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByMissedAttendanceReminderOffsetDesc() {
+      sortByNotificationSoundDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(17, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByEnableCloudSync() {
+      sortByNotificationVibration() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(18);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByEnableCloudSyncDesc() {
+      sortByNotificationVibrationDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(18, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByCloudSyncConsentGiven() {
+      sortByMissedAttendanceReminderEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(19);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByCloudSyncConsentGivenDesc() {
+      sortByMissedAttendanceReminderEnabledDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(19, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByEnableAutoBackup() {
+      sortByMissedAttendanceReminderOffset() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(20);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByEnableAutoBackupDesc() {
+      sortByMissedAttendanceReminderOffsetDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(20, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByLastBackupDate() {
+      sortByEnableCloudSync() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(21);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByLastBackupDateDesc() {
+      sortByEnableCloudSyncDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(21, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByAutoBackupDay() {
+      sortByCloudSyncConsentGiven() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(22);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByAutoBackupDayDesc() {
+      sortByCloudSyncConsentGivenDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(22, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByAutoBackupHour() {
+      sortByEnableAutoBackup() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(23);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByAutoBackupHourDesc() {
+      sortByEnableAutoBackupDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(23, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByUpdatedAt() {
+      sortByLastBackupDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(24);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByUpdatedAtDesc() {
+      sortByLastBackupDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(24, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDirty() {
+      sortByAutoBackupDay() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(25);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDirtyDesc() {
+      sortByAutoBackupDayDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(25, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDeleted() {
+      sortByAutoBackupHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(26);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      sortByIsDeletedDesc() {
+      sortByAutoBackupHourDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(26, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(27);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(27, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(28);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(28, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(29);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(29, sort: Sort.desc);
     });
   }
 }
@@ -3103,254 +3244,296 @@ extension UserPreferencesLocalQuerySortThenBy
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByLateAttendanceWeight() {
+      thenByEnableLateAttendance() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByLateAttendanceWeightDesc() {
+      thenByEnableLateAttendanceDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(9, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByLateAttendanceWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(10);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByLateAttendanceWeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(10, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
       thenByLateAttendancePolicy({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(10, caseSensitive: caseSensitive);
+      return query.addSortBy(11, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
       thenByLateAttendancePolicyDesc({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(10, sort: Sort.desc, caseSensitive: caseSensitive);
+      return query.addSortBy(11, sort: Sort.desc, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByQuietHoursEnabled() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(11);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByQuietHoursEnabledDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(11, sort: Sort.desc);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByQuietHoursStartHour() {
+      thenByEnableGlassyTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(12);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByQuietHoursStartHourDesc() {
+      thenByEnableGlassyThemeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(12, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByQuietHoursEndHour() {
+      thenByEnableAiAdvisor() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByQuietHoursEndHourDesc() {
+      thenByEnableAiAdvisorDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(13, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByNotificationSound() {
+      thenByQuietHoursEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(14);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByNotificationSoundDesc() {
+      thenByQuietHoursEnabledDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(14, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByNotificationVibration() {
+      thenByQuietHoursStartHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(15);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByNotificationVibrationDesc() {
+      thenByQuietHoursStartHourDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(15, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByMissedAttendanceReminderEnabled() {
+      thenByQuietHoursEndHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(16);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByMissedAttendanceReminderEnabledDesc() {
+      thenByQuietHoursEndHourDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(16, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByMissedAttendanceReminderOffset() {
+      thenByNotificationSound() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(17);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByMissedAttendanceReminderOffsetDesc() {
+      thenByNotificationSoundDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(17, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByEnableCloudSync() {
+      thenByNotificationVibration() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(18);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByEnableCloudSyncDesc() {
+      thenByNotificationVibrationDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(18, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByCloudSyncConsentGiven() {
+      thenByMissedAttendanceReminderEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(19);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByCloudSyncConsentGivenDesc() {
+      thenByMissedAttendanceReminderEnabledDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(19, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByEnableAutoBackup() {
+      thenByMissedAttendanceReminderOffset() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(20);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByEnableAutoBackupDesc() {
+      thenByMissedAttendanceReminderOffsetDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(20, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByLastBackupDate() {
+      thenByEnableCloudSync() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(21);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByLastBackupDateDesc() {
+      thenByEnableCloudSyncDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(21, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByAutoBackupDay() {
+      thenByCloudSyncConsentGiven() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(22);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByAutoBackupDayDesc() {
+      thenByCloudSyncConsentGivenDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(22, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByAutoBackupHour() {
+      thenByEnableAutoBackup() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(23);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByAutoBackupHourDesc() {
+      thenByEnableAutoBackupDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(23, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByUpdatedAt() {
+      thenByLastBackupDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(24);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByUpdatedAtDesc() {
+      thenByLastBackupDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(24, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDirty() {
+      thenByAutoBackupDay() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(25);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDirtyDesc() {
+      thenByAutoBackupDayDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(25, sort: Sort.desc);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDeleted() {
+      thenByAutoBackupHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(26);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
-      thenByIsDeletedDesc() {
+      thenByAutoBackupHourDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(26, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(27);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(27, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(28);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDirtyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(28, sort: Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(29);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(29, sort: Sort.desc);
     });
   }
 }
@@ -3414,128 +3597,149 @@ extension UserPreferencesLocalQueryWhereDistinct
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByLateAttendanceWeight() {
+      distinctByEnableLateAttendance() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(9);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByLateAttendanceWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(10);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
       distinctByLateAttendancePolicy({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(10, caseSensitive: caseSensitive);
+      return query.addDistinctBy(11, caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByQuietHoursEnabled() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(11);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByQuietHoursStartHour() {
+      distinctByEnableGlassyTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(12);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByQuietHoursEndHour() {
+      distinctByEnableAiAdvisor() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByNotificationSound() {
+      distinctByQuietHoursEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(14);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByNotificationVibration() {
+      distinctByQuietHoursStartHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(15);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByMissedAttendanceReminderEnabled() {
+      distinctByQuietHoursEndHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(16);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByMissedAttendanceReminderOffset() {
+      distinctByNotificationSound() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(17);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByEnableCloudSync() {
+      distinctByNotificationVibration() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(18);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByCloudSyncConsentGiven() {
+      distinctByMissedAttendanceReminderEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(19);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByEnableAutoBackup() {
+      distinctByMissedAttendanceReminderOffset() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(20);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByLastBackupDate() {
+      distinctByEnableCloudSync() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(21);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByAutoBackupDay() {
+      distinctByCloudSyncConsentGiven() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(22);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByAutoBackupHour() {
+      distinctByEnableAutoBackup() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(23);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByUpdatedAt() {
+      distinctByLastBackupDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(24);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByIsDirty() {
+      distinctByAutoBackupDay() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(25);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
-      distinctByIsDeleted() {
+      distinctByAutoBackupHour() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(26);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(27);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByIsDirty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(28);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, UserPreferencesLocal, QAfterDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(29);
     });
   }
 }
@@ -3604,127 +3808,148 @@ extension UserPreferencesLocalQueryProperty1
     });
   }
 
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
+      enableLateAttendanceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
+    });
+  }
+
   QueryBuilder<UserPreferencesLocal, double, QAfterProperty>
       lateAttendanceWeightProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(10);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, String, QAfterProperty>
       lateAttendancePolicyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
-      quietHoursEnabledProperty() {
-    return QueryBuilder.apply(this, (query) {
       return query.addProperty(11);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
-      quietHoursStartHourProperty() {
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
+      enableGlassyThemeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(12);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
-      quietHoursEndHourProperty() {
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
+      enableAiAdvisorProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
-      notificationSoundProperty() {
+      quietHoursEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(14);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
-      notificationVibrationProperty() {
+  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
+      quietHoursStartHourProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(15);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
-      missedAttendanceReminderEnabledProperty() {
+  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
+      quietHoursEndHourProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(16);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
-      missedAttendanceReminderOffsetProperty() {
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
+      notificationSoundProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(17);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
-      enableCloudSyncProperty() {
+      notificationVibrationProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(18);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
-      cloudSyncConsentGivenProperty() {
+      missedAttendanceReminderEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(19);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
+      missedAttendanceReminderOffsetProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(20);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
+      enableCloudSyncProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(21);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
+      cloudSyncConsentGivenProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(22);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, bool, QAfterProperty>
       enableAutoBackupProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(20);
+      return query.addProperty(23);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, DateTime?, QAfterProperty>
       lastBackupDateProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(21);
+      return query.addProperty(24);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
       autoBackupDayProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(22);
+      return query.addProperty(25);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, int, QAfterProperty>
       autoBackupHourProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(23);
+      return query.addProperty(26);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, DateTime, QAfterProperty>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(24);
+      return query.addProperty(27);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, bool, QAfterProperty> isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(25);
+      return query.addProperty(28);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, bool, QAfterProperty> isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(26);
+      return query.addProperty(29);
     });
   }
 }
@@ -3793,129 +4018,150 @@ extension UserPreferencesLocalQueryProperty2<R>
     });
   }
 
+  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
+      enableLateAttendanceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
+    });
+  }
+
   QueryBuilder<UserPreferencesLocal, (R, double), QAfterProperty>
       lateAttendanceWeightProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(10);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, String), QAfterProperty>
       lateAttendancePolicyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
-      quietHoursEnabledProperty() {
-    return QueryBuilder.apply(this, (query) {
       return query.addProperty(11);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
-      quietHoursStartHourProperty() {
+  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
+      enableGlassyThemeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(12);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
-      quietHoursEndHourProperty() {
+  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
+      enableAiAdvisorProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
-      notificationSoundProperty() {
+      quietHoursEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(14);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
-      notificationVibrationProperty() {
+  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
+      quietHoursStartHourProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(15);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
-      missedAttendanceReminderEnabledProperty() {
+  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
+      quietHoursEndHourProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(16);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
-      missedAttendanceReminderOffsetProperty() {
+  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
+      notificationSoundProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(17);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
-      enableCloudSyncProperty() {
+      notificationVibrationProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(18);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
-      cloudSyncConsentGivenProperty() {
+      missedAttendanceReminderEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(19);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
+      missedAttendanceReminderOffsetProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(20);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
+      enableCloudSyncProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(21);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
+      cloudSyncConsentGivenProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(22);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
       enableAutoBackupProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(20);
+      return query.addProperty(23);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, DateTime?), QAfterProperty>
       lastBackupDateProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(21);
+      return query.addProperty(24);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
       autoBackupDayProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(22);
+      return query.addProperty(25);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, int), QAfterProperty>
       autoBackupHourProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(23);
+      return query.addProperty(26);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, DateTime), QAfterProperty>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(24);
+      return query.addProperty(27);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(25);
+      return query.addProperty(28);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R, bool), QAfterProperty>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(26);
+      return query.addProperty(29);
     });
   }
 }
@@ -3984,129 +4230,150 @@ extension UserPreferencesLocalQueryProperty3<R1, R2>
     });
   }
 
+  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
+      enableLateAttendanceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(9);
+    });
+  }
+
   QueryBuilder<UserPreferencesLocal, (R1, R2, double), QOperations>
       lateAttendanceWeightProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(9);
+      return query.addProperty(10);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, String), QOperations>
       lateAttendancePolicyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(10);
-    });
-  }
-
-  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
-      quietHoursEnabledProperty() {
-    return QueryBuilder.apply(this, (query) {
       return query.addProperty(11);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
-      quietHoursStartHourProperty() {
+  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
+      enableGlassyThemeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(12);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
-      quietHoursEndHourProperty() {
+  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
+      enableAiAdvisorProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(13);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
-      notificationSoundProperty() {
+      quietHoursEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(14);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
-      notificationVibrationProperty() {
+  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
+      quietHoursStartHourProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(15);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
-      missedAttendanceReminderEnabledProperty() {
+  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
+      quietHoursEndHourProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(16);
     });
   }
 
-  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
-      missedAttendanceReminderOffsetProperty() {
+  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
+      notificationSoundProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(17);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
-      enableCloudSyncProperty() {
+      notificationVibrationProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(18);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
-      cloudSyncConsentGivenProperty() {
+      missedAttendanceReminderEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(19);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
+      missedAttendanceReminderOffsetProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(20);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
+      enableCloudSyncProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(21);
+    });
+  }
+
+  QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
+      cloudSyncConsentGivenProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(22);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
       enableAutoBackupProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(20);
+      return query.addProperty(23);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, DateTime?), QOperations>
       lastBackupDateProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(21);
+      return query.addProperty(24);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
       autoBackupDayProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(22);
+      return query.addProperty(25);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, int), QOperations>
       autoBackupHourProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(23);
+      return query.addProperty(26);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, DateTime), QOperations>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(24);
+      return query.addProperty(27);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
       isDirtyProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(25);
+      return query.addProperty(28);
     });
   }
 
   QueryBuilder<UserPreferencesLocal, (R1, R2, bool), QOperations>
       isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addProperty(26);
+      return query.addProperty(29);
     });
   }
 }

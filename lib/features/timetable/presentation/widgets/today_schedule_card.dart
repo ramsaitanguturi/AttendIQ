@@ -9,6 +9,8 @@ import '../controllers/today_schedule_provider.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../../subject/domain/entities/subject.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 import 'add_extra_class_dialog.dart';
 
 class TodayScheduleCard extends ConsumerWidget {
@@ -260,23 +262,26 @@ class _OccurrenceCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = _parseColor(subjectColorHex);
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return Container(
       padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(20.0),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(borderRadius: 20.0)
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(20.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -417,9 +422,10 @@ class _OccurrenceCard extends ConsumerWidget {
 
   Widget _buildActionButtons(WidgetRef ref) {
     final currentStatus = occurrence.status;
+    final lateEnabled = ref.watch(isLateAttendanceEnabledProvider);
 
     return Row(
-      key: ValueKey('ActionButtons_${currentStatus.name}'),
+      key: ValueKey('ActionButtons_${currentStatus.name}_$lateEnabled'),
       children: [
         Expanded(
           child: _ActionButton(
@@ -432,18 +438,20 @@ class _OccurrenceCard extends ConsumerWidget {
                 .markOccurrencePresent(occurrence),
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _ActionButton(
-            label: 'Late',
-            color: const Color(0xFFFFB300),
-            icon: Icons.access_time,
-            isSelected: currentStatus == OccurrenceStatus.LATE,
-            onPressed: () => ref
-                .read(attendanceControllerProvider.notifier)
-                .markOccurrenceLate(occurrence),
+        if (lateEnabled) ...[
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ActionButton(
+              label: 'Late',
+              color: const Color(0xFFFFB300),
+              icon: Icons.access_time,
+              isSelected: currentStatus == OccurrenceStatus.LATE,
+              onPressed: () => ref
+                  .read(attendanceControllerProvider.notifier)
+                  .markOccurrenceLate(occurrence),
+            ),
           ),
-        ),
+        ],
         const SizedBox(width: 8),
         Expanded(
           child: _ActionButton(

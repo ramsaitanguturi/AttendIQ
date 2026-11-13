@@ -118,8 +118,8 @@ class HistoricalAttendanceService {
 
     final occId = occurrence.id;
     if (occId != null && occId > 0 && occurrence.subjectId != null) {
-      final existingRecord =
-          await _attendanceRepository.getAttendanceForOccurrenceAnyStatus(occId);
+      final existingRecord = await _attendanceRepository
+          .getAttendanceForOccurrenceAnyStatus(occId);
 
       switch (targetStatus) {
         case OccurrenceStatus.PRESENT:

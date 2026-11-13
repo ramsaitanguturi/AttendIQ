@@ -40,6 +40,7 @@ class LocalNotificationServiceImpl implements NotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
   bool _isInitialized = false;
   Future<void>? _inFlightInit;
+  bool enableLateAttendance = false;
 
   LocalNotificationServiceImpl([FlutterLocalNotificationsPlugin? plugin])
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
@@ -194,7 +195,11 @@ class LocalNotificationServiceImpl implements NotificationService {
   }
 
   @override
-  Future<void> scheduleNotification(NotificationItem item) async {
+  Future<void> scheduleNotification(
+    NotificationItem item, {
+    bool? enableLateAttendance,
+  }) async {
+    final useLate = enableLateAttendance ?? this.enableLateAttendance;
     final int notificationId = item.effectiveAndroidNotificationId;
     final tz.TZDateTime scheduledTZDateTime = tz.TZDateTime.from(
       item.scheduledTime.toLocal(),
@@ -248,25 +253,32 @@ class LocalNotificationServiceImpl implements NotificationService {
 
     List<AndroidNotificationAction>? actions;
     if (type == NotificationType.CLASS_REMINDER) {
-      actions = const [
-        AndroidNotificationAction(
+      actions = [
+        const AndroidNotificationAction(
           NotificationActionHandler.actionPresent,
           'PRESENT',
           showsUserInterface: false,
           cancelNotification: true,
         ),
-        AndroidNotificationAction(
+        const AndroidNotificationAction(
           NotificationActionHandler.actionAbsent,
           'ABSENT',
           showsUserInterface: false,
           cancelNotification: true,
         ),
-        AndroidNotificationAction(
+        const AndroidNotificationAction(
           NotificationActionHandler.actionCancelled,
           'CANCELLED',
           showsUserInterface: false,
           cancelNotification: true,
         ),
+        if (useLate)
+          const AndroidNotificationAction(
+            NotificationActionHandler.actionLate,
+            'LATE',
+            showsUserInterface: false,
+            cancelNotification: true,
+          ),
       ];
     }
 
@@ -280,6 +292,11 @@ class LocalNotificationServiceImpl implements NotificationService {
       playSound: playSound,
       enableVibration: enableVibrate,
       actions: actions,
+      ongoing: type == NotificationType.CLASS_REMINDER,
+      autoCancel: true,
+      category: type == NotificationType.CLASS_REMINDER
+          ? AndroidNotificationCategory.reminder
+          : null,
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(

@@ -29,10 +29,12 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        leading: context.canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.pop(),
+              )
+            : null,
         title: const Text(
           'Attendance Analytics',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -53,8 +55,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding: const EdgeInsets.only(
+                  left: 20.0, right: 20.0, top: 12.0, bottom: 120.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

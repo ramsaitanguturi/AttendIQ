@@ -484,7 +484,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Paste your .attendiq JSON backup content below:',
+                  'Paste your ACEDRA backup JSON content below:',
                   style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 12),
@@ -927,7 +927,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                   )
                                 : const Icon(Icons.download),
                             label: const Text(
-                              'Export Backup (.attendiq)',
+                              'Export ACEDRA Backup',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 13),
                             ),

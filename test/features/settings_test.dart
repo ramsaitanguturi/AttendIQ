@@ -114,6 +114,33 @@ void main() {
       expect(state.enableNotifications, false);
       expect(settingsRepository.saveCount, 3);
 
+      // Verify Late Attendance (Default OFF, can be enabled)
+      expect(state.enableLateAttendance, false);
+      expect(container.read(isLateAttendanceEnabledProvider), false);
+      await notifier.updateEnableLateAttendance(true);
+      state = container.read(settingsControllerProvider).valueOrNull!;
+      expect(state.enableLateAttendance, true);
+      expect(container.read(isLateAttendanceEnabledProvider), true);
+      expect(settingsRepository.saveCount, 4);
+
+      // Verify Glassy Theme (Default OFF, can be enabled)
+      expect(state.enableGlassyTheme, false);
+      expect(container.read(isGlassyThemeEnabledProvider), false);
+      await notifier.updateEnableGlassyTheme(true);
+      state = container.read(settingsControllerProvider).valueOrNull!;
+      expect(state.enableGlassyTheme, true);
+      expect(container.read(isGlassyThemeEnabledProvider), true);
+      expect(settingsRepository.saveCount, 5);
+
+      // Verify AI Advisor (Default ON, can be disabled)
+      expect(state.enableAiAdvisor, true);
+      expect(container.read(isAiAdvisorEnabledProvider), true);
+      await notifier.updateEnableAiAdvisor(false);
+      state = container.read(settingsControllerProvider).valueOrNull!;
+      expect(state.enableAiAdvisor, false);
+      expect(container.read(isAiAdvisorEnabledProvider), false);
+      expect(settingsRepository.saveCount, 6);
+
       sub.close();
     });
   });

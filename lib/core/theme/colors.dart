@@ -4,20 +4,28 @@ class AppColors {
   AppColors._();
 
   // Dark Smoked Glass Theme Colors (Primary Aesthetic)
-  static const Color darkBackground = Color(0xFF0D0D11); // Deep obsidian background
+  static const Color darkBackground =
+      Color(0xFF0D0D11); // Deep obsidian background
   static const Color darkSurface = Color(0xFF16161C); // Smoked glass surface
-  static const Color darkSurfaceGlass = Color(0xDE16161C); // 87% opacity smoked glass
+  static const Color darkSurfaceGlass =
+      Color(0xDE16161C); // 87% opacity smoked glass
   static const Color darkBorder = Color(0xFF282832); // Subtle charcoal border
   static const Color darkCard = Color(0xFF191922);
 
-  static const Color darkTextPrimary = Color(0xFFF5F5F7); // High contrast silver white
-  static const Color darkTextSecondary = Color(0xFFA1A1AA); // Cool metallic silver grey
+  static const Color darkTextPrimary =
+      Color(0xFFF5F5F7); // High contrast silver white
+  static const Color darkTextSecondary =
+      Color(0xFFA1A1AA); // Cool metallic silver grey
 
   // Silver Reflection Highlights & Borders
-  static const Color silverReflect = Color(0xFFE2E8F0); // Polished silver highlight
-  static const Color silverBorder = Color(0x33E2E8F0); // Translucent silver edge (20%)
-  static const Color silverBorderSubtle = Color(0x1AE2E8F0); // Subtle silver stroke (10%)
-  static const Color silverBorderGlow = Color(0x4DE2E8F0); // Elevated silver reflection
+  static const Color silverReflect =
+      Color(0xFFE2E8F0); // Polished silver highlight
+  static const Color silverBorder =
+      Color(0x33E2E8F0); // Translucent silver edge (20%)
+  static const Color silverBorderSubtle =
+      Color(0x1AE2E8F0); // Subtle silver stroke (10%)
+  static const Color silverBorderGlow =
+      Color(0x4DE2E8F0); // Elevated silver reflection
 
   // Light Theme Colors (Counterpart)
   static const Color lightBackground = Color(0xFFF8F9FA);

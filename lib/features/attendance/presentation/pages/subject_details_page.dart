@@ -7,6 +7,7 @@ import '../../../timetable/presentation/widgets/add_extra_class_dialog.dart';
 import '../controllers/subject_attendance_stats_provider.dart';
 import '../controllers/attendance_controller.dart';
 import '../../domain/entities/attendance_record.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 
 class SubjectDetailsPage extends ConsumerWidget {
   final int subjectId;
@@ -515,6 +516,7 @@ class SubjectDetailsPage extends ConsumerWidget {
     Color subjectColor,
     bool isDark,
   ) {
+    final lateEnabled = ref.watch(isLateAttendanceEnabledProvider);
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.help_outline;
 
@@ -594,6 +596,8 @@ class SubjectDetailsPage extends ConsumerWidget {
               final notifier = ref.read(attendanceControllerProvider.notifier);
               if (value == 'present') {
                 notifier.markOccurrencePresent(occurrence);
+              } else if (value == 'late') {
+                notifier.markOccurrenceLate(occurrence);
               } else if (value == 'absent') {
                 notifier.markOccurrenceAbsent(occurrence);
               } else if (value == 'cancelled') {
@@ -612,6 +616,19 @@ class SubjectDetailsPage extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (lateEnabled) ...[
+                const PopupMenuItem(
+                  value: 'late',
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time_outlined,
+                          color: AppColors.attendanceMid, size: 20),
+                      SizedBox(width: 8),
+                      Text('Mark Late'),
+                    ],
+                  ),
+                ),
+              ],
               const PopupMenuItem(
                 value: 'absent',
                 child: Row(

@@ -734,7 +734,7 @@ void main() {
 
       // Loading phase: SplashPage renders, no DB-dependent providers evaluated.
       expect(find.byType(SplashPage), findsOneWidget);
-      expect(find.text('AttendIQ'), findsOneWidget);
+      expect(find.text('ACEDRA'), findsOneWidget);
       expect(find.byType(DatabaseStartupErrorPage), findsNothing);
       expect(semesterRepoCreated, isFalse);
       expect(settingsRepoCreated, isFalse);

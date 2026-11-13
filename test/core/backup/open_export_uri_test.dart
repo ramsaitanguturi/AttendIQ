@@ -576,7 +576,7 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(
-            find.text('AttendIQ Backup (.attendiq JSON)'),
+            find.text('ACEDRA Backup (.attendiq JSON)'),
             findsOneWidget,
           );
           expect(find.text('2.0 KB'), findsOneWidget);
