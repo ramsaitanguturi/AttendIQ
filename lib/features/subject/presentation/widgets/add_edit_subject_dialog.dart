@@ -11,6 +11,7 @@ import '../../../timetable/presentation/controllers/weekly_schedule_view_control
 import '../../../timetable/presentation/controllers/academic_calendar_controller.dart';
 import '../../../widgets/services/widget_refresh_service.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 
 class _ScheduleSlotInput {
   int dayOfWeek; // 1 = Monday, 7 = Sunday
@@ -456,19 +457,16 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
     return Container(
       decoration: isGlassy
           ? BoxDecoration(
-              color: AppColors.darkSurfaceGlass,
+              color: AppColors.surfaceGlass(isDark),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(28.0)),
               border: Border.all(
-                color: AppColors.silverBorder,
+                color: isDark
+                    ? AppColors.silverBorder
+                    : GlassTokens.lightGlassBorder,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, -4),
-                ),
-              ],
+              boxShadow:
+                  GlassTokens.cardShadows(isGlassy: true, isDark: isDark),
             )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
@@ -634,14 +632,16 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                     padding: const EdgeInsets.all(14.0),
                     decoration: BoxDecoration(
                       color: isGlassy
-                          ? AppColors.darkSurfaceGlass
+                          ? AppColors.surfaceGlass(isDark)
                           : (isDark
                               ? AppColors.darkBackground
                               : AppColors.lightSurface),
                       borderRadius: BorderRadius.circular(16.0),
                       border: Border.all(
                         color: isGlassy
-                            ? AppColors.silverBorder
+                            ? (isDark
+                                ? AppColors.silverBorder
+                                : GlassTokens.lightGlassBorder)
                             : (isDark
                                 ? AppColors.darkBorder
                                 : AppColors.lightBorder),

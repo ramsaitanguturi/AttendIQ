@@ -315,11 +315,11 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         backgroundColor:
             isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.info_outline, color: AppColors.primary),
-            SizedBox(width: 10),
-            Expanded(child: Text('Backup Details')),
+            Icon(Icons.info_outline, color: AppColors.iconPrimary(isDark)),
+            const SizedBox(width: 10),
+            const Expanded(child: Text('Backup Details')),
           ],
         ),
         content: SingleChildScrollView(
@@ -341,11 +341,12 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
               const SizedBox(height: 10),
               _BackupDetailRow(label: 'Location', value: locationLines),
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 'This backup is formatted specifically for ACEDRA. '
                 'To restore it, select it from Backup Manager or tap '
                 'Import Backup / Data File.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary(isDark)),
               ),
             ],
           ),
@@ -569,15 +570,16 @@ class _BackupDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: Colors.grey,
+            color: AppColors.textSecondary(isDark),
           ),
         ),
         const SizedBox(height: 2),

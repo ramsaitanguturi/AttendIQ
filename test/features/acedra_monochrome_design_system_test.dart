@@ -82,10 +82,14 @@ void main() {
           equals(const Color(0xFFCED4DA))); // Secondary text #ced4da
       expect(AppColors.darkTextMuted,
           equals(const Color(0xFFADB5BD))); // Muted text #adb5bd
-      expect(AppColors.darkTextDisabled,
-          equals(const Color(0xFFADB5BD))); // Disabled text #adb5bd (contrast-enhanced from #6c757d)
-      expect(AppColors.darkIconPrimary,
-          equals(const Color(0xFFF8F9FA))); // Primary icons #f8f9fa (contrast-enhanced from #dee2e6)
+      expect(
+          AppColors.darkTextDisabled,
+          equals(const Color(
+              0xFFADB5BD))); // Disabled text #adb5bd (contrast-enhanced from #6c757d)
+      expect(
+          AppColors.darkIconPrimary,
+          equals(const Color(
+              0xFFF8F9FA))); // Primary icons #f8f9fa (contrast-enhanced from #dee2e6)
       expect(
           AppColors.navIndicator,
           equals(const Color(
@@ -110,12 +114,18 @@ void main() {
           equals(const Color(0xFF212529))); // Primary text #212529
       expect(AppColors.lightTextSecondary,
           equals(const Color(0xFF495057))); // Secondary text #495057
-      expect(AppColors.lightTextMuted,
-          equals(const Color(0xFF495057))); // Muted text #495057 (contrast-enhanced from #6c757d)
-      expect(AppColors.lightTextDisabled,
-          equals(const Color(0xFF6C757D))); // Disabled text #6c757d (contrast-enhanced from #adb5bd)
-      expect(AppColors.lightIconPrimary,
-          equals(const Color(0xFF212529))); // Primary icons #212529 (contrast-enhanced from #343a40)
+      expect(
+          AppColors.lightTextMuted,
+          equals(const Color(
+              0xFF495057))); // Muted text #495057 (contrast-enhanced from #6c757d)
+      expect(
+          AppColors.lightTextDisabled,
+          equals(const Color(
+              0xFF6C757D))); // Disabled text #6c757d (contrast-enhanced from #adb5bd)
+      expect(
+          AppColors.lightIconPrimary,
+          equals(const Color(
+              0xFF212529))); // Primary icons #212529 (contrast-enhanced from #343a40)
       expect(AppColors.lightNavIndicator,
           equals(const Color(0xFF212529))); // Selected indicator #212529
       expect(AppColors.lightNavSelectedIcon,
@@ -324,8 +334,8 @@ void main() {
       expect(lightPrimaryContrast, greaterThanOrEqualTo(14.0));
       // #495057 on #F8F9FA has > 7:1 contrast (WCAG AAA requires 7.0:1)
       expect(lightSecondaryContrast, greaterThanOrEqualTo(7.0));
-      // #495057 / #6C757D on #F8F9FA has > 4.45:1 contrast
-      expect(lightMutedContrast, greaterThanOrEqualTo(4.4));
+      // #495057 on #F8F9FA strictly exceeds WCAG AA 4.5:1 baseline
+      expect(lightMutedContrast, greaterThanOrEqualTo(4.5));
     });
 
     test(
@@ -333,7 +343,8 @@ void main() {
         () {
       // Dark appearance checks
       expect(AppColors.textPrimary(true), equals(AppColors.darkTextPrimary));
-      expect(AppColors.textSecondary(true), equals(AppColors.darkTextSecondary));
+      expect(
+          AppColors.textSecondary(true), equals(AppColors.darkTextSecondary));
       expect(AppColors.textMuted(true), equals(AppColors.darkTextMuted));
       expect(AppColors.textDisabled(true), equals(AppColors.darkTextDisabled));
       expect(AppColors.textOnElevatedSurface(true),
@@ -341,19 +352,23 @@ void main() {
       expect(AppColors.textOnGlass(true), equals(AppColors.darkTextOnGlass));
       expect(AppColors.textHint(true), equals(AppColors.darkTextHint));
       expect(AppColors.iconPrimary(true), equals(AppColors.darkIconPrimary));
-      expect(AppColors.iconSecondary(true), equals(AppColors.darkIconSecondary));
+      expect(
+          AppColors.iconSecondary(true), equals(AppColors.darkIconSecondary));
 
       // Light appearance checks
       expect(AppColors.textPrimary(false), equals(AppColors.lightTextPrimary));
-      expect(AppColors.textSecondary(false), equals(AppColors.lightTextSecondary));
+      expect(
+          AppColors.textSecondary(false), equals(AppColors.lightTextSecondary));
       expect(AppColors.textMuted(false), equals(AppColors.lightTextMuted));
-      expect(AppColors.textDisabled(false), equals(AppColors.lightTextDisabled));
+      expect(
+          AppColors.textDisabled(false), equals(AppColors.lightTextDisabled));
       expect(AppColors.textOnElevatedSurface(false),
           equals(AppColors.lightTextOnElevatedSurface));
       expect(AppColors.textOnGlass(false), equals(AppColors.lightTextOnGlass));
       expect(AppColors.textHint(false), equals(AppColors.lightTextHint));
       expect(AppColors.iconPrimary(false), equals(AppColors.lightIconPrimary));
-      expect(AppColors.iconSecondary(false), equals(AppColors.lightIconSecondary));
+      expect(
+          AppColors.iconSecondary(false), equals(AppColors.lightIconSecondary));
     });
 
     test(
@@ -367,7 +382,8 @@ void main() {
       ];
 
       for (final surface in darkSurfaces) {
-        final primaryRatio = _contrastRatio(AppColors.textPrimary(true), surface);
+        final primaryRatio =
+            _contrastRatio(AppColors.textPrimary(true), surface);
         final secondaryRatio =
             _contrastRatio(AppColors.textSecondary(true), surface);
         final iconRatio = _contrastRatio(AppColors.iconPrimary(true), surface);
@@ -445,8 +461,8 @@ void main() {
         '16. Attendance status pills have distinct, high-contrast foregrounds in both themes',
         () {
       // Dark Mode Statuses
-      final darkPresentRatio = _contrastRatio(
-          AppColors.statusPresent(true), AppColors.darkSurface);
+      final darkPresentRatio =
+          _contrastRatio(AppColors.statusPresent(true), AppColors.darkSurface);
       final darkLateRatio =
           _contrastRatio(AppColors.statusLate(true), AppColors.darkSurface);
       final darkAbsentRatio =
@@ -486,7 +502,8 @@ void main() {
       // Light theme: primary button background is #212529 with #F8F9FA text
       final lightBtnBg = AppColors.gray900;
       final lightBtnFg = AppColors.gray100;
-      expect(_contrastRatio(lightBtnFg, lightBtnBg), greaterThanOrEqualTo(14.0));
+      expect(
+          _contrastRatio(lightBtnFg, lightBtnBg), greaterThanOrEqualTo(14.0));
     });
 
     test(
@@ -508,19 +525,127 @@ void main() {
       final gray500OnLightRatio =
           _contrastRatio(AppColors.gray500, AppColors.lightSurface);
       expect(gray500OnLightRatio, lessThan(3.0),
-          reason: 'Proves gray500 on lightSurface fails 4.5:1 text requirement');
+          reason:
+              'Proves gray500 on lightSurface fails 4.5:1 text requirement');
 
       // Ensure that our dynamic tokens avoid these forbidden ratios
-      expect(_contrastRatio(AppColors.textPrimary(false), AppColors.lightSurface),
+      expect(
+          _contrastRatio(AppColors.textPrimary(false), AppColors.lightSurface),
           greaterThanOrEqualTo(4.5));
       expect(
-          _contrastRatio(AppColors.textSecondary(false), AppColors.lightSurface),
+          _contrastRatio(
+              AppColors.textSecondary(false), AppColors.lightSurface),
           greaterThanOrEqualTo(4.5));
       expect(_contrastRatio(AppColors.textPrimary(true), AppColors.darkSurface),
           greaterThanOrEqualTo(4.5));
       expect(
           _contrastRatio(AppColors.textSecondary(true), AppColors.darkSurface),
           greaterThanOrEqualTo(4.5));
+    });
+
+    test(
+        '19. Real-world composited glass surfaces maintain >= 4.5:1 for all readable typography tokens',
+        () {
+      Color composite(Color fg, Color bg) {
+        final a = fg.alpha / 255.0;
+        return Color.fromARGB(
+          255,
+          (fg.red * a + bg.red * (1.0 - a)).round(),
+          (fg.green * a + bg.green * (1.0 - a)).round(),
+          (fg.blue * a + bg.blue * (1.0 - a)).round(),
+        );
+      }
+
+      // 1. Dark glass on dark background (#212529)
+      final darkEffectiveGlass =
+          composite(AppColors.darkSurfaceGlass, AppColors.darkBackground);
+      expect(_contrastRatio(AppColors.textPrimary(true), darkEffectiveGlass),
+          greaterThanOrEqualTo(7.0),
+          reason: 'Primary text on dark composited glass must exceed 7.0:1');
+      expect(_contrastRatio(AppColors.textSecondary(true), darkEffectiveGlass),
+          greaterThanOrEqualTo(4.5),
+          reason: 'Secondary text on dark composited glass must exceed 4.5:1');
+      expect(_contrastRatio(AppColors.textMuted(true), darkEffectiveGlass),
+          greaterThanOrEqualTo(4.5),
+          reason: 'Muted text on dark composited glass must exceed 4.5:1');
+      expect(_contrastRatio(AppColors.iconPrimary(true), darkEffectiveGlass),
+          greaterThanOrEqualTo(3.0),
+          reason: 'Primary icons on dark composited glass must exceed 3.0:1');
+
+      // 2. Light glass on light background (#F8F9FA)
+      final lightEffectiveGlass =
+          composite(AppColors.lightSurfaceGlass, AppColors.lightBackground);
+      expect(_contrastRatio(AppColors.textPrimary(false), lightEffectiveGlass),
+          greaterThanOrEqualTo(10.0),
+          reason: 'Primary text on light composited glass must exceed 10.0:1');
+      expect(
+          _contrastRatio(AppColors.textSecondary(false), lightEffectiveGlass),
+          greaterThanOrEqualTo(4.5),
+          reason: 'Secondary text on light composited glass must exceed 4.5:1');
+      expect(_contrastRatio(AppColors.textMuted(false), lightEffectiveGlass),
+          greaterThanOrEqualTo(4.5),
+          reason: 'Muted text on light composited glass must exceed 4.5:1');
+      expect(_contrastRatio(AppColors.iconPrimary(false), lightEffectiveGlass),
+          greaterThanOrEqualTo(3.0),
+          reason: 'Primary icons on light composited glass must exceed 3.0:1');
+    });
+
+    test(
+        '20. Regression guard: Unstyled Material Colors.grey is forbidden due to WCAG failure',
+        () {
+      const unstyledGrey = Color(0xFF9E9E9E); // Material Colors.grey
+
+      // Colors.grey fails WCAG AA on cards/surfaces
+      final darkContrast = _contrastRatio(unstyledGrey, AppColors.darkSurface);
+      final lightContrast =
+          _contrastRatio(unstyledGrey, AppColors.lightSurface);
+
+      expect(darkContrast, lessThan(4.5),
+          reason: 'Colors.grey fails WCAG AA 4.5:1 on dark cards (4.22:1)');
+      expect(lightContrast, lessThan(3.0),
+          reason: 'Colors.grey fails WCAG AA on light cards (2.55:1)');
+
+      // Verify that semantic replacements succeed
+      expect(
+          _contrastRatio(AppColors.textSecondary(true), AppColors.darkSurface),
+          greaterThanOrEqualTo(4.5));
+      expect(
+          _contrastRatio(
+              AppColors.textSecondary(false), AppColors.lightSurface),
+          greaterThanOrEqualTo(4.5));
+      expect(_contrastRatio(AppColors.textMuted(true), AppColors.darkSurface),
+          greaterThanOrEqualTo(4.5));
+      expect(_contrastRatio(AppColors.textMuted(false), AppColors.lightSurface),
+          greaterThanOrEqualTo(4.5));
+    });
+
+    test(
+        '21. Attendance action button status tokens maintain >= 4.5:1 in selected state and >= 3.0:1 in unselected state',
+        () {
+      for (final isDark in [true, false]) {
+        final statuses = [
+          AppColors.statusPresent(isDark),
+          AppColors.statusLate(isDark),
+          AppColors.statusAbsent(isDark),
+          AppColors.statusCancelledAdaptive(isDark),
+        ];
+        final surface = AppColors.surface(isDark);
+
+        for (final st in statuses) {
+          // Selected text contrast inside button
+          final btnFg = st.computeLuminance() > 0.4
+              ? AppColors.gray900
+              : AppColors.gray100;
+          expect(_contrastRatio(btnFg, st), greaterThanOrEqualTo(4.5),
+              reason:
+                  'Button foreground failed on status $st (isDark: $isDark)');
+
+          // Unselected status accent/icon against surface must meet SC 1.4.11 (>= 3.0:1)
+          expect(_contrastRatio(st, surface), greaterThanOrEqualTo(3.0),
+              reason:
+                  'Unselected status accent failed on surface $surface (isDark: $isDark)');
+        }
+      }
     });
 
     testWidgets(

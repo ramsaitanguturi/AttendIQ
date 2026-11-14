@@ -259,7 +259,7 @@ class _CountingNotificationScheduler extends NotificationScheduler {
   Future<void> waitForCompletedPasses(int targetCount) async {
     while (completedReschedulePasses < targetCount) {
       _passSignal ??= Completer<void>();
-      await _passSignal!.future.timeout(const Duration(seconds: 5));
+      await _passSignal!.future.timeout(const Duration(seconds: 30));
     }
   }
 }

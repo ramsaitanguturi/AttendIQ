@@ -505,7 +505,7 @@ class _OccurrenceCard extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             label: 'Present',
-            color: AppColors.present,
+            color: AppColors.statusPresent(isDark),
             icon: Icons.check_circle_outline,
             isSelected: currentStatus == OccurrenceStatus.PRESENT,
             onPressed: () => ref
@@ -518,7 +518,7 @@ class _OccurrenceCard extends ConsumerWidget {
           Expanded(
             child: _ActionButton(
               label: 'Late',
-              color: AppColors.late,
+              color: AppColors.statusLate(isDark),
               icon: Icons.access_time,
               isSelected: currentStatus == OccurrenceStatus.LATE,
               onPressed: () => ref
@@ -531,7 +531,7 @@ class _OccurrenceCard extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             label: 'Absent',
-            color: AppColors.absent,
+            color: AppColors.statusAbsent(isDark),
             icon: Icons.cancel_outlined,
             isSelected: currentStatus == OccurrenceStatus.ABSENT,
             onPressed: () => ref
@@ -543,7 +543,7 @@ class _OccurrenceCard extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             label: 'Cancelled',
-            color: AppColors.cancelled,
+            color: AppColors.statusCancelledAdaptive(isDark),
             icon: Icons.remove_circle_outline,
             isSelected: currentStatus == OccurrenceStatus.CANCELLED,
             onPressed: () => ref
@@ -576,14 +576,17 @@ class _ActionButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (isSelected) {
-      final btnBg = isDark ? AppColors.gray100 : AppColors.gray900;
-      final btnFg = isDark ? AppColors.gray900 : AppColors.gray100;
+      final btnBg = color;
+      final btnFg = color.computeLuminance() > 0.4
+          ? AppColors.gray900
+          : AppColors.gray100;
       return ElevatedButton.icon(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: btnBg,
           foregroundColor: btnFg,
           elevation: 2,
+          minimumSize: const Size(0, 42),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
@@ -600,21 +603,20 @@ class _ActionButton extends StatelessWidget {
       );
     }
 
-    final outlineColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final outlineColor = color.withOpacity(isDark ? 0.45 : 0.60);
     final textColor =
         isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final iconColor =
-        isDark ? AppColors.darkIconPrimary : AppColors.lightIconPrimary;
 
     return OutlinedButton.icon(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: textColor,
-        side: BorderSide(color: outlineColor),
+        minimumSize: const Size(0, 42),
+        side: BorderSide(color: outlineColor, width: 1.1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
       ),
-      icon: Icon(icon, size: 14, color: iconColor),
+      icon: Icon(icon, size: 14, color: color),
       label: Text(
         label,
         style: TextStyle(

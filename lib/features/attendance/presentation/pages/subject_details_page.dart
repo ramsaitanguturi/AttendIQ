@@ -145,7 +145,9 @@ class SubjectDetailsPage extends ConsumerWidget {
                           padding: const EdgeInsets.all(32.0),
                           decoration: isGlassy
                               ? GlassTokens.glassBoxDecoration(
-                                  borderRadius: 16.0)
+                                  isDark: isDark,
+                                  borderRadius: 16.0,
+                                )
                               : BoxDecoration(
                                   color: isDark
                                       ? AppColors.darkSurface
@@ -244,6 +246,7 @@ class SubjectDetailsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(24.0),
       decoration: isGlassy
           ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
               borderRadius: 20.0,
               customBorderColor: subjectColor.withOpacity(0.35),
             )
@@ -399,8 +402,10 @@ class SubjectDetailsPage extends ConsumerWidget {
           alertIcon = Icons.warning_amber_rounded;
           break;
         case BunkStatus.NORMAL:
-          alertBg = AppColors.gray200;
-          alertBorder = AppColors.gray700;
+          alertBg =
+              isGlassy ? AppColors.surfaceGlass(isDark) : AppColors.gray200;
+          alertBorder =
+              isGlassy ? GlassTokens.lightGlassBorder : AppColors.gray700;
           alertText = AppColors.gray900;
           alertIcon = Icons.check_circle_outline;
           break;
@@ -414,7 +419,9 @@ class SubjectDetailsPage extends ConsumerWidget {
         color: alertBg,
         borderRadius: BorderRadius.circular(14.0),
         border: Border.all(color: alertBorder),
-        boxShadow: isGlassy ? GlassTokens.cardShadows(isGlassy: true) : null,
+        boxShadow: isGlassy
+            ? GlassTokens.cardShadows(isGlassy: true, isDark: isDark)
+            : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,7 +471,10 @@ class SubjectDetailsPage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 16.0)
+          ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
+              borderRadius: 16.0,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(16.0),
@@ -518,7 +528,10 @@ class SubjectDetailsPage extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 20.0)
+          ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
+              borderRadius: 20.0,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(16.0),
@@ -638,7 +651,10 @@ class SubjectDetailsPage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 14.0)
+          ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
+              borderRadius: 14.0,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(12.0),

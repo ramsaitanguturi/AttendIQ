@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 import '../../../attendance/domain/entities/attendance_record.dart';
 import '../../../attendance/presentation/controllers/attendance_controller.dart';
 import '../../../semester/domain/entities/semester.dart';
@@ -450,12 +451,14 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: isGlassy
-            ? const BorderSide(color: AppColors.silverBorder)
+            ? BorderSide(
+                color: isDark
+                    ? AppColors.silverBorder
+                    : GlassTokens.lightGlassBorder)
             : BorderSide.none,
       ),
-      backgroundColor: isGlassy
-          ? AppColors.darkSurfaceGlass
-          : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+      backgroundColor:
+          isGlassy ? AppColors.surfaceGlass(isDark) : AppColors.surface(isDark),
       title: Row(
         children: [
           Icon(Icons.add_task, color: AppColors.iconPrimary(isDark)),

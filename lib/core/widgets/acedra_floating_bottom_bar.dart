@@ -63,7 +63,7 @@ class AcedraFloatingBottomBar extends ConsumerStatefulWidget {
   /// Total height occupied by the floating bar from the bottom of the screen,
   /// including the raised bubble and bottom margin with system navigation inset.
   static double totalBarHeight(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final bottomMargin = bottomPadding > 0 ? bottomPadding + 6.0 : 16.0;
     return kBubbleHeight + bottomMargin;
   }
@@ -71,16 +71,21 @@ class AcedraFloatingBottomBar extends ConsumerStatefulWidget {
   /// Recommended bottom padding for scrollable page content so that the last
   /// card, list item, or footer can scroll completely and comfortably above
   /// the floating navigation bar and its raised bubble / drop shadows.
-  static double contentBottomPadding(BuildContext context,
-      {double additionalClearance = 24.0}) {
-    return totalBarHeight(context) + additionalClearance;
+  /// When [hasFab] is true, extra clearance is added so content never hides behind the FAB.
+  static double contentBottomPadding(
+    BuildContext context, {
+    bool hasFab = false,
+    double additionalClearance = 32.0,
+  }) {
+    final fabAllowance = hasFab ? (56.0 + 16.0) : 0.0;
+    return totalBarHeight(context) + additionalClearance + fabAllowance;
   }
 
   /// Recommended bottom padding to wrap a FloatingActionButton so it floats
   /// comfortably above the floating navigation bar and its raised bubble without colliding.
   static double fabBottomPadding(BuildContext context,
       {double clearance = 24.0}) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final barBottomMargin = bottomPadding > 0 ? bottomPadding + 6.0 : 16.0;
     // Scaffold default endFloat places the FAB at (bottomPadding + 16.0).
     // To position the FAB at: (barBottomMargin + kBubbleHeight + clearance),
@@ -172,7 +177,7 @@ class _AcedraFloatingBottomBarState
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     // Outer container padding respecting device navigation gestures
     final margin = EdgeInsets.only(

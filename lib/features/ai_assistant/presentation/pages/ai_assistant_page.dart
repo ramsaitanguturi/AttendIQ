@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/ai_chat_controller.dart';
 
@@ -251,17 +252,15 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                                 fontSize: 12, fontWeight: FontWeight.w600),
                           ),
                           backgroundColor: isGlassy
-                              ? AppColors.darkSurfaceGlass
-                              : (isDark
-                                  ? AppColors.darkSurface
-                                  : AppColors.lightSurface),
+                              ? AppColors.surfaceGlass(isDark)
+                              : AppColors.surface(isDark),
                           surfaceTintColor: Colors.transparent,
                           side: BorderSide(
                             color: isGlassy
-                                ? AppColors.silverBorder
-                                : (isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.lightBorder),
+                                ? (isDark
+                                    ? AppColors.silverBorder
+                                    : GlassTokens.lightGlassBorder)
+                                : AppColors.border(isDark),
                           ),
                           onPressed: () => _handleSubmit(question),
                         ),
@@ -330,12 +329,10 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: isUser
-                        ? AppColors.primary
+                        ? (isDark ? AppColors.primary : AppColors.gray900)
                         : (isGlassy
-                            ? AppColors.darkSurfaceGlass
-                            : (isDark
-                                ? AppColors.darkSurface
-                                : AppColors.lightSurface)),
+                            ? AppColors.surfaceGlass(isDark)
+                            : AppColors.surface(isDark)),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
@@ -346,10 +343,10 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                         ? null
                         : Border.all(
                             color: isGlassy
-                                ? AppColors.silverBorder
-                                : (isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.lightBorder)),
+                                ? (isDark
+                                    ? AppColors.silverBorder
+                                    : GlassTokens.lightGlassBorder)
+                                : AppColors.border(isDark)),
                     boxShadow: isGlassy && !isUser
                         ? [
                             BoxShadow(
@@ -415,17 +412,15 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isGlassy
-                            ? AppColors.darkSurfaceGlass
-                            : (isDark
-                                ? AppColors.darkSurface
-                                : AppColors.lightSurface),
+                            ? AppColors.surfaceGlass(isDark)
+                            : AppColors.surface(isDark),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isGlassy
-                              ? AppColors.silverBorder
-                              : (isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.lightBorder),
+                              ? (isDark
+                                  ? AppColors.silverBorder
+                                  : GlassTokens.lightGlassBorder)
+                              : AppColors.border(isDark),
                         ),
                         boxShadow: isGlassy
                             ? [
@@ -503,8 +498,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isGlassy
-            ? AppColors.darkSurfaceGlass
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+            ? AppColors.surfaceGlass(isDark)
+            : AppColors.surface(isDark),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
@@ -513,8 +508,10 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
         ),
         border: Border.all(
             color: isGlassy
-                ? AppColors.silverBorder
-                : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+                ? (isDark
+                    ? AppColors.silverBorder
+                    : GlassTokens.lightGlassBorder)
+                : AppColors.border(isDark)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -544,13 +541,15 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isGlassy
-            ? AppColors.darkSurfaceGlass
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+            ? AppColors.surfaceGlass(isDark)
+            : AppColors.surface(isDark),
         border: Border(
           top: BorderSide(
               color: isGlassy
-                  ? AppColors.silverBorder
-                  : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+                  ? (isDark
+                      ? AppColors.silverBorder
+                      : GlassTokens.lightGlassBorder)
+                  : AppColors.border(isDark)),
         ),
       ),
       child: SafeArea(
@@ -560,17 +559,15 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
               child: Container(
                 decoration: BoxDecoration(
                   color: isGlassy
-                      ? AppColors.darkSurfaceGlass
-                      : (isDark
-                          ? AppColors.darkBackground
-                          : AppColors.lightBackground),
+                      ? AppColors.surfaceGlass(isDark)
+                      : AppColors.background(isDark),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: isGlassy
-                        ? AppColors.silverBorder
-                        : (isDark
-                            ? AppColors.darkBorder
-                            : AppColors.lightBorder),
+                        ? (isDark
+                            ? AppColors.silverBorder
+                            : GlassTokens.lightGlassBorder)
+                        : AppColors.border(isDark),
                   ),
                 ),
                 child: Padding(

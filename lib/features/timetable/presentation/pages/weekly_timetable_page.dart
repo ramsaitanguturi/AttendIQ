@@ -85,7 +85,10 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
             left: 16.0,
             right: 16.0,
             top: 8.0,
-            bottom: AcedraFloatingBottomBar.contentBottomPadding(context),
+            bottom: AcedraFloatingBottomBar.contentBottomPadding(
+              context,
+              hasFab: true,
+            ),
           ),
           child: SemesterWeeklyCalendarView(
             onSlotTap: (slot) => _handleSlotTap(context, slot),

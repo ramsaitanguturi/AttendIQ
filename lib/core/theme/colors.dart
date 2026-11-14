@@ -65,8 +65,8 @@ class AppColors {
   static const Color darkSecondaryBackground =
       gray800; // #343a40 - Secondary background
   static const Color darkSurface = gray800; // #343a40 - Standard cards
-  static const Color darkSurfaceGlass =
-      Color(0xD9343A40); // Translucent smoked glass surface
+  static const Color darkSurfaceGlass = Color(
+      0xF0343A40); // Translucent smoked glass surface (94.1% opacity matching GlassTokens)
   static const Color darkCard = gray800; // #343a40 - Standard card surface
   static const Color darkElevated = gray700; // #495057 - Elevated cards
   static const Color darkBorder = gray700; // #495057 - Perimeter borders
@@ -276,12 +276,11 @@ class AppColors {
     Color? backgroundColor,
   }) {
     return BoxDecoration(
-      color: backgroundColor ??
-          (isDark ? const Color(0xD9343A40) : const Color(0xD9F8F9FA)),
+      color: backgroundColor ?? (isDark ? darkSurfaceGlass : lightSurfaceGlass),
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
         color: borderColor ??
-            (isDark ? const Color(0x38DEE2E6) : const Color(0x38CED4DA)),
+            (isDark ? const Color(0x38DEE2E6) : const Color(0x50CED4DA)),
         width: borderWidth,
       ),
       boxShadow: isDark

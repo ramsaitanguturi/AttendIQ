@@ -133,7 +133,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               left: 20.0,
               right: 20.0,
               top: 12.0,
-              bottom: AcedraFloatingBottomBar.contentBottomPadding(context),
+              bottom: AcedraFloatingBottomBar.contentBottomPadding(
+                context,
+                hasFab: ref.watch(isAiAdvisorEnabledProvider),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,8 +295,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 child: Icon(
                   Icons.auto_awesome,
                   color: ref.watch(isGlassyThemeEnabledProvider)
-                      ? AppColors.gray100
-                      : AppColors.onPrimary,
+                      ? AppColors.iconPrimary(isDark)
+                      : (isDark ? AppColors.onPrimary : AppColors.gray100),
                 ),
               ),
             )
@@ -1225,13 +1228,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ),
           ),
         ] else ...[
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: upcomingTasks.length,
-            itemBuilder: (context, index) {
-              return TaskCardWidget(task: upcomingTasks[index]);
-            },
+          Column(
+            children: upcomingTasks
+                .map((task) => TaskCardWidget(
+                      key: ValueKey(task.id),
+                      task: task,
+                    ))
+                .toList(),
           ),
         ],
       ],

@@ -171,12 +171,13 @@ class SemesterManagementSheet extends ConsumerWidget {
             child: semestersAsync.when(
               data: (semesters) {
                 if (semesters.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
                     child: Center(
                       child: Text(
                         'No semesters configured yet.',
-                        style: TextStyle(color: Colors.grey),
+                        style:
+                            TextStyle(color: AppColors.textSecondary(isDark)),
                       ),
                     ),
                   );
@@ -361,11 +362,12 @@ class _SemesterTile extends StatelessWidget {
                   label: const Text('Archive'),
                 ),
               if (semester.isArchived)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     'Read-only (activate to edit)',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textMuted(isDark)),
                   ),
                 ),
             ],
