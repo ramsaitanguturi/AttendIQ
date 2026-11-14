@@ -133,16 +133,22 @@ class ClassScheduleCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: AppColors.gray700,
+                            color:
+                                isDark ? AppColors.gray700 : AppColors.gray200,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppColors.gray600),
+                            border: Border.all(
+                                color: isDark
+                                    ? AppColors.gray400
+                                    : AppColors.gray700),
                           ),
-                          child: const Text(
+                          child: Text(
                             'EXAM',
                             style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.gray100,
+                              color: isDark
+                                  ? AppColors.gray100
+                                  : AppColors.gray900,
                             ),
                           ),
                         )
@@ -151,16 +157,22 @@ class ClassScheduleCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: AppColors.gray700,
+                            color:
+                                isDark ? AppColors.gray700 : AppColors.gray200,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppColors.gray500),
+                            border: Border.all(
+                                color: isDark
+                                    ? AppColors.gray400
+                                    : AppColors.gray700),
                           ),
                           child: Text(
                             slot.code.isNotEmpty ? slot.code : 'EVENT',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.gray200,
+                              color: isDark
+                                  ? AppColors.gray100
+                                  : AppColors.gray900,
                             ),
                           ),
                         )
@@ -170,21 +182,42 @@ class ClassScheduleCard extends StatelessWidget {
                             final st = slot.status.toUpperCase();
                             Color pillColor;
                             Color pillBg;
+                            Color pillBorder;
 
                             if (st == 'PRESENT' || st == 'EXTRA_PRESENT') {
                               pillColor = AppColors.attendanceHigh;
-                              pillBg = AppColors.gray700.withOpacity(0.5);
+                              pillBg = isDark
+                                  ? AppColors.gray700.withOpacity(0.5)
+                                  : AppColors.gray900;
+                              pillBorder = isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray700;
                             } else if (st == 'CANCELLED' ||
                                 st == 'CANCELLED_CLASS') {
                               pillColor = AppColors.statusCancelled;
-                              pillBg = AppColors.gray800;
+                              pillBg = isDark
+                                  ? AppColors.gray800
+                                  : AppColors.gray900;
+                              pillBorder = isDark
+                                  ? AppColors.gray500
+                                  : AppColors.gray700;
                             } else if (st == 'LATE') {
                               pillColor = AppColors.attendanceMid;
-                              pillBg = AppColors.gray700.withOpacity(0.4);
+                              pillBg = isDark
+                                  ? AppColors.gray700.withOpacity(0.5)
+                                  : AppColors.gray900;
+                              pillBorder = isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray600;
                             } else {
                               // ABSENT / EXTRA_ABSENT
                               pillColor = AppColors.attendanceLow;
-                              pillBg = AppColors.gray800;
+                              pillBg = isDark
+                                  ? AppColors.gray800
+                                  : AppColors.gray900;
+                              pillBorder = isDark
+                                  ? AppColors.gray500
+                                  : AppColors.gray700;
                             }
 
                             return Container(
@@ -193,7 +226,7 @@ class ClassScheduleCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: pillBg,
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: pillColor),
+                                border: Border.all(color: pillBorder),
                               ),
                               child: Text(
                                 slot.status,

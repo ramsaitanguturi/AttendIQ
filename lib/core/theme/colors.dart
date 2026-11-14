@@ -72,15 +72,27 @@ class AppColors {
   static const Color darkBorder = gray700; // #495057 - Perimeter borders
   static const Color darkBorderSubtle = Color(0x38495057); // Subtle border
 
-  // Typography tokens (Dark default)
-  static const Color darkTextPrimary = gray100; // #f8f9fa - Primary text
-  static const Color darkTextSecondary = gray400; // #ced4da - Secondary text
-  static const Color darkTextMuted = gray500; // #adb5bd - Descriptions
-  static const Color darkTextDisabled = gray600; // #6c757d - Disabled text
+  // Typography tokens (Dark default - strictly WCAG 2.2 AA compliant)
+  static const Color darkTextPrimary =
+      gray100; // #f8f9fa - Primary headings (10.9:1 on gray800, 7.76:1 on gray700)
+  static const Color darkTextSecondary =
+      gray400; // #ced4da - Secondary text (7.70:1 on gray800, 5.47:1 on gray700)
+  static const Color darkTextMuted =
+      gray500; // #adb5bd - Muted descriptions (5.55:1 on gray800)
+  static const Color darkTextDisabled =
+      gray500; // #adb5bd - Disabled text (5.55:1 on gray800)
+  static const Color darkTextHint =
+      gray400; // #ced4da - Input hints (7.70:1 on gray800)
+  static const Color darkTextOnElevatedSurface =
+      gray100; // #f8f9fa - Text on elevated cards (7.76:1 on gray700)
+  static const Color darkTextOnGlass =
+      gray100; // #f8f9fa - Text on smoked glass (10.9:1 on glass)
 
   // Icon tokens
-  static const Color darkIconPrimary = gray300; // #dee2e6 - Primary icons
-  static const Color darkIconSecondary = gray500; // #adb5bd - Secondary icons
+  static const Color darkIconPrimary =
+      gray100; // #f8f9fa - Primary icons (10.9:1 on gray800)
+  static const Color darkIconSecondary =
+      gray300; // #dee2e6 - Secondary icons (8.84:1 on gray800, 6.28:1 on gray700)
 
   // Navigation tokens
   static const Color navIndicator =
@@ -108,44 +120,59 @@ class AppColors {
   static const Color secondary = gray300; // #dee2e6 - Light silver
   static const Color accent = gray400; // #ced4da - Muted silver
 
-  // Semantic Status Tones (Monochromatic)
+  // Semantic Status Tones (Static dark defaults)
   static const Color attendanceHigh = gray100; // #f8f9fa - Safe / High (>= 75%)
-  static const Color attendanceMid = gray500; // #adb5bd - Warning (~75%)
-  static const Color attendanceLow = gray600; // #6c757d - Danger (< 75%)
-  static const Color statusCancelled = gray700; // #495057 - Neutral cancelled
+  static const Color attendanceMid =
+      gray300; // #dee2e6 - Warning (~75%, 8.84:1 on dark)
+  static const Color attendanceLow =
+      gray400; // #ced4da - Danger (< 75%, 7.70:1 on dark)
 
-  // Occurrence states
+  // Occurrence states (Static dark defaults)
   static const Color present = gray100; // #f8f9fa
-  static const Color late = gray500; // #adb5bd
-  static const Color absent = gray600; // #6c757d
-  static const Color cancelled = gray700; // #495057
-  static const Color extraClass = gray300; // #dee2e6
+  static const Color late = gray300; // #dee2e6
+  static const Color absent = gray400; // #ced4da
+  static const Color cancelled = gray400; // #ced4da
+  static const Color statusCancelled =
+      gray400; // #ced4da - Static cancelled status token
+  static const Color extraClass = gray200; // #e9ecef
 
   // ===========================================================================
-  // 4. Light Theme Counterparts (Consistent Monochromatic)
+  // 4. Light Theme Counterparts (Consistent Monochromatic, WCAG AA Compliant)
   // ===========================================================================
   static const Color lightBackground = gray100; // #f8f9fa - Main background
   static const Color lightSecondaryBackground =
       gray200; // #e9ecef - Secondary background
   static const Color lightSurface = gray100; // #f8f9fa - Standard surfaces
-  static const Color lightSurfaceGlass =
-      Color(0xD9F8F9FA); // Translucent light glass surface
+  static const Color lightSurfaceGlass = Color(
+      0xF2F8F9FA); // Translucent light glass surface (95% opaque for contrast)
   static const Color lightCard = gray100; // #f8f9fa - Standard cards
   static const Color lightElevated = gray200; // #e9ecef - Elevated surfaces
   static const Color lightBorder = gray400; // #ced4da - Borders
   static const Color lightBorderSubtle = Color(0x38CED4DA); // Subtle border
-  static const Color lightTextPrimary = gray900; // #212529 - Primary text
-  static const Color lightTextSecondary = gray700; // #495057 - Secondary text
-  static const Color lightTextMuted = gray600; // #6c757d - Muted text
-  static const Color lightTextDisabled = gray500; // #adb5bd - Disabled text
-  static const Color lightIconPrimary = gray800; // #343a40 - Primary icons
-  static const Color lightIconSecondary = gray600; // #6c757d - Secondary icons
+  static const Color lightTextPrimary =
+      gray900; // #212529 - Primary text (14.6:1 on gray100)
+  static const Color lightTextSecondary =
+      gray700; // #495057 - Secondary text (7.76:1 on gray100, 6.90:1 on gray200)
+  static const Color lightTextMuted =
+      gray700; // #495057 - Muted text (7.76:1 on gray100, 6.90:1 on gray200)
+  static const Color lightTextDisabled =
+      gray600; // #6c757d - Disabled text (4.45:1 on gray100)
+  static const Color lightTextHint =
+      gray700; // #495057 - Input hints (6.90:1 on gray200)
+  static const Color lightTextOnElevatedSurface =
+      gray900; // #212529 - Text on elevated cards (13.0:1 on gray200)
+  static const Color lightTextOnGlass =
+      gray900; // #212529 - Text on light glass (14.6:1 on glass)
+  static const Color lightIconPrimary =
+      gray900; // #212529 - Primary icons (14.6:1 on gray100)
+  static const Color lightIconSecondary =
+      gray700; // #495057 - Secondary icons (7.76:1 on gray100)
 
   // Light Navigation tokens
   static const Color lightNavIndicator = gray900; // #212529 - Selected pill
   static const Color lightNavSelectedIcon = gray100; // #f8f9fa - Selected icon
   static const Color lightNavUnselectedIcon =
-      gray600; // #6c757d - Unselected icon
+      gray700; // #495057 - Unselected icon (7.76:1)
 
   // Dynamic Semantic Accessors
   static Color background(bool isDark) =>
@@ -166,10 +193,35 @@ class AppColors {
       isDark ? darkTextMuted : lightTextMuted;
   static Color textDisabled(bool isDark) =>
       isDark ? darkTextDisabled : lightTextDisabled;
+  static Color textHint(bool isDark) => isDark ? darkTextHint : lightTextHint;
+  static Color textOnElevatedSurface(bool isDark) =>
+      isDark ? darkTextOnElevatedSurface : lightTextOnElevatedSurface;
+  static Color textOnGlass(bool isDark) =>
+      isDark ? darkTextOnGlass : lightTextOnGlass;
   static Color iconPrimary(bool isDark) =>
       isDark ? darkIconPrimary : lightIconPrimary;
   static Color iconSecondary(bool isDark) =>
       isDark ? darkIconSecondary : lightIconSecondary;
+  static Color primaryColor(bool isDark) => isDark ? primary : gray900;
+
+  // Adaptive Attendance & Occurrence Status Colors (Inverted for guaranteed contrast)
+  static Color statusPresent(bool isDark) => isDark ? gray100 : gray900;
+  static Color statusLate(bool isDark) => isDark ? gray300 : gray700;
+  static Color statusAbsent(bool isDark) => isDark ? gray400 : gray800;
+  static Color statusCancelledAdaptive(bool isDark) =>
+      isDark ? gray400 : gray700;
+  static Color statusExtra(bool isDark) => isDark ? gray200 : gray800;
+
+  /// Resolves an attendance percentage into a WCAG-compliant status color.
+  static Color attendanceMetricColor(double percentage, bool isDark) {
+    if (percentage >= 75.0) {
+      return isDark ? gray100 : gray900;
+    } else if (percentage >= 65.0) {
+      return isDark ? gray300 : gray700;
+    } else {
+      return isDark ? gray400 : gray800;
+    }
+  }
 
   // ===========================================================================
   // 5. Normalization & Mapping Utilities

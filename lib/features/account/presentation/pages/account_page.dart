@@ -75,7 +75,7 @@ class AccountPage extends ConsumerWidget {
               children: [
                 _buildMenuItem(
                   icon: Icons.tune_rounded,
-                  iconColor: AppColors.primary,
+                  iconColor: AppColors.iconPrimary(isDark),
                   title: 'Settings & Preferences',
                   subtitle: 'Appearance, notifications, target percentages',
                   onTap: () => context.push('/settings'),
@@ -84,7 +84,7 @@ class AccountPage extends ConsumerWidget {
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.backup_rounded,
-                  iconColor: AppColors.secondary,
+                  iconColor: AppColors.iconPrimary(isDark),
                   title: 'Backup & Restore',
                   subtitle: 'Export and import offline database snapshots',
                   onTap: () => context.push('/backup'),
@@ -93,7 +93,7 @@ class AccountPage extends ConsumerWidget {
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.task_alt_rounded,
-                  iconColor: AppColors.gray300,
+                  iconColor: AppColors.iconPrimary(isDark),
                   title: 'Academic Planner',
                   subtitle: 'Assignments, exams, and academic tasks',
                   onTap: () => context.push('/planner'),
@@ -103,7 +103,7 @@ class AccountPage extends ConsumerWidget {
                   _buildDivider(isDark),
                   _buildMenuItem(
                     icon: Icons.auto_awesome_rounded,
-                    iconColor: AppColors.gray400,
+                    iconColor: AppColors.iconPrimary(isDark),
                     title: 'AI Attendance Advisor',
                     subtitle:
                         'Intelligent schedule advice & attendance insights',
@@ -114,7 +114,7 @@ class AccountPage extends ConsumerWidget {
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.widgets_rounded,
-                  iconColor: AppColors.gray300,
+                  iconColor: AppColors.iconPrimary(isDark),
                   title: 'Home Screen Widgets',
                   subtitle: 'Live timetable and attendance widgets',
                   onTap: () => context.push('/widget-settings'),
@@ -133,7 +133,7 @@ class AccountPage extends ConsumerWidget {
               children: [
                 _buildMenuItem(
                   icon: Icons.info_outline_rounded,
-                  iconColor: AppColors.silverReflect,
+                  iconColor: AppColors.iconPrimary(isDark),
                   title: 'About ACEDRA',
                   subtitle: 'Version 2.0.0 (ACEDRA Edition) • 100% Offline',
                   onTap: () => context.push('/about'),
@@ -200,11 +200,7 @@ class AccountPage extends ConsumerWidget {
     bool isDark,
     bool isGlassy,
   ) {
-    final statusColor = attendanceRate >= 75.0
-        ? AppColors.primary
-        : (attendanceRate >= 65.0
-            ? AppColors.attendanceMid
-            : AppColors.attendanceLow);
+    final statusColor = AppColors.attendanceMetricColor(attendanceRate, isDark);
 
     return Container(
       width: double.infinity,
@@ -276,17 +272,20 @@ class AccountPage extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8.0, vertical: 3.0),
                       decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.14),
+                        color: (isDark ? AppColors.gray400 : AppColors.gray700)
+                            .withOpacity(0.14),
                         borderRadius: BorderRadius.circular(8.0),
                         border: Border.all(
-                            color: AppColors.secondary.withOpacity(0.3)),
+                            color:
+                                (isDark ? AppColors.gray400 : AppColors.gray700)
+                                    .withOpacity(0.3)),
                       ),
                       child: Text(
                         '$subjectCount Subjects',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.secondary,
+                          color: isDark ? AppColors.gray300 : AppColors.gray800,
                         ),
                       ),
                     ),
@@ -328,8 +327,8 @@ class AccountPage extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.school_rounded,
-                      color: AppColors.primary, size: 20),
+                  Icon(Icons.school_rounded,
+                      color: AppColors.iconPrimary(isDark), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     activeSemester?.name ?? 'No Active Semester',
@@ -345,15 +344,16 @@ class AccountPage extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8.0, vertical: 2.0),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.15),
+                    color: (isDark ? AppColors.primary : AppColors.gray900)
+                        .withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6.0),
                   ),
-                  child: const Text(
+                  child: Text(
                     'ACTIVE',
                     style: TextStyle(
                       fontSize: 10.0,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: isDark ? AppColors.primary : AppColors.gray900,
                     ),
                   ),
                 ),
@@ -447,8 +447,8 @@ class AccountPage extends ConsumerWidget {
               : AppColors.lightTextSecondary,
         ),
       ),
-      trailing:
-          const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
+      trailing: Icon(Icons.chevron_right_rounded,
+          size: 20, color: AppColors.iconSecondary(isDark)),
       onTap: onTap,
     );
   }

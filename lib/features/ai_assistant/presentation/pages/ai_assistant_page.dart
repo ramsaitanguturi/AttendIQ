@@ -77,9 +77,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.silverBorder),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.auto_awesome,
-                color: AppColors.primary,
+                color: AppColors.iconPrimary(isDark),
                 size: 20,
               ),
             ),
@@ -100,14 +100,18 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       fontSize: 11,
                       color: state.isOffline
                           ? AppColors.attendanceLow
-                          : AppColors.primary,
+                          : (isDark ? AppColors.primary : AppColors.gray900),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  loading: () => const Text('Initializing...',
-                      style: TextStyle(fontSize: 11, color: Colors.grey)),
-                  error: (_, __) => const Text('Error',
-                      style: TextStyle(fontSize: 11, color: AppColors.gray400)),
+                  loading: () => Text('Initializing...',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary(isDark))),
+                  error: (_, __) => Text('Error',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary(isDark))),
                 ),
               ],
             ),
@@ -512,20 +516,23 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                 ? AppColors.silverBorder
                 : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Analyzing attendance metrics...',
             style: TextStyle(
-                fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
+                fontSize: 12,
+                color: AppColors.textSecondary(isDark),
+                fontStyle: FontStyle.italic),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           SizedBox(
             width: 12,
             height: 12,
             child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppColors.primary),
+                strokeWidth: 2,
+                color: isDark ? AppColors.primary : AppColors.gray900),
           ),
         ],
       ),
@@ -571,11 +578,12 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                   child: TextField(
                     controller: _textController,
                     readOnly: isLoading,
-                    style: const TextStyle(fontSize: 14),
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                        fontSize: 14, color: AppColors.textPrimary(isDark)),
+                    decoration: InputDecoration(
                       hintText: 'Type your question...',
                       border: InputBorder.none,
-                      hintStyle: TextStyle(color: Colors.grey),
+                      hintStyle: TextStyle(color: AppColors.textHint(isDark)),
                     ),
                     onSubmitted: (text) => _handleSubmit(text),
                   ),
@@ -584,13 +592,14 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
             ),
             const SizedBox(width: 8),
             Container(
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.primary : AppColors.gray900,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.send,
-                    color: AppColors.onPrimary, size: 20),
+                icon: Icon(Icons.send,
+                    color: isDark ? AppColors.gray900 : AppColors.gray100,
+                    size: 20),
                 onPressed: isLoading
                     ? null
                     : () => _handleSubmit(_textController.text),

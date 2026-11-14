@@ -42,11 +42,11 @@ class AboutPage extends StatelessWidget {
                 children: [
                   const AcedraLogo(size: 80, showWordmark: true, spacing: 14),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Version 2.0.0 (ACEDRA Edition)',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey,
+                      color: AppColors.textSecondary(isDark),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -57,24 +57,28 @@ class AboutPage extends StatelessWidget {
                     Icons.wifi_off,
                     '100% Offline Intelligence',
                     'Runs completely offline on your device with zero dependency on external servers.',
+                    isDark,
                   ),
                   const SizedBox(height: 16),
                   _buildFeatureRow(
                     Icons.no_accounts,
                     'Zero User Tracking',
                     'No registration, no user accounts, complete privacy guaranteed.',
+                    isDark,
                   ),
                   const SizedBox(height: 16),
                   _buildFeatureRow(
                     Icons.storage,
                     'Local Isar Database',
                     'All academic data resides safely in your device high-performance Isar engine.',
+                    isDark,
                   ),
                   const SizedBox(height: 16),
                   _buildFeatureRow(
                     Icons.import_export,
                     'Seamless Backup & Restore',
                     'Export and import complete encrypted database backups anytime.',
+                    isDark,
                   ),
                 ],
               ),
@@ -85,11 +89,12 @@ class AboutPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureRow(IconData icon, String title, String subtitle) {
+  Widget _buildFeatureRow(
+      IconData icon, String title, String subtitle, bool isDark) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: AppColors.primary, size: 24),
+        Icon(icon, color: AppColors.iconPrimary(isDark), size: 24),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
@@ -103,7 +108,10 @@ class AboutPage extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary(isDark),
+                ),
               ),
             ],
           ),

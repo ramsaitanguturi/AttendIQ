@@ -216,15 +216,17 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                         Container(
                           width: 12.0,
                           height: 12.0,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
+                          decoration: BoxDecoration(
+                            color:
+                                isDark ? AppColors.primary : AppColors.gray900,
                             shape: BoxShape.circle,
                           ),
                         ),
                         Expanded(
                           child: Container(
                             height: 2.0,
-                            color: AppColors.primary,
+                            color:
+                                isDark ? AppColors.primary : AppColors.gray900,
                           ),
                         ),
                       ],

@@ -9,6 +9,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: AppTextStyles.primaryFont,
       primaryColor: AppColors.gray900,
       scaffoldBackgroundColor: AppColors.lightBackground,
       colorScheme: const ColorScheme.light(
@@ -39,13 +40,33 @@ class AppTheme {
         selectedItemColor: AppColors.lightNavIndicator,
         unselectedItemColor: AppColors.lightNavUnselectedIcon,
       ),
+      iconTheme: const IconThemeData(color: AppColors.lightIconPrimary),
       textTheme: TextTheme(
         displayLarge: AppTextStyles.displayLarge
             .copyWith(color: AppColors.lightTextPrimary),
+        displayMedium: const TextStyle(
+            color: AppColors.lightTextPrimary, fontWeight: FontWeight.bold),
+        displaySmall: const TextStyle(
+            color: AppColors.lightTextPrimary, fontWeight: FontWeight.bold),
+        headlineLarge: const TextStyle(
+            color: AppColors.lightTextPrimary, fontWeight: FontWeight.bold),
+        headlineMedium: const TextStyle(
+            color: AppColors.lightTextPrimary, fontWeight: FontWeight.bold),
+        headlineSmall: const TextStyle(
+            color: AppColors.lightTextPrimary, fontWeight: FontWeight.bold),
+        titleLarge: const TextStyle(
+            color: AppColors.lightTextPrimary, fontWeight: FontWeight.bold),
         titleMedium: AppTextStyles.titleMedium
             .copyWith(color: AppColors.lightTextPrimary),
+        titleSmall: const TextStyle(
+            color: AppColors.lightTextSecondary, fontWeight: FontWeight.w600),
+        bodyLarge: const TextStyle(color: AppColors.lightTextSecondary),
         bodyMedium: AppTextStyles.bodyMedium
             .copyWith(color: AppColors.lightTextSecondary),
+        bodySmall: const TextStyle(color: AppColors.lightTextMuted),
+        labelLarge: const TextStyle(
+            color: AppColors.lightTextPrimary, fontWeight: FontWeight.w600),
+        labelMedium: const TextStyle(color: AppColors.lightTextSecondary),
         labelSmall:
             AppTextStyles.labelSmall.copyWith(color: AppColors.lightTextMuted),
       ),
@@ -139,6 +160,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         fillColor: AppColors.lightSecondaryBackground,
         filled: true,
+        hintStyle:
+            const TextStyle(color: AppColors.lightTextHint, fontSize: 14),
+        labelStyle: const TextStyle(color: AppColors.lightTextSecondary),
+        helperStyle: const TextStyle(color: AppColors.lightTextMuted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.lightBorder),
@@ -159,6 +184,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: AppTextStyles.primaryFont,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
@@ -189,13 +215,33 @@ class AppTheme {
         selectedItemColor: AppColors.navIndicator,
         unselectedItemColor: AppColors.navUnselectedIcon,
       ),
+      iconTheme: const IconThemeData(color: AppColors.darkIconPrimary),
       textTheme: TextTheme(
         displayLarge: AppTextStyles.displayLarge
             .copyWith(color: AppColors.darkTextPrimary),
+        displayMedium: const TextStyle(
+            color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold),
+        displaySmall: const TextStyle(
+            color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold),
+        headlineLarge: const TextStyle(
+            color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold),
+        headlineMedium: const TextStyle(
+            color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold),
+        headlineSmall: const TextStyle(
+            color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold),
+        titleLarge: const TextStyle(
+            color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold),
         titleMedium: AppTextStyles.titleMedium
             .copyWith(color: AppColors.darkTextPrimary),
+        titleSmall: const TextStyle(
+            color: AppColors.darkTextSecondary, fontWeight: FontWeight.w600),
+        bodyLarge: const TextStyle(color: AppColors.darkTextSecondary),
         bodyMedium: AppTextStyles.bodyMedium
             .copyWith(color: AppColors.darkTextSecondary),
+        bodySmall: const TextStyle(color: AppColors.darkTextMuted),
+        labelLarge: const TextStyle(
+            color: AppColors.darkTextPrimary, fontWeight: FontWeight.w600),
+        labelMedium: const TextStyle(color: AppColors.darkTextSecondary),
         labelSmall:
             AppTextStyles.labelSmall.copyWith(color: AppColors.darkTextMuted),
       ),
@@ -289,6 +335,9 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         fillColor: AppColors.darkSurface,
         filled: true,
+        hintStyle: const TextStyle(color: AppColors.darkTextHint, fontSize: 14),
+        labelStyle: const TextStyle(color: AppColors.darkTextSecondary),
+        helperStyle: const TextStyle(color: AppColors.darkTextMuted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.darkBorder),

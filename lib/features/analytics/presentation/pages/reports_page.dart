@@ -58,8 +58,8 @@ class ReportsPage extends ConsumerWidget {
                     Text(
                       'No active semester found.\nPlease set up a semester first.',
                       textAlign: TextAlign.center,
-                      style:
-                          AppTextStyles.bodyMedium.copyWith(color: Colors.grey),
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: AppColors.textSecondary(isDark)),
                     ),
                   ],
                 ),
@@ -106,8 +106,10 @@ class ReportsPage extends ConsumerWidget {
                             .generateReport();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.onPrimary,
+                        backgroundColor:
+                            isDark ? AppColors.primary : AppColors.gray900,
+                        foregroundColor:
+                            isDark ? AppColors.gray900 : AppColors.gray100,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -118,7 +120,7 @@ class ReportsPage extends ConsumerWidget {
                         'Regenerate Report',
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.onPrimary,
+                          color: isDark ? AppColors.gray900 : AppColors.gray100,
                         ),
                       ),
                     ),
@@ -143,8 +145,7 @@ class ReportsPage extends ConsumerWidget {
   Widget _buildSummaryCard(
       AttendanceReport report, bool isDark, bool isGlassy) {
     final double percentage = report.overallPercentage;
-    final Color riskColor =
-        percentage >= 75.0 ? AppColors.primary : AppColors.attendanceLow;
+    final Color riskColor = AppColors.attendanceMetricColor(percentage, isDark);
 
     return Container(
       width: double.infinity,
@@ -368,7 +369,8 @@ class ReportsPage extends ConsumerWidget {
         child: Center(
           child: Text(
             'No subjects registered in this semester.',
-            style: AppTextStyles.bodyMedium.copyWith(color: Colors.grey),
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.textSecondary(isDark)),
           ),
         ),
       );
@@ -440,8 +442,8 @@ class ReportsPage extends ConsumerWidget {
                     const SizedBox(height: 6),
                     Text(
                       'P: ${sub.present} | A: ${sub.absent} | Total: ${sub.totalClasses}',
-                      style:
-                          AppTextStyles.labelSmall.copyWith(color: Colors.grey),
+                      style: AppTextStyles.labelSmall
+                          .copyWith(color: AppColors.textSecondary(isDark)),
                     ),
                   ],
                 ),

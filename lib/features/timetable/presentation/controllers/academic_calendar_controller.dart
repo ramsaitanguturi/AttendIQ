@@ -42,22 +42,43 @@ enum CalendarItemType {
     }
   }
 
-  Color get indicatorColor {
-    switch (this) {
-      case CalendarItemType.REGULAR_CLASS:
-        return AppColors.gray100;
-      case CalendarItemType.EXAM:
-        return AppColors.gray600;
-      case CalendarItemType.TASK:
-        return AppColors.gray400;
-      case CalendarItemType.HOLIDAY:
-        return AppColors.gray200;
-      case CalendarItemType.EXTRA_CLASS:
-        return AppColors.gray300;
-      case CalendarItemType.CANCELLED_CLASS:
-        return AppColors.gray700;
-      case CalendarItemType.EVENT:
-        return AppColors.gray500;
+  Color get indicatorColor => getAdaptiveIndicatorColor(true);
+
+  Color getAdaptiveIndicatorColor(bool isDark) {
+    if (isDark) {
+      switch (this) {
+        case CalendarItemType.REGULAR_CLASS:
+          return AppColors.gray100;
+        case CalendarItemType.EXAM:
+          return AppColors.gray300;
+        case CalendarItemType.TASK:
+          return AppColors.gray400;
+        case CalendarItemType.HOLIDAY:
+          return AppColors.gray200;
+        case CalendarItemType.EXTRA_CLASS:
+          return AppColors.gray300;
+        case CalendarItemType.CANCELLED_CLASS:
+          return AppColors.gray400;
+        case CalendarItemType.EVENT:
+          return AppColors.gray400;
+      }
+    } else {
+      switch (this) {
+        case CalendarItemType.REGULAR_CLASS:
+          return AppColors.gray900;
+        case CalendarItemType.EXAM:
+          return AppColors.gray700;
+        case CalendarItemType.TASK:
+          return AppColors.gray800;
+        case CalendarItemType.HOLIDAY:
+          return AppColors.gray700;
+        case CalendarItemType.EXTRA_CLASS:
+          return AppColors.gray800;
+        case CalendarItemType.CANCELLED_CLASS:
+          return AppColors.gray700;
+        case CalendarItemType.EVENT:
+          return AppColors.gray800;
+      }
     }
   }
 }

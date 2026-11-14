@@ -54,14 +54,14 @@ class DayHeaderStrip extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 2.0),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primary
+                      ? (isDark ? AppColors.primary : AppColors.gray900)
                       : (isDark
                           ? AppColors.darkSurface
                           : AppColors.lightSurface),
                   borderRadius: BorderRadius.circular(12.0),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.primary
+                        ? (isDark ? AppColors.primary : AppColors.gray900)
                         : (isDark
                             ? AppColors.darkBorder
                             : AppColors.lightBorder),
@@ -70,7 +70,9 @@ class DayHeaderStrip extends StatelessWidget {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: AppColors.primaryGlow,
+                            color: isDark
+                                ? AppColors.primaryGlow
+                                : AppColors.gray900.withOpacity(0.2),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           )
@@ -86,7 +88,7 @@ class DayHeaderStrip extends StatelessWidget {
                         fontSize: 11.0,
                         fontWeight: FontWeight.bold,
                         color: isSelected
-                            ? AppColors.onPrimary
+                            ? (isDark ? AppColors.gray900 : AppColors.gray100)
                             : (isDark
                                 ? AppColors.darkTextSecondary
                                 : AppColors.lightTextSecondary),
@@ -103,7 +105,9 @@ class DayHeaderStrip extends StatelessWidget {
                             fontSize: 15.0,
                             fontWeight: FontWeight.w800,
                             color: isSelected
-                                ? AppColors.onPrimary
+                                ? (isDark
+                                    ? AppColors.gray900
+                                    : AppColors.gray100)
                                 : (isDark
                                     ? AppColors.darkTextPrimary
                                     : AppColors.lightTextPrimary),
@@ -116,8 +120,12 @@ class DayHeaderStrip extends StatelessWidget {
                             height: 6,
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.onPrimary
-                                  : AppColors.primary,
+                                  ? (isDark
+                                      ? AppColors.gray900
+                                      : AppColors.gray100)
+                                  : (isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900),
                               shape: BoxShape.circle,
                             ),
                           ),

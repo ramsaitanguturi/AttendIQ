@@ -295,8 +295,8 @@ class _AddEditSemesterDialogState extends ConsumerState<AddEditSemesterDialog> {
                   ),
                   Text(
                     '${_requiredAttendanceRate.round()}%',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: isDark ? AppColors.primary : AppColors.gray900,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                     ),
@@ -308,7 +308,7 @@ class _AddEditSemesterDialogState extends ConsumerState<AddEditSemesterDialog> {
                 min: 50.0,
                 max: 100.0,
                 divisions: 50,
-                activeColor: AppColors.primary,
+                activeColor: isDark ? AppColors.primary : AppColors.gray900,
                 onChanged: _isSaving
                     ? null
                     : (val) => setState(() => _requiredAttendanceRate = val),
@@ -324,10 +324,11 @@ class _AddEditSemesterDialogState extends ConsumerState<AddEditSemesterDialog> {
                     _activateImmediately
                         ? 'Archives any currently active semester'
                         : 'Save as draft for later activation',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary(isDark)),
                   ),
                   value: _activateImmediately,
-                  activeColor: AppColors.primary,
+                  activeColor: isDark ? AppColors.primary : AppColors.gray900,
                   onChanged: _isSaving
                       ? null
                       : (val) => setState(() => _activateImmediately = val),
@@ -344,19 +345,19 @@ class _AddEditSemesterDialogState extends ConsumerState<AddEditSemesterDialog> {
         ElevatedButton(
           onPressed: _isSaving ? null : _save,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.onPrimary,
+            backgroundColor: isDark ? AppColors.primary : AppColors.gray900,
+            foregroundColor: isDark ? AppColors.gray900 : AppColors.gray100,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
           child: _isSaving
-              ? const SizedBox(
+              ? SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.onPrimary,
+                    color: isDark ? AppColors.gray900 : AppColors.gray100,
                   ),
                 )
               : Text(

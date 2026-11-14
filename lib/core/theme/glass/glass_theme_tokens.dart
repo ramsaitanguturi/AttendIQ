@@ -12,17 +12,17 @@ class GlassTokens {
   static const double blurSigma = 12.0;
   static const double subtleBlurSigma = 8.0;
 
-  // Smoked Glass Surfaces (Dark mode: Strictly #212529, #343a40, #495057 opacities)
-  static const Color smokedGlassBg = Color(0xD9212529); // #212529 @ 85%
-  static const Color smokedGlassSurface = Color(0xD9343A40); // #343a40 @ 85%
-  static const Color smokedGlassElevated = Color(0xEA495057); // #495057 @ 92%
-  static const Color smokedGlassSheet = Color(0xF2212529); // #212529 @ 95%
+  // Smoked Glass Surfaces (Dark mode: Strictly #212529, #343a40, #495057 with reinforced opacity for text contrast)
+  static const Color smokedGlassBg = Color(0xF2212529); // #212529 @ 95%
+  static const Color smokedGlassSurface = Color(0xF0343A40); // #343a40 @ 94%
+  static const Color smokedGlassElevated = Color(0xF5495057); // #495057 @ 96%
+  static const Color smokedGlassSheet = Color(0xF8212529); // #212529 @ 97%
 
-  // Light Glass Surfaces (Light mode: Strictly #f8f9fa, #e9ecef opacities)
-  static const Color lightGlassBg = Color(0xD9F8F9FA); // #f8f9fa @ 85%
-  static const Color lightGlassSurface = Color(0xD9F8F9FA); // #f8f9fa @ 85%
-  static const Color lightGlassElevated = Color(0xEAE9ECEF); // #e9ecef @ 92%
-  static const Color lightGlassSheet = Color(0xF2F8F9FA); // #f8f9fa @ 95%
+  // Light Glass Surfaces (Light mode: Strictly #f8f9fa, #e9ecef with reinforced opacity for text contrast)
+  static const Color lightGlassBg = Color(0xF2F8F9FA); // #f8f9fa @ 95%
+  static const Color lightGlassSurface = Color(0xF2F8F9FA); // #f8f9fa @ 95%
+  static const Color lightGlassElevated = Color(0xF5E9ECEF); // #e9ecef @ 96%
+  static const Color lightGlassSheet = Color(0xF8F8F9FA); // #f8f9fa @ 97%
 
   // Silver Reflection Highlights & Borders (Strictly #f8f9fa, #dee2e6, #ced4da opacities)
   static const Color silverGleam = AppColors.gray100; // #f8f9fa
@@ -37,13 +37,13 @@ class GlassTokens {
   static const Color lightGlassBorderBright =
       Color(0x80CED4DA); // #ced4da @ 50%
 
-  // Grayscale Gradients (Dark)
+  // Grayscale Gradients (Dark - High opacity backing for crisp typography)
   static const LinearGradient surfaceGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xD9343A40), // Smoked gray800
-      Color(0xB8212529), // Translucent depth gray900
+      Color(0xF5343A40), // Smoked gray800 @ 96%
+      Color(0xEA212529), // Translucent depth gray900 @ 92%
     ],
   );
 
@@ -51,18 +51,18 @@ class GlassTokens {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xEA495057), // Elevated gray700
-      Color(0xD9343A40), // Grounded gray800
+      Color(0xF5495057), // Elevated gray700 @ 96%
+      Color(0xEA343A40), // Grounded gray800 @ 92%
     ],
   );
 
-  // Grayscale Gradients (Light)
+  // Grayscale Gradients (Light - High opacity backing for crisp typography)
   static const LinearGradient lightSurfaceGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xE6F8F9FA), // Luminous near-white gray100
-      Color(0xD4E9ECEF), // Translucent light silver gray200
+      Color(0xF8F8F9FA), // Luminous near-white gray100 @ 97%
+      Color(0xEFE9ECEF), // Translucent light silver gray200 @ 94%
     ],
   );
 
@@ -70,8 +70,8 @@ class GlassTokens {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xEAE9ECEF), // Elevated light silver gray200
-      Color(0xD9DEE2E6), // Grounded silver gray300
+      Color(0xF5E9ECEF), // Elevated light silver gray200 @ 96%
+      Color(0xEADEE2E6), // Grounded silver gray300 @ 92%
     ],
   );
 

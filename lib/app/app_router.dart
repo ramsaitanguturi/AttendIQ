@@ -91,6 +91,7 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: '/error',
         builder: (BuildContext context, GoRouterState state) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           final errorMsg = state.uri.queryParameters['message'] ??
               'A database or initialization error occurred.';
           return Scaffold(
@@ -116,7 +117,8 @@ GoRouter appRouter(AppRouterRef ref) {
                     const SizedBox(height: 8),
                     Text(
                       errorMsg,
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: TextStyle(
+                          fontSize: 14, color: AppColors.textSecondary(isDark)),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),

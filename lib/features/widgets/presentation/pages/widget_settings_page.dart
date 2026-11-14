@@ -45,12 +45,13 @@ class WidgetSettingsPage extends ConsumerWidget {
                     'Enable Widgets',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'Allow ACEDRA widgets to display live academic data on your home screen',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary(isDark)),
                   ),
                   value: widgetSettings.enabled,
-                  activeColor: AppColors.primary,
+                  activeColor: isDark ? AppColors.primary : AppColors.gray900,
                   onChanged: (val) => notifier.setEnabled(val),
                 ),
               ),
@@ -69,13 +70,16 @@ class WidgetSettingsPage extends ConsumerWidget {
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w500),
                       ),
-                      subtitle: const Text(
+                      subtitle: Text(
                         'Sync widgets when attendance is marked, schedule updates, or app opens',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary(isDark)),
                       ),
                       value: 'auto',
                       groupValue: widgetSettings.refreshFrequency,
-                      activeColor: AppColors.primary,
+                      activeColor:
+                          isDark ? AppColors.primary : AppColors.gray900,
                       onChanged: widgetSettings.enabled
                           ? (val) {
                               if (val != null)
@@ -90,13 +94,16 @@ class WidgetSettingsPage extends ConsumerWidget {
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w500),
                       ),
-                      subtitle: const Text(
+                      subtitle: Text(
                         'Periodic background refresh every hour',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary(isDark)),
                       ),
                       value: '1h',
                       groupValue: widgetSettings.refreshFrequency,
-                      activeColor: AppColors.primary,
+                      activeColor:
+                          isDark ? AppColors.primary : AppColors.gray900,
                       onChanged: widgetSettings.enabled
                           ? (val) {
                               if (val != null)
@@ -111,13 +118,16 @@ class WidgetSettingsPage extends ConsumerWidget {
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w500),
                       ),
-                      subtitle: const Text(
+                      subtitle: Text(
                         'Periodic background refresh every 6 hours',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary(isDark)),
                       ),
                       value: '6h',
                       groupValue: widgetSettings.refreshFrequency,
-                      activeColor: AppColors.primary,
+                      activeColor:
+                          isDark ? AppColors.primary : AppColors.gray900,
                       onChanged: widgetSettings.enabled
                           ? (val) {
                               if (val != null)
@@ -141,11 +151,14 @@ class WidgetSettingsPage extends ConsumerWidget {
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.15),
+                          color:
+                              (isDark ? AppColors.primary : AppColors.gray900)
+                                  .withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child:
-                            const Icon(Icons.today, color: AppColors.primary),
+                        child: Icon(Icons.today,
+                            color:
+                                isDark ? AppColors.primary : AppColors.gray900),
                       ),
                       title: const Text('ACEDRA - Today',
                           style: TextStyle(fontWeight: FontWeight.bold)),
@@ -157,11 +170,14 @@ class WidgetSettingsPage extends ConsumerWidget {
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.15),
+                          color:
+                              (isDark ? AppColors.gray400 : AppColors.gray700)
+                                  .withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.calendar_view_week,
-                            color: AppColors.secondary),
+                        child: Icon(Icons.calendar_view_week,
+                            color:
+                                isDark ? AppColors.gray400 : AppColors.gray700),
                       ),
                       title: const Text('ACEDRA - This Week',
                           style: TextStyle(fontWeight: FontWeight.bold)),
@@ -176,8 +192,9 @@ class WidgetSettingsPage extends ConsumerWidget {
                           color: isDark ? AppColors.gray800 : AppColors.gray200,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.calendar_month,
-                            color: AppColors.gray300),
+                        child: Icon(Icons.calendar_month,
+                            color:
+                                isDark ? AppColors.gray300 : AppColors.gray800),
                       ),
                       title: const Text('ACEDRA - Month',
                           style: TextStyle(fontWeight: FontWeight.bold)),
@@ -194,17 +211,20 @@ class WidgetSettingsPage extends ConsumerWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
+                    backgroundColor:
+                        isDark ? AppColors.primary : AppColors.gray900,
+                    foregroundColor:
+                        isDark ? AppColors.gray900 : AppColors.gray100,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  icon: const Icon(Icons.refresh, color: AppColors.onPrimary),
-                  label: const Text(
+                  icon: Icon(Icons.refresh,
+                      color: isDark ? AppColors.gray900 : AppColors.gray100),
+                  label: Text(
                     'Refresh Widgets Now',
                     style: TextStyle(
-                        color: AppColors.onPrimary,
+                        color: isDark ? AppColors.gray900 : AppColors.gray100,
                         fontWeight: FontWeight.bold,
                         fontSize: 16),
                   ),

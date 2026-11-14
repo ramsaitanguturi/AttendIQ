@@ -264,8 +264,8 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   ),
                   if (isEditing)
                     IconButton(
-                      icon: const Icon(Icons.delete_outline,
-                          color: AppColors.gray500),
+                      icon: Icon(Icons.delete_outline,
+                          color: AppColors.statusAbsent(isDark)),
                       onPressed: _deleteTask,
                     )
                   else
@@ -340,9 +340,9 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                             value: _selectedSubjectId,
                             child: Text(
                               'Deleted Subject (#$_selectedSubjectId)',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: Colors.grey,
+                                color: AppColors.textSecondary(isDark),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -497,8 +497,10 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.onPrimary,
+                      backgroundColor:
+                          isDark ? AppColors.primary : AppColors.gray900,
+                      foregroundColor:
+                          isDark ? AppColors.gray900 : AppColors.gray100,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -506,12 +508,14 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                       ),
                     ),
                     icon: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.onPrimary,
+                              color: isDark
+                                  ? AppColors.gray900
+                                  : AppColors.gray100,
                             ),
                           )
                         : Icon(isEditing ? Icons.save : Icons.add),

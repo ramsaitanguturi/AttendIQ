@@ -456,11 +456,11 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
       backgroundColor: isGlassy
           ? AppColors.darkSurfaceGlass
           : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.add_task, color: AppColors.primary),
-          SizedBox(width: 10),
-          Text(
+          Icon(Icons.add_task, color: AppColors.iconPrimary(isDark)),
+          const SizedBox(width: 10),
+          const Text(
             'Add Extra Class',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
@@ -493,9 +493,10 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                 subjectsAsync.when(
                   data: (subjects) {
                     if (subjects.isEmpty) {
-                      return const Text(
+                      return Text(
                         'No subjects available. Please create a subject first.',
-                        style: TextStyle(color: AppColors.gray400),
+                        style:
+                            TextStyle(color: AppColors.textSecondary(isDark)),
                       );
                     }
                     final validSelectedId =
@@ -542,23 +543,24 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                   ),
                   error: (err, _) => Text(
                     'Error loading subjects: $err',
-                    style: const TextStyle(color: AppColors.gray400),
+                    style: TextStyle(color: AppColors.textSecondary(isDark)),
                   ),
                 ),
 
               if (_isLoadingSemester) ...[
                 const SizedBox(height: 8),
-                const Row(
+                Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 14,
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Checking subject semester...',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary(isDark)),
                     ),
                   ],
                 ),
@@ -617,15 +619,19 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                             Icons.calendar_today,
                             size: 18,
                             color: bounds == null
-                                ? Colors.grey
-                                : AppColors.primary,
+                                ? AppColors.iconSecondary(isDark)
+                                : (isDark
+                                    ? AppColors.primary
+                                    : AppColors.gray900),
                           ),
                           const SizedBox(width: 10),
                           Text(
                             DateFormat('EEE, d MMM yyyy').format(_selectedDate),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: bounds == null ? Colors.grey : null,
+                              color: bounds == null
+                                  ? AppColors.textSecondary(isDark)
+                                  : null,
                             ),
                           ),
                         ],
@@ -648,7 +654,8 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                 const SizedBox(height: 4),
                 Text(
                   'Semester: ${DateFormat('d MMM yyyy').format(bounds.firstDate)} – ${DateFormat('d MMM yyyy').format(bounds.lastDate)}',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(
+                      fontSize: 11, color: AppColors.textSecondary(isDark)),
                 ),
               ],
 
@@ -679,10 +686,11 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Start Time',
-                              style:
-                                  TextStyle(fontSize: 11, color: Colors.grey),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary(isDark)),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -720,10 +728,11 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'End Time',
-                              style:
-                                  TextStyle(fontSize: 11, color: Colors.grey),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary(isDark)),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -826,19 +835,19 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
         ElevatedButton(
           onPressed: _canSubmit ? _save : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.onPrimary,
+            backgroundColor: isDark ? AppColors.primary : AppColors.gray900,
+            foregroundColor: isDark ? AppColors.gray900 : AppColors.gray100,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
           child: _isSaving
-              ? const SizedBox(
+              ? SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.onPrimary,
+                    color: isDark ? AppColors.gray900 : AppColors.gray100,
                   ),
                 )
               : const Text(

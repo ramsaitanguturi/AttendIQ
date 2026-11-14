@@ -151,8 +151,13 @@ class TodayScheduleCard extends ConsumerWidget {
                 decoration: isGlassy
                     ? GlassTokens.glassBoxDecoration(
                         borderRadius: BorderRadius.circular(20.0),
-                        fillColor: GlassTokens.smokedGlassSurface,
-                        borderColor: GlassTokens.silverBorder,
+                        fillColor: isDark
+                            ? GlassTokens.smokedGlassSurface
+                            : GlassTokens.lightGlassSurface,
+                        borderColor: isDark
+                            ? GlassTokens.silverBorder
+                            : GlassTokens.lightGlassBorder,
+                        isDark: isDark,
                       )
                     : BoxDecoration(
                         color: isDark
@@ -408,33 +413,72 @@ class _OccurrenceCard extends ConsumerWidget {
 
   Widget _buildTypeBadge(OccurrenceType type) {
     Color badgeColor;
+    Color badgeBg;
+    Color badgeBorder;
     String label;
 
-    switch (type) {
-      case OccurrenceType.REGULAR_CLASS:
-        badgeColor = AppColors.gray100;
-        label = 'Regular';
-        break;
-      case OccurrenceType.EXTRA_CLASS:
-        badgeColor = AppColors.gray300;
-        label = 'Extra Class';
-        break;
-      case OccurrenceType.EXAM:
-        badgeColor = AppColors.gray600;
-        label = 'Exam';
-        break;
-      case OccurrenceType.EVENT:
-        badgeColor = AppColors.gray500;
-        label = 'Event';
-        break;
+    if (isDark) {
+      switch (type) {
+        case OccurrenceType.REGULAR_CLASS:
+          badgeColor = AppColors.gray100;
+          badgeBg = AppColors.gray100.withOpacity(0.12);
+          badgeBorder = AppColors.gray300;
+          label = 'Regular';
+          break;
+        case OccurrenceType.EXTRA_CLASS:
+          badgeColor = AppColors.gray200;
+          badgeBg = AppColors.gray300.withOpacity(0.12);
+          badgeBorder = AppColors.gray400;
+          label = 'Extra Class';
+          break;
+        case OccurrenceType.EXAM:
+          badgeColor = AppColors.gray100;
+          badgeBg = AppColors.gray700.withOpacity(0.5);
+          badgeBorder = AppColors.gray400;
+          label = 'Exam';
+          break;
+        case OccurrenceType.EVENT:
+          badgeColor = AppColors.gray200;
+          badgeBg = AppColors.gray700.withOpacity(0.4);
+          badgeBorder = AppColors.gray400;
+          label = 'Event';
+          break;
+      }
+    } else {
+      switch (type) {
+        case OccurrenceType.REGULAR_CLASS:
+          badgeColor = AppColors.gray900;
+          badgeBg = AppColors.gray900.withOpacity(0.08);
+          badgeBorder = AppColors.gray700;
+          label = 'Regular';
+          break;
+        case OccurrenceType.EXTRA_CLASS:
+          badgeColor = AppColors.gray800;
+          badgeBg = AppColors.gray800.withOpacity(0.08);
+          badgeBorder = AppColors.gray700;
+          label = 'Extra Class';
+          break;
+        case OccurrenceType.EXAM:
+          badgeColor = AppColors.gray900;
+          badgeBg = AppColors.gray200;
+          badgeBorder = AppColors.gray700;
+          label = 'Exam';
+          break;
+        case OccurrenceType.EVENT:
+          badgeColor = AppColors.gray800;
+          badgeBg = AppColors.gray200;
+          badgeBorder = AppColors.gray700;
+          label = 'Event';
+          break;
+      }
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.gray700.withOpacity(0.4),
+        color: badgeBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: badgeColor.withOpacity(0.5)),
+        border: Border.all(color: badgeBorder.withOpacity(0.6)),
       ),
       child: Text(
         label,
@@ -532,26 +576,25 @@ class _ActionButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (isSelected) {
-      final fgColor = color.computeLuminance() > 0.4
-          ? AppColors.gray900
-          : AppColors.gray100;
+      final btnBg = isDark ? AppColors.gray100 : AppColors.gray900;
+      final btnFg = isDark ? AppColors.gray900 : AppColors.gray100;
       return ElevatedButton.icon(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: fgColor,
+          backgroundColor: btnBg,
+          foregroundColor: btnFg,
           elevation: 2,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
         ),
-        icon: Icon(icon, size: 14, color: fgColor),
+        icon: Icon(icon, size: 14, color: btnFg),
         label: Text(
           label,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 11,
-            color: fgColor,
+            color: btnFg,
           ),
         ),
       );
@@ -561,7 +604,7 @@ class _ActionButton extends StatelessWidget {
     final textColor =
         isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     final iconColor =
-        (!isDark && color.computeLuminance() > 0.6) ? AppColors.gray800 : color;
+        isDark ? AppColors.darkIconPrimary : AppColors.lightIconPrimary;
 
     return OutlinedButton.icon(
       onPressed: onPressed,

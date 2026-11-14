@@ -375,12 +375,13 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.2),
+              color: (isDark ? AppColors.primary : AppColors.gray900)
+                  .withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check_circle_outline,
-              color: AppColors.primary,
+              color: isDark ? AppColors.primary : AppColors.gray900,
               size: 28,
             ),
           ),
@@ -405,7 +406,8 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
         children: [
           Text(
             _subtitleText(),
-            style: const TextStyle(fontSize: 13, color: Colors.grey),
+            style:
+                TextStyle(fontSize: 13, color: AppColors.textSecondary(isDark)),
           ),
           const SizedBox(height: 12),
           Container(
@@ -424,16 +426,17 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
               children: [
                 Text(
                   _currentResult.fileName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: AppColors.primary,
+                    color: isDark ? AppColors.primary : AppColors.gray900,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   _currentResult.displayPath,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(
+                      fontSize: 11, color: AppColors.textSecondary(isDark)),
                 ),
               ],
             ),
@@ -454,20 +457,21 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 onPressed:
                     _isSavingCopy ? null : () => _handleSavePublicCopy(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary),
+                  side: BorderSide(
+                      color: isDark ? AppColors.primary : AppColors.gray900),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: const Icon(
+                icon: Icon(
                   Icons.save_alt,
                   size: 18,
-                  color: AppColors.primary,
+                  color: isDark ? AppColors.primary : AppColors.gray900,
                 ),
                 label: Text(
                   _isSavingCopy ? 'Saving...' : 'Save Copy to Device',
-                  style: const TextStyle(
-                    color: AppColors.primary,
+                  style: TextStyle(
+                    color: isDark ? AppColors.primary : AppColors.gray900,
                     fontSize: 13,
                   ),
                 ),
@@ -476,19 +480,22 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
               OutlinedButton.icon(
                 onPressed: () => _showBackupDetailsDialog(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary),
+                  side: BorderSide(
+                      color: isDark ? AppColors.primary : AppColors.gray900),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: const Icon(
+                icon: Icon(
                   Icons.info_outline,
                   size: 18,
-                  color: AppColors.primary,
+                  color: isDark ? AppColors.primary : AppColors.gray900,
                 ),
-                label: const Text(
+                label: Text(
                   'Backup Details',
-                  style: TextStyle(color: AppColors.primary, fontSize: 13),
+                  style: TextStyle(
+                      color: isDark ? AppColors.primary : AppColors.gray900,
+                      fontSize: 13),
                 ),
               )
             else if (_currentResult.hasContentUri)
@@ -496,33 +503,39 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 onPressed:
                     _isOpeningFile ? null : () => _handleOpenFile(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary),
+                  side: BorderSide(
+                      color: isDark ? AppColors.primary : AppColors.gray900),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: const Icon(
+                icon: Icon(
                   Icons.open_in_new,
                   size: 18,
-                  color: AppColors.primary,
+                  color: isDark ? AppColors.primary : AppColors.gray900,
                 ),
-                label: const Text(
+                label: Text(
                   'Open File',
-                  style: TextStyle(color: AppColors.primary, fontSize: 13),
+                  style: TextStyle(
+                      color: isDark ? AppColors.primary : AppColors.gray900,
+                      fontSize: 13),
                 ),
               ),
             if (_currentResult.effectiveSharePath != null)
               ElevatedButton.icon(
                 onPressed: () => _handleShare(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.onPrimary,
+                  backgroundColor:
+                      isDark ? AppColors.primary : AppColors.gray900,
+                  foregroundColor:
+                      isDark ? AppColors.gray900 : AppColors.gray100,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: const Icon(Icons.share,
-                    size: 18, color: AppColors.onPrimary),
+                icon: Icon(Icons.share,
+                    size: 18,
+                    color: isDark ? AppColors.gray900 : AppColors.gray100),
                 label: Text(
                   _isAttendIqBackup ? 'Share Backup' : 'Share File',
                   style: const TextStyle(

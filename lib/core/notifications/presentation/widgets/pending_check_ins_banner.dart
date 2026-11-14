@@ -168,7 +168,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Present',
-                              color: AppColors.present,
+                              color: AppColors.statusPresent(isDark),
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -179,7 +179,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Late',
-                              color: AppColors.late,
+                              color: AppColors.statusLate(isDark),
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -190,7 +190,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Absent',
-                              color: AppColors.absent,
+                              color: AppColors.statusAbsent(isDark),
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -201,7 +201,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Cancel',
-                              color: AppColors.cancelled,
+                              color: AppColors.statusCancelledAdaptive(isDark),
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -222,9 +222,9 @@ class PendingCheckInsBanner extends ConsumerWidget {
                   child: Center(
                     child: Text(
                       '+ ${items.length - 3} more pending classes in Calendar',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.gray400,
+                        color: AppColors.textSecondary(isDark),
                         fontStyle: FontStyle.italic,
                       ),
                     ),

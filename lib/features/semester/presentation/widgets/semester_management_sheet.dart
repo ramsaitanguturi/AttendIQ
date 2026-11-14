@@ -60,6 +60,7 @@ class SemesterManagementSheet extends ConsumerWidget {
   ) async {
     final localId = semester.localId;
     if (localId == null) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (semester.isActive) {
       final confirmed = await showDialog<bool>(
@@ -78,8 +79,8 @@ class SemesterManagementSheet extends ConsumerWidget {
             ElevatedButton(
               onPressed: () => Navigator.of(dialogCtx).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
+                backgroundColor: isDark ? AppColors.primary : AppColors.gray900,
+                foregroundColor: isDark ? AppColors.gray900 : AppColors.gray100,
               ),
               child: const Text('Archive'),
             ),
@@ -149,8 +150,10 @@ class SemesterManagementSheet extends ConsumerWidget {
                 key: const ValueKey<String>('sheet_new_semester_button'),
                 onPressed: () => AddEditSemesterDialog.show(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.onPrimary,
+                  backgroundColor:
+                      isDark ? AppColors.primary : AppColors.gray900,
+                  foregroundColor:
+                      isDark ? AppColors.gray900 : AppColors.gray100,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -247,13 +250,13 @@ class _SemesterTile extends StatelessWidget {
     final Color badgeColor;
     switch (semester.status) {
       case SemesterStatus.active:
-        badgeColor = AppColors.primary;
+        badgeColor = isDark ? AppColors.primary : AppColors.gray900;
         break;
       case SemesterStatus.draft:
-        badgeColor = AppColors.gray400;
+        badgeColor = isDark ? AppColors.gray400 : AppColors.gray700;
         break;
       case SemesterStatus.archived:
-        badgeColor = AppColors.gray600;
+        badgeColor = isDark ? AppColors.gray500 : AppColors.gray600;
         break;
     }
 
@@ -264,7 +267,8 @@ class _SemesterTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: semester.isActive
-              ? AppColors.primary.withOpacity(0.6)
+              ? (isDark ? AppColors.primary : AppColors.gray900)
+                  .withOpacity(0.6)
               : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
       ),

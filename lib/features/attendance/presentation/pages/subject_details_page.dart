@@ -92,7 +92,8 @@ class SubjectDetailsPage extends ConsumerWidget {
                           context: context,
                           label: 'Safe Bunks',
                           value: '${stats.safeBunks}',
-                          valueColor: AppColors.primary,
+                          valueColor:
+                              isDark ? AppColors.primary : AppColors.gray900,
                           icon: Icons.check_circle_outline,
                           isDark: isDark,
                           isGlassy: isGlassy,
@@ -107,8 +108,10 @@ class SubjectDetailsPage extends ConsumerWidget {
                               ? 'N/A'
                               : '${stats.requiredClasses}',
                           valueColor: stats.requiredClasses == 0
-                              ? AppColors.primary
-                              : AppColors.attendanceLow,
+                              ? (isDark ? AppColors.primary : AppColors.gray900)
+                              : (isDark
+                                  ? AppColors.gray300
+                                  : AppColors.gray800),
                           icon: Icons.warning_amber_rounded,
                           isDark: isDark,
                           isGlassy: isGlassy,
@@ -154,14 +157,23 @@ class SubjectDetailsPage extends ConsumerWidget {
                                         : AppColors.lightBorder,
                                   ),
                                 ),
-                          child: const Column(
+                          child: Column(
                             children: [
-                              Icon(Icons.history_toggle_off,
-                                  size: 40, color: Colors.grey),
-                              SizedBox(height: 12),
+                              Icon(
+                                Icons.history_toggle_off,
+                                size: 40,
+                                color: isDark
+                                    ? AppColors.darkIconSecondary
+                                    : AppColors.lightIconSecondary,
+                              ),
+                              const SizedBox(height: 12),
                               Text(
                                 'No classes logged yet',
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.lightTextSecondary,
+                                ),
                               ),
                             ],
                           ),
@@ -347,33 +359,52 @@ class SubjectDetailsPage extends ConsumerWidget {
     Color alertText;
     IconData alertIcon;
 
-    switch (stats.bunkAnalysis.status) {
-      case BunkStatus.CRITICAL:
-        alertBg = isGlassy
-            ? AppColors.attendanceLow.withOpacity(0.14)
-            : AppColors.attendanceLow.withOpacity(0.08);
-        alertBorder = AppColors.attendanceLow.withOpacity(0.3);
-        alertText = AppColors.attendanceLow;
-        alertIcon = Icons.error_outline;
-        break;
-      case BunkStatus.WARNING:
-        alertBg = isGlassy
-            ? AppColors.attendanceMid.withOpacity(0.14)
-            : AppColors.attendanceMid.withOpacity(0.08);
-        alertBorder = AppColors.attendanceMid.withOpacity(0.3);
-        alertText = AppColors.attendanceMid;
-        alertIcon = Icons.warning_amber_rounded;
-        break;
-      case BunkStatus.NORMAL:
-        alertBg = isGlassy
-            ? AppColors.darkSurfaceGlass
-            : AppColors.primary.withOpacity(0.08);
-        alertBorder = isGlassy
-            ? GlassTokens.silverBorder
-            : AppColors.primary.withOpacity(0.3);
-        alertText = AppColors.primary;
-        alertIcon = Icons.check_circle_outline;
-        break;
+    if (isDark) {
+      switch (stats.bunkAnalysis.status) {
+        case BunkStatus.CRITICAL:
+          alertBg = AppColors.gray700.withOpacity(0.3);
+          alertBorder = AppColors.gray400;
+          alertText = AppColors.gray100;
+          alertIcon = Icons.error_outline;
+          break;
+        case BunkStatus.WARNING:
+          alertBg = AppColors.gray700.withOpacity(0.25);
+          alertBorder = AppColors.gray400;
+          alertText = AppColors.gray200;
+          alertIcon = Icons.warning_amber_rounded;
+          break;
+        case BunkStatus.NORMAL:
+          alertBg = isGlassy
+              ? AppColors.darkSurfaceGlass
+              : AppColors.gray100.withOpacity(0.08);
+          alertBorder = isGlassy
+              ? GlassTokens.silverBorder
+              : AppColors.gray300.withOpacity(0.4);
+          alertText = AppColors.gray100;
+          alertIcon = Icons.check_circle_outline;
+          break;
+      }
+    } else {
+      switch (stats.bunkAnalysis.status) {
+        case BunkStatus.CRITICAL:
+          alertBg = AppColors.gray200;
+          alertBorder = AppColors.gray700;
+          alertText = AppColors.gray900;
+          alertIcon = Icons.error_outline;
+          break;
+        case BunkStatus.WARNING:
+          alertBg = AppColors.gray200;
+          alertBorder = AppColors.gray700;
+          alertText = AppColors.gray800;
+          alertIcon = Icons.warning_amber_rounded;
+          break;
+        case BunkStatus.NORMAL:
+          alertBg = AppColors.gray200;
+          alertBorder = AppColors.gray700;
+          alertText = AppColors.gray900;
+          alertIcon = Icons.check_circle_outline;
+          break;
+      }
     }
 
     return Container(
@@ -446,12 +477,18 @@ class SubjectDetailsPage extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: Colors.grey),
+              Icon(icon,
+                  size: 16,
+                  color: isDark
+                      ? AppColors.darkIconSecondary
+                      : AppColors.lightIconSecondary),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.grey,
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
                   fontSize: 12.0,
                 ),
               ),
@@ -498,32 +535,54 @@ class SubjectDetailsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           _buildStatRow(
-              'Present Classes', '${stats.presentCount}', AppColors.primary),
+            'Present Classes',
+            '${stats.presentCount}',
+            AppColors.statusPresent(isDark),
+            isDark,
+          ),
           const Divider(height: 24),
-          _buildStatRow('Absent Classes', '${stats.absentCount}',
-              AppColors.attendanceLow),
+          _buildStatRow(
+            'Absent Classes',
+            '${stats.absentCount}',
+            AppColors.statusAbsent(isDark),
+            isDark,
+          ),
           const Divider(height: 24),
-          _buildStatRow('Total Logged', '${stats.totalClasses}', null),
+          _buildStatRow(
+            'Total Logged',
+            '${stats.totalClasses}',
+            AppColors.textPrimary(isDark),
+            isDark,
+          ),
           const Divider(height: 24),
           _buildStatRow(
             'Predicted Final Rate',
             '${stats.predictedPercentage.toStringAsFixed(1)}%',
             stats.predictedPercentage >= stats.subject.attendanceTarget
-                ? AppColors.primary
-                : AppColors.attendanceLow,
+                ? AppColors.primaryColor(isDark)
+                : AppColors.statusAbsent(isDark),
+            isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatRow(String label, String value, Color? valueColor) {
+  Widget _buildStatRow(
+    String label,
+    String value,
+    Color? valueColor,
+    bool isDark,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.grey, fontSize: 14.0),
+          style: TextStyle(
+            color: AppColors.textSecondary(isDark),
+            fontSize: 14.0,
+          ),
         ),
         Text(
           value,
@@ -546,28 +605,28 @@ class SubjectDetailsPage extends ConsumerWidget {
     bool isGlassy,
   ) {
     final lateEnabled = ref.watch(isLateAttendanceEnabledProvider);
-    Color statusColor = Colors.grey;
+    Color statusColor = AppColors.textSecondary(isDark);
     IconData statusIcon = Icons.help_outline;
 
     switch (occurrence.status) {
       case OccurrenceStatus.PRESENT:
-        statusColor = AppColors.present;
+        statusColor = AppColors.statusPresent(isDark);
         statusIcon = Icons.check_circle_outline;
         break;
       case OccurrenceStatus.ABSENT:
-        statusColor = AppColors.absent;
+        statusColor = AppColors.statusAbsent(isDark);
         statusIcon = Icons.cancel_outlined;
         break;
       case OccurrenceStatus.CANCELLED:
-        statusColor = AppColors.cancelled;
+        statusColor = AppColors.statusCancelledAdaptive(isDark);
         statusIcon = Icons.block_outlined;
         break;
       case OccurrenceStatus.UPCOMING:
-        statusColor = AppColors.gray500;
+        statusColor = isDark ? AppColors.gray400 : AppColors.gray700;
         statusIcon = Icons.radio_button_unchecked;
         break;
       case OccurrenceStatus.LATE:
-        statusColor = AppColors.late;
+        statusColor = AppColors.statusLate(isDark);
         statusIcon = Icons.access_time_outlined;
         break;
     }
@@ -592,7 +651,7 @@ class SubjectDetailsPage extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
+              color: statusColor.withOpacity(isDark ? 0.22 : 0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(statusIcon, color: statusColor, size: 20),
@@ -604,16 +663,17 @@ class SubjectDetailsPage extends ConsumerWidget {
               children: [
                 Text(
                   _formatDate(occurrence.date),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14.0,
+                    color: AppColors.textPrimary(isDark),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitleText,
-                  style: const TextStyle(
-                    color: Colors.grey,
+                  style: TextStyle(
+                    color: AppColors.textSecondary(isDark),
                     fontSize: 12.0,
                   ),
                 ),
@@ -622,7 +682,7 @@ class SubjectDetailsPage extends ConsumerWidget {
           ),
           // Action Buttons
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.grey),
+            icon: Icon(Icons.more_vert, color: AppColors.iconSecondary(isDark)),
             onSelected: (value) {
               final notifier = ref.read(attendanceControllerProvider.notifier);
               if (value == 'present') {
@@ -636,49 +696,62 @@ class SubjectDetailsPage extends ConsumerWidget {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'present',
                 child: Row(
                   children: [
                     Icon(Icons.check_circle_outline,
-                        color: AppColors.present, size: 20),
-                    SizedBox(width: 8),
-                    Text('Mark Present'),
+                        color: AppColors.statusPresent(isDark), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Mark Present',
+                      style: TextStyle(color: AppColors.textPrimary(isDark)),
+                    ),
                   ],
                 ),
               ),
               if (lateEnabled) ...[
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'late',
                   child: Row(
                     children: [
                       Icon(Icons.access_time_outlined,
-                          color: AppColors.late, size: 20),
-                      SizedBox(width: 8),
-                      Text('Mark Late'),
+                          color: AppColors.statusLate(isDark), size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Mark Late',
+                        style: TextStyle(color: AppColors.textPrimary(isDark)),
+                      ),
                     ],
                   ),
                 ),
               ],
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'absent',
                 child: Row(
                   children: [
                     Icon(Icons.cancel_outlined,
-                        color: AppColors.absent, size: 20),
-                    SizedBox(width: 8),
-                    Text('Mark Absent'),
+                        color: AppColors.statusAbsent(isDark), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Mark Absent',
+                      style: TextStyle(color: AppColors.textPrimary(isDark)),
+                    ),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'cancelled',
                 child: Row(
                   children: [
                     Icon(Icons.block_outlined,
-                        color: AppColors.cancelled, size: 20),
-                    SizedBox(width: 8),
-                    Text('Mark Cancelled'),
+                        color: AppColors.statusCancelledAdaptive(isDark),
+                        size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Mark Cancelled',
+                      style: TextStyle(color: AppColors.textPrimary(isDark)),
+                    ),
                   ],
                 ),
               ),

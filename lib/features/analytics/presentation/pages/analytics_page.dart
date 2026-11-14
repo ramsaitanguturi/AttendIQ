@@ -47,11 +47,16 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       body: analyticsAsync.when(
         data: (analytics) {
           if (analytics == null) {
-            return const Center(
+            return Center(
               child: Text(
                 'No active semester found.\nPlease complete onboarding first.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
               ),
             );
           }
@@ -116,10 +121,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     Color riskColor = isDark ? AppColors.primary : AppColors.gray900;
     String riskTitle = 'Safe';
     if (analytics.riskLevel == RiskStatus.CRITICAL) {
-      riskColor = AppColors.attendanceLow;
+      riskColor = isDark ? AppColors.gray300 : AppColors.gray800;
       riskTitle = 'Critical';
     } else if (analytics.riskLevel == RiskStatus.WARNING) {
-      riskColor = AppColors.attendanceMid;
+      riskColor = isDark ? AppColors.gray200 : AppColors.gray700;
       riskTitle = 'Warning';
     }
 
@@ -430,8 +435,11 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                               final date = points[index].date;
                               return Text(
                                 '${date.day}/${date.month}',
-                                style: const TextStyle(
-                                    fontSize: 10, color: Colors.grey),
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary),
                               );
                             },
                           ),
@@ -443,8 +451,11 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '${value.toInt()}%',
-                                style: const TextStyle(
-                                    fontSize: 10, color: Colors.grey),
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary),
                               );
                             },
                             reservedSize: 32,
@@ -467,8 +478,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                                 index.toDouble(), points[index].percentage);
                           }),
                           isCurved: points.length > 1,
-                          gradient: const LinearGradient(
-                            colors: [AppColors.gray100, AppColors.gray400],
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? const [AppColors.gray100, AppColors.gray400]
+                                : const [AppColors.gray900, AppColors.gray700],
                           ),
                           barWidth: 3,
                           isStrokeCapRound: true,
@@ -477,17 +490,23 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                             getDotPainter: (spot, percent, barData, index) =>
                                 FlDotCirclePainter(
                               radius: 3,
-                              color: AppColors.gray100,
+                              color: isDark
+                                  ? AppColors.gray100
+                                  : AppColors.gray900,
                               strokeWidth: 1.5,
-                              strokeColor: AppColors.gray800,
+                              strokeColor: isDark
+                                  ? AppColors.gray800
+                                  : AppColors.gray200,
                             ),
                           ),
                           belowBarData: BarAreaData(
                             show: true,
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.gray100.withOpacity(0.2),
-                                AppColors.gray400.withOpacity(0.0),
+                                (isDark ? AppColors.gray100 : AppColors.gray900)
+                                    .withOpacity(0.18),
+                                (isDark ? AppColors.gray400 : AppColors.gray700)
+                                    .withOpacity(0.0),
                               ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
@@ -615,8 +634,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                                 space: 8,
                                 child: Text(
                                   subject.code,
-                                  style: const TextStyle(
-                                    color: Colors.grey,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 10,
                                   ),
@@ -633,8 +654,11 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '${value.toInt()}%',
-                                style: const TextStyle(
-                                    fontSize: 10, color: Colors.grey),
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary),
                               );
                             },
                           ),
@@ -722,7 +746,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             'Highest Attendance',
             comparison.highestAttendanceSubject?.subjectName ?? 'N/A',
             '${comparison.highestAttendanceSubject?.percentage.toStringAsFixed(1) ?? '0.0'}%',
-            AppColors.primary,
+            isDark ? AppColors.primary : AppColors.gray900,
             isDark,
           ),
           const Divider(height: 24),
@@ -730,7 +754,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             'Lowest Attendance',
             comparison.lowestAttendanceSubject?.subjectName ?? 'N/A',
             '${comparison.lowestAttendanceSubject?.percentage.toStringAsFixed(1) ?? '0.0'}%',
-            AppColors.attendanceLow,
+            isDark ? AppColors.gray300 : AppColors.gray800,
             isDark,
           ),
           const Divider(height: 24),
@@ -738,7 +762,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             'Most Attended Subject',
             comparison.mostAttendedSubject?.subjectName ?? 'N/A',
             '${comparison.mostAttendedSubject?.present ?? 0} classes',
-            AppColors.gray200,
+            isDark ? AppColors.gray100 : AppColors.gray900,
             isDark,
           ),
           const Divider(height: 24),
@@ -746,7 +770,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             'Most Missed Subject',
             comparison.mostMissedSubject?.subjectName ?? 'N/A',
             '${comparison.mostMissedSubject?.absent ?? 0} classes',
-            AppColors.gray500,
+            isDark ? AppColors.gray400 : AppColors.gray700,
             isDark,
           ),
         ],

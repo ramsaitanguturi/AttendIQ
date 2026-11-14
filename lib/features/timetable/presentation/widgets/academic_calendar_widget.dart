@@ -36,15 +36,15 @@ class AcademicCalendarWidget extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(
                     Icons.calendar_month_outlined,
-                    color: AppColors.primary,
+                    color: AppColors.iconPrimary(isDark),
                     size: 22,
                   ),
-                  SizedBox(width: 8),
-                  Text(
+                  const SizedBox(width: 8),
+                  const Text(
                     'Academic Calendar',
                     style: TextStyle(
                       fontSize: 18.0,
@@ -58,7 +58,7 @@ class AcademicCalendarWidget extends ConsumerWidget {
                   isExpanded
                       ? Icons.keyboard_arrow_up
                       : Icons.keyboard_arrow_down,
-                  color: AppColors.primary,
+                  color: AppColors.iconPrimary(isDark),
                 ),
                 onPressed: () {
                   ref.read(isCalendarExpandedProvider.notifier).state =
@@ -87,15 +87,16 @@ class AcademicCalendarWidget extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: (isDark ? AppColors.primary : AppColors.gray900)
+                        .withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '$upcomingEventsCount Upcoming Events',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.0,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: isDark ? AppColors.primary : AppColors.gray900,
                     ),
                   ),
                 ),
@@ -230,7 +231,8 @@ class AcademicCalendarWidget extends ConsumerWidget {
           : AppColors.lightTextSecondary.withOpacity(0.5);
     }
     if (isDisabled) {
-      textColor = AppColors.darkTextDisabled;
+      textColor =
+          isDark ? AppColors.darkTextDisabled : AppColors.lightTextDisabled;
     }
 
     return InkWell(
@@ -248,14 +250,16 @@ class AcademicCalendarWidget extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           color: dayData.isToday
-              ? AppColors.primary.withOpacity(0.15)
+              ? (isDark
+                  ? AppColors.primary.withOpacity(0.15)
+                  : AppColors.gray900.withOpacity(0.12))
               : (isDark
                   ? AppColors.gray100.withOpacity(0.03)
                   : AppColors.gray900.withOpacity(0.03)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: dayData.isToday
-                ? AppColors.primary
+                ? (isDark ? AppColors.primary : AppColors.gray900)
                 : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
             width: dayData.isToday ? 1.5 : 0.5,
           ),
@@ -279,17 +283,23 @@ class AcademicCalendarWidget extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (dayData.hasRegularClass && !isDisabled)
-                  _buildDot(AppColors.gray100),
+                  _buildDot(CalendarItemType.REGULAR_CLASS
+                      .getAdaptiveIndicatorColor(isDark)),
                 if (dayData.hasExam && !isDisabled)
-                  _buildDot(AppColors.gray600),
+                  _buildDot(
+                      CalendarItemType.EXAM.getAdaptiveIndicatorColor(isDark)),
                 if (dayData.hasTask && !isDisabled)
-                  _buildDot(AppColors.gray400),
+                  _buildDot(
+                      CalendarItemType.TASK.getAdaptiveIndicatorColor(isDark)),
                 if (dayData.hasHoliday && !isDisabled)
-                  _buildDot(AppColors.gray200),
+                  _buildDot(CalendarItemType.HOLIDAY
+                      .getAdaptiveIndicatorColor(isDark)),
                 if (dayData.hasExtraClass && !isDisabled)
-                  _buildDot(AppColors.gray300),
+                  _buildDot(CalendarItemType.EXTRA_CLASS
+                      .getAdaptiveIndicatorColor(isDark)),
                 if (dayData.hasEvent && !isDisabled)
-                  _buildDot(AppColors.gray500),
+                  _buildDot(
+                      CalendarItemType.EVENT.getAdaptiveIndicatorColor(isDark)),
               ],
             ),
           ],

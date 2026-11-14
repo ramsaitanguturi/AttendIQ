@@ -140,8 +140,10 @@ class SettingsPage extends ConsumerWidget {
                               ),
                               Text(
                                 '${settings.defaultAttendanceTarget.toStringAsFixed(0)}%',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -153,7 +155,8 @@ class SettingsPage extends ConsumerWidget {
                             min: 50.0,
                             max: 100.0,
                             divisions: 50,
-                            activeColor: AppColors.primary,
+                            activeColor:
+                                isDark ? AppColors.primary : AppColors.gray900,
                             inactiveColor: isDark
                                 ? AppColors.darkBorder
                                 : AppColors.lightBorder,
@@ -249,7 +252,9 @@ class SettingsPage extends ConsumerWidget {
                                 min: 0.1,
                                 max: 0.9,
                                 divisions: 8,
-                                activeColor: AppColors.primary,
+                                activeColor: isDark
+                                    ? AppColors.primary
+                                    : AppColors.gray900,
                                 inactiveColor: isDark
                                     ? AppColors.darkBorder
                                     : AppColors.lightBorder,
@@ -469,31 +474,34 @@ class SettingsPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: const Icon(Icons.widgets_outlined,
-                              color: AppColors.primary),
+                          leading: Icon(Icons.widgets_outlined,
+                              color: AppColors.iconPrimary(isDark)),
                           title: const Text('Home Screen Widgets'),
                           subtitle: const Text(
                               'Configure Today, Weekly, and Calendar widgets'),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: Icon(Icons.chevron_right,
+                              color: AppColors.iconSecondary(isDark)),
                           onTap: () => context.push('/widget-settings'),
                         ),
                         _buildDivider(isDark, isGlassy),
                         ListTile(
-                          leading: const Icon(Icons.backup_outlined,
-                              color: AppColors.primary),
+                          leading: Icon(Icons.backup_outlined,
+                              color: AppColors.iconPrimary(isDark)),
                           title: const Text('Backup & Restore'),
                           subtitle: const Text(
                               'Export or restore database backup (.attendiq)'),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: Icon(Icons.chevron_right,
+                              color: AppColors.iconSecondary(isDark)),
                           onTap: () => context.push('/backup'),
                         ),
                         _buildDivider(isDark, isGlassy),
                         ListTile(
-                          leading: const Icon(Icons.picture_as_pdf_outlined,
-                              color: AppColors.secondary),
+                          leading: Icon(Icons.picture_as_pdf_outlined,
+                              color: AppColors.iconPrimary(isDark)),
                           title: const Text('Attendance Reports'),
                           subtitle: const Text('Generate PDF & CSV reports'),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: Icon(Icons.chevron_right,
+                              color: AppColors.iconSecondary(isDark)),
                           onTap: () => context.push('/reports'),
                         ),
                         _buildDivider(isDark, isGlassy),
@@ -523,22 +531,24 @@ class SettingsPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: const Icon(Icons.info_outline,
-                              color: AppColors.primary),
+                          leading: Icon(Icons.info_outline,
+                              color: AppColors.iconPrimary(isDark)),
                           title: const Text('About ACEDRA'),
                           subtitle: const Text(
                               'Version 1.1.0 • Academic & Attendance Intelligence'),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: Icon(Icons.chevron_right,
+                              color: AppColors.iconSecondary(isDark)),
                           onTap: () => context.push('/about'),
                         ),
                         _buildDivider(isDark, isGlassy),
                         ListTile(
-                          leading: const Icon(Icons.privacy_tip_outlined,
-                              color: AppColors.primary),
+                          leading: Icon(Icons.privacy_tip_outlined,
+                              color: AppColors.iconPrimary(isDark)),
                           title: const Text('Privacy Commitment'),
                           subtitle: const Text(
                               '100% On-Device Data Privacy & Local Storage'),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: Icon(Icons.chevron_right,
+                              color: AppColors.iconSecondary(isDark)),
                           onTap: () => context.push('/about'),
                         ),
                       ],
@@ -723,9 +733,10 @@ class _SemesterManagementCard extends ConsumerWidget {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color:
-                      (active != null ? AppColors.primary : AppColors.gray400)
-                          .withOpacity(0.14),
+                  color: (active != null
+                          ? (isDark ? AppColors.primary : AppColors.gray900)
+                          : (isDark ? AppColors.gray400 : AppColors.gray700))
+                      .withOpacity(0.14),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -733,7 +744,7 @@ class _SemesterManagementCard extends ConsumerWidget {
                   style: TextStyle(
                     color: active != null
                         ? (isDark ? AppColors.primary : AppColors.gray900)
-                        : AppColors.gray400,
+                        : (isDark ? AppColors.gray400 : AppColors.gray700),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),

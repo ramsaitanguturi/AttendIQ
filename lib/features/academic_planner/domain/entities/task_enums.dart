@@ -81,16 +81,31 @@ enum TaskPriority {
     }
   }
 
-  Color get color {
-    switch (this) {
-      case TaskPriority.LOW:
-        return AppColors.gray500;
-      case TaskPriority.MEDIUM:
-        return AppColors.gray400;
-      case TaskPriority.HIGH:
-        return AppColors.gray200;
-      case TaskPriority.CRITICAL:
-        return AppColors.gray100;
+  Color get color => getAdaptiveColor(true);
+
+  Color getAdaptiveColor(bool isDark) {
+    if (isDark) {
+      switch (this) {
+        case TaskPriority.LOW:
+          return AppColors.gray400;
+        case TaskPriority.MEDIUM:
+          return AppColors.gray300;
+        case TaskPriority.HIGH:
+          return AppColors.gray200;
+        case TaskPriority.CRITICAL:
+          return AppColors.gray100;
+      }
+    } else {
+      switch (this) {
+        case TaskPriority.LOW:
+          return AppColors.gray600;
+        case TaskPriority.MEDIUM:
+          return AppColors.gray700;
+        case TaskPriority.HIGH:
+          return AppColors.gray800;
+        case TaskPriority.CRITICAL:
+          return AppColors.gray900;
+      }
     }
   }
 
@@ -219,16 +234,31 @@ enum TaskUrgency {
     }
   }
 
-  Color get color {
-    switch (this) {
-      case TaskUrgency.NORMAL:
-        return AppColors.gray500;
-      case TaskUrgency.WARNING:
-        return AppColors.gray400;
-      case TaskUrgency.URGENT:
-        return AppColors.gray200;
-      case TaskUrgency.OVERDUE:
-        return AppColors.gray100;
+  Color get color => getAdaptiveColor(true);
+
+  Color getAdaptiveColor(bool isDark) {
+    if (isDark) {
+      switch (this) {
+        case TaskUrgency.NORMAL:
+          return AppColors.gray400;
+        case TaskUrgency.WARNING:
+          return AppColors.gray300;
+        case TaskUrgency.URGENT:
+          return AppColors.gray200;
+        case TaskUrgency.OVERDUE:
+          return AppColors.gray100;
+      }
+    } else {
+      switch (this) {
+        case TaskUrgency.NORMAL:
+          return AppColors.gray600;
+        case TaskUrgency.WARNING:
+          return AppColors.gray700;
+        case TaskUrgency.URGENT:
+          return AppColors.gray800;
+        case TaskUrgency.OVERDUE:
+          return AppColors.gray900;
+      }
     }
   }
 

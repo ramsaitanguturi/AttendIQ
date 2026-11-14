@@ -489,7 +489,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.4),
+                    color: AppColors.textSecondary(isDark).withOpacity(0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -785,8 +785,11 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                 label: const Text('+ Add Another Time Slot',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                  foregroundColor:
+                      isDark ? AppColors.primary : AppColors.gray900,
+                  side: BorderSide(
+                      color: (isDark ? AppColors.primary : AppColors.gray900)
+                          .withOpacity(0.5)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -816,7 +819,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.gray100
+                              ? (isDark ? AppColors.gray100 : AppColors.gray900)
                               : Colors.transparent,
                           width: 3,
                         ),
@@ -847,19 +850,23 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.onPrimary,
+                  backgroundColor:
+                      isDark ? AppColors.primary : AppColors.gray900,
+                  foregroundColor:
+                      isDark ? AppColors.gray900 : AppColors.gray100,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: _isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2.5, color: AppColors.onPrimary),
+                          strokeWidth: 2.5,
+                          color: isDark ? AppColors.gray900 : AppColors.gray100,
+                        ),
                       )
                     : Text(
                         isEdit ? 'Save Subject' : 'Save Subject',

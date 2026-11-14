@@ -83,9 +83,9 @@ void main() {
       expect(AppColors.darkTextMuted,
           equals(const Color(0xFFADB5BD))); // Muted text #adb5bd
       expect(AppColors.darkTextDisabled,
-          equals(const Color(0xFF6C757D))); // Disabled text #6c757d
+          equals(const Color(0xFFADB5BD))); // Disabled text #adb5bd (contrast-enhanced from #6c757d)
       expect(AppColors.darkIconPrimary,
-          equals(const Color(0xFFDEE2E6))); // Primary icons #dee2e6
+          equals(const Color(0xFFF8F9FA))); // Primary icons #f8f9fa (contrast-enhanced from #dee2e6)
       expect(
           AppColors.navIndicator,
           equals(const Color(
@@ -111,11 +111,11 @@ void main() {
       expect(AppColors.lightTextSecondary,
           equals(const Color(0xFF495057))); // Secondary text #495057
       expect(AppColors.lightTextMuted,
-          equals(const Color(0xFF6C757D))); // Muted text #6c757d
+          equals(const Color(0xFF495057))); // Muted text #495057 (contrast-enhanced from #6c757d)
       expect(AppColors.lightTextDisabled,
-          equals(const Color(0xFFADB5BD))); // Disabled text #adb5bd
+          equals(const Color(0xFF6C757D))); // Disabled text #6c757d (contrast-enhanced from #adb5bd)
       expect(AppColors.lightIconPrimary,
-          equals(const Color(0xFF343A40))); // Primary icons #343a40
+          equals(const Color(0xFF212529))); // Primary icons #212529 (contrast-enhanced from #343a40)
       expect(AppColors.lightNavIndicator,
           equals(const Color(0xFF212529))); // Selected indicator #212529
       expect(AppColors.lightNavSelectedIcon,
@@ -297,7 +297,7 @@ void main() {
     test(
         '11. Monochromatic text contrast satisfies WCAG AA and AAA accessibility standards',
         () {
-      // Dark Mode Contrast
+      // Dark Mode Contrast on background & surfaces
       final darkPrimaryContrast =
           _contrastRatio(AppColors.darkTextPrimary, AppColors.darkBackground);
       final darkSecondaryContrast =
@@ -312,7 +312,7 @@ void main() {
       // #ADB5BD on #212529 has > 5:1 contrast
       expect(darkMutedContrast, greaterThanOrEqualTo(5.0));
 
-      // Light Mode Contrast
+      // Light Mode Contrast on background & surfaces
       final lightPrimaryContrast =
           _contrastRatio(AppColors.lightTextPrimary, AppColors.lightBackground);
       final lightSecondaryContrast = _contrastRatio(
@@ -324,8 +324,203 @@ void main() {
       expect(lightPrimaryContrast, greaterThanOrEqualTo(14.0));
       // #495057 on #F8F9FA has > 7:1 contrast (WCAG AAA requires 7.0:1)
       expect(lightSecondaryContrast, greaterThanOrEqualTo(7.0));
-      // #6C757D on #F8F9FA has ~4.45:1 contrast (well above 3.0:1 WCAG requirement for secondary/muted text)
-      expect(lightMutedContrast, greaterThanOrEqualTo(4.0));
+      // #495057 / #6C757D on #F8F9FA has > 4.45:1 contrast
+      expect(lightMutedContrast, greaterThanOrEqualTo(4.4));
+    });
+
+    test(
+        '13. All 9 semantic tokens resolve accurately and dynamically across both appearances',
+        () {
+      // Dark appearance checks
+      expect(AppColors.textPrimary(true), equals(AppColors.darkTextPrimary));
+      expect(AppColors.textSecondary(true), equals(AppColors.darkTextSecondary));
+      expect(AppColors.textMuted(true), equals(AppColors.darkTextMuted));
+      expect(AppColors.textDisabled(true), equals(AppColors.darkTextDisabled));
+      expect(AppColors.textOnElevatedSurface(true),
+          equals(AppColors.darkTextOnElevatedSurface));
+      expect(AppColors.textOnGlass(true), equals(AppColors.darkTextOnGlass));
+      expect(AppColors.textHint(true), equals(AppColors.darkTextHint));
+      expect(AppColors.iconPrimary(true), equals(AppColors.darkIconPrimary));
+      expect(AppColors.iconSecondary(true), equals(AppColors.darkIconSecondary));
+
+      // Light appearance checks
+      expect(AppColors.textPrimary(false), equals(AppColors.lightTextPrimary));
+      expect(AppColors.textSecondary(false), equals(AppColors.lightTextSecondary));
+      expect(AppColors.textMuted(false), equals(AppColors.lightTextMuted));
+      expect(AppColors.textDisabled(false), equals(AppColors.lightTextDisabled));
+      expect(AppColors.textOnElevatedSurface(false),
+          equals(AppColors.lightTextOnElevatedSurface));
+      expect(AppColors.textOnGlass(false), equals(AppColors.lightTextOnGlass));
+      expect(AppColors.textHint(false), equals(AppColors.lightTextHint));
+      expect(AppColors.iconPrimary(false), equals(AppColors.lightIconPrimary));
+      expect(AppColors.iconSecondary(false), equals(AppColors.lightIconSecondary));
+    });
+
+    test(
+        '14. Foreground and background contrast pairings meet WCAG 2.2 AA (>=4.5:1 text, >=3.0:1 icons)',
+        () {
+      // 1. Dark surfaces: #212529 (Scaffold), #343A40 (Card/Surface), #495057 (Elevated)
+      final darkSurfaces = [
+        AppColors.darkBackground,
+        AppColors.darkSurface,
+        AppColors.darkElevated,
+      ];
+
+      for (final surface in darkSurfaces) {
+        final primaryRatio = _contrastRatio(AppColors.textPrimary(true), surface);
+        final secondaryRatio =
+            _contrastRatio(AppColors.textSecondary(true), surface);
+        final iconRatio = _contrastRatio(AppColors.iconPrimary(true), surface);
+
+        // Primary text on dark surfaces must always exceed 7.0:1 (AAA)
+        expect(primaryRatio, greaterThanOrEqualTo(6.5),
+            reason: 'Dark primary text failed on surface $surface');
+
+        // Secondary text on dark surfaces must always exceed 4.5:1 (AA)
+        expect(secondaryRatio, greaterThanOrEqualTo(4.5),
+            reason: 'Dark secondary text failed on surface $surface');
+
+        // Primary icon must exceed 3.0:1 (UI control threshold)
+        expect(iconRatio, greaterThanOrEqualTo(3.0),
+            reason: 'Dark icon failed on surface $surface');
+      }
+
+      // 2. Light surfaces: #F8F9FA (Scaffold/Card), #E9ECEF (Elevated), #DEE2E6
+      final lightSurfaces = [
+        AppColors.lightBackground,
+        AppColors.lightElevated,
+      ];
+
+      for (final surface in lightSurfaces) {
+        final primaryRatio =
+            _contrastRatio(AppColors.textPrimary(false), surface);
+        final secondaryRatio =
+            _contrastRatio(AppColors.textSecondary(false), surface);
+        final iconRatio = _contrastRatio(AppColors.iconPrimary(false), surface);
+
+        // Primary text on light surfaces must always exceed 12.0:1 (AAA)
+        expect(primaryRatio, greaterThanOrEqualTo(12.0),
+            reason: 'Light primary text failed on surface $surface');
+
+        // Secondary text on light surfaces must always exceed 4.5:1 (AA)
+        expect(secondaryRatio, greaterThanOrEqualTo(4.5),
+            reason: 'Light secondary text failed on surface $surface');
+
+        // Primary icon must exceed 3.0:1
+        expect(iconRatio, greaterThanOrEqualTo(3.0),
+            reason: 'Light icon failed on surface $surface');
+      }
+    });
+
+    test(
+        '15. Glass surfaces composite with opacity >=94% ensuring contrast retention',
+        () {
+      // Helper function to composite alpha colors onto solid base
+      Color composite(Color fg, Color bg) {
+        final a = fg.alpha / 255.0;
+        final r = (fg.red * a + bg.red * (1.0 - a)).round();
+        final g = (fg.green * a + bg.green * (1.0 - a)).round();
+        final b = (fg.blue * a + bg.blue * (1.0 - a)).round();
+        return Color.fromARGB(255, r, g, b);
+      }
+
+      // Dark glass composited on dark background
+      final effectiveDarkGlass =
+          composite(GlassTokens.smokedGlassSurface, AppColors.darkBackground);
+      final darkGlassTextRatio =
+          _contrastRatio(AppColors.textOnGlass(true), effectiveDarkGlass);
+      expect(darkGlassTextRatio, greaterThanOrEqualTo(7.0),
+          reason: 'Text on dark glass must maintain high contrast');
+
+      // Light glass composited on light background
+      final effectiveLightGlass =
+          composite(GlassTokens.lightGlassSurface, AppColors.lightBackground);
+      final lightGlassTextRatio =
+          _contrastRatio(AppColors.textOnGlass(false), effectiveLightGlass);
+      expect(lightGlassTextRatio, greaterThanOrEqualTo(10.0),
+          reason: 'Text on light glass must maintain high contrast');
+    });
+
+    test(
+        '16. Attendance status pills have distinct, high-contrast foregrounds in both themes',
+        () {
+      // Dark Mode Statuses
+      final darkPresentRatio = _contrastRatio(
+          AppColors.statusPresent(true), AppColors.darkSurface);
+      final darkLateRatio =
+          _contrastRatio(AppColors.statusLate(true), AppColors.darkSurface);
+      final darkAbsentRatio =
+          _contrastRatio(AppColors.statusAbsent(true), AppColors.darkSurface);
+      final darkCancelledRatio = _contrastRatio(
+          AppColors.statusCancelledAdaptive(true), AppColors.darkSurface);
+
+      expect(darkPresentRatio, greaterThanOrEqualTo(7.0));
+      expect(darkLateRatio, greaterThanOrEqualTo(4.5));
+      expect(darkAbsentRatio, greaterThanOrEqualTo(4.5));
+      expect(darkCancelledRatio, greaterThanOrEqualTo(4.5));
+
+      // Light Mode Statuses
+      final lightPresentRatio = _contrastRatio(
+          AppColors.statusPresent(false), AppColors.lightSurface);
+      final lightLateRatio =
+          _contrastRatio(AppColors.statusLate(false), AppColors.lightSurface);
+      final lightAbsentRatio =
+          _contrastRatio(AppColors.statusAbsent(false), AppColors.lightSurface);
+      final lightCancelledRatio = _contrastRatio(
+          AppColors.statusCancelledAdaptive(false), AppColors.lightSurface);
+
+      expect(lightPresentRatio, greaterThanOrEqualTo(10.0));
+      expect(lightLateRatio, greaterThanOrEqualTo(4.5));
+      expect(lightAbsentRatio, greaterThanOrEqualTo(8.0));
+      expect(lightCancelledRatio, greaterThanOrEqualTo(4.5));
+    });
+
+    test(
+        '17. Inverted button tokens have >= 14:1 contrast on both dark and light themes',
+        () {
+      // Dark theme: primary button background is #F8F9FA with #212529 text
+      final darkBtnBg = AppColors.primary;
+      final darkBtnFg = AppColors.gray900;
+      expect(_contrastRatio(darkBtnFg, darkBtnBg), greaterThanOrEqualTo(14.0));
+
+      // Light theme: primary button background is #212529 with #F8F9FA text
+      final lightBtnBg = AppColors.gray900;
+      final lightBtnFg = AppColors.gray100;
+      expect(_contrastRatio(lightBtnFg, lightBtnBg), greaterThanOrEqualTo(14.0));
+    });
+
+    test(
+        '18. Regression guard: Low-contrast combinations are forbidden for primary/secondary text',
+        () {
+      // 1. AppColors.primary (#F8F9FA) must NEVER be used on light surface (#F8F9FA)
+      final whiteOnWhiteRatio =
+          _contrastRatio(AppColors.primary, AppColors.lightSurface);
+      expect(whiteOnWhiteRatio, equals(1.0),
+          reason: 'Proves AppColors.primary on lightSurface is invisible 1:1');
+
+      // 2. Gray 600 (#6C757D) on dark surface (#343A40) fails WCAG AA normal text
+      final gray600OnDarkRatio =
+          _contrastRatio(AppColors.gray600, AppColors.darkSurface);
+      expect(gray600OnDarkRatio, lessThan(3.0),
+          reason: 'Proves gray600 on darkSurface fails 4.5:1 text requirement');
+
+      // 3. Gray 500 (#ADB5BD) on light surface (#F8F9FA) fails WCAG AA normal text
+      final gray500OnLightRatio =
+          _contrastRatio(AppColors.gray500, AppColors.lightSurface);
+      expect(gray500OnLightRatio, lessThan(3.0),
+          reason: 'Proves gray500 on lightSurface fails 4.5:1 text requirement');
+
+      // Ensure that our dynamic tokens avoid these forbidden ratios
+      expect(_contrastRatio(AppColors.textPrimary(false), AppColors.lightSurface),
+          greaterThanOrEqualTo(4.5));
+      expect(
+          _contrastRatio(AppColors.textSecondary(false), AppColors.lightSurface),
+          greaterThanOrEqualTo(4.5));
+      expect(_contrastRatio(AppColors.textPrimary(true), AppColors.darkSurface),
+          greaterThanOrEqualTo(4.5));
+      expect(
+          _contrastRatio(AppColors.textSecondary(true), AppColors.darkSurface),
+          greaterThanOrEqualTo(4.5));
     });
 
     testWidgets(

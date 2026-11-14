@@ -101,7 +101,8 @@ class TaskCardWidget extends ConsumerWidget {
                   padding: const EdgeInsets.only(top: 2.0),
                   child: Checkbox(
                     value: isCompleted,
-                    activeColor: AppColors.primary,
+                    activeColor: isDark ? AppColors.primary : AppColors.gray900,
+                    checkColor: isDark ? AppColors.gray900 : AppColors.gray100,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -134,7 +135,9 @@ class TaskCardWidget extends ConsumerWidget {
                                     ? TextDecoration.lineThrough
                                     : null,
                                 color: isCompleted
-                                    ? AppColors.darkTextDisabled
+                                    ? (isDark
+                                        ? AppColors.darkTextDisabled
+                                        : AppColors.lightTextDisabled)
                                     : (isDark
                                         ? AppColors.darkTextPrimary
                                         : AppColors.lightTextPrimary),
@@ -148,10 +151,14 @@ class TaskCardWidget extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: task.priority.color.withOpacity(0.15),
+                              color: task.priority
+                                  .getAdaptiveColor(isDark)
+                                  .withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: task.priority.color.withOpacity(0.3),
+                                color: task.priority
+                                    .getAdaptiveColor(isDark)
+                                    .withOpacity(0.3),
                                 width: 0.8,
                               ),
                             ),
@@ -160,7 +167,7 @@ class TaskCardWidget extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 11.0,
                                 fontWeight: FontWeight.bold,
-                                color: task.priority.color,
+                                color: task.priority.getAdaptiveColor(isDark),
                               ),
                             ),
                           ),
@@ -178,21 +185,28 @@ class TaskCardWidget extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.gray700.withOpacity(0.4),
+                              color: isDark
+                                  ? AppColors.gray700.withOpacity(0.4)
+                                  : AppColors.gray200,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(task.taskType.icon,
-                                    size: 12, color: AppColors.gray300),
+                                    size: 12,
+                                    color: isDark
+                                        ? AppColors.gray300
+                                        : AppColors.gray800),
                                 const SizedBox(width: 4),
                                 Text(
                                   task.taskType.displayName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11.0,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.gray300,
+                                    color: isDark
+                                        ? AppColors.gray300
+                                        : AppColors.gray800,
                                   ),
                                 ),
                               ],
@@ -205,15 +219,19 @@ class TaskCardWidget extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.gray700.withOpacity(0.4),
+                                color: isDark
+                                    ? AppColors.gray700.withOpacity(0.4)
+                                    : AppColors.gray200,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 subject.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11.0,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.gray200,
+                                  color: isDark
+                                      ? AppColors.gray200
+                                      : AppColors.gray900,
                                 ),
                               ),
                             ),

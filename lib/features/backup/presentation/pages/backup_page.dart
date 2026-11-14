@@ -750,12 +750,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(Icons.folder_special_outlined,
-                              color: AppColors.primary, size: 28),
-                          SizedBox(width: 12),
-                          Text(
+                              color: AppColors.iconPrimary(isDark), size: 28),
+                          const SizedBox(width: 12),
+                          const Text(
                             'Backup Export Location',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
@@ -767,23 +767,33 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color:
+                              (isDark ? AppColors.primary : AppColors.gray900)
+                                  .withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: AppColors.primary.withOpacity(0.3)),
+                              color: (isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900)
+                                  .withOpacity(0.3)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.sd_storage,
-                                size: 18, color: AppColors.primary),
+                            Icon(Icons.sd_storage,
+                                size: 18,
+                                color: isDark
+                                    ? AppColors.primary
+                                    : AppColors.gray900),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _displayFolderPath,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-                                  color: AppColors.primary,
+                                  color: isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900,
                                 ),
                               ),
                             ),
@@ -791,9 +801,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'App-managed backups and automatic backups are stored safely in app storage. Reports, JSON exports, and optional public copies are saved via Android system storage without broad permissions. To restore older backups from Documents, use Import Backup / Data File below.',
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary(isDark)),
                       ),
                     ],
                   ),
@@ -833,12 +845,15 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 15),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Runs automatically once every week (Sunday at 2:00 AM)',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary(isDark)),
                         ),
                         value: isAutoBackupEnabled,
-                        activeColor: AppColors.primary,
+                        activeColor:
+                            isDark ? AppColors.primary : AppColors.gray900,
                         onChanged: (enabled) {
                           ref
                               .read(settingsControllerProvider.notifier)
@@ -850,9 +865,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Last Backup Date:',
-                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary(isDark)),
                           ),
                           Text(
                             lastBackup != null
@@ -867,9 +884,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Next Scheduled Backup:',
-                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary(isDark)),
                           ),
                           Text(
                             nextScheduled != null
@@ -879,8 +898,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: isAutoBackupEnabled
-                                  ? AppColors.primary
-                                  : Colors.grey,
+                                  ? (isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900)
+                                  : AppColors.textSecondary(isDark),
                             ),
                           ),
                         ],
@@ -911,8 +932,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                             onPressed:
                                 _isExporting ? null : _handleExportBackup,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: AppColors.onPrimary,
+                              backgroundColor: isDark
+                                  ? AppColors.primary
+                                  : AppColors.gray900,
+                              foregroundColor: isDark
+                                  ? AppColors.gray900
+                                  : AppColors.gray100,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -940,19 +965,26 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 _isExporting ? null : _handleExportJsonData,
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: AppColors.primary),
+                              side: BorderSide(
+                                  color: isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            icon: const Icon(Icons.code,
-                                color: AppColors.primary),
-                            label: const Text(
+                            icon: Icon(Icons.code,
+                                color: isDark
+                                    ? AppColors.primary
+                                    : AppColors.gray900),
+                            label: Text(
                               'Export Data (.json)',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-                                  color: AppColors.primary),
+                                  color: isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900),
                             ),
                           ),
                         ),
@@ -984,8 +1016,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 child:
                                     CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Icon(Icons.folder_open_outlined,
-                                color: AppColors.primary),
+                            : Icon(Icons.folder_open_outlined,
+                                color: AppColors.iconPrimary(isDark)),
                         label: const Text(
                           'Import Backup / Data File (Drive, Downloads, Documents)',
                           style: TextStyle(
@@ -998,11 +1030,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: _showImportTextDialog,
-                        icon: const Icon(Icons.paste_outlined,
-                            size: 14, color: Colors.grey),
-                        label: const Text(
+                        icon: Icon(Icons.paste_outlined,
+                            size: 14, color: AppColors.iconSecondary(isDark)),
+                        label: Text(
                           'Paste raw JSON string instead',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary(isDark)),
                         ),
                       ),
                     ),
@@ -1055,8 +1089,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 child: Text(
                                   'No backup files (.attendiq) found in $_displayFolderPath.\nTo restore older backups from Documents, use Import Backup / Data File.',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      color: Colors.grey, fontSize: 13),
+                                  style: TextStyle(
+                                      color: AppColors.textSecondary(isDark),
+                                      fontSize: 13),
                                 ),
                               ),
                             )
@@ -1076,26 +1111,34 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                   contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 16, vertical: 4),
                                   leading: CircleAvatar(
-                                    backgroundColor:
-                                        AppColors.primary.withOpacity(0.15),
-                                    child: const Icon(Icons.insert_drive_file,
-                                        color: AppColors.primary, size: 22),
+                                    backgroundColor: (isDark
+                                            ? AppColors.primary
+                                            : AppColors.gray900)
+                                        .withOpacity(0.15),
+                                    child: Icon(Icons.insert_drive_file,
+                                        color: isDark
+                                            ? AppColors.primary
+                                            : AppColors.gray900,
+                                        size: 22),
                                   ),
                                   title: Text(
                                     fileItem.fileName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary(isDark),
                                         fontSize: 14),
                                   ),
                                   subtitle: Text(
                                     '${dateFormat.format(fileItem.modifiedDate)} • ${fileItem.formattedSize}',
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary(isDark)),
                                   ),
                                   trailing: PopupMenuButton<String>(
-                                    icon: const Icon(Icons.more_vert),
+                                    icon: Icon(Icons.more_vert,
+                                        color: AppColors.iconSecondary(isDark)),
                                     onSelected: (value) {
                                       if (value == 'restore') {
                                         _handleRestoreFile(fileItem);
@@ -1108,39 +1151,42 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                       }
                                     },
                                     itemBuilder: (ctx) => [
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'restore',
                                         child: Row(
                                           children: [
                                             Icon(Icons.restore,
                                                 size: 18,
-                                                color: AppColors.primary),
-                                            SizedBox(width: 8),
-                                            Text('Restore'),
+                                                color: AppColors.iconPrimary(
+                                                    isDark)),
+                                            const SizedBox(width: 8),
+                                            const Text('Restore'),
                                           ],
                                         ),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'share',
                                         child: Row(
                                           children: [
                                             Icon(Icons.share,
                                                 size: 18,
-                                                color: AppColors.gray300),
-                                            SizedBox(width: 8),
-                                            Text('Share'),
+                                                color: AppColors.iconPrimary(
+                                                    isDark)),
+                                            const SizedBox(width: 8),
+                                            const Text('Share'),
                                           ],
                                         ),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'save_copy',
                                         child: Row(
                                           children: [
                                             Icon(Icons.save_alt,
                                                 size: 18,
-                                                color: AppColors.primary),
-                                            SizedBox(width: 8),
-                                            Flexible(
+                                                color: AppColors.iconPrimary(
+                                                    isDark)),
+                                            const SizedBox(width: 8),
+                                            const Flexible(
                                               child: Text(
                                                 'Save Copy to Device',
                                                 overflow: TextOverflow.ellipsis,

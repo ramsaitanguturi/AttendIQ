@@ -251,8 +251,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                     TextButton(
                       onPressed: () => context.push('/timetable'),
-                      child: const Text('Manage Timetable',
-                          style: TextStyle(color: AppColors.primary)),
+                      child: Text('Manage Timetable',
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary,
+                            fontWeight: FontWeight.bold,
+                          )),
                     ),
                   ],
                 ),
@@ -575,21 +580,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     'Absent',
                     '${analytics.totalAbsent}',
                     Icons.cancel_outlined,
-                    AppColors.gray600,
+                    isDark ? AppColors.gray300 : AppColors.gray800,
                     isDark,
                   ),
                   _buildDashboardMetric(
                     'Late',
                     '${analytics.totalLate}',
                     Icons.schedule_rounded,
-                    AppColors.gray500,
+                    isDark ? AppColors.gray400 : AppColors.gray700,
                     isDark,
                   ),
                   _buildDashboardMetric(
                     'Cancelled',
                     '$cancelledCount',
                     Icons.block_rounded,
-                    isDark ? AppColors.gray700 : AppColors.gray600,
+                    isDark ? AppColors.gray400 : AppColors.gray700,
                     isDark,
                   ),
                 ],
@@ -853,7 +858,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   gradient: LinearGradient(
                     colors: isDark
                         ? const [AppColors.gray100, AppColors.gray400]
-                        : const [AppColors.gray900, AppColors.gray600],
+                        : const [AppColors.gray900, AppColors.gray700],
                   ),
                   barWidth: 3,
                   dotData: const FlDotData(show: false),
@@ -863,7 +868,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       colors: [
                         (isDark ? AppColors.gray100 : AppColors.gray900)
                             .withOpacity(0.15),
-                        (isDark ? AppColors.gray400 : AppColors.gray600)
+                        (isDark ? AppColors.gray400 : AppColors.gray700)
                             .withOpacity(0.0),
                       ],
                       begin: Alignment.topCenter,
