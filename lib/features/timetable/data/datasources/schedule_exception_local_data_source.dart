@@ -4,7 +4,9 @@ import '../models/schedule_exception_local.dart';
 abstract class ScheduleExceptionLocalDataSource {
   Future<List<ScheduleExceptionLocal>> getExceptionsForDate(DateTime date);
   Future<List<ScheduleExceptionLocal>> getExceptionsForRange(
-      DateTime startDate, DateTime endDate);
+    DateTime startDate,
+    DateTime endDate,
+  );
   Future<List<ScheduleExceptionLocal>> getAllExceptions();
   Future<ScheduleExceptionLocal?> getExceptionById(int id);
   Future<void> saveException(ScheduleExceptionLocal exception);
@@ -24,7 +26,8 @@ class ScheduleExceptionLocalDataSourceImpl
 
   @override
   Future<List<ScheduleExceptionLocal>> getExceptionsForDate(
-      DateTime date) async {
+    DateTime date,
+  ) async {
     final targetDate = _cleanDate(date);
     return _isar.scheduleExceptionLocals
         .where()
@@ -35,7 +38,9 @@ class ScheduleExceptionLocalDataSourceImpl
 
   @override
   Future<List<ScheduleExceptionLocal>> getExceptionsForRange(
-      DateTime startDate, DateTime endDate) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     final start = _cleanDate(startDate);
     final end = _cleanDate(endDate);
 

@@ -81,7 +81,9 @@ class _InMemoryExceptionRepo implements ScheduleExceptionRepository {
 
   @override
   Future<List<ScheduleException>> getExceptionsForRange(
-      DateTime startDate, DateTime endDate) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     return exceptions
         .where((e) => !e.date.isBefore(startDate) && !e.date.isAfter(endDate))
         .toList();
@@ -114,7 +116,8 @@ class _InMemoryOccurrenceRepo implements DailyScheduleOccurrenceRepository {
 
   @override
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDate(
-      DateTime date) async {
+    DateTime date,
+  ) async {
     final norm = normalizeUtcDate(date);
     return occurrences
         .where((o) => normalizeUtcDate(o.date).isAtSameMomentAs(norm))
@@ -123,12 +126,15 @@ class _InMemoryOccurrenceRepo implements DailyScheduleOccurrenceRepository {
 
   @override
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(
-          DateTime start, DateTime end) async =>
+    DateTime start,
+    DateTime end,
+  ) async =>
       occurrences;
 
   @override
   Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(
-          int subjectId) async =>
+    int subjectId,
+  ) async =>
       occurrences.where((o) => o.subjectId == subjectId).toList();
 
   @override
@@ -136,19 +142,22 @@ class _InMemoryOccurrenceRepo implements DailyScheduleOccurrenceRepository {
       occurrences.where((o) => o.id == id).firstOrNull;
 
   Future<DailyScheduleOccurrence?> getOccurrenceBySlotKey(
-          String slotKey) async =>
+    String slotKey,
+  ) async =>
       occurrences.where((o) => o.slotKey == slotKey).firstOrNull;
 
   @override
   Future<DailyScheduleOccurrence> saveOccurrence(
-      DailyScheduleOccurrence occurrence) async {
+    DailyScheduleOccurrence occurrence,
+  ) async {
     occurrences.add(occurrence);
     return occurrence;
   }
 
   @override
   Future<List<DailyScheduleOccurrence>> saveOccurrences(
-      List<DailyScheduleOccurrence> list) async {
+    List<DailyScheduleOccurrence> list,
+  ) async {
     occurrences.addAll(list);
     return list;
   }
@@ -175,14 +184,16 @@ class _InMemoryAttendanceRepo implements AttendanceRepository {
 
   @override
   Future<AttendanceRecord?> getAttendanceForOccurrence(
-          int occurrenceId) async =>
+    int occurrenceId,
+  ) async =>
       records
           .where((r) => (r.occurrenceId ?? r.eventId) == occurrenceId)
           .firstOrNull;
 
   @override
   Future<AttendanceRecord?> getAttendanceForOccurrenceAnyStatus(
-          int occurrenceId) async =>
+    int occurrenceId,
+  ) async =>
       records
           .where((r) => (r.occurrenceId ?? r.eventId) == occurrenceId)
           .firstOrNull;
@@ -251,7 +262,7 @@ void main() {
       credits: 4,
       attendanceTarget: 75,
       color: '#4F46E5',
-      type: SubjectType.THEORY,
+      type: SubjectType.theory,
       updatedAt: nowUtc,
     );
 
@@ -263,7 +274,7 @@ void main() {
       credits: 4,
       attendanceTarget: 75,
       color: '#06B6D4',
-      type: SubjectType.THEORY,
+      type: SubjectType.theory,
       updatedAt: nowUtc,
     );
 
@@ -310,7 +321,8 @@ void main() {
           activeSemesterProvider
               .overrideWith((ref) => Future.value(activeSemester)),
           subjectListControllerProvider.overrideWith(
-              () => _FakeSubjectListNotifier([subjectMath, subjectPhysics])),
+            () => _FakeSubjectListNotifier([subjectMath, subjectPhysics]),
+          ),
           weeklyScheduleRuleRepositoryProvider.overrideWithValue(ruleRepo),
           scheduleExceptionRepositoryProvider.overrideWithValue(exceptionRepo),
           dailyScheduleOccurrenceRepositoryProvider
@@ -365,7 +377,7 @@ void main() {
         ScheduleException(
           date: futureMonday,
           subjectId: 10,
-          type: ScheduleExceptionType.CANCELLED_CLASS,
+          type: ScheduleExceptionType.cancelledClass,
           title: 'Math Cancelled',
           createdAt: DateTime.now().toUtc(),
           updatedAt: DateTime.now().toUtc(),
@@ -410,7 +422,7 @@ void main() {
         ScheduleException(
           date: pastMonday,
           subjectId: 20,
-          type: ScheduleExceptionType.CANCELLED_CLASS,
+          type: ScheduleExceptionType.cancelledClass,
           title: 'Physics Postponed',
           createdAt: DateTime.now().toUtc(),
           updatedAt: DateTime.now().toUtc(),
@@ -440,7 +452,7 @@ void main() {
         ScheduleException(
           date: futureDate,
           subjectId: 10,
-          type: ScheduleExceptionType.EXAM,
+          type: ScheduleExceptionType.exam,
           title: 'Math Midterm',
           createdAt: DateTime.now().toUtc(),
           updatedAt: DateTime.now().toUtc(),
@@ -461,8 +473,10 @@ void main() {
       expect(examSlot.title, equals('Mathematics Exam'));
 
       // Today has NO exam
-      expect(todaySchedule.items.any((s) => s.type == ScheduleSlotType.exam),
-          isFalse);
+      expect(
+        todaySchedule.items.any((s) => s.type == ScheduleSlotType.exam),
+        isFalse,
+      );
     });
   });
 }

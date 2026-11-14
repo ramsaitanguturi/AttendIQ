@@ -39,7 +39,7 @@ void main() {
     credits: 4,
     attendanceTarget: 75.0,
     color: '#2196F3',
-    type: SubjectType.THEORY,
+    type: SubjectType.theory,
     updatedAt: timestamp,
   );
 
@@ -52,7 +52,7 @@ void main() {
     credits: 2,
     attendanceTarget: 75.0,
     color: '#4CAF50',
-    type: SubjectType.LAB,
+    type: SubjectType.lab,
     updatedAt: timestamp,
   );
 
@@ -108,7 +108,7 @@ void main() {
             endTime: '12:00',
             room: 'Lab-2',
             faculty: 'Dr. Alan Turing',
-            type: SubjectType.LAB,
+            type: SubjectType.lab,
             createdAt: timestamp,
             updatedAt: timestamp,
           ),
@@ -120,7 +120,7 @@ void main() {
             endTime: '10:00',
             room: 'LH-1',
             faculty: null,
-            type: SubjectType.THEORY,
+            type: SubjectType.theory,
             createdAt: timestamp,
             updatedAt: timestamp,
           ),
@@ -145,8 +145,8 @@ void main() {
         expect(first.title, equals('Algorithms'));
         expect(first.faculty, equals('Dr. Ada Lovelace'));
         expect(first.room, equals('LH-1'));
-        expect(first.type, equals(OccurrenceType.REGULAR_CLASS));
-        expect(first.status, equals(OccurrenceStatus.UPCOMING));
+        expect(first.type, equals(OccurrenceType.regularClass));
+        expect(first.status, equals(OccurrenceStatus.upcoming));
 
         final second = result.occurrences[1];
         expect(second.subjectId, equals(102));
@@ -168,7 +168,7 @@ void main() {
             id: 1,
             date: tuesdayUtc,
             subjectId: 101,
-            type: ScheduleExceptionType.EXAM,
+            type: ScheduleExceptionType.exam,
             title: 'Midterm',
             description: 'Room 101',
             createdAt: timestamp,
@@ -178,7 +178,7 @@ void main() {
             id: 2,
             date: tuesdayUtc,
             subjectId: null,
-            type: ScheduleExceptionType.EXAM,
+            type: ScheduleExceptionType.exam,
             title: 'General Aptitude Test',
             createdAt: timestamp,
             updatedAt: timestamp,
@@ -202,7 +202,7 @@ void main() {
           (o) => o.subjectId == 101,
         );
         expect(subjectExam.title, equals('Algorithms Exam'));
-        expect(subjectExam.type, equals(OccurrenceType.EXAM));
+        expect(subjectExam.type, equals(OccurrenceType.exam));
         expect(subjectExam.reason, equals('Room 101'));
 
         final generalExam = result.occurrences.firstWhere(
@@ -262,7 +262,7 @@ void main() {
           ScheduleException(
             id: 3,
             date: DateTime.utc(2026, 7, 8),
-            type: ScheduleExceptionType.HOLIDAY,
+            type: ScheduleExceptionType.holiday,
             title: 'Founders Day',
             description: 'Campus closed',
             createdAt: timestamp,
@@ -322,9 +322,9 @@ void main() {
           title: 'Algorithms',
           startTime: '09:00',
           endTime: '10:00',
-          type: OccurrenceType.REGULAR_CLASS,
-          status: OccurrenceStatus.PRESENT,
-          createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+          type: OccurrenceType.regularClass,
+          status: OccurrenceStatus.present,
+          createdFrom: OccurrenceCreatedFrom.weeklyRule,
           createdAt: timestamp,
           updatedAt: timestamp,
         );
@@ -336,9 +336,9 @@ void main() {
           title: 'Operating Systems Lab Extra',
           startTime: '15:00',
           endTime: '16:00',
-          type: OccurrenceType.EXTRA_CLASS,
-          status: OccurrenceStatus.UPCOMING,
-          createdFrom: OccurrenceCreatedFrom.MANUAL,
+          type: OccurrenceType.extraClass,
+          status: OccurrenceStatus.upcoming,
+          createdFrom: OccurrenceCreatedFrom.manual,
           createdAt: timestamp,
           updatedAt: timestamp,
         );
@@ -348,7 +348,7 @@ void main() {
             id: 700,
             eventId: 99,
             subjectId: 102,
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             markedAt: mondayUtc,
             updatedAt: timestamp,
           ),
@@ -369,11 +369,11 @@ void main() {
         expect(result.isHoliday, isFalse);
         expect(result.occurrences, hasLength(3));
         expect(result.occurrences[0].id, equals(500));
-        expect(result.occurrences[0].status, equals(OccurrenceStatus.PRESENT));
+        expect(result.occurrences[0].status, equals(OccurrenceStatus.present));
         expect(result.occurrences[1].subjectId, equals(102));
-        expect(result.occurrences[1].status, equals(OccurrenceStatus.ABSENT));
+        expect(result.occurrences[1].status, equals(OccurrenceStatus.absent));
         expect(result.occurrences[2].id, equals(501));
-        expect(result.occurrences[2].type, equals(OccurrenceType.EXTRA_CLASS));
+        expect(result.occurrences[2].type, equals(OccurrenceType.extraClass));
       },
     );
 
@@ -402,7 +402,7 @@ void main() {
               id: 4,
               date: mondayUtc,
               subjectId: 101,
-              type: ScheduleExceptionType.CANCELLED_CLASS,
+              type: ScheduleExceptionType.cancelledClass,
               title: 'Instructor unavailable',
               createdAt: timestamp,
               updatedAt: timestamp,
@@ -416,7 +416,7 @@ void main() {
         expect(cancelledResult.occurrences, hasLength(1));
         expect(
           cancelledResult.occurrences.single.status,
-          equals(OccurrenceStatus.CANCELLED),
+          equals(OccurrenceStatus.cancelled),
         );
 
         final noSemesterContainer = createContainer(semester: null);

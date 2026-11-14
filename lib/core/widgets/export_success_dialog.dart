@@ -346,7 +346,9 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 'To restore it, select it from Backup Manager or tap '
                 'Import Backup / Data File.',
                 style: TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary(isDark)),
+                  fontSize: 12,
+                  color: AppColors.textSecondary(isDark),
+                ),
               ),
             ],
           ),
@@ -437,7 +439,9 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 Text(
                   _currentResult.displayPath,
                   style: TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary(isDark)),
+                    fontSize: 11,
+                    color: AppColors.textSecondary(isDark),
+                  ),
                 ),
               ],
             ),
@@ -459,7 +463,8 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                     _isSavingCopy ? null : () => _handleSavePublicCopy(context),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
-                      color: isDark ? AppColors.primary : AppColors.gray900),
+                    color: isDark ? AppColors.primary : AppColors.gray900,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -482,7 +487,8 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 onPressed: () => _showBackupDetailsDialog(context),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
-                      color: isDark ? AppColors.primary : AppColors.gray900),
+                    color: isDark ? AppColors.primary : AppColors.gray900,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -495,8 +501,9 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 label: Text(
                   'Backup Details',
                   style: TextStyle(
-                      color: isDark ? AppColors.primary : AppColors.gray900,
-                      fontSize: 13),
+                    color: isDark ? AppColors.primary : AppColors.gray900,
+                    fontSize: 13,
+                  ),
                 ),
               )
             else if (_currentResult.hasContentUri)
@@ -505,7 +512,8 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                     _isOpeningFile ? null : () => _handleOpenFile(context),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
-                      color: isDark ? AppColors.primary : AppColors.gray900),
+                    color: isDark ? AppColors.primary : AppColors.gray900,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -518,8 +526,9 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 label: Text(
                   'Open File',
                   style: TextStyle(
-                      color: isDark ? AppColors.primary : AppColors.gray900,
-                      fontSize: 13),
+                    color: isDark ? AppColors.primary : AppColors.gray900,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             if (_currentResult.effectiveSharePath != null)
@@ -534,9 +543,11 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: Icon(Icons.share,
-                    size: 18,
-                    color: isDark ? AppColors.gray900 : AppColors.gray100),
+                icon: Icon(
+                  Icons.share,
+                  size: 18,
+                  color: isDark ? AppColors.gray900 : AppColors.gray100,
+                ),
                 label: Text(
                   _isAttendIqBackup ? 'Share Backup' : 'Share File',
                   style: const TextStyle(

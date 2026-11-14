@@ -32,9 +32,9 @@ void main() {
         title: 'Operating Systems',
         startTime: regularRule.startTime,
         endTime: regularRule.endTime,
-        type: OccurrenceType.REGULAR_CLASS,
-        status: OccurrenceStatus.UPCOMING,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+        type: OccurrenceType.regularClass,
+        status: OccurrenceStatus.upcoming,
+        createdFrom: OccurrenceCreatedFrom.weeklyRule,
         room: regularRule.room,
         faculty: regularRule.faculty,
         createdAt: DateTime.now(),
@@ -46,9 +46,9 @@ void main() {
       expect(occurrence.title, equals('Operating Systems'));
       expect(occurrence.startTime, equals('10:00'));
       expect(occurrence.endTime, equals('11:00'));
-      expect(occurrence.type, equals(OccurrenceType.REGULAR_CLASS));
-      expect(occurrence.status, equals(OccurrenceStatus.UPCOMING));
-      expect(occurrence.createdFrom, equals(OccurrenceCreatedFrom.WEEKLY_RULE));
+      expect(occurrence.type, equals(OccurrenceType.regularClass));
+      expect(occurrence.status, equals(OccurrenceStatus.upcoming));
+      expect(occurrence.createdFrom, equals(OccurrenceCreatedFrom.weeklyRule));
     });
 
     // Test 2: Present updates attendance
@@ -60,9 +60,9 @@ void main() {
         title: 'Operating Systems',
         startTime: '10:00',
         endTime: '11:00',
-        type: OccurrenceType.REGULAR_CLASS,
-        status: OccurrenceStatus.PRESENT,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+        type: OccurrenceType.regularClass,
+        status: OccurrenceStatus.present,
+        createdFrom: OccurrenceCreatedFrom.weeklyRule,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -71,17 +71,17 @@ void main() {
         id: 1,
         eventId: occurrence.id!,
         subjectId: occurrence.subjectId!,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: occurrence.date,
         updatedAt: DateTime.now(),
       );
 
-      expect(occurrence.status, equals(OccurrenceStatus.PRESENT));
-      expect(record.status, equals(AttendanceStatus.PRESENT));
+      expect(occurrence.status, equals(OccurrenceStatus.present));
+      expect(record.status, equals(AttendanceStatus.present));
 
       int presentCount = 0;
       const absentCount = 0;
-      if (record.status == AttendanceStatus.PRESENT) presentCount++;
+      if (record.status == AttendanceStatus.present) presentCount++;
       final totalConducted = presentCount + absentCount;
 
       expect(presentCount, equals(1));
@@ -99,9 +99,9 @@ void main() {
         title: 'Operating Systems',
         startTime: '11:00',
         endTime: '12:00',
-        type: OccurrenceType.REGULAR_CLASS,
-        status: OccurrenceStatus.ABSENT,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+        type: OccurrenceType.regularClass,
+        status: OccurrenceStatus.absent,
+        createdFrom: OccurrenceCreatedFrom.weeklyRule,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -110,13 +110,13 @@ void main() {
         id: 2,
         eventId: occurrence.id!,
         subjectId: occurrence.subjectId!,
-        status: AttendanceStatus.ABSENT,
+        status: AttendanceStatus.absent,
         markedAt: occurrence.date,
         updatedAt: DateTime.now(),
       );
 
-      expect(occurrence.status, equals(OccurrenceStatus.ABSENT));
-      expect(record.status, equals(AttendanceStatus.ABSENT));
+      expect(occurrence.status, equals(OccurrenceStatus.absent));
+      expect(record.status, equals(AttendanceStatus.absent));
 
       const presentCount = 0;
       const absentCount = 1;
@@ -140,9 +140,9 @@ void main() {
         title: 'Operating Systems',
         startTime: '14:00',
         endTime: '15:00',
-        type: OccurrenceType.REGULAR_CLASS,
-        status: OccurrenceStatus.CANCELLED,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+        type: OccurrenceType.regularClass,
+        status: OccurrenceStatus.cancelled,
+        createdFrom: OccurrenceCreatedFrom.weeklyRule,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -153,12 +153,12 @@ void main() {
       int presentCount = 0;
       int absentCount = 0;
       for (final r in records) {
-        if (r.status == AttendanceStatus.PRESENT) presentCount++;
-        if (r.status == AttendanceStatus.ABSENT) absentCount++;
+        if (r.status == AttendanceStatus.present) presentCount++;
+        if (r.status == AttendanceStatus.absent) absentCount++;
       }
       final totalConducted = presentCount + absentCount;
 
-      expect(occurrence.status, equals(OccurrenceStatus.CANCELLED));
+      expect(occurrence.status, equals(OccurrenceStatus.cancelled));
       expect(records, isEmpty);
       expect(totalConducted, equals(0));
     });
@@ -174,9 +174,9 @@ void main() {
         title: 'Operating Systems',
         startTime: '14:00',
         endTime: '16:00',
-        type: OccurrenceType.EXTRA_CLASS,
-        status: OccurrenceStatus.UPCOMING,
-        createdFrom: OccurrenceCreatedFrom.MANUAL,
+        type: OccurrenceType.extraClass,
+        status: OccurrenceStatus.upcoming,
+        createdFrom: OccurrenceCreatedFrom.manual,
         reason: 'Lab catch-up',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -185,8 +185,8 @@ void main() {
       final nextDayDate = extraClassDate.add(const Duration(days: 1));
 
       expect(extraOccurrence.date, equals(extraClassDate));
-      expect(extraOccurrence.type, equals(OccurrenceType.EXTRA_CLASS));
-      expect(extraOccurrence.createdFrom, equals(OccurrenceCreatedFrom.MANUAL));
+      expect(extraOccurrence.type, equals(OccurrenceType.extraClass));
+      expect(extraOccurrence.createdFrom, equals(OccurrenceCreatedFrom.manual));
       expect(extraOccurrence.date == nextDayDate, isFalse);
       // Weekly rule remains unchanged
       expect(regularRule.dayOfWeek, equals(1));
@@ -201,7 +201,7 @@ void main() {
           id: 1,
           eventId: 1,
           subjectId: 101,
-          status: AttendanceStatus.PRESENT,
+          status: AttendanceStatus.present,
           markedAt: mondayDate,
           updatedAt: DateTime.now(),
         ),
@@ -209,7 +209,7 @@ void main() {
           id: 2,
           eventId: 10,
           subjectId: 101,
-          status: AttendanceStatus.EXTRA_PRESENT,
+          status: AttendanceStatus.extraPresent,
           markedAt: extraClassDate,
           updatedAt: DateTime.now(),
         ),
@@ -217,7 +217,7 @@ void main() {
           id: 3,
           eventId: 11,
           subjectId: 101,
-          status: AttendanceStatus.EXTRA_ABSENT,
+          status: AttendanceStatus.extraAbsent,
           markedAt: extraClassDate,
           updatedAt: DateTime.now(),
         ),
@@ -226,11 +226,11 @@ void main() {
       int present = 0;
       int absent = 0;
       for (final r in records) {
-        if (r.status == AttendanceStatus.PRESENT ||
-            r.status == AttendanceStatus.EXTRA_PRESENT) {
+        if (r.status == AttendanceStatus.present ||
+            r.status == AttendanceStatus.extraPresent) {
           present++;
-        } else if (r.status == AttendanceStatus.ABSENT ||
-            r.status == AttendanceStatus.EXTRA_ABSENT) {
+        } else if (r.status == AttendanceStatus.absent ||
+            r.status == AttendanceStatus.extraAbsent) {
           absent++;
         }
       }
@@ -248,14 +248,14 @@ void main() {
       final holidayException = ScheduleException(
         id: 99,
         date: tuesdayDate,
-        type: ScheduleExceptionType.HOLIDAY,
+        type: ScheduleExceptionType.holiday,
         title: 'College Holiday',
         description: 'Independence Day',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
-      final isHoliday = holidayException.type == ScheduleExceptionType.HOLIDAY;
+      final isHoliday = holidayException.type == ScheduleExceptionType.holiday;
       final List<DailyScheduleOccurrence> schedule = isHoliday
           ? []
           : [
@@ -266,9 +266,9 @@ void main() {
                 title: 'Operating Systems',
                 startTime: '09:00',
                 endTime: '10:00',
-                type: OccurrenceType.REGULAR_CLASS,
-                status: OccurrenceStatus.UPCOMING,
-                createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+                type: OccurrenceType.regularClass,
+                status: OccurrenceStatus.upcoming,
+                createdFrom: OccurrenceCreatedFrom.weeklyRule,
                 createdAt: DateTime.now(),
                 updatedAt: DateTime.now(),
               ),

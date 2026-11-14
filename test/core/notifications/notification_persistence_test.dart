@@ -253,7 +253,7 @@ void main() {
           (i) => _buildItem(
             title: 'Reminder ${i + 1}',
             body: 'Body ${i + 1}',
-            type: NotificationType.CLASS_REMINDER,
+            type: NotificationType.classReminder,
             scheduledTime: baseTime.add(Duration(minutes: i * 15)),
             relatedId: '${100 + i}',
           ),
@@ -314,21 +314,21 @@ void main() {
         final first = _buildItem(
           title: 'First Class',
           body: 'Room 101',
-          type: NotificationType.CLASS_REMINDER,
+          type: NotificationType.classReminder,
           scheduledTime: baseTime,
           relatedId: '1',
         );
         final second = _buildItem(
           title: 'Second Class',
           body: 'Room 202',
-          type: NotificationType.CLASS_REMINDER,
+          type: NotificationType.classReminder,
           scheduledTime: baseTime.add(const Duration(hours: 1)),
           relatedId: '2',
         );
         final third = _buildItem(
           title: 'Third Class',
           body: 'Room 303',
-          type: NotificationType.CLASS_REMINDER,
+          type: NotificationType.classReminder,
           scheduledTime: baseTime.add(const Duration(hours: 2)),
           relatedId: '3',
         );
@@ -356,7 +356,7 @@ void main() {
           ..id = originalSecondId
           ..title = 'Second Class Final'
           ..body = 'Lab B'
-          ..type = NotificationType.CLASS_REMINDER.toShortString()
+          ..type = NotificationType.classReminder.toShortString()
           ..scheduledTime = baseTime.add(const Duration(hours: 1))
           ..relatedId = '2'
           ..isRead = false;
@@ -404,21 +404,21 @@ void main() {
         final a = _buildItem(
           title: 'A',
           body: 'Body A',
-          type: NotificationType.CLASS_REMINDER,
+          type: NotificationType.classReminder,
           scheduledTime: future,
           relatedId: '10',
         );
         final b = _buildItem(
           title: 'B',
           body: 'Body B',
-          type: NotificationType.CLASS_REMINDER,
+          type: NotificationType.classReminder,
           scheduledTime: future.add(const Duration(minutes: 30)),
           relatedId: '11',
         );
         final c = _buildItem(
           title: 'C',
           body: 'Body C',
-          type: NotificationType.WEEKLY_REPORT,
+          type: NotificationType.weeklyReport,
           scheduledTime: future.add(const Duration(days: 2)),
         );
 
@@ -702,7 +702,7 @@ void main() {
         final postRestartItem = _buildItem(
           title: 'Post Restart',
           body: 'Alert',
-          type: NotificationType.ATTENDANCE_WARNING,
+          type: NotificationType.attendanceWarning,
           scheduledTime: now.add(const Duration(minutes: 5)),
           relatedId: '1',
         );
@@ -767,7 +767,7 @@ void main() {
             ..id = 0
             ..title = 'Legacy Zero Record'
             ..body = 'Overwritten pre-fix slot'
-            ..type = NotificationType.CLASS_REMINDER.toShortString()
+            ..type = NotificationType.classReminder.toShortString()
             ..scheduledTime = future1
             ..relatedId = '77'
             ..isRead = false;
@@ -776,7 +776,7 @@ void main() {
             ..id = 4
             ..title = 'Legacy Restored Record'
             ..body = 'Imported before fix'
-            ..type = NotificationType.LOW_ATTENDANCE_ALERT.toShortString()
+            ..type = NotificationType.lowAttendanceAlert.toShortString()
             ..scheduledTime = future2
             ..relatedId = '9'
             ..isRead = true;
@@ -845,7 +845,7 @@ void main() {
         final nextItem = _buildItem(
           title: 'Post Migration',
           body: 'Fresh notification',
-          type: NotificationType.CLASS_REMINDER,
+          type: NotificationType.classReminder,
           scheduledTime: future2.add(const Duration(hours: 1)),
           relatedId: '88',
         );
@@ -890,7 +890,7 @@ void main() {
           final rowA = _buildItem(
             title: 'Row A',
             body: 'Body A',
-            type: NotificationType.CLASS_REMINDER,
+            type: NotificationType.classReminder,
             scheduledTime: future,
           )
             ..id = 1
@@ -898,7 +898,7 @@ void main() {
           final rowB = _buildItem(
             title: 'Row B',
             body: 'Body B',
-            type: NotificationType.CLASS_REMINDER,
+            type: NotificationType.classReminder,
             scheduledTime: future.add(const Duration(minutes: 10)),
           )
             ..id = 2
@@ -906,7 +906,7 @@ void main() {
           final rowTaskIdOverlap = _buildItem(
             title: 'High DB ID Row',
             body: 'Collides with 800001 if DB ID == Android ID',
-            type: NotificationType.CLASS_REMINDER,
+            type: NotificationType.classReminder,
             scheduledTime: future.add(const Duration(minutes: 20)),
           )
             ..id = 800001
@@ -914,7 +914,7 @@ void main() {
           final rowOverflow = _buildItem(
             title: 'Overflow DB ID Row',
             body: '64-bit ID > INT32_MAX',
-            type: NotificationType.WEEKLY_REPORT,
+            type: NotificationType.weeklyReport,
             scheduledTime: future.add(const Duration(minutes: 30)),
           )
             ..id = 5000000000
@@ -955,12 +955,12 @@ void main() {
           AcademicTask(
             id: 1,
             title: 'Assignment 1',
-            taskType: TaskType.ASSIGNMENT,
+            taskType: TaskType.assignment,
             startDate: DateTime.now(),
             dueDate: DateTime.now().add(const Duration(days: 2)),
-            priority: TaskPriority.HIGH,
-            status: TaskStatus.PENDING,
-            reminder: TaskReminder.HOURS_1,
+            priority: TaskPriority.high,
+            status: TaskStatus.pending,
+            reminder: TaskReminder.hours1,
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),

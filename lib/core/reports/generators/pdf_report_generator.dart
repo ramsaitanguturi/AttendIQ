@@ -85,28 +85,37 @@ class PdfReportGenerator {
                       ),
                       pw.Column(
                         children: [
-                          pw.Text('${report.totalClasses}',
-                              style: pw.TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: pw.FontWeight.bold)),
+                          pw.Text(
+                            '${report.totalClasses}',
+                            style: pw.TextStyle(
+                              fontSize: 16,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
                           pw.Text('Total Classes'),
                         ],
                       ),
                       pw.Column(
                         children: [
-                          pw.Text('${report.totalPresent}',
-                              style: pw.TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: pw.FontWeight.bold)),
+                          pw.Text(
+                            '${report.totalPresent}',
+                            style: pw.TextStyle(
+                              fontSize: 16,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
                           pw.Text('Present'),
                         ],
                       ),
                       pw.Column(
                         children: [
-                          pw.Text('${report.totalAbsent}',
-                              style: pw.TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: pw.FontWeight.bold)),
+                          pw.Text(
+                            '${report.totalAbsent}',
+                            style: pw.TextStyle(
+                              fontSize: 16,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
                           pw.Text('Absent'),
                         ],
                       ),
@@ -132,7 +141,7 @@ class PdfReportGenerator {
                     'Absent',
                     'Total',
                     'Percentage',
-                    'Status'
+                    'Status',
                   ],
                   data: report.subjectReports.map((sub) {
                     return [
@@ -166,10 +175,10 @@ class PdfReportGenerator {
 
   static List<pw.Widget> _buildRiskSection(AttendanceReport report) {
     final criticalSubjects = report.subjectReports
-        .where((sub) => sub.riskStatus == RiskStatus.CRITICAL)
+        .where((sub) => sub.riskStatus == RiskStatus.critical)
         .toList();
     final warningSubjects = report.subjectReports
-        .where((sub) => sub.riskStatus == RiskStatus.WARNING)
+        .where((sub) => sub.riskStatus == RiskStatus.warning)
         .toList();
 
     if (criticalSubjects.isEmpty && warningSubjects.isEmpty) {
@@ -177,15 +186,20 @@ class PdfReportGenerator {
         pw.Text(
           'Status: Excellent! All subjects are in the safe zone.',
           style: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#212529')),
-        )
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColor.fromHex('#212529'),
+          ),
+        ),
       ];
     }
 
     final List<pw.Widget> widgets = [];
-    widgets.add(pw.Text('Risk Assessment',
-        style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)));
+    widgets.add(
+      pw.Text(
+        'Risk Assessment',
+        style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+      ),
+    );
     widgets.add(pw.SizedBox(height: 8));
 
     if (criticalSubjects.isNotEmpty) {
@@ -193,8 +207,9 @@ class PdfReportGenerator {
         pw.Text(
           'Critical Subjects (Below Target):',
           style: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#495057')),
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColor.fromHex('#495057'),
+          ),
         ),
       );
       for (final sub in criticalSubjects) {
@@ -214,7 +229,8 @@ class PdfReportGenerator {
                   ),
                 ),
                 pw.Text(
-                    '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)'),
+                  '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)',
+                ),
               ],
             ),
           ),
@@ -228,8 +244,9 @@ class PdfReportGenerator {
         pw.Text(
           'Warning Subjects (Near Threshold):',
           style: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#6C757D')),
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColor.fromHex('#6C757D'),
+          ),
         ),
       );
       for (final sub in warningSubjects) {
@@ -249,7 +266,8 @@ class PdfReportGenerator {
                   ),
                 ),
                 pw.Text(
-                    '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)'),
+                  '${sub.subjectName} (${sub.percentage.toStringAsFixed(1)}%)',
+                ),
               ],
             ),
           ),

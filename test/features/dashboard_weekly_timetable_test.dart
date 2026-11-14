@@ -113,7 +113,7 @@ void main() {
       final holidayException = ScheduleException(
         id: 1,
         date: holidayDate,
-        type: ScheduleExceptionType.HOLIDAY,
+        type: ScheduleExceptionType.holiday,
         title: 'Independence Day',
         description: 'College Holiday',
         createdAt: DateTime.now(),
@@ -123,7 +123,7 @@ void main() {
       final dayData = DayScheduleData(
         date: holidayDate,
         weekday: holidayDate.weekday,
-        isHoliday: holidayException.type == ScheduleExceptionType.HOLIDAY,
+        isHoliday: holidayException.type == ScheduleExceptionType.holiday,
         holidayTitle: holidayException.title,
         holidayDescription: holidayException.description,
         items: const [],
@@ -163,8 +163,10 @@ void main() {
       );
 
       expect(dataFromDashboard.date, equals(dataFromTimetablePage.date));
-      expect(dataFromDashboard.items.length,
-          equals(dataFromTimetablePage.items.length));
+      expect(
+        dataFromDashboard.items.length,
+        equals(dataFromTimetablePage.items.length),
+      );
       expect(dataFromDashboard.items.first.title, equals('Data Structures'));
     });
   });

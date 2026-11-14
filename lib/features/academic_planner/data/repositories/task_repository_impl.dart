@@ -35,13 +35,13 @@ class TaskRepositoryImpl implements TaskRepository {
       ..serverId = domain.serverId
       ..title = domain.title
       ..description = domain.description
-      ..taskType = domain.taskType.name
+      ..taskType = domain.taskType.toShortString()
       ..subjectId = domain.subjectId
       ..startDate = domain.startDate
       ..dueDate = domain.dueDate
-      ..priority = domain.priority.name
-      ..status = domain.status.name
-      ..reminder = domain.reminder.name
+      ..priority = domain.priority.toShortString()
+      ..status = domain.status.toShortString()
+      ..reminder = domain.reminder.toShortString()
       ..createdAt = domain.createdAt
       ..updatedAt = domain.updatedAt
       ..isDirty = domain.isDirty

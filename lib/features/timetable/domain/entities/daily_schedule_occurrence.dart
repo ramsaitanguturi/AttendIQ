@@ -1,47 +1,93 @@
 enum OccurrenceType {
-  REGULAR_CLASS,
-  EXTRA_CLASS,
-  EXAM,
-  EVENT;
+  regularClass,
+  extraClass,
+  exam,
+  event;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case OccurrenceType.regularClass:
+        return 'REGULAR_CLASS';
+      case OccurrenceType.extraClass:
+        return 'EXTRA_CLASS';
+      case OccurrenceType.exam:
+        return 'EXAM';
+      case OccurrenceType.event:
+        return 'EVENT';
+    }
+  }
 
   static OccurrenceType fromString(String value) {
-    return OccurrenceType.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase(),
-      orElse: () => OccurrenceType.REGULAR_CLASS,
-    );
+    final norm = value.trim().toUpperCase();
+    for (final type in OccurrenceType.values) {
+      if (type.toShortString() == norm ||
+          type.name.toUpperCase() == norm ||
+          type.name == value) {
+        return type;
+      }
+    }
+    return OccurrenceType.regularClass;
   }
 }
 
 enum OccurrenceStatus {
-  UPCOMING,
-  PRESENT,
-  ABSENT,
-  CANCELLED,
-  LATE;
+  upcoming,
+  present,
+  absent,
+  cancelled,
+  late;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case OccurrenceStatus.upcoming:
+        return 'UPCOMING';
+      case OccurrenceStatus.present:
+        return 'PRESENT';
+      case OccurrenceStatus.absent:
+        return 'ABSENT';
+      case OccurrenceStatus.cancelled:
+        return 'CANCELLED';
+      case OccurrenceStatus.late:
+        return 'LATE';
+    }
+  }
 
   static OccurrenceStatus fromString(String value) {
-    return OccurrenceStatus.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase(),
-      orElse: () => OccurrenceStatus.UPCOMING,
-    );
+    final norm = value.trim().toUpperCase();
+    for (final status in OccurrenceStatus.values) {
+      if (status.toShortString() == norm ||
+          status.name.toUpperCase() == norm ||
+          status.name == value) {
+        return status;
+      }
+    }
+    return OccurrenceStatus.upcoming;
   }
 }
 
 enum OccurrenceCreatedFrom {
-  WEEKLY_RULE,
-  MANUAL;
+  weeklyRule,
+  manual;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case OccurrenceCreatedFrom.weeklyRule:
+        return 'WEEKLY_RULE';
+      case OccurrenceCreatedFrom.manual:
+        return 'MANUAL';
+    }
+  }
 
   static OccurrenceCreatedFrom fromString(String value) {
-    return OccurrenceCreatedFrom.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase(),
-      orElse: () => OccurrenceCreatedFrom.WEEKLY_RULE,
-    );
+    final norm = value.trim().toUpperCase();
+    for (final source in OccurrenceCreatedFrom.values) {
+      if (source.toShortString() == norm ||
+          source.name.toUpperCase() == norm ||
+          source.name == value) {
+        return source;
+      }
+    }
+    return OccurrenceCreatedFrom.weeklyRule;
   }
 }
 

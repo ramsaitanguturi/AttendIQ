@@ -127,7 +127,7 @@ class WidgetDataService {
     // Fetch schedule exceptions for today
     final exceptions = await exceptionRepo.getExceptionsForDate(todayUtc);
     final holidayException = exceptions
-        .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+        .where((e) => e.type == ScheduleExceptionType.holiday)
         .firstOrNull;
 
     if (holidayException != null) {
@@ -144,7 +144,7 @@ class WidgetDataService {
     final cancelledSubjectIds = exceptions
         .where(
           (e) =>
-              e.type == ScheduleExceptionType.CANCELLED_CLASS &&
+              e.type == ScheduleExceptionType.cancelledClass &&
               e.subjectId != null,
         )
         .map((e) => e.subjectId!)
@@ -202,7 +202,7 @@ class WidgetDataService {
               o.subjectId == rule.subjectId &&
               normalizeTimeSlotPart(o.startTime) == normStart &&
               normalizeTimeSlotPart(o.endTime) == normEnd &&
-              o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE;
+              o.createdFrom == OccurrenceCreatedFrom.weeklyRule;
         }).firstOrNull;
 
         matchedByRuleIndex[i] = saved;
@@ -223,7 +223,7 @@ class WidgetDataService {
 
         String statusStr = 'UPCOMING';
         if (saved != null) {
-          if (saved.status != OccurrenceStatus.UPCOMING) {
+          if (saved.status != OccurrenceStatus.upcoming) {
             statusStr = _statusToString(saved.status);
           } else if (saved.id != null && saved.id! > 0) {
             final rec =
@@ -269,8 +269,8 @@ class WidgetDataService {
       // Add extra / unconsumed manual occurrences
       for (final extra in savedOccurrences) {
         if (extra.id != null && consumedOccIds.contains(extra.id)) continue;
-        if (extra.createdFrom == OccurrenceCreatedFrom.MANUAL ||
-            extra.type == OccurrenceType.EXTRA_CLASS) {
+        if (extra.createdFrom == OccurrenceCreatedFrom.manual ||
+            extra.type == OccurrenceType.extraClass) {
           final fallbackName = extra.subjectId != null
               ? (subjectMap[extra.subjectId] ?? 'Extra Class')
               : 'Extra Class';
@@ -298,7 +298,7 @@ class WidgetDataService {
         academicEvents.where((e) => !e.isDeleted).toList();
 
     final examExceptions =
-        exceptions.where((e) => e.type == ScheduleExceptionType.EXAM).toList();
+        exceptions.where((e) => e.type == ScheduleExceptionType.exam).toList();
 
     final consumedAcademicEventIds = <int>{};
 
@@ -318,7 +318,7 @@ class WidgetDataService {
         final subjectMatches = subName != null &&
             (normalizeTitleForKey(ae.title)
                     .contains(normalizeTitleForKey(subName)) ||
-                (ae.type == AcademicEventType.EXAM && titleMatches));
+                (ae.type == AcademicEventType.exam && titleMatches));
 
         if (titleMatches || subjectMatches) {
           matchingEvent = ae;
@@ -370,7 +370,7 @@ class WidgetDataService {
               : '09:00';
       final endTime = (ae.endTime != null && ae.endTime!.trim().isNotEmpty)
           ? normalizeTimeSlotPart(ae.endTime!)
-          : (ae.type == AcademicEventType.EXAM ? '12:00' : '10:00');
+          : (ae.type == AcademicEventType.exam ? '12:00' : '10:00');
 
       items.add(
         TodayWidgetItem(
@@ -448,7 +448,7 @@ class WidgetDataService {
       // Check holiday exception
       final exceptions = await exceptionRepo.getExceptionsForDate(dayDateUtc);
       final holiday = exceptions
-          .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+          .where((e) => e.type == ScheduleExceptionType.holiday)
           .firstOrNull;
 
       if (holiday != null) {
@@ -468,7 +468,7 @@ class WidgetDataService {
       final cancelledSubjectIds = exceptions
           .where(
             (e) =>
-                e.type == ScheduleExceptionType.CANCELLED_CLASS &&
+                e.type == ScheduleExceptionType.cancelledClass &&
                 e.subjectId != null,
           )
           .map((e) => e.subjectId!)
@@ -511,7 +511,7 @@ class WidgetDataService {
                 o.subjectId == rule.subjectId &&
                 normalizeTimeSlotPart(o.startTime) == normStart &&
                 normalizeTimeSlotPart(o.endTime) == normEnd &&
-                o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE;
+                o.createdFrom == OccurrenceCreatedFrom.weeklyRule;
           }).firstOrNull;
 
           if (matched?.id != null) {
@@ -519,7 +519,7 @@ class WidgetDataService {
           }
 
           final isCancelled = matched != null
-              ? matched.status == OccurrenceStatus.CANCELLED
+              ? matched.status == OccurrenceStatus.cancelled
               : cancelledSubjectIds.contains(rule.subjectId);
 
           dayClasses.add(
@@ -536,8 +536,8 @@ class WidgetDataService {
         // Add extra / manual occurrences
         for (final extra in occurrences) {
           if (extra.id != null && consumedOccIds.contains(extra.id)) continue;
-          if (extra.createdFrom == OccurrenceCreatedFrom.MANUAL ||
-              extra.type == OccurrenceType.EXTRA_CLASS) {
+          if (extra.createdFrom == OccurrenceCreatedFrom.manual ||
+              extra.type == OccurrenceType.extraClass) {
             final fallbackName = extra.subjectId != null
                 ? (subjectMap[extra.subjectId] ?? 'Extra Class')
                 : 'Extra Class';
@@ -549,7 +549,7 @@ class WidgetDataService {
                 subjectName: name,
                 startTime: normalizeTimeSlotPart(extra.startTime),
                 endTime: normalizeTimeSlotPart(extra.endTime),
-                isCancelled: extra.status == OccurrenceStatus.CANCELLED,
+                isCancelled: extra.status == OccurrenceStatus.cancelled,
                 isExtra: true,
               ),
             );
@@ -594,7 +594,7 @@ class WidgetDataService {
 
     final allTasks = await taskRepo.getAllTasks();
     final pendingTasks =
-        allTasks.where((t) => t.status != TaskStatus.COMPLETED).toList();
+        allTasks.where((t) => t.status != TaskStatus.completed).toList();
     final rules = semId != null
         ? (await ruleRepo.getRulesForSemester(semId))
             .where((r) => r.isActive && !r.isDeleted)
@@ -610,17 +610,17 @@ class WidgetDataService {
       final events = await eventRepo.getEventsForRange(dayUtc, dayUtc);
 
       final hasHolidays =
-          exceptions.any((e) => e.type == ScheduleExceptionType.HOLIDAY);
+          exceptions.any((e) => e.type == ScheduleExceptionType.holiday);
 
       final hasExams =
-          exceptions.any((e) => e.type == ScheduleExceptionType.EXAM) ||
-              events.any((e) => e.type == AcademicEventType.EXAM);
+          exceptions.any((e) => e.type == ScheduleExceptionType.exam) ||
+              events.any((e) => e.type == AcademicEventType.exam);
 
       final hasEvents = events.any(
         (e) =>
-            e.type == AcademicEventType.EVENT ||
-            e.type == AcademicEventType.ASSIGNMENT ||
-            e.type == AcademicEventType.DEADLINE,
+            e.type == AcademicEventType.event ||
+            e.type == AcademicEventType.assignment ||
+            e.type == AcademicEventType.deadline,
       );
 
       final hasTasks = pendingTasks.any(
@@ -635,8 +635,8 @@ class WidgetDataService {
               await occurrenceRepo.getOccurrencesForDate(dayUtc);
           hasClasses = occurrences.any(
             (o) =>
-                o.type == OccurrenceType.EXTRA_CLASS ||
-                o.createdFrom == OccurrenceCreatedFrom.MANUAL,
+                o.type == OccurrenceType.extraClass ||
+                o.createdFrom == OccurrenceCreatedFrom.manual,
           );
         }
       }
@@ -684,7 +684,7 @@ class WidgetDataService {
     for (final event in futureEvents) {
       final eventUtc = normalizeUtcDate(event.date);
       if (!eventUtc.isBefore(todayUtc)) {
-        final isExam = event.type == AcademicEventType.EXAM;
+        final isExam = event.type == AcademicEventType.exam;
         sortableUpcoming.add(
           (
             date: eventUtc,
@@ -707,7 +707,7 @@ class WidgetDataService {
     for (final ex in upcomingExceptions) {
       final exUtc = normalizeUtcDate(ex.date);
       if (exUtc.isBefore(todayUtc)) continue;
-      if (ex.type == ScheduleExceptionType.HOLIDAY) {
+      if (ex.type == ScheduleExceptionType.holiday) {
         sortableUpcoming.add(
           (
             date: exUtc,
@@ -719,7 +719,7 @@ class WidgetDataService {
             ),
           ),
         );
-      } else if (ex.type == ScheduleExceptionType.EXAM) {
+      } else if (ex.type == ScheduleExceptionType.exam) {
         sortableUpcoming.add(
           (
             date: exUtc,
@@ -731,7 +731,7 @@ class WidgetDataService {
             ),
           ),
         );
-      } else if (ex.type == ScheduleExceptionType.EVENT) {
+      } else if (ex.type == ScheduleExceptionType.event) {
         sortableUpcoming.add(
           (
             date: exUtc,
@@ -842,30 +842,30 @@ class WidgetDataService {
 
   String _statusToString(OccurrenceStatus status) {
     switch (status) {
-      case OccurrenceStatus.PRESENT:
+      case OccurrenceStatus.present:
         return 'PRESENT';
-      case OccurrenceStatus.ABSENT:
+      case OccurrenceStatus.absent:
         return 'ABSENT';
-      case OccurrenceStatus.CANCELLED:
+      case OccurrenceStatus.cancelled:
         return 'CANCELLED';
-      case OccurrenceStatus.UPCOMING:
+      case OccurrenceStatus.upcoming:
         return 'UPCOMING';
-      case OccurrenceStatus.LATE:
+      case OccurrenceStatus.late:
         return 'LATE';
     }
   }
 
   String _attendanceStatusToString(AttendanceStatus status) {
     switch (status) {
-      case AttendanceStatus.PRESENT:
-      case AttendanceStatus.EXTRA_PRESENT:
+      case AttendanceStatus.present:
+      case AttendanceStatus.extraPresent:
         return 'PRESENT';
-      case AttendanceStatus.ABSENT:
-      case AttendanceStatus.EXTRA_ABSENT:
+      case AttendanceStatus.absent:
+      case AttendanceStatus.extraAbsent:
         return 'ABSENT';
-      case AttendanceStatus.CANCELLED:
+      case AttendanceStatus.cancelled:
         return 'CANCELLED';
-      case AttendanceStatus.LATE:
+      case AttendanceStatus.late:
         return 'LATE';
     }
   }

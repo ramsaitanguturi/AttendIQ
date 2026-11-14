@@ -46,7 +46,7 @@ void main() {
       );
 
       expect(result.success, isTrue);
-      expect(result.appliedStatus, equals(OccurrenceStatus.PRESENT));
+      expect(result.appliedStatus, equals(OccurrenceStatus.present));
 
       // Verify occurrence was created/updated in Isar
       final occurrences = isar.dailyScheduleOccurrenceLocals.where().findAll();
@@ -80,7 +80,7 @@ void main() {
       );
 
       expect(result.success, isTrue);
-      expect(result.appliedStatus, equals(OccurrenceStatus.ABSENT));
+      expect(result.appliedStatus, equals(OccurrenceStatus.absent));
 
       final occurrences = isar.dailyScheduleOccurrenceLocals.where().findAll();
       expect(occurrences.first.status, equals('ABSENT'));
@@ -106,7 +106,7 @@ void main() {
       );
 
       expect(result.success, isTrue);
-      expect(result.appliedStatus, equals(OccurrenceStatus.LATE));
+      expect(result.appliedStatus, equals(OccurrenceStatus.late));
 
       final occurrences = isar.dailyScheduleOccurrenceLocals.where().findAll();
       expect(occurrences.first.status, equals('LATE'));
@@ -135,8 +135,9 @@ void main() {
       );
 
       expect(
-          isar.attendanceRecordLocals.where().isDeletedEqualTo(false).count(),
-          equals(1));
+        isar.attendanceRecordLocals.where().isDeletedEqualTo(false).count(),
+        equals(1),
+      );
 
       // Now cancel
       final cancelResult = await NotificationActionHandler.handleAction(
@@ -146,7 +147,7 @@ void main() {
       );
 
       expect(cancelResult.success, isTrue);
-      expect(cancelResult.appliedStatus, equals(OccurrenceStatus.CANCELLED));
+      expect(cancelResult.appliedStatus, equals(OccurrenceStatus.cancelled));
 
       final occurrences = isar.dailyScheduleOccurrenceLocals.where().findAll();
       expect(occurrences.first.status, equals('CANCELLED'));

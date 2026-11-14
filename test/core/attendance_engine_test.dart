@@ -19,39 +19,57 @@ void main() {
 
     test('calculateSafeBunks 27/31 with 75% target', () {
       final safeBunks = AttendanceCalculator.calculateSafeBunks(
-          attended: 27, total: 31, target: 75.0);
+        attended: 27,
+        total: 31,
+        target: 75.0,
+      );
       expect(safeBunks, 5); // floor((2700 - 2325)/75) = floor(375/75) = 5
     });
 
     test('calculateSafeBunks 27/31 with 87% target', () {
       final safeBunks = AttendanceCalculator.calculateSafeBunks(
-          attended: 27, total: 31, target: 87.0);
+        attended: 27,
+        total: 31,
+        target: 87.0,
+      );
       // floor((2700 - 2697)/87) = floor(3/87) = 0
       expect(safeBunks, 0);
     });
 
     test('calculateSafeBunks below target threshold returns 0', () {
       final safeBunks = AttendanceCalculator.calculateSafeBunks(
-          attended: 20, total: 30, target: 75.0);
+        attended: 20,
+        total: 30,
+        target: 75.0,
+      );
       expect(safeBunks, 0);
     });
 
     test('calculateSafeBunks zero total returns 0', () {
       final safeBunks = AttendanceCalculator.calculateSafeBunks(
-          attended: 0, total: 0, target: 75.0);
+        attended: 0,
+        total: 0,
+        target: 75.0,
+      );
       expect(safeBunks, 0);
     });
 
     test('calculateRequiredClasses when above target returns 0', () {
       final required = AttendanceCalculator.calculateRequiredClasses(
-          attended: 27, total: 31, target: 75.0);
+        attended: 27,
+        total: 31,
+        target: 75.0,
+      );
       expect(required, 0);
     });
 
     test('calculateRequiredClasses when below target 75%', () {
       // 20/30 = 66.7%
       final required = AttendanceCalculator.calculateRequiredClasses(
-          attended: 20, total: 30, target: 75.0);
+        attended: 20,
+        total: 30,
+        target: 75.0,
+      );
       // ceil((75 * 30 - 100 * 20) / 25) = ceil((2250 - 2000) / 25) = ceil(250 / 25) = 10
       expect(required, 10);
     });
@@ -60,7 +78,10 @@ void main() {
         'calculateRequiredClasses target 100% returns null when a class is missed',
         () {
       final required = AttendanceCalculator.calculateRequiredClasses(
-          attended: 29, total: 30, target: 100.0);
+        attended: 29,
+        total: 30,
+        target: 100.0,
+      );
       expect(required, isNull);
     });
   });
@@ -101,7 +122,7 @@ void main() {
         safeBunks: 0,
         requiredClasses: 6,
       );
-      expect(analysis.status, BunkStatus.CRITICAL);
+      expect(analysis.status, BunkStatus.critical);
       expect(analysis.statusText, 'Critical');
       expect(analysis.recommendation, contains('below target'));
     });
@@ -113,7 +134,7 @@ void main() {
         safeBunks: 1,
         requiredClasses: 0,
       );
-      expect(analysis.status, BunkStatus.WARNING);
+      expect(analysis.status, BunkStatus.warning);
       expect(analysis.statusText, 'Warning');
       expect(analysis.recommendation, contains('Narrow attendance margin'));
     });
@@ -125,7 +146,7 @@ void main() {
         safeBunks: 3,
         requiredClasses: 0,
       );
-      expect(analysis.status, BunkStatus.NORMAL);
+      expect(analysis.status, BunkStatus.normal);
       expect(analysis.statusText, 'Normal');
       expect(analysis.recommendation, contains('safe zone'));
     });

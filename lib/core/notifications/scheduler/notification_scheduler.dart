@@ -75,7 +75,7 @@ class NotificationScheduler {
       credits: s.credits,
       attendanceTarget: s.attendanceTarget,
       color: s.color,
-      type: s.type == 'LAB' ? SubjectType.LAB : SubjectType.THEORY,
+      type: s.type == 'LAB' ? SubjectType.lab : SubjectType.theory,
       updatedAt: s.updatedAt,
     );
   }
@@ -89,14 +89,14 @@ class NotificationScheduler {
       eventId: r.occurrenceId ?? r.eventId,
       subjectId: r.subjectId,
       status: r.status == 'PRESENT'
-          ? AttendanceStatus.PRESENT
+          ? AttendanceStatus.present
           : (r.status == 'ABSENT'
-              ? AttendanceStatus.ABSENT
+              ? AttendanceStatus.absent
               : (r.status == 'CANCELLED'
-                  ? AttendanceStatus.CANCELLED
+                  ? AttendanceStatus.cancelled
                   : (r.status == 'EXTRA_PRESENT'
-                      ? AttendanceStatus.EXTRA_PRESENT
-                      : AttendanceStatus.EXTRA_ABSENT))),
+                      ? AttendanceStatus.extraPresent
+                      : AttendanceStatus.extraAbsent))),
       markedAt: r.markedAt,
       updatedAt: r.updatedAt,
     );
@@ -199,11 +199,11 @@ class NotificationScheduler {
   Future<void> cancelAttendanceWarnings() async {
     final now = DateTime.now();
     final warnings = await _db.getFutureNotificationsByType(
-      NotificationType.ATTENDANCE_WARNING.toShortString(),
+      NotificationType.attendanceWarning.toShortString(),
       now,
     );
     final alerts = await _db.getFutureNotificationsByType(
-      NotificationType.LOW_ATTENDANCE_ALERT.toShortString(),
+      NotificationType.lowAttendanceAlert.toShortString(),
       now,
     );
     for (final n in [...warnings, ...alerts]) {
@@ -216,7 +216,7 @@ class NotificationScheduler {
   Future<void> cancelWeeklyReports() async {
     final now = DateTime.now();
     final reports = await _db.getFutureNotificationsByType(
-      NotificationType.WEEKLY_REPORT.toShortString(),
+      NotificationType.weeklyReport.toShortString(),
       now,
     );
     for (final r in reports) {
@@ -242,8 +242,7 @@ class NotificationScheduler {
 
     final isLateEnabled = prefs?.enableLateAttendance ?? false;
     if (_notificationService is LocalNotificationServiceImpl) {
-      (_notificationService as LocalNotificationServiceImpl)
-          .enableLateAttendance = isLateEnabled;
+      (_notificationService).enableLateAttendance = isLateEnabled;
     }
 
     final effectiveOffsets = (prefs != null && prefs.classReminderOffset > 0)
@@ -285,14 +284,22 @@ class NotificationScheduler {
     }
   }
 
-  Future<void> rescheduleRollingWindow(
-      {List<int> offsets = const [15], DateTime? customNow}) async {
+  Future<void> rescheduleRollingWindow({
+    List<int> offsets = const [15],
+    DateTime? customNow,
+  }) async {
     final now = customNow ?? DateTime.now();
     final rollingEnd = now.add(const Duration(days: 7));
 
     final startUtc = DateTime.utc(now.year, now.month, now.day);
     final endUtc = DateTime.utc(
-        rollingEnd.year, rollingEnd.month, rollingEnd.day, 23, 59, 59);
+      rollingEnd.year,
+      rollingEnd.month,
+      rollingEnd.day,
+      23,
+      59,
+      59,
+    );
 
     // 1. Fetch canonical occurrences, weekly rules, exceptions, and subjects
     final occurrences = await _db.getOccurrences(startUtc, endUtc);
@@ -336,19 +343,21 @@ class NotificationScheduler {
       for (final offset in offsets) {
         final triggerTime = localClassTime.subtract(Duration(minutes: offset));
         if (triggerTime.isAfter(now) && !triggerTime.isAfter(rollingEnd)) {
-          desiredReminders.add(DesiredReminder(
-            relatedKey: relatedKey,
-            legacyRelatedKey: legacyRelatedKey,
-            subjectId: subjectId,
-            title: isExtra
-                ? 'Extra $displayName class starts in $offset minutes'
-                : '$displayName class starts in $offset minutes',
-            body: isExtra
-                ? 'Extra $displayName class today at $startTime'
-                : 'Starts at $startTime${room != null ? " in $room" : ""}',
-            scheduledTime: triggerTime,
-            offsetMinutes: offset,
-          ));
+          desiredReminders.add(
+            DesiredReminder(
+              relatedKey: relatedKey,
+              legacyRelatedKey: legacyRelatedKey,
+              subjectId: subjectId,
+              title: isExtra
+                  ? 'Extra $displayName class starts in $offset minutes'
+                  : '$displayName class starts in $offset minutes',
+              body: isExtra
+                  ? 'Extra $displayName class today at $startTime'
+                  : 'Starts at $startTime${room != null ? " in $room" : ""}',
+              scheduledTime: triggerTime,
+              offsetMinutes: offset,
+            ),
+          );
         }
       }
     }
@@ -485,21 +494,25 @@ class NotificationScheduler {
 
     // 1c. Fetch academic events for next 14 days (namespaced keys cannot collide with occurrences)
     final academicEvents = await _db.getAcademicEvents(
-        startUtc, now.add(const Duration(days: 14)));
+      startUtc,
+      now.add(const Duration(days: 14)),
+    );
     for (final ae in academicEvents) {
       final aeDate = normalizeUtcDate(ae.date);
       final eventDate = DateTime(aeDate.year, aeDate.month, aeDate.day, 9, 0);
       final oneDayBefore = eventDate.subtract(const Duration(days: 1));
       if (oneDayBefore.isAfter(now)) {
-        desiredReminders.add(DesiredReminder(
-          relatedKey: NotificationRelatedKeys.forAcademicEventOneDay(ae.id),
-          legacyRelatedKey: (ae.id + 100000).toString(),
-          subjectId: 0,
-          title: 'Tomorrow:',
-          body: ae.title,
-          scheduledTime: oneDayBefore,
-          offsetMinutes: 1440,
-        ));
+        desiredReminders.add(
+          DesiredReminder(
+            relatedKey: NotificationRelatedKeys.forAcademicEventOneDay(ae.id),
+            legacyRelatedKey: (ae.id + 100000).toString(),
+            subjectId: 0,
+            title: 'Tomorrow:',
+            body: ae.title,
+            scheduledTime: oneDayBefore,
+            offsetMinutes: 1440,
+          ),
+        );
       }
 
       if (ae.startTime != null && ae.startTime!.contains(':')) {
@@ -511,23 +524,25 @@ class NotificationScheduler {
         final thirtyMinBefore =
             startTimeDate.subtract(const Duration(minutes: 30));
         if (thirtyMinBefore.isAfter(now)) {
-          desiredReminders.add(DesiredReminder(
-            relatedKey:
-                NotificationRelatedKeys.forAcademicEventThirtyMin(ae.id),
-            legacyRelatedKey: (ae.id + 200000).toString(),
-            subjectId: 0,
-            title: '${ae.title} starts at ${ae.startTime}',
-            body: ae.description ?? ae.title,
-            scheduledTime: thirtyMinBefore,
-            offsetMinutes: 30,
-          ));
+          desiredReminders.add(
+            DesiredReminder(
+              relatedKey:
+                  NotificationRelatedKeys.forAcademicEventThirtyMin(ae.id),
+              legacyRelatedKey: (ae.id + 200000).toString(),
+              subjectId: 0,
+              title: '${ae.title} starts at ${ae.startTime}',
+              body: ae.description ?? ae.title,
+              scheduledTime: thirtyMinBefore,
+              offsetMinutes: 30,
+            ),
+          );
         }
       }
     }
 
     // 3. Fetch future scheduled class reminders
     final futureNotifications = await _db.getFutureNotificationsByType(
-      NotificationType.CLASS_REMINDER.toShortString(),
+      NotificationType.classReminder.toShortString(),
       now,
     );
 
@@ -543,11 +558,13 @@ class NotificationScheduler {
         continue;
       }
 
-      final existing = futureNotifications.firstWhereOrNull((n) =>
-          (n.relatedId == desired.relatedKey ||
-              (desired.legacyRelatedKey != null &&
-                  n.relatedId == desired.legacyRelatedKey)) &&
-          n.scheduledTime.isAtSameMomentAs(desired.scheduledTime));
+      final existing = futureNotifications.firstWhereOrNull(
+        (n) =>
+            (n.relatedId == desired.relatedKey ||
+                (desired.legacyRelatedKey != null &&
+                    n.relatedId == desired.legacyRelatedKey)) &&
+            n.scheduledTime.isAtSameMomentAs(desired.scheduledTime),
+      );
       if (existing != null) {
         keptIds.add(existing.id);
         if (existing.title != desired.title ||
@@ -585,7 +602,7 @@ class NotificationScheduler {
       final item = NotificationItem()
         ..title = desired.title
         ..body = desired.body
-        ..type = NotificationType.CLASS_REMINDER.toShortString()
+        ..type = NotificationType.classReminder.toShortString()
         ..scheduledTime = desired.scheduledTime
         ..relatedId = desired.relatedKey
         ..isRead = false;
@@ -605,10 +622,12 @@ class NotificationScheduler {
     }
     final occDate = normalizeUtcDate(occ.date);
     final normStart = normalizeTimeSlotPart(occ.startTime);
-    return rules.firstWhereOrNull((r) =>
-        r.subjectId == occ.subjectId &&
-        r.dayOfWeek == occDate.weekday &&
-        normalizeTimeSlotPart(r.startTime) == normStart);
+    return rules.firstWhereOrNull(
+      (r) =>
+          r.subjectId == occ.subjectId &&
+          r.dayOfWeek == occDate.weekday &&
+          normalizeTimeSlotPart(r.startTime) == normStart,
+    );
   }
 
   Future<void> checkAttendanceRisks({DateTime? customNow}) async {
@@ -640,15 +659,15 @@ class NotificationScheduler {
       String? title;
       String? body;
 
-      if (analytics.riskStatus == RiskStatus.CRITICAL) {
-        alertType = NotificationType.LOW_ATTENDANCE_ALERT;
+      if (analytics.riskStatus == RiskStatus.critical) {
+        alertType = NotificationType.lowAttendanceAlert;
         title = 'Low Attendance Alert: ${subject.name}';
         final classesNeeded = analytics.classesNeeded;
         body =
             'Your ${subject.name} attendance is below $target% (${analytics.percentage.toStringAsFixed(1)}%). '
             '${classesNeeded != null && classesNeeded > 0 ? "Attend next $classesNeeded classes to recover." : ""}';
-      } else if (analytics.riskStatus == RiskStatus.WARNING) {
-        alertType = NotificationType.ATTENDANCE_WARNING;
+      } else if (analytics.riskStatus == RiskStatus.warning) {
+        alertType = NotificationType.attendanceWarning;
         title = 'Attendance Warning: ${subject.name}';
         body =
             'Your ${subject.name} attendance is close to falling below target. Currently at ${analytics.percentage.toStringAsFixed(1)}% (Target: $target%).';
@@ -692,7 +711,8 @@ class NotificationScheduler {
             await _notificationService.scheduleNotification(item);
           } catch (e, stack) {
             debugPrint(
-                'Failed to schedule risk notification with platform service: $e');
+              'Failed to schedule risk notification with platform service: $e',
+            );
             debugPrint(stack.toString());
           }
         }
@@ -731,10 +751,16 @@ class NotificationScheduler {
     final semesterRecords = semesterRecordsLocal.map(_mapRecord).toList();
 
     // Fetch canonical occurrences
-    final startUtc = DateTime.utc(semesterLocal.startDate.year,
-        semesterLocal.startDate.month, semesterLocal.startDate.day);
-    final endUtc = DateTime.utc(semesterLocal.endDate.year,
-        semesterLocal.endDate.month, semesterLocal.endDate.day);
+    final startUtc = DateTime.utc(
+      semesterLocal.startDate.year,
+      semesterLocal.startDate.month,
+      semesterLocal.startDate.day,
+    );
+    final endUtc = DateTime.utc(
+      semesterLocal.endDate.year,
+      semesterLocal.endDate.month,
+      semesterLocal.endDate.day,
+    );
     final allOccurrences = await _db.getOccurrences(startUtc, endUtc);
     final semesterOccurrences = allOccurrences
         .where((o) => o.subjectId != null && subjectIds.contains(o.subjectId))
@@ -749,17 +775,21 @@ class NotificationScheduler {
       final occId = rec.occurrenceId;
       final occ = (occId != null && occId > 0) ? occurrenceMap[occId] : null;
       if (occ != null) {
-        occurrences.add(LoggedOccurrence(
-          date: occ.date,
-          startTime: occ.startTime,
-          status: rec.status,
-        ));
+        occurrences.add(
+          LoggedOccurrence(
+            date: occ.date,
+            startTime: occ.startTime,
+            status: rec.status,
+          ),
+        );
       } else {
-        occurrences.add(LoggedOccurrence(
-          date: rec.markedAt,
-          startTime: '09:00',
-          status: rec.status,
-        ));
+        occurrences.add(
+          LoggedOccurrence(
+            date: rec.markedAt,
+            startTime: '09:00',
+            status: rec.status,
+          ),
+        );
       }
     }
 
@@ -802,9 +832,11 @@ class NotificationScheduler {
     final worstSub = analytics.subjectComparison.lowestAttendanceSubject;
 
     final riskSubjects = subjectAnalyticsList
-        .where((s) =>
-            s.riskStatus == RiskStatus.WARNING ||
-            s.riskStatus == RiskStatus.CRITICAL)
+        .where(
+          (s) =>
+              s.riskStatus == RiskStatus.warning ||
+              s.riskStatus == RiskStatus.critical,
+        )
         .map((s) => s.subjectName)
         .toList();
     final riskStr = riskSubjects.isEmpty ? 'None' : riskSubjects.join(', ');
@@ -818,7 +850,7 @@ class NotificationScheduler {
 
     // 2. Fetch future WEEKLY_REPORT scheduled notifications
     final futureReports = await _db.getFutureNotificationsByType(
-      NotificationType.WEEKLY_REPORT.toShortString(),
+      NotificationType.weeklyReport.toShortString(),
       now,
     );
 
@@ -834,7 +866,7 @@ class NotificationScheduler {
     final item = NotificationItem()
       ..title = title
       ..body = body
-      ..type = NotificationType.WEEKLY_REPORT.toShortString()
+      ..type = NotificationType.weeklyReport.toShortString()
       ..scheduledTime = nextSunday
       ..isRead = false;
 

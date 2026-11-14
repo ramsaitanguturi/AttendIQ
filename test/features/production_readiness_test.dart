@@ -81,8 +81,10 @@ void main() {
       );
 
       expect(response.confidence, 1.0);
-      expect(response.answer,
-          contains('No, you should not skip tomorrow\'s classes.'));
+      expect(
+        response.answer,
+        contains('No, you should not skip tomorrow\'s classes.'),
+      );
       expect(response.relatedSubjects, contains('Math'));
       expect(response.actionItems.first, contains('Attend Math'));
     });

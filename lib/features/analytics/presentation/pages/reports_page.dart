@@ -52,8 +52,11 @@ class ReportsPage extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        size: 64, color: AppColors.attendanceMid),
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      size: 64,
+                      color: AppColors.attendanceMid,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'No active semester found.\nPlease set up a semester first.',
@@ -143,7 +146,10 @@ class ReportsPage extends ConsumerWidget {
   }
 
   Widget _buildSummaryCard(
-      AttendanceReport report, bool isDark, bool isGlassy) {
+    AttendanceReport report,
+    bool isDark,
+    bool isGlassy,
+  ) {
     final double percentage = report.overallPercentage;
     final Color riskColor = AppColors.attendanceMetricColor(percentage, isDark);
 
@@ -275,8 +281,12 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildExportActions(BuildContext context, AttendanceReport report,
-      bool isDark, bool isGlassy) {
+  Widget _buildExportActions(
+    BuildContext context,
+    AttendanceReport report,
+    bool isDark,
+    bool isGlassy,
+  ) {
     return Row(
       children: [
         Expanded(
@@ -345,7 +355,10 @@ class ReportsPage extends ConsumerWidget {
   }
 
   Widget _buildSubjectList(
-      List<SubjectReport> reports, bool isDark, bool isGlassy) {
+    List<SubjectReport> reports,
+    bool isDark,
+    bool isGlassy,
+  ) {
     if (reports.isEmpty) {
       return Container(
         width: double.infinity,
@@ -384,9 +397,9 @@ class ReportsPage extends ConsumerWidget {
       itemBuilder: (context, index) {
         final sub = reports[index];
         Color statusColor = isDark ? AppColors.primary : AppColors.gray900;
-        if (sub.riskStatus == RiskStatus.CRITICAL) {
+        if (sub.riskStatus == RiskStatus.critical) {
           statusColor = AppColors.attendanceLow;
-        } else if (sub.riskStatus == RiskStatus.WARNING) {
+        } else if (sub.riskStatus == RiskStatus.warning) {
           statusColor = AppColors.attendanceMid;
         }
 

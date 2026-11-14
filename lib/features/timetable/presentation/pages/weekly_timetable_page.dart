@@ -114,7 +114,9 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
           label: const Text(
             'Add Class',
             style: TextStyle(
-                color: AppColors.onPrimary, fontWeight: FontWeight.bold),
+              color: AppColors.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
@@ -310,7 +312,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                                   await _markAttendance(
                                     context,
                                     slot,
-                                    OccurrenceStatus.PRESENT,
+                                    OccurrenceStatus.present,
                                     subject.name,
                                   );
                                 },
@@ -350,7 +352,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                                     await _markAttendance(
                                       context,
                                       slot,
-                                      OccurrenceStatus.LATE,
+                                      OccurrenceStatus.late,
                                       subject.name,
                                     );
                                   },
@@ -390,7 +392,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                                   await _markAttendance(
                                     context,
                                     slot,
-                                    OccurrenceStatus.ABSENT,
+                                    OccurrenceStatus.absent,
                                     subject.name,
                                   );
                                 },
@@ -412,7 +414,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                                   side: BorderSide(
                                     color: currentStatus == 'CANCELLED'
                                         ? AppColors.statusCancelledAdaptive(
-                                            isDark)
+                                            isDark,
+                                          )
                                         : (isDark
                                             ? AppColors.gray700
                                             : AppColors.gray400),
@@ -420,8 +423,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                                   ),
                                   backgroundColor: currentStatus == 'CANCELLED'
                                       ? AppColors.statusCancelledAdaptive(
-                                              isDark)
-                                          .withOpacity(isDark ? 0.22 : 0.12)
+                                          isDark,
+                                        ).withOpacity(isDark ? 0.22 : 0.12)
                                       : null,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 8),
@@ -431,7 +434,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                                   await _markAttendance(
                                     context,
                                     slot,
-                                    OccurrenceStatus.CANCELLED,
+                                    OccurrenceStatus.cancelled,
                                     subject.name,
                                   );
                                 },
@@ -454,8 +457,10 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                   const Divider(),
 
                   ListTile(
-                    leading: Icon(Icons.event_busy_outlined,
-                        color: AppColors.iconSecondary(isDark)),
+                    leading: Icon(
+                      Icons.event_busy_outlined,
+                      color: AppColors.iconSecondary(isDark),
+                    ),
                     title: const Text('Edit this occurrence only'),
                     subtitle: Text(
                       'Remove or set exception for this date without changing weekly rule',
@@ -474,8 +479,10 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                     },
                   ),
                   ListTile(
-                    leading: Icon(Icons.calendar_month_outlined,
-                        color: AppColors.iconPrimary(isDark)),
+                    leading: Icon(
+                      Icons.calendar_month_outlined,
+                      color: AppColors.iconPrimary(isDark),
+                    ),
                     title: const Text('Edit entire subject schedule'),
                     subtitle: Text(
                       'Modify weekly recurring days and times',
@@ -483,13 +490,17 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                     ),
                     onTap: () {
                       Navigator.pop(context);
-                      AddEditSubjectDialog.show(context,
-                          existingSubject: subject);
+                      AddEditSubjectDialog.show(
+                        context,
+                        existingSubject: subject,
+                      );
                     },
                   ),
                   ListTile(
-                    leading: Icon(Icons.delete_outline,
-                        color: AppColors.statusAbsent(isDark)),
+                    leading: Icon(
+                      Icons.delete_outline,
+                      color: AppColors.statusAbsent(isDark),
+                    ),
                     title: Text(
                       'Delete Class Slot',
                       style: TextStyle(color: AppColors.statusAbsent(isDark)),
@@ -500,13 +511,16 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                         final targetRuleId = slot.ruleId ?? slot.id;
                         if (targetRuleId > 0) {
                           await ref
-                              .read(weeklyScheduleRuleListControllerProvider
-                                  .notifier)
+                              .read(
+                                weeklyScheduleRuleListControllerProvider
+                                    .notifier,
+                              )
                               .removeRule(targetRuleId);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('Class slot deleted.')),
+                                content: Text('Class slot deleted.'),
+                              ),
                             );
                           }
                         }
@@ -546,8 +560,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
             room: slot.room,
             targetStatus: targetStatus,
             type: slot.status.contains('EXTRA')
-                ? OccurrenceType.EXTRA_CLASS
-                : OccurrenceType.REGULAR_CLASS,
+                ? OccurrenceType.extraClass
+                : OccurrenceType.regularClass,
           );
 
       if (context.mounted) {
@@ -575,7 +589,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
     required DateTime date,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    ScheduleExceptionType selectedType = ScheduleExceptionType.CANCELLED_CLASS;
+    ScheduleExceptionType selectedType = ScheduleExceptionType.cancelledClass;
     final titleController =
         TextEditingController(text: '${subject.code} Class Cancelled');
     final descController = TextEditingController();
@@ -604,15 +618,15 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                     ),
                     items: const [
                       DropdownMenuItem(
-                        value: ScheduleExceptionType.CANCELLED_CLASS,
+                        value: ScheduleExceptionType.cancelledClass,
                         child: Text('Cancel Class for this Date'),
                       ),
                       DropdownMenuItem(
-                        value: ScheduleExceptionType.EXAM,
+                        value: ScheduleExceptionType.exam,
                         child: Text('Exam for this Date'),
                       ),
                       DropdownMenuItem(
-                        value: ScheduleExceptionType.HOLIDAY,
+                        value: ScheduleExceptionType.holiday,
                         child: Text('Holiday (Remove all classes)'),
                       ),
                     ],
@@ -620,12 +634,12 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                       if (val != null) {
                         setState(() {
                           selectedType = val;
-                          if (val == ScheduleExceptionType.CANCELLED_CLASS) {
+                          if (val == ScheduleExceptionType.cancelledClass) {
                             titleController.text =
                                 '${subject.code} Class Cancelled';
-                          } else if (val == ScheduleExceptionType.EXAM) {
+                          } else if (val == ScheduleExceptionType.exam) {
                             titleController.text = '${subject.code} Exam';
-                          } else if (val == ScheduleExceptionType.HOLIDAY) {
+                          } else if (val == ScheduleExceptionType.holiday) {
                             titleController.text = 'Holiday';
                           }
                         });
@@ -663,7 +677,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                         .addException(
                           date: normalizeUtcDate(date),
                           subjectId:
-                              selectedType == ScheduleExceptionType.HOLIDAY
+                              selectedType == ScheduleExceptionType.holiday
                                   ? null
                                   : subject.id,
                           type: selectedType,
@@ -687,8 +701,10 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                     foregroundColor:
                         isDark ? AppColors.gray900 : AppColors.gray100,
                   ),
-                  child: const Text('Save Exception',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Save Exception',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             );
@@ -723,8 +739,10 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                 backgroundColor: isDark ? AppColors.primary : AppColors.gray900,
                 foregroundColor: isDark ? AppColors.gray900 : AppColors.gray100,
               ),
-              child: const Text('Register Subject',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Register Subject',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         );

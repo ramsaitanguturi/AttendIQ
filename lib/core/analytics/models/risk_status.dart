@@ -1,5 +1,5 @@
 enum RiskStatus {
-  SAFE,
-  WARNING,
-  CRITICAL,
+  safe,
+  warning,
+  critical,
 }

@@ -119,48 +119,56 @@ class BackupValidator {
   };
 
   static final Set<String> _validSubjectTypes =
-      SubjectType.values.map((e) => e.name.toUpperCase()).toSet();
+      SubjectType.values.map((e) => e.toShortString().toUpperCase()).toSet();
 
-  static final Set<String> _validAttendanceStatuses =
-      AttendanceStatus.values.map((e) => e.name.toUpperCase()).toSet();
+  static final Set<String> _validAttendanceStatuses = AttendanceStatus.values
+      .map((e) => e.toShortString().toUpperCase())
+      .toSet();
 
   static final Set<String> _validOccurrenceTypes =
-      OccurrenceType.values.map((e) => e.name.toUpperCase()).toSet();
+      OccurrenceType.values.map((e) => e.toShortString().toUpperCase()).toSet();
 
-  static final Set<String> _validOccurrenceStatuses =
-      OccurrenceStatus.values.map((e) => e.name.toUpperCase()).toSet();
+  static final Set<String> _validOccurrenceStatuses = OccurrenceStatus.values
+      .map((e) => e.toShortString().toUpperCase())
+      .toSet();
 
-  static final Set<String> _validOccurrenceCreatedFrom =
-      OccurrenceCreatedFrom.values.map((e) => e.name.toUpperCase()).toSet();
+  static final Set<String> _validOccurrenceCreatedFrom = OccurrenceCreatedFrom
+      .values
+      .map((e) => e.toShortString().toUpperCase())
+      .toSet();
 
-  static final Set<String> _validScheduleExceptionTypes =
-      ScheduleExceptionType.values.map((e) => e.name.toUpperCase()).toSet();
+  static final Set<String> _validScheduleExceptionTypes = ScheduleExceptionType
+      .values
+      .map((e) => e.toShortString().toUpperCase())
+      .toSet();
 
-  static final Set<String> _validAcademicEventTypes =
-      AcademicEventType.values.map((e) => e.name.toUpperCase()).toSet();
+  static final Set<String> _validAcademicEventTypes = AcademicEventType.values
+      .map((e) => e.toShortString().toUpperCase())
+      .toSet();
 
   static final Set<String> _validTaskTypes =
-      TaskType.values.map((e) => e.name.toUpperCase()).toSet();
+      TaskType.values.map((e) => e.toShortString().toUpperCase()).toSet();
 
   static final Set<String> _validTaskPriorities =
-      TaskPriority.values.map((e) => e.name.toUpperCase()).toSet();
+      TaskPriority.values.map((e) => e.toShortString().toUpperCase()).toSet();
 
   static final Set<String> _validTaskStatuses =
-      TaskStatus.values.map((e) => e.name.toUpperCase()).toSet();
+      TaskStatus.values.map((e) => e.toShortString().toUpperCase()).toSet();
 
   static final Set<String> _validTaskReminders =
-      TaskReminder.values.map((e) => e.name.toUpperCase()).toSet();
+      TaskReminder.values.map((e) => e.toShortString().toUpperCase()).toSet();
 
-  static final Set<String> _validNotificationTypes =
-      NotificationType.values.map((e) => e.name.toUpperCase()).toSet();
+  static final Set<String> _validNotificationTypes = NotificationType.values
+      .map((e) => e.toShortString().toUpperCase())
+      .toSet();
 
   static final Set<String> _validLegacyEventTypes = <String>{
-    ...EventType.values.map((e) => e.name.toUpperCase()),
-    ...OccurrenceType.values.map((e) => e.name.toUpperCase()),
+    ...EventType.values.map((e) => e.toShortString().toUpperCase()),
+    ...OccurrenceType.values.map((e) => e.toShortString().toUpperCase()),
   };
 
   static final Set<String> _validLegacyEventStatuses = <String>{
-    ...EventStatus.values.map((e) => e.name.toUpperCase()),
+    ...EventStatus.values.map((e) => e.toShortString().toUpperCase()),
     'UPCOMING',
     'EXTRA_PRESENT',
     'EXTRA_ABSENT',

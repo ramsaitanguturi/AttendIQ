@@ -48,7 +48,8 @@ class LocalAdvisorService implements AIProvider {
           if (percentage < target || safeBunks <= 0) {
             riskyTomorrow.add(subjectName);
             actions.add(
-                'Attend $subjectName (Current: ${percentage.toStringAsFixed(1)}% < Target: ${target.toStringAsFixed(0)}%)');
+              'Attend $subjectName (Current: ${percentage.toStringAsFixed(1)}% < Target: ${target.toStringAsFixed(0)}%)',
+            );
           } else {
             safeTomorrow.add('$subjectName ($safeBunks skips left)');
           }
@@ -92,7 +93,8 @@ class LocalAdvisorService implements AIProvider {
 
         if (newPercentage < target) {
           warnings.add(
-              'In $subjectName, attendance drops from ${stat['currentPercentage']?.toStringAsFixed(1)}% to ${newPercentage.toStringAsFixed(1)}%, which is below your target of ${target.toStringAsFixed(0)}%.');
+            'In $subjectName, attendance drops from ${stat['currentPercentage']?.toStringAsFixed(1)}% to ${newPercentage.toStringAsFixed(1)}%, which is below your target of ${target.toStringAsFixed(0)}%.',
+          );
           related.add(subjectName);
         }
       }
@@ -112,7 +114,7 @@ class LocalAdvisorService implements AIProvider {
           confidence: 1.0,
           relatedSubjects: [],
           actionItems: [
-            'You can safely miss classes if needed, but monitor your margin.'
+            'You can safely miss classes if needed, but monitor your margin.',
           ],
         );
       }
@@ -145,14 +147,16 @@ class LocalAdvisorService implements AIProvider {
         final name = c['name'] as String;
         related.add(name);
         actions.add(
-            'Critical: $name is at ${c['currentPercentage']?.toStringAsFixed(1)}% (needs ${c['mustAttendConsecutive']} consecutive classes)');
+          'Critical: $name is at ${c['currentPercentage']?.toStringAsFixed(1)}% (needs ${c['mustAttendConsecutive']} consecutive classes)',
+        );
       }
 
       for (final w in warningList) {
         final name = w['name'] as String;
         related.add(name);
         actions.add(
-            'Warning: $name is at ${w['currentPercentage']?.toStringAsFixed(1)}% (only ${w['safeBunks']} safe skips remaining)');
+          'Warning: $name is at ${w['currentPercentage']?.toStringAsFixed(1)}% (only ${w['safeBunks']} safe skips remaining)',
+        );
       }
 
       return AIResponse(
@@ -178,7 +182,8 @@ class LocalAdvisorService implements AIProvider {
 
         if (must > 0) {
           items.add(
-              'Attend $must consecutive classes in $name to restore attendance to ${target.toStringAsFixed(0)}%.');
+            'Attend $must consecutive classes in $name to restore attendance to ${target.toStringAsFixed(0)}%.',
+          );
           related.add(name);
         }
       }
@@ -238,7 +243,7 @@ class LocalAdvisorService implements AIProvider {
             confidence: 1.0,
             relatedSubjects: [subjectName],
             actionItems: [
-              'Skipping today will drop your attendance to critical levels.'
+              'Skipping today will drop your attendance to critical levels.',
             ],
           );
         } else {
@@ -248,7 +253,7 @@ class LocalAdvisorService implements AIProvider {
             confidence: 1.0,
             relatedSubjects: [subjectName],
             actionItems: [
-              'Skipping will drop your attendance slightly, but it will remain above target.'
+              'Skipping will drop your attendance slightly, but it will remain above target.',
             ],
           );
         }
@@ -273,7 +278,8 @@ class LocalAdvisorService implements AIProvider {
           if (percentage < target || safeBunks <= 0) {
             risky.add(subjectName);
             actions.add(
-                'Must attend: $subjectName (Current: ${percentage.toStringAsFixed(1)}% < Target: ${target.toStringAsFixed(0)}%)');
+              'Must attend: $subjectName (Current: ${percentage.toStringAsFixed(1)}% < Target: ${target.toStringAsFixed(0)}%)',
+            );
           } else {
             actions.add('Optional: $subjectName (Safe skips: $safeBunks)');
           }
@@ -320,7 +326,8 @@ class LocalAdvisorService implements AIProvider {
 
       if (percentage < target) {
         actionItems.add(
-            'Must attend $name to reach ${target.toStringAsFixed(0)}%. You need $must consecutive classes.');
+          'Must attend $name to reach ${target.toStringAsFixed(0)}%. You need $must consecutive classes.',
+        );
         related.add(name);
       }
     }
@@ -333,7 +340,8 @@ class LocalAdvisorService implements AIProvider {
 
       if (percentage >= target && (percentage - target <= 2.5)) {
         actionItems.add(
-            'Alert: $name is close to falling below target. You can only skip 0 classes.');
+          'Alert: $name is close to falling below target. You can only skip 0 classes.',
+        );
         related.add(name);
       }
     }

@@ -51,7 +51,7 @@ class HistoricalAttendanceService {
     required String title,
     String? room,
     required OccurrenceStatus targetStatus,
-    OccurrenceType type = OccurrenceType.REGULAR_CLASS,
+    OccurrenceType type = OccurrenceType.regularClass,
   }) async {
     final dateUtc = normalizeUtcDate(date);
     DailyScheduleOccurrence? occurrence;
@@ -99,8 +99,8 @@ class HistoricalAttendanceService {
         type: type,
         status: targetStatus,
         createdFrom: ruleId != null
-            ? OccurrenceCreatedFrom.WEEKLY_RULE
-            : OccurrenceCreatedFrom.MANUAL,
+            ? OccurrenceCreatedFrom.weeklyRule
+            : OccurrenceCreatedFrom.manual,
         createdAt: DateTime.now().toUtc(),
         updatedAt: DateTime.now().toUtc(),
         isDirty: false,
@@ -122,10 +122,10 @@ class HistoricalAttendanceService {
           .getAttendanceForOccurrenceAnyStatus(occId);
 
       switch (targetStatus) {
-        case OccurrenceStatus.PRESENT:
-          final recStatus = occurrence.type == OccurrenceType.EXTRA_CLASS
-              ? AttendanceStatus.EXTRA_PRESENT
-              : AttendanceStatus.PRESENT;
+        case OccurrenceStatus.present:
+          final recStatus = occurrence.type == OccurrenceType.extraClass
+              ? AttendanceStatus.extraPresent
+              : AttendanceStatus.present;
           final record = AttendanceRecord(
             id: existingRecord?.id,
             serverId: existingRecord?.serverId,
@@ -141,10 +141,10 @@ class HistoricalAttendanceService {
           await _attendanceRepository.saveAttendanceRecord(record);
           break;
 
-        case OccurrenceStatus.ABSENT:
-          final recStatus = occurrence.type == OccurrenceType.EXTRA_CLASS
-              ? AttendanceStatus.EXTRA_ABSENT
-              : AttendanceStatus.ABSENT;
+        case OccurrenceStatus.absent:
+          final recStatus = occurrence.type == OccurrenceType.extraClass
+              ? AttendanceStatus.extraAbsent
+              : AttendanceStatus.absent;
           final record = AttendanceRecord(
             id: existingRecord?.id,
             serverId: existingRecord?.serverId,
@@ -160,14 +160,14 @@ class HistoricalAttendanceService {
           await _attendanceRepository.saveAttendanceRecord(record);
           break;
 
-        case OccurrenceStatus.LATE:
+        case OccurrenceStatus.late:
           final record = AttendanceRecord(
             id: existingRecord?.id,
             serverId: existingRecord?.serverId,
             occurrenceId: occId,
             eventId: occId,
             subjectId: occurrence.subjectId!,
-            status: AttendanceStatus.LATE,
+            status: AttendanceStatus.late,
             markedAt: occurrence.date,
             updatedAt: DateTime.now().toUtc(),
             isDirty: false,
@@ -176,8 +176,8 @@ class HistoricalAttendanceService {
           await _attendanceRepository.saveAttendanceRecord(record);
           break;
 
-        case OccurrenceStatus.CANCELLED:
-        case OccurrenceStatus.UPCOMING:
+        case OccurrenceStatus.cancelled:
+        case OccurrenceStatus.upcoming:
           // Invalidate/delete existing attendance record so it no longer counts
           if (existingRecord?.id != null) {
             await _attendanceRepository

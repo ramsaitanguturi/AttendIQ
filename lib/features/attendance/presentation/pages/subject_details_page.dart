@@ -48,7 +48,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                   context,
                   initialSubjectId: stats.subject.id,
                   initialSubject: stats.subject,
-                  initialStatus: AttendanceStatus.EXTRA_PRESENT,
+                  initialStatus: AttendanceStatus.extraPresent,
                   lockSubject: true,
                 ),
               );
@@ -77,7 +77,12 @@ class SubjectDetailsPage extends ConsumerWidget {
                 children: [
                   // Hero Card
                   _buildHeroCard(
-                      context, stats, subjectColor, isDark, isGlassy),
+                    context,
+                    stats,
+                    subjectColor,
+                    isDark,
+                    isGlassy,
+                  ),
                   const SizedBox(height: 20),
 
                   // Status and Recommendation Alert
@@ -190,8 +195,14 @@ class SubjectDetailsPage extends ConsumerWidget {
                             const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final occurrence = occurrences[index];
-                          return _buildOccurrenceItem(context, ref, occurrence,
-                              subjectColor, isDark, isGlassy);
+                          return _buildOccurrenceItem(
+                            context,
+                            ref,
+                            occurrence,
+                            subjectColor,
+                            isDark,
+                            isGlassy,
+                          );
                         },
                       );
                     },
@@ -229,7 +240,7 @@ class SubjectDetailsPage extends ConsumerWidget {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${weekdays[date.weekday - 1]}, ${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -356,7 +367,10 @@ class SubjectDetailsPage extends ConsumerWidget {
   }
 
   Widget _buildRecommendationAlert(
-      SubjectAttendanceStats stats, bool isDark, bool isGlassy) {
+    SubjectAttendanceStats stats,
+    bool isDark,
+    bool isGlassy,
+  ) {
     Color alertBg;
     Color alertBorder;
     Color alertText;
@@ -364,19 +378,19 @@ class SubjectDetailsPage extends ConsumerWidget {
 
     if (isDark) {
       switch (stats.bunkAnalysis.status) {
-        case BunkStatus.CRITICAL:
+        case BunkStatus.critical:
           alertBg = AppColors.gray700.withOpacity(0.3);
           alertBorder = AppColors.gray400;
           alertText = AppColors.gray100;
           alertIcon = Icons.error_outline;
           break;
-        case BunkStatus.WARNING:
+        case BunkStatus.warning:
           alertBg = AppColors.gray700.withOpacity(0.25);
           alertBorder = AppColors.gray400;
           alertText = AppColors.gray200;
           alertIcon = Icons.warning_amber_rounded;
           break;
-        case BunkStatus.NORMAL:
+        case BunkStatus.normal:
           alertBg = isGlassy
               ? AppColors.darkSurfaceGlass
               : AppColors.gray100.withOpacity(0.08);
@@ -389,19 +403,19 @@ class SubjectDetailsPage extends ConsumerWidget {
       }
     } else {
       switch (stats.bunkAnalysis.status) {
-        case BunkStatus.CRITICAL:
+        case BunkStatus.critical:
           alertBg = AppColors.gray200;
           alertBorder = AppColors.gray700;
           alertText = AppColors.gray900;
           alertIcon = Icons.error_outline;
           break;
-        case BunkStatus.WARNING:
+        case BunkStatus.warning:
           alertBg = AppColors.gray200;
           alertBorder = AppColors.gray700;
           alertText = AppColors.gray800;
           alertIcon = Icons.warning_amber_rounded;
           break;
-        case BunkStatus.NORMAL:
+        case BunkStatus.normal:
           alertBg =
               isGlassy ? AppColors.surfaceGlass(isDark) : AppColors.gray200;
           alertBorder =
@@ -487,11 +501,13 @@ class SubjectDetailsPage extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(icon,
-                  size: 16,
-                  color: isDark
-                      ? AppColors.darkIconSecondary
-                      : AppColors.lightIconSecondary),
+              Icon(
+                icon,
+                size: 16,
+                color: isDark
+                    ? AppColors.darkIconSecondary
+                    : AppColors.lightIconSecondary,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
@@ -622,29 +638,29 @@ class SubjectDetailsPage extends ConsumerWidget {
     IconData statusIcon = Icons.help_outline;
 
     switch (occurrence.status) {
-      case OccurrenceStatus.PRESENT:
+      case OccurrenceStatus.present:
         statusColor = AppColors.statusPresent(isDark);
         statusIcon = Icons.check_circle_outline;
         break;
-      case OccurrenceStatus.ABSENT:
+      case OccurrenceStatus.absent:
         statusColor = AppColors.statusAbsent(isDark);
         statusIcon = Icons.cancel_outlined;
         break;
-      case OccurrenceStatus.CANCELLED:
+      case OccurrenceStatus.cancelled:
         statusColor = AppColors.statusCancelledAdaptive(isDark);
         statusIcon = Icons.block_outlined;
         break;
-      case OccurrenceStatus.UPCOMING:
+      case OccurrenceStatus.upcoming:
         statusColor = isDark ? AppColors.gray400 : AppColors.gray700;
         statusIcon = Icons.radio_button_unchecked;
         break;
-      case OccurrenceStatus.LATE:
+      case OccurrenceStatus.late:
         statusColor = AppColors.statusLate(isDark);
         statusIcon = Icons.access_time_outlined;
         break;
     }
 
-    final subtitleText = occurrence.type == OccurrenceType.EXTRA_CLASS
+    final subtitleText = occurrence.type == OccurrenceType.extraClass
         ? '${occurrence.startTime} - ${occurrence.endTime} • Extra Class'
         : '${occurrence.startTime} - ${occurrence.endTime}';
 
@@ -716,8 +732,11 @@ class SubjectDetailsPage extends ConsumerWidget {
                 value: 'present',
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_outline,
-                        color: AppColors.statusPresent(isDark), size: 20),
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.statusPresent(isDark),
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Mark Present',
@@ -731,8 +750,11 @@ class SubjectDetailsPage extends ConsumerWidget {
                   value: 'late',
                   child: Row(
                     children: [
-                      Icon(Icons.access_time_outlined,
-                          color: AppColors.statusLate(isDark), size: 20),
+                      Icon(
+                        Icons.access_time_outlined,
+                        color: AppColors.statusLate(isDark),
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Mark Late',
@@ -746,8 +768,11 @@ class SubjectDetailsPage extends ConsumerWidget {
                 value: 'absent',
                 child: Row(
                   children: [
-                    Icon(Icons.cancel_outlined,
-                        color: AppColors.statusAbsent(isDark), size: 20),
+                    Icon(
+                      Icons.cancel_outlined,
+                      color: AppColors.statusAbsent(isDark),
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Mark Absent',
@@ -760,9 +785,11 @@ class SubjectDetailsPage extends ConsumerWidget {
                 value: 'cancelled',
                 child: Row(
                   children: [
-                    Icon(Icons.block_outlined,
-                        color: AppColors.statusCancelledAdaptive(isDark),
-                        size: 20),
+                    Icon(
+                      Icons.block_outlined,
+                      color: AppColors.statusCancelledAdaptive(isDark),
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Mark Cancelled',

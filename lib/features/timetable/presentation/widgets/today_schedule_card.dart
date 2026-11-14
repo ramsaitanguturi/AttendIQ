@@ -113,8 +113,11 @@ class TodayScheduleCard extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.beach_access,
-                        size: 40, color: AppColors.gray300),
+                    const Icon(
+                      Icons.beach_access,
+                      size: 40,
+                      color: AppColors.gray300,
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -123,7 +126,9 @@ class TodayScheduleCard extends ConsumerWidget {
                           Text(
                             state.holidayTitle ?? 'College Holiday',
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 17),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -172,20 +177,23 @@ class TodayScheduleCard extends ConsumerWidget {
                       ),
                 child: Column(
                   children: [
-                    Icon(Icons.event_available,
-                        size: 42,
-                        color: isDark
-                            ? AppColors.darkIconPrimary
-                            : AppColors.lightTextSecondary),
+                    Icon(
+                      Icons.event_available,
+                      size: 42,
+                      color: isDark
+                          ? AppColors.darkIconPrimary
+                          : AppColors.lightTextSecondary,
+                    ),
                     const SizedBox(height: 10),
                     Text(
                       'No classes scheduled today.',
                       style: TextStyle(
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15),
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                      ),
                     ),
                   ],
                 ),
@@ -231,31 +239,34 @@ class TodayScheduleCard extends ConsumerWidget {
                 Text(
                   'Error loading today schedule',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                      fontSize: 14),
+                    fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   err.toString(),
                   style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary),
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                  ),
                 ),
                 if (kDebugMode) ...[
                   const SizedBox(height: 8),
                   Text(
                     stackTrace.toString(),
                     style: TextStyle(
-                        fontSize: 10,
-                        fontFamily: 'monospace',
-                        color: isDark
-                            ? AppColors.darkTextMuted
-                            : AppColors.lightTextSecondary),
+                      fontSize: 10,
+                      fontFamily: 'monospace',
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.lightTextSecondary,
+                    ),
                   ),
                 ],
               ],
@@ -419,25 +430,25 @@ class _OccurrenceCard extends ConsumerWidget {
 
     if (isDark) {
       switch (type) {
-        case OccurrenceType.REGULAR_CLASS:
+        case OccurrenceType.regularClass:
           badgeColor = AppColors.gray100;
           badgeBg = AppColors.gray100.withOpacity(0.12);
           badgeBorder = AppColors.gray300;
           label = 'Regular';
           break;
-        case OccurrenceType.EXTRA_CLASS:
+        case OccurrenceType.extraClass:
           badgeColor = AppColors.gray200;
           badgeBg = AppColors.gray300.withOpacity(0.12);
           badgeBorder = AppColors.gray400;
           label = 'Extra Class';
           break;
-        case OccurrenceType.EXAM:
+        case OccurrenceType.exam:
           badgeColor = AppColors.gray100;
           badgeBg = AppColors.gray700.withOpacity(0.5);
           badgeBorder = AppColors.gray400;
           label = 'Exam';
           break;
-        case OccurrenceType.EVENT:
+        case OccurrenceType.event:
           badgeColor = AppColors.gray200;
           badgeBg = AppColors.gray700.withOpacity(0.4);
           badgeBorder = AppColors.gray400;
@@ -446,25 +457,25 @@ class _OccurrenceCard extends ConsumerWidget {
       }
     } else {
       switch (type) {
-        case OccurrenceType.REGULAR_CLASS:
+        case OccurrenceType.regularClass:
           badgeColor = AppColors.gray900;
           badgeBg = AppColors.gray900.withOpacity(0.08);
           badgeBorder = AppColors.gray700;
           label = 'Regular';
           break;
-        case OccurrenceType.EXTRA_CLASS:
+        case OccurrenceType.extraClass:
           badgeColor = AppColors.gray800;
           badgeBg = AppColors.gray800.withOpacity(0.08);
           badgeBorder = AppColors.gray700;
           label = 'Extra Class';
           break;
-        case OccurrenceType.EXAM:
+        case OccurrenceType.exam:
           badgeColor = AppColors.gray900;
           badgeBg = AppColors.gray200;
           badgeBorder = AppColors.gray700;
           label = 'Exam';
           break;
-        case OccurrenceType.EVENT:
+        case OccurrenceType.event:
           badgeColor = AppColors.gray800;
           badgeBg = AppColors.gray200;
           badgeBorder = AppColors.gray700;
@@ -507,7 +518,7 @@ class _OccurrenceCard extends ConsumerWidget {
             label: 'Present',
             color: AppColors.statusPresent(isDark),
             icon: Icons.check_circle_outline,
-            isSelected: currentStatus == OccurrenceStatus.PRESENT,
+            isSelected: currentStatus == OccurrenceStatus.present,
             onPressed: () => ref
                 .read(attendanceControllerProvider.notifier)
                 .markOccurrencePresent(occurrence),
@@ -520,7 +531,7 @@ class _OccurrenceCard extends ConsumerWidget {
               label: 'Late',
               color: AppColors.statusLate(isDark),
               icon: Icons.access_time,
-              isSelected: currentStatus == OccurrenceStatus.LATE,
+              isSelected: currentStatus == OccurrenceStatus.late,
               onPressed: () => ref
                   .read(attendanceControllerProvider.notifier)
                   .markOccurrenceLate(occurrence),
@@ -533,7 +544,7 @@ class _OccurrenceCard extends ConsumerWidget {
             label: 'Absent',
             color: AppColors.statusAbsent(isDark),
             icon: Icons.cancel_outlined,
-            isSelected: currentStatus == OccurrenceStatus.ABSENT,
+            isSelected: currentStatus == OccurrenceStatus.absent,
             onPressed: () => ref
                 .read(attendanceControllerProvider.notifier)
                 .markOccurrenceAbsent(occurrence),
@@ -545,7 +556,7 @@ class _OccurrenceCard extends ConsumerWidget {
             label: 'Cancelled',
             color: AppColors.statusCancelledAdaptive(isDark),
             icon: Icons.remove_circle_outline,
-            isSelected: currentStatus == OccurrenceStatus.CANCELLED,
+            isSelected: currentStatus == OccurrenceStatus.cancelled,
             onPressed: () => ref
                 .read(attendanceControllerProvider.notifier)
                 .markOccurrenceCancelled(occurrence),

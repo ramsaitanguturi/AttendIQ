@@ -31,7 +31,9 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     return occurrences.where((o) {
       final dateStripped = DateTime.utc(o.date.year, o.date.month, o.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
@@ -43,7 +45,9 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     return scheduleExceptions.where((e) {
       final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
@@ -52,7 +56,9 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<AcademicEventLocal>> getAcademicEvents(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     return academicEvents.where((e) {
       final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
@@ -64,7 +70,8 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
-      int subjectId) async {
+    int subjectId,
+  ) async {
     return attendanceRecords.where((r) => r.subjectId == subjectId).toList();
   }
 
@@ -82,7 +89,9 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<NotificationItem>> getFutureNotificationsByType(
-      String type, DateTime now) async {
+    String type,
+    DateTime now,
+  ) async {
     return notifications
         .where((n) => n.type == type && n.scheduledTime.isAfter(now))
         .toList();
@@ -90,7 +99,9 @@ class MockNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<NotificationItem?> getLastNotification(
-      String type, String relatedId) async {
+    String type,
+    String relatedId,
+  ) async {
     final list = notifications
         .where((n) => n.type == type && n.relatedId == relatedId)
         .toList();
@@ -284,7 +295,7 @@ void main() {
       expect(scheduledNotifs.length, 4);
 
       final types = scheduledNotifs.map((n) => n.type).toSet();
-      expect(types, {NotificationType.CLASS_REMINDER.toShortString()});
+      expect(types, {NotificationType.classReminder.toShortString()});
 
       // Verify mock service schedules them
       expect(mockService.scheduled.length, 4);
@@ -292,7 +303,8 @@ void main() {
       // Verify body text includes room info and namespaced slotKey relatedId
       final expectedKey1 = NotificationRelatedKeys.forSlotKey(occ1.slotKey!);
       final testReminder = mockService.scheduled.firstWhere(
-          (n) => n.relatedId == expectedKey1 && n.body.contains('Room 302'));
+        (n) => n.relatedId == expectedKey1 && n.body.contains('Room 302'),
+      );
       expect(testReminder, isNotNull);
 
       // Try running scheduler again: should not schedule duplicates or double-register
@@ -364,8 +376,10 @@ void main() {
       // Since rate is 50% (target 75%), a LOW_ATTENDANCE_ALERT should be triggered
       final warnings = mockDb.notifications;
       expect(warnings.length, 1);
-      expect(warnings.first.type,
-          NotificationType.LOW_ATTENDANCE_ALERT.toShortString());
+      expect(
+        warnings.first.type,
+        NotificationType.lowAttendanceAlert.toShortString(),
+      );
       expect(warnings.first.title, contains('Low Attendance Alert'));
       expect(warnings.first.body, contains('Database Management Systems'));
 
@@ -440,7 +454,8 @@ void main() {
 
       final reports = mockDb.notifications
           .where(
-              (n) => n.type == NotificationType.WEEKLY_REPORT.toShortString())
+            (n) => n.type == NotificationType.weeklyReport.toShortString(),
+          )
           .toList();
 
       expect(reports.length, 1);

@@ -69,7 +69,7 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
       startDate: startDate,
       dueDate: dueDate,
       priority: priority,
-      status: TaskStatus.PENDING,
+      status: TaskStatus.pending,
       reminder: reminder,
       createdAt: now,
       updatedAt: now,
@@ -98,8 +98,10 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
         subjectName = sub?.name;
       }
       if (savedTask != null) {
-        await scheduler.scheduleTaskNotification(savedTask,
-            subjectName: subjectName);
+        await scheduler.scheduleTaskNotification(
+          savedTask,
+          subjectName: subjectName,
+        );
       }
 
       updatedList.sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -135,8 +137,10 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
             subjects.where((s) => s.id == updatedTask.subjectId).firstOrNull;
         subjectName = sub?.name;
       }
-      await scheduler.scheduleTaskNotification(updatedTask,
-          subjectName: subjectName);
+      await scheduler.scheduleTaskNotification(
+        updatedTask,
+        subjectName: subjectName,
+      );
 
       final list = await repository.getAllTasks();
       list.sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -153,9 +157,9 @@ class TaskListController extends AsyncNotifier<List<AcademicTask>> {
     if (index == -1) return;
 
     final existingTask = currentTasks[index];
-    final newStatus = existingTask.status == TaskStatus.COMPLETED
-        ? TaskStatus.PENDING
-        : TaskStatus.COMPLETED;
+    final newStatus = existingTask.status == TaskStatus.completed
+        ? TaskStatus.pending
+        : TaskStatus.completed;
 
     final updatedTask = existingTask.copyWith(
       status: newStatus,
@@ -213,7 +217,7 @@ final upcomingTasksProvider = Provider<List<AcademicTask>>((ref) {
   final todayClean = DateTime(now.year, now.month, now.day);
 
   return tasks.where((t) {
-    if (t.status == TaskStatus.COMPLETED) return false;
+    if (t.status == TaskStatus.completed) return false;
     final dueClean = DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day);
     return dueClean.isAfter(todayClean) ||
         (dueClean.isAtSameMomentAs(todayClean) && !t.dueDate.isBefore(now));
@@ -225,14 +229,14 @@ final overdueTasksProvider = Provider<List<AcademicTask>>((ref) {
   final now = DateTime.now();
 
   return tasks.where((t) {
-    if (t.status == TaskStatus.COMPLETED) return false;
+    if (t.status == TaskStatus.completed) return false;
     return t.dueDate.isBefore(now);
   }).toList();
 });
 
 final completedTasksProvider = Provider<List<AcademicTask>>((ref) {
   final tasks = ref.watch(allTasksProvider);
-  return tasks.where((t) => t.status == TaskStatus.COMPLETED).toList();
+  return tasks.where((t) => t.status == TaskStatus.completed).toList();
 });
 
 final dashboardUpcomingTasksProvider = Provider<List<AcademicTask>>((ref) {

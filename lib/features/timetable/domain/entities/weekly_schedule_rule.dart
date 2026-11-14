@@ -29,7 +29,7 @@ class WeeklyScheduleRule {
     required this.endTime,
     this.room,
     this.faculty,
-    this.type = SubjectType.THEORY,
+    this.type = SubjectType.theory,
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,

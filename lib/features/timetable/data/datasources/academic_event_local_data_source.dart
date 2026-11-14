@@ -4,7 +4,9 @@ import '../models/academic_event_local.dart';
 abstract class AcademicEventLocalDataSource {
   Future<List<AcademicEventLocal>> getEventsForDate(DateTime date);
   Future<List<AcademicEventLocal>> getEventsForRange(
-      DateTime startDate, DateTime endDate);
+    DateTime startDate,
+    DateTime endDate,
+  );
   Future<List<AcademicEventLocal>> getAllEvents();
   Future<AcademicEventLocal?> getEventById(int id);
   Future<void> saveEvent(AcademicEventLocal event);
@@ -33,7 +35,9 @@ class AcademicEventLocalDataSourceImpl implements AcademicEventLocalDataSource {
 
   @override
   Future<List<AcademicEventLocal>> getEventsForRange(
-      DateTime startDate, DateTime endDate) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     final start = _cleanDate(startDate);
     final end = _cleanDate(endDate);
 

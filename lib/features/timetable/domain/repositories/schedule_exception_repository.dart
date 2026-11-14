@@ -3,7 +3,9 @@ import '../entities/schedule_exception.dart';
 abstract class ScheduleExceptionRepository {
   Future<List<ScheduleException>> getExceptionsForDate(DateTime date);
   Future<List<ScheduleException>> getExceptionsForRange(
-      DateTime startDate, DateTime endDate);
+    DateTime startDate,
+    DateTime endDate,
+  );
   Future<List<ScheduleException>> getAllExceptions();
   Future<ScheduleException?> getExceptionById(int id);
   Future<void> saveException(ScheduleException exception);

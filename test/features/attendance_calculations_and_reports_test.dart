@@ -41,8 +41,10 @@ class _FakeSubjectRepository extends Fake implements SubjectRepository {
   _FakeSubjectRepository(this.subjects);
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-      {bool includeDeleted = false}) async {
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async {
     return includeDeleted
         ? subjects.where((s) => s.semesterId == semesterId).toList()
         : subjects
@@ -125,7 +127,7 @@ void main() {
           ScheduleException(
             id: 1,
             date: DateTime.utc(2026, 11, 16),
-            type: ScheduleExceptionType.HOLIDAY,
+            type: ScheduleExceptionType.holiday,
             title: 'College Holiday',
             createdAt: DateTime.utc(2026, 11, 1),
             updatedAt: DateTime.utc(2026, 11, 1),
@@ -135,7 +137,7 @@ void main() {
             id: 2,
             date: DateTime.utc(2026, 11, 23),
             subjectId: 10,
-            type: ScheduleExceptionType.CANCELLED_CLASS,
+            type: ScheduleExceptionType.cancelledClass,
             title: 'Faculty Leave',
             createdAt: DateTime.utc(2026, 11, 1),
             updatedAt: DateTime.utc(2026, 11, 1),
@@ -151,13 +153,17 @@ void main() {
         var cur = currentNorm;
         while (!cur.isAfter(endNorm)) {
           if (activeRuleWeekdays.contains(cur.weekday)) {
-            final isHoliday = exceptions.any((e) =>
-                e.type == ScheduleExceptionType.HOLIDAY &&
-                DateTime.utc(e.date.year, e.date.month, e.date.day) == cur);
-            final isCancelled = exceptions.any((e) =>
-                e.type == ScheduleExceptionType.CANCELLED_CLASS &&
-                e.subjectId == 10 &&
-                DateTime.utc(e.date.year, e.date.month, e.date.day) == cur);
+            final isHoliday = exceptions.any(
+              (e) =>
+                  e.type == ScheduleExceptionType.holiday &&
+                  DateTime.utc(e.date.year, e.date.month, e.date.day) == cur,
+            );
+            final isCancelled = exceptions.any(
+              (e) =>
+                  e.type == ScheduleExceptionType.cancelledClass &&
+                  e.subjectId == 10 &&
+                  DateTime.utc(e.date.year, e.date.month, e.date.day) == cur,
+            );
 
             if (!isHoliday && !isCancelled) {
               remaining++;
@@ -196,7 +202,7 @@ void main() {
             subjectId: 10,
             occurrenceId: 101,
             markedAt: todayUtc,
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: todayUtc,
@@ -229,7 +235,7 @@ void main() {
             id: 1,
             subjectId: 10,
             markedAt: DateTime.utc(2026, 11, 10),
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 11, 10),
@@ -239,7 +245,7 @@ void main() {
             id: 2,
             subjectId: 10,
             markedAt: DateTime.utc(2026, 11, 5),
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 11, 5),
@@ -249,7 +255,7 @@ void main() {
             id: 3,
             subjectId: 10,
             markedAt: DateTime.utc(2026, 11, 1),
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             isDirty: false,
             isDeleted: true,
             updatedAt: DateTime.utc(2026, 11, 1),
@@ -259,7 +265,7 @@ void main() {
             id: 4,
             subjectId: 10,
             markedAt: DateTime.utc(2026, 9, 1),
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 1),
@@ -272,15 +278,16 @@ void main() {
           if (r.isDeleted) continue;
           final markedDate =
               DateTime.utc(r.markedAt.year, r.markedAt.month, r.markedAt.day);
-          if (markedDate.isBefore(thirtyDaysAgo) || markedDate.isAfter(now))
+          if (markedDate.isBefore(thirtyDaysAgo) || markedDate.isAfter(now)) {
             continue;
+          }
 
-          if (r.status == AttendanceStatus.PRESENT ||
-              r.status == AttendanceStatus.EXTRA_PRESENT) {
+          if (r.status == AttendanceStatus.present ||
+              r.status == AttendanceStatus.extraPresent) {
             present30++;
             total30++;
-          } else if (r.status == AttendanceStatus.ABSENT ||
-              r.status == AttendanceStatus.EXTRA_ABSENT) {
+          } else if (r.status == AttendanceStatus.absent ||
+              r.status == AttendanceStatus.extraAbsent) {
             total30++;
           }
         }
@@ -288,7 +295,9 @@ void main() {
         expect(total30, 2);
         expect(present30, 1);
         final rate = AttendanceCalculator.calculatePercentage(
-            attended: present30, total: total30);
+          attended: present30,
+          total: total30,
+        );
         expect(rate, 50.0);
       });
     });
@@ -307,7 +316,7 @@ void main() {
           credits: 3,
           attendanceTarget: 75.0,
           color: '#10B981',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           isDeleted: false,
           updatedAt: DateTime.utc(2026, 8, 1),
         );
@@ -319,7 +328,7 @@ void main() {
           credits: 3,
           attendanceTarget: 75.0,
           color: '#EF4444',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           isDeleted: true,
           updatedAt: DateTime.utc(2026, 9, 1),
         );
@@ -334,8 +343,10 @@ void main() {
         final withDeleted =
             await repo.getSubjectsBySemester(1, includeDeleted: true);
         expect(withDeleted.length, 2);
-        expect(withDeleted.map((s) => s.name),
-            containsAll(['Active Subject', 'Dropped Subject']));
+        expect(
+          withDeleted.map((s) => s.name),
+          containsAll(['Active Subject', 'Dropped Subject']),
+        );
       });
 
       test(
@@ -349,7 +360,7 @@ void main() {
           credits: 3,
           attendanceTarget: 75.0,
           color: '#10B981',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           isDeleted: false,
           updatedAt: DateTime.utc(2026, 8, 1),
         );
@@ -361,7 +372,7 @@ void main() {
           credits: 3,
           attendanceTarget: 75.0,
           color: '#EF4444',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           isDeleted: true,
           updatedAt: DateTime.utc(2026, 9, 1),
         );
@@ -372,7 +383,7 @@ void main() {
             id: 1,
             subjectId: 1,
             markedAt: DateTime.utc(2026, 9, 1),
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 1),
@@ -381,7 +392,7 @@ void main() {
             id: 2,
             subjectId: 1,
             markedAt: DateTime.utc(2026, 9, 8),
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 8),
@@ -391,7 +402,7 @@ void main() {
             id: 3,
             subjectId: 2,
             markedAt: DateTime.utc(2026, 9, 2),
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 2),
@@ -400,7 +411,7 @@ void main() {
             id: 4,
             subjectId: 2,
             markedAt: DateTime.utc(2026, 9, 9),
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 9),
@@ -409,21 +420,25 @@ void main() {
 
         final occurrences = [
           LoggedOccurrence(
-              date: DateTime.utc(2026, 9, 1),
-              startTime: '09:00',
-              status: AttendanceStatus.PRESENT),
+            date: DateTime.utc(2026, 9, 1),
+            startTime: '09:00',
+            status: AttendanceStatus.present,
+          ),
           LoggedOccurrence(
-              date: DateTime.utc(2026, 9, 2),
-              startTime: '09:00',
-              status: AttendanceStatus.PRESENT),
+            date: DateTime.utc(2026, 9, 2),
+            startTime: '09:00',
+            status: AttendanceStatus.present,
+          ),
           LoggedOccurrence(
-              date: DateTime.utc(2026, 9, 8),
-              startTime: '09:00',
-              status: AttendanceStatus.PRESENT),
+            date: DateTime.utc(2026, 9, 8),
+            startTime: '09:00',
+            status: AttendanceStatus.present,
+          ),
           LoggedOccurrence(
-              date: DateTime.utc(2026, 9, 9),
-              startTime: '09:00',
-              status: AttendanceStatus.ABSENT),
+            date: DateTime.utc(2026, 9, 9),
+            startTime: '09:00',
+            status: AttendanceStatus.absent,
+          ),
         ];
 
         // NEW-BUG-04: When subjects list includes deleted subject, overall analytics reflects all records
@@ -455,7 +470,7 @@ void main() {
           credits: 4,
           attendanceTarget: 75.0,
           color: '#10B981',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           isDeleted: false,
           updatedAt: DateTime.utc(2026, 8, 1),
         );
@@ -467,7 +482,7 @@ void main() {
           credits: 3,
           attendanceTarget: 75.0,
           color: '#6366F1',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           isDeleted: true,
           updatedAt: DateTime.utc(2026, 9, 1),
         );
@@ -479,7 +494,7 @@ void main() {
           credits: 2,
           attendanceTarget: 75.0,
           color: '#F59E0B',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           isDeleted: true,
           updatedAt: DateTime.utc(2026, 9, 1),
         );
@@ -489,7 +504,7 @@ void main() {
             id: 1,
             subjectId: 1,
             markedAt: DateTime.utc(2026, 9, 1),
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 1),
@@ -498,7 +513,7 @@ void main() {
             id: 2,
             subjectId: 2,
             markedAt: DateTime.utc(2026, 9, 2),
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 2),
@@ -507,7 +522,7 @@ void main() {
             id: 3,
             subjectId: 2,
             markedAt: DateTime.utc(2026, 9, 9),
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             isDirty: false,
             isDeleted: false,
             updatedAt: DateTime.utc(2026, 9, 9),
@@ -518,7 +533,8 @@ void main() {
           mockSemesterId: 1,
           semesterRepository: _FakeSemesterRepository(testSemester),
           subjectRepository: _FakeSubjectRepository(
-              [activeSubject, archivedWithRecords, archivedWithoutRecords]),
+            [activeSubject, archivedWithRecords, archivedWithoutRecords],
+          ),
           attendanceRepository: _FakeAttendanceRepository(records),
         );
 
@@ -543,9 +559,10 @@ void main() {
 
         // Ancient History has 0 records and was soft-deleted, so it should not appear
         expect(
-            report.subjectReports
-                .any((s) => s.subjectName.contains('Ancient History')),
-            isFalse);
+          report.subjectReports
+              .any((s) => s.subjectName.contains('Ancient History')),
+          isFalse,
+        );
       });
 
       test(
@@ -561,23 +578,23 @@ void main() {
           totalPresent: 24,
           totalAbsent: 6,
           subjectReports: [
-            SubjectReport(
+            const SubjectReport(
               subjectName: 'Mathematics',
               faculty: 'Prof. Gauss',
               percentage: 90.0,
               present: 18,
               absent: 2,
               totalClasses: 20,
-              riskStatus: RiskStatus.SAFE,
+              riskStatus: RiskStatus.safe,
             ),
-            SubjectReport(
+            const SubjectReport(
               subjectName: 'Electromagnetism (Archived)',
               faculty: 'Prof. Maxwell',
               percentage: 60.0,
               present: 6,
               absent: 4,
               totalClasses: 10,
-              riskStatus: RiskStatus.CRITICAL,
+              riskStatus: RiskStatus.critical,
             ),
           ],
         );

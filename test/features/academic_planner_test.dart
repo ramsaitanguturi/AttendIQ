@@ -72,63 +72,63 @@ void main() {
     final overdueTask = AcademicTask(
       id: 1,
       title: 'Overdue Assignment',
-      taskType: TaskType.ASSIGNMENT,
+      taskType: TaskType.assignment,
       startDate: DateTime(2026, 7, 10),
       dueDate: DateTime(2026, 7, 19, 23, 59),
-      priority: TaskPriority.HIGH,
-      status: TaskStatus.PENDING,
-      reminder: TaskReminder.DAYS_1,
+      priority: TaskPriority.high,
+      status: TaskStatus.pending,
+      reminder: TaskReminder.days1,
       createdAt: now,
       updatedAt: now,
     );
-    expect(overdueTask.urgencyAt(now), equals(TaskUrgency.OVERDUE));
+    expect(overdueTask.urgencyAt(now), equals(TaskUrgency.overdue));
     expect(overdueTask.remainingDaysText(now), contains('Overdue'));
 
     // Urgent (< 3 days)
     final urgentTask = AcademicTask(
       id: 2,
       title: 'OS Quiz',
-      taskType: TaskType.QUIZ,
+      taskType: TaskType.quiz,
       startDate: DateTime(2026, 7, 19),
       dueDate: DateTime(2026, 7, 22, 14, 0),
-      priority: TaskPriority.CRITICAL,
-      status: TaskStatus.PENDING,
-      reminder: TaskReminder.HOURS_2,
+      priority: TaskPriority.critical,
+      status: TaskStatus.pending,
+      reminder: TaskReminder.hours2,
       createdAt: now,
       updatedAt: now,
     );
-    expect(urgentTask.urgencyAt(now), equals(TaskUrgency.URGENT));
+    expect(urgentTask.urgencyAt(now), equals(TaskUrgency.urgent));
     expect(urgentTask.daysRemainingAt(now), equals(2));
 
     // Warning (3 to 7 days)
     final warningTask = AcademicTask(
       id: 3,
       title: 'DBMS Lab Submission',
-      taskType: TaskType.LAB_SUBMISSION,
+      taskType: TaskType.labSubmission,
       startDate: DateTime(2026, 7, 19),
       dueDate: DateTime(2026, 7, 25, 23, 59),
-      priority: TaskPriority.MEDIUM,
-      status: TaskStatus.PENDING,
-      reminder: TaskReminder.DAYS_1,
+      priority: TaskPriority.medium,
+      status: TaskStatus.pending,
+      reminder: TaskReminder.days1,
       createdAt: now,
       updatedAt: now,
     );
-    expect(warningTask.urgencyAt(now), equals(TaskUrgency.WARNING));
+    expect(warningTask.urgencyAt(now), equals(TaskUrgency.warning));
 
     // Normal (7+ days)
     final normalTask = AcademicTask(
       id: 4,
       title: 'Final Project',
-      taskType: TaskType.PROJECT,
+      taskType: TaskType.project,
       startDate: DateTime(2026, 7, 19),
       dueDate: DateTime(2026, 8, 1, 23, 59),
-      priority: TaskPriority.LOW,
-      status: TaskStatus.PENDING,
-      reminder: TaskReminder.DAYS_2,
+      priority: TaskPriority.low,
+      status: TaskStatus.pending,
+      reminder: TaskReminder.days2,
       createdAt: now,
       updatedAt: now,
     );
-    expect(normalTask.urgencyAt(now), equals(TaskUrgency.NORMAL));
+    expect(normalTask.urgencyAt(now), equals(TaskUrgency.normal));
   });
 
   test('Creating and editing tasks via TaskListController (Real Isar Database)',
@@ -149,31 +149,31 @@ void main() {
     await controller.addTask(
       title: 'OS Project',
       description: 'Implement memory management module',
-      taskType: TaskType.PROJECT,
+      taskType: TaskType.project,
       startDate: DateTime(2026, 7, 20),
       dueDate: DateTime(2026, 7, 25, 23, 59),
-      priority: TaskPriority.HIGH,
-      reminder: TaskReminder.DAYS_1,
+      priority: TaskPriority.high,
+      reminder: TaskReminder.days1,
     );
 
     await container.read(taskListControllerProvider.future);
     var tasks = container.read(allTasksProvider);
     expect(tasks.length, equals(1));
     expect(tasks.first.title, equals('OS Project'));
-    expect(tasks.first.taskType, equals(TaskType.PROJECT));
+    expect(tasks.first.taskType, equals(TaskType.project));
 
     // Edit Task
     final createdTask = tasks.first;
     final updatedTask = createdTask.copyWith(
       title: 'OS Advanced Project',
-      priority: TaskPriority.CRITICAL,
+      priority: TaskPriority.critical,
     );
     await controller.updateTask(updatedTask);
 
     await container.read(taskListControllerProvider.future);
     tasks = container.read(allTasksProvider);
     expect(tasks.first.title, equals('OS Advanced Project'));
-    expect(tasks.first.priority, equals(TaskPriority.CRITICAL));
+    expect(tasks.first.priority, equals(TaskPriority.critical));
   });
 
   test(
@@ -193,11 +193,11 @@ void main() {
 
     await controller.addTask(
       title: 'DBMS Assignment',
-      taskType: TaskType.ASSIGNMENT,
+      taskType: TaskType.assignment,
       startDate: DateTime.now(),
       dueDate: DateTime.now().add(const Duration(days: 2)),
-      priority: TaskPriority.MEDIUM,
-      reminder: TaskReminder.HOURS_2,
+      priority: TaskPriority.medium,
+      reminder: TaskReminder.hours2,
     );
 
     await container.read(taskListControllerProvider.future);
@@ -213,8 +213,10 @@ void main() {
     await container.read(taskListControllerProvider.future);
     expect(container.read(completedTasksProvider).length, equals(1));
     expect(container.read(upcomingTasksProvider).length, equals(0));
-    expect(container.read(completedTasksProvider).first.status,
-        equals(TaskStatus.COMPLETED));
+    expect(
+      container.read(completedTasksProvider).first.status,
+      equals(TaskStatus.completed),
+    );
 
     // Toggle back to pending
     await controller.toggleTaskCompletion(taskId);
@@ -234,12 +236,12 @@ void main() {
     final task = AcademicTask(
       id: 10,
       title: 'DBMS Assignment',
-      taskType: TaskType.ASSIGNMENT,
+      taskType: TaskType.assignment,
       startDate: DateTime.now(),
       dueDate: futureDue,
-      priority: TaskPriority.HIGH,
-      status: TaskStatus.PENDING,
-      reminder: TaskReminder.DAYS_1,
+      priority: TaskPriority.high,
+      status: TaskStatus.pending,
+      reminder: TaskReminder.days1,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -247,11 +249,13 @@ void main() {
     await scheduler.scheduleTaskNotification(task, subjectName: 'DBMS');
 
     expect(fakeNotifService.scheduledItems.length, equals(1));
-    expect(fakeNotifService.scheduledItems.first.body,
-        contains('DBMS Assignment deadline tomorrow'));
+    expect(
+      fakeNotifService.scheduledItems.first.body,
+      contains('DBMS Assignment deadline tomorrow'),
+    );
 
     // Cancel notification on complete
-    final completedTask = task.copyWith(status: TaskStatus.COMPLETED);
+    final completedTask = task.copyWith(status: TaskStatus.completed);
     await scheduler.scheduleTaskNotification(completedTask);
 
     expect(fakeNotifService.cancelledIds, contains(800010));
@@ -272,12 +276,12 @@ void main() {
     final testTask = AcademicTask(
       id: 100,
       title: 'Algorithm Submission',
-      taskType: TaskType.ASSIGNMENT,
+      taskType: TaskType.assignment,
       startDate: DateTime(2026, 7, 20),
       dueDate: DateTime(2026, 7, 25, 23, 59),
-      priority: TaskPriority.CRITICAL,
-      status: TaskStatus.PENDING,
-      reminder: TaskReminder.DAYS_1,
+      priority: TaskPriority.critical,
+      status: TaskStatus.pending,
+      reminder: TaskReminder.days1,
       createdAt: DateTime(2026, 7, 20),
       updatedAt: DateTime(2026, 7, 20),
     );
@@ -296,12 +300,16 @@ void main() {
     final days = daysAsync.value!;
 
     final july25 = days.firstWhere(
-        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 25);
+      (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 25,
+    );
     expect(july25.hasTask, isTrue);
     expect(
-        july25.items.any((i) =>
-            i.type == CalendarItemType.TASK &&
-            i.title == 'Algorithm Submission'),
-        isTrue);
+      july25.items.any(
+        (i) =>
+            i.type == CalendarItemType.task &&
+            i.title == 'Algorithm Submission',
+      ),
+      isTrue,
+    );
   });
 }

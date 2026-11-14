@@ -44,7 +44,9 @@ class _FakeAcademicEventRepository extends Fake
 
   @override
   Future<List<AcademicEvent>> getEventsForRange(
-      DateTime startDate, DateTime endDate) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     return events;
   }
 
@@ -75,7 +77,9 @@ class _FakeScheduleExceptionRepository extends Fake
 
   @override
   Future<List<ScheduleException>> getExceptionsForRange(
-          DateTime start, DateTime end) async =>
+    DateTime start,
+    DateTime end,
+  ) async =>
       exceptions;
 
   @override
@@ -109,12 +113,15 @@ class _FakeDailyScheduleOccurrenceRepository extends Fake
 
   @override
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDate(
-          DateTime date) async =>
+    DateTime date,
+  ) async =>
       occurrences;
 
   @override
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(
-          DateTime start, DateTime end) async =>
+    DateTime start,
+    DateTime end,
+  ) async =>
       occurrences;
 
   @override
@@ -123,8 +130,8 @@ class _FakeDailyScheduleOccurrenceRepository extends Fake
 }
 
 class _FakeAttendanceRepository extends Fake implements AttendanceRepository {
-  final List<AttendanceRecord> records;
-  _FakeAttendanceRepository([this.records = const []]);
+  final List<AttendanceRecord> records = const [];
+  _FakeAttendanceRepository();
 
   @override
   Future<List<AttendanceRecord>> getAttendanceForSubject(int subjectId) async =>
@@ -132,7 +139,8 @@ class _FakeAttendanceRepository extends Fake implements AttendanceRepository {
 
   @override
   Future<AttendanceRecord?> getAttendanceForOccurrence(
-          int occurrenceId) async =>
+    int occurrenceId,
+  ) async =>
       null;
 
   @override
@@ -144,8 +152,10 @@ class _FakeSubjectRepository extends Fake implements SubjectRepository {
   _FakeSubjectRepository(this.subjects);
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-      {bool includeDeleted = false}) async {
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async {
     return includeDeleted
         ? subjects
         : subjects.where((s) => !s.isDeleted).toList();
@@ -229,7 +239,7 @@ void main() {
     credits: 4,
     color: '#4F46E5',
     attendanceTarget: 75.0,
-    type: SubjectType.THEORY,
+    type: SubjectType.theory,
     updatedAt: DateTime.utc(2026, 8, 1),
   );
 
@@ -303,7 +313,7 @@ void main() {
         date: testDate,
         startTime: '10:30',
         endTime: '12:00',
-        type: AcademicEventType.EVENT,
+        type: AcademicEventType.event,
         createdAt: DateTime.utc(2026, 11, 1),
         updatedAt: DateTime.utc(2026, 11, 1),
       );
@@ -315,7 +325,9 @@ void main() {
       );
 
       final sub = container.listen(
-          todayScheduleProvider(customDate: testDate), (_, __) {});
+        todayScheduleProvider(customDate: testDate),
+        (_, __) {},
+      );
       final state = await container
           .read(todayScheduleProvider(customDate: testDate).future);
       sub.close();
@@ -328,15 +340,15 @@ void main() {
           state.occurrences.firstWhere((o) => o.title == 'Mathematics');
       expect(mathOcc.startTime, '08:30');
       expect(mathOcc.endTime, '09:30');
-      expect(mathOcc.type, OccurrenceType.REGULAR_CLASS);
+      expect(mathOcc.type, OccurrenceType.regularClass);
 
       // Verify academic event occurrence is present with actual start & end times
       final eventOcc = state.occurrences
           .firstWhere((o) => o.title == 'Tech Symposium Keynote');
       expect(eventOcc.startTime, '10:30');
       expect(eventOcc.endTime, '12:00');
-      expect(eventOcc.type, OccurrenceType.EVENT);
-      expect(eventOcc.status, OccurrenceStatus.UPCOMING);
+      expect(eventOcc.type, OccurrenceType.event);
+      expect(eventOcc.status, OccurrenceStatus.upcoming);
       expect(eventOcc.reason, 'Auditorium Main Hall');
     });
 
@@ -347,7 +359,7 @@ void main() {
         id: 201,
         date: testDate,
         subjectId: 10,
-        type: ScheduleExceptionType.EXAM,
+        type: ScheduleExceptionType.exam,
         title: 'Mathematics Midterm',
         description: 'Room 301',
         createdAt: DateTime.utc(2026, 11, 1),
@@ -361,7 +373,7 @@ void main() {
         date: testDate,
         startTime: '14:00',
         endTime: '16:30',
-        type: AcademicEventType.EXAM,
+        type: AcademicEventType.exam,
         createdAt: DateTime.utc(2026, 11, 1),
         updatedAt: DateTime.utc(2026, 11, 1),
       );
@@ -374,7 +386,9 @@ void main() {
       );
 
       final sub = container.listen(
-          todayScheduleProvider(customDate: testDate), (_, __) {});
+        todayScheduleProvider(customDate: testDate),
+        (_, __) {},
+      );
       final state = await container
           .read(todayScheduleProvider(customDate: testDate).future);
       sub.close();
@@ -382,7 +396,7 @@ void main() {
       // Should contain regular class + EXACTLY ONE exam occurrence (not two)
       expect(state.occurrences.length, 2);
       final examOccs = state.occurrences
-          .where((o) => o.type == OccurrenceType.EXAM)
+          .where((o) => o.type == OccurrenceType.exam)
           .toList();
       expect(examOccs.length, 1);
 
@@ -401,7 +415,7 @@ void main() {
         date: testDate,
         startTime: '13:00',
         endTime: '15:00',
-        type: AcademicEventType.EVENT,
+        type: AcademicEventType.event,
         createdAt: DateTime.utc(2026, 11, 1),
         updatedAt: DateTime.utc(2026, 11, 1),
       );
@@ -435,7 +449,7 @@ void main() {
         date: testDate,
         startTime: '11:00',
         endTime: '13:00',
-        type: AcademicEventType.EXAM,
+        type: AcademicEventType.exam,
         createdAt: DateTime.utc(2026, 11, 1),
         updatedAt: DateTime.utc(2026, 11, 1),
       );
@@ -446,7 +460,7 @@ void main() {
         date: testDate,
         startTime: '15:00',
         endTime: '16:30',
-        type: AcademicEventType.EVENT,
+        type: AcademicEventType.event,
         createdAt: DateTime.utc(2026, 11, 1),
         updatedAt: DateTime.utc(2026, 11, 1),
       );
@@ -474,7 +488,8 @@ void main() {
       expect(practicalItem.endTime, '13:00');
 
       final lectureItem = widgetData.classes.firstWhere(
-          (c) => c.subjectName == 'Guest Lecture on Quantum Computing');
+        (c) => c.subjectName == 'Guest Lecture on Quantum Computing',
+      );
       expect(lectureItem.startTime, '15:00');
       expect(lectureItem.endTime, '16:30');
     });

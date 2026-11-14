@@ -4,8 +4,10 @@ import '../../../timetable/data/models/weekly_schedule_rule_local.dart';
 import '../../../timetable/data/models/daily_schedule_occurrence_local.dart';
 
 abstract class SubjectLocalDataSource {
-  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId,
-      {bool includeDeleted = false});
+  Future<List<SubjectLocal>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  });
   Future<SubjectLocal?> getSubjectById(int id);
   Future<void> saveSubject(SubjectLocal subject);
   Future<void> deleteSubject(int id);
@@ -18,8 +20,10 @@ class SubjectLocalDataSourceImpl implements SubjectLocalDataSource {
   SubjectLocalDataSourceImpl(this._isar);
 
   @override
-  Future<List<SubjectLocal>> getSubjectsBySemester(int semesterId,
-      {bool includeDeleted = false}) async {
+  Future<List<SubjectLocal>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async {
     if (includeDeleted) {
       return _isar.subjectLocals
           .where()

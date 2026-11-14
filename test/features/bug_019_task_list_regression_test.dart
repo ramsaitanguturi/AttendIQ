@@ -108,7 +108,7 @@ void main() {
       credits: 4,
       attendanceTarget: 75,
       color: '#4F46E5',
-      type: SubjectType.THEORY,
+      type: SubjectType.theory,
       updatedAt: DateTime.now(),
     );
 
@@ -143,12 +143,12 @@ void main() {
       // Pre-fix: subjects.firstWhere(..., orElse: () => subjects.first) threw StateError!
       await controller.addTask(
         title: 'Empty Subject Safety Task',
-        taskType: TaskType.ASSIGNMENT,
+        taskType: TaskType.assignment,
         subjectId: 99,
         startDate: DateTime.now(),
         dueDate: DateTime.now().add(const Duration(days: 2)),
-        priority: TaskPriority.HIGH,
-        reminder: TaskReminder.HOURS_1,
+        priority: TaskPriority.high,
+        reminder: TaskReminder.hours1,
       );
 
       await container.read(taskListControllerProvider.future);
@@ -173,23 +173,23 @@ void main() {
       // Task 1: Overdue (due 2 days ago)
       await controller.addTask(
         title: 'Past Due Task',
-        taskType: TaskType.ASSIGNMENT,
+        taskType: TaskType.assignment,
         subjectId: 10,
         startDate: now.subtract(const Duration(days: 5)),
         dueDate: now.subtract(const Duration(days: 2)),
-        priority: TaskPriority.CRITICAL,
-        reminder: TaskReminder.NONE,
+        priority: TaskPriority.critical,
+        reminder: TaskReminder.none,
       );
 
       // Task 2: Upcoming (due 3 days in future)
       await controller.addTask(
         title: 'Future Upcoming Task',
-        taskType: TaskType.PROJECT,
+        taskType: TaskType.project,
         subjectId: 10,
         startDate: now,
         dueDate: now.add(const Duration(days: 3)),
-        priority: TaskPriority.MEDIUM,
-        reminder: TaskReminder.DAYS_1,
+        priority: TaskPriority.medium,
+        reminder: TaskReminder.days1,
       );
 
       await container.read(taskListControllerProvider.future);
@@ -221,12 +221,12 @@ void main() {
       // Add a past due task that is completed
       await controller.addTask(
         title: 'Completed Past Task',
-        taskType: TaskType.ASSIGNMENT,
+        taskType: TaskType.assignment,
         subjectId: 10,
         startDate: now.subtract(const Duration(days: 5)),
         dueDate: now.subtract(const Duration(days: 2)),
-        priority: TaskPriority.LOW,
-        reminder: TaskReminder.NONE,
+        priority: TaskPriority.low,
+        reminder: TaskReminder.none,
       );
 
       await container.read(taskListControllerProvider.future);
@@ -253,13 +253,13 @@ void main() {
       final taskWithDeletedSubject = AcademicTask(
         id: 1,
         title: 'Task for Archived Subject',
-        taskType: TaskType.ASSIGNMENT,
+        taskType: TaskType.assignment,
         subjectId: 888, // Subject 888 is deleted / absent from active list
         startDate: DateTime.now(),
         dueDate: DateTime.now().add(const Duration(days: 2)),
-        priority: TaskPriority.MEDIUM,
-        status: TaskStatus.PENDING,
-        reminder: TaskReminder.DAYS_1,
+        priority: TaskPriority.medium,
+        status: TaskStatus.pending,
+        reminder: TaskReminder.days1,
         createdAt: DateTime.now().toUtc(),
         updatedAt: DateTime.now().toUtc(),
       );
@@ -314,7 +314,9 @@ void main() {
 
       // Enter title
       await tester.enterText(
-          find.byType(TextFormField).first, 'Unsaved Important Task');
+        find.byType(TextFormField).first,
+        'Unsaved Important Task',
+      );
       await tester.pumpAndSettle();
 
       // Tap Create Task

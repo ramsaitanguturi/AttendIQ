@@ -325,7 +325,9 @@ class _AddEditSemesterDialogState extends ConsumerState<AddEditSemesterDialog> {
                         ? 'Archives any currently active semester'
                         : 'Save as draft for later activation',
                     style: TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary(isDark)),
+                      fontSize: 12,
+                      color: AppColors.textSecondary(isDark),
+                    ),
                   ),
                   value: _activateImmediately,
                   activeColor: isDark ? AppColors.primary : AppColors.gray900,

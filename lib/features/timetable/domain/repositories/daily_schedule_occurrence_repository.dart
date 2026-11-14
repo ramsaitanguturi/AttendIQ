@@ -10,13 +10,17 @@ part 'daily_schedule_occurrence_repository.g.dart';
 abstract class DailyScheduleOccurrenceRepository {
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDate(DateTime date);
   Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(
-      DateTime start, DateTime end);
+    DateTime start,
+    DateTime end,
+  );
   Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(int subjectId);
   Future<DailyScheduleOccurrence?> getOccurrenceById(int id);
   Future<DailyScheduleOccurrence> saveOccurrence(
-      DailyScheduleOccurrence occurrence);
+    DailyScheduleOccurrence occurrence,
+  );
   Future<List<DailyScheduleOccurrence>> saveOccurrences(
-      List<DailyScheduleOccurrence> occurrences);
+    List<DailyScheduleOccurrence> occurrences,
+  );
   Future<void> deleteOccurrence(int id);
   Future<List<DailyScheduleOccurrence>> getAllOccurrences();
   Stream<void> watchOccurrencesForDate(DateTime date);
@@ -24,14 +28,16 @@ abstract class DailyScheduleOccurrenceRepository {
 
 @riverpod
 DailyScheduleOccurrenceLocalDataSource dailyScheduleOccurrenceLocalDataSource(
-    DailyScheduleOccurrenceLocalDataSourceRef ref) {
+  DailyScheduleOccurrenceLocalDataSourceRef ref,
+) {
   final isar = ref.watch(isarProvider).requireValue;
   return DailyScheduleOccurrenceLocalDataSourceImpl(isar);
 }
 
 @riverpod
 DailyScheduleOccurrenceRepository dailyScheduleOccurrenceRepository(
-    DailyScheduleOccurrenceRepositoryRef ref) {
+  DailyScheduleOccurrenceRepositoryRef ref,
+) {
   final dataSource = ref.watch(dailyScheduleOccurrenceLocalDataSourceProvider);
   return DailyScheduleOccurrenceRepositoryImpl(localDataSource: dataSource);
 }

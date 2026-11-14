@@ -1,8 +1,25 @@
 enum SubjectType {
-  THEORY,
-  LAB;
+  theory,
+  lab;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case SubjectType.theory:
+        return 'THEORY';
+      case SubjectType.lab:
+        return 'LAB';
+    }
+  }
+
+  static SubjectType fromString(String value) {
+    switch (value.trim().toUpperCase()) {
+      case 'LAB':
+        return SubjectType.lab;
+      case 'THEORY':
+      default:
+        return SubjectType.theory;
+    }
+  }
 }
 
 class Subject {

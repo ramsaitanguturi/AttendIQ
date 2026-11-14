@@ -114,7 +114,10 @@ class AcademicCalendarWidget extends ConsumerWidget {
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () {
                     final prevMonth = DateTime(
-                        selectedMonth.year, selectedMonth.month - 1, 1);
+                      selectedMonth.year,
+                      selectedMonth.month - 1,
+                      1,
+                    );
                     ref.read(selectedMonthProvider.notifier).state = prevMonth;
                   },
                 ),
@@ -135,7 +138,10 @@ class AcademicCalendarWidget extends ConsumerWidget {
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () {
                     final nextMonth = DateTime(
-                        selectedMonth.year, selectedMonth.month + 1, 1);
+                      selectedMonth.year,
+                      selectedMonth.month + 1,
+                      1,
+                    );
                     ref.read(selectedMonthProvider.notifier).state = nextMonth;
                   },
                 ),
@@ -175,13 +181,19 @@ class AcademicCalendarWidget extends ConsumerWidget {
                       if (details.primaryVelocity! < -200) {
                         // Swipe left -> next month
                         final nextMonth = DateTime(
-                            selectedMonth.year, selectedMonth.month + 1, 1);
+                          selectedMonth.year,
+                          selectedMonth.month + 1,
+                          1,
+                        );
                         ref.read(selectedMonthProvider.notifier).state =
                             nextMonth;
                       } else if (details.primaryVelocity! > 200) {
                         // Swipe right -> previous month
                         final prevMonth = DateTime(
-                            selectedMonth.year, selectedMonth.month - 1, 1);
+                          selectedMonth.year,
+                          selectedMonth.month - 1,
+                          1,
+                        );
                         ref.read(selectedMonthProvider.notifier).state =
                             prevMonth;
                       }
@@ -220,7 +232,10 @@ class AcademicCalendarWidget extends ConsumerWidget {
   }
 
   Widget _buildDateCell(
-      BuildContext context, CalendarDayData dayData, bool isDark) {
+    BuildContext context,
+    CalendarDayData dayData,
+    bool isDark,
+  ) {
     final isDisabled = !dayData.isInSemesterRange;
 
     Color textColor =
@@ -283,23 +298,31 @@ class AcademicCalendarWidget extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (dayData.hasRegularClass && !isDisabled)
-                  _buildDot(CalendarItemType.REGULAR_CLASS
-                      .getAdaptiveIndicatorColor(isDark)),
+                  _buildDot(
+                    CalendarItemType.regularClass
+                        .getAdaptiveIndicatorColor(isDark),
+                  ),
                 if (dayData.hasExam && !isDisabled)
                   _buildDot(
-                      CalendarItemType.EXAM.getAdaptiveIndicatorColor(isDark)),
+                    CalendarItemType.exam.getAdaptiveIndicatorColor(isDark),
+                  ),
                 if (dayData.hasTask && !isDisabled)
                   _buildDot(
-                      CalendarItemType.TASK.getAdaptiveIndicatorColor(isDark)),
+                    CalendarItemType.task.getAdaptiveIndicatorColor(isDark),
+                  ),
                 if (dayData.hasHoliday && !isDisabled)
-                  _buildDot(CalendarItemType.HOLIDAY
-                      .getAdaptiveIndicatorColor(isDark)),
+                  _buildDot(
+                    CalendarItemType.holiday.getAdaptiveIndicatorColor(isDark),
+                  ),
                 if (dayData.hasExtraClass && !isDisabled)
-                  _buildDot(CalendarItemType.EXTRA_CLASS
-                      .getAdaptiveIndicatorColor(isDark)),
+                  _buildDot(
+                    CalendarItemType.extraClass
+                        .getAdaptiveIndicatorColor(isDark),
+                  ),
                 if (dayData.hasEvent && !isDisabled)
                   _buildDot(
-                      CalendarItemType.EVENT.getAdaptiveIndicatorColor(isDark)),
+                    CalendarItemType.event.getAdaptiveIndicatorColor(isDark),
+                  ),
               ],
             ),
           ],

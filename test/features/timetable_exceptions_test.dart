@@ -71,16 +71,18 @@ void main() {
       final now = DateTime.now();
 
       final rules = days
-          .map((day) => WeeklyScheduleRule(
-                subjectId: 101,
-                dayOfWeek: day,
-                startTime: '10:00',
-                endTime: '11:00',
-                room: 'Room A203',
-                faculty: 'Dr. Smith',
-                createdAt: now,
-                updatedAt: now,
-              ))
+          .map(
+            (day) => WeeklyScheduleRule(
+              subjectId: 101,
+              dayOfWeek: day,
+              startTime: '10:00',
+              endTime: '11:00',
+              room: 'Room A203',
+              faculty: 'Dr. Smith',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          )
           .toList();
 
       await ruleRepository.saveRules(rules);
@@ -95,15 +97,17 @@ void main() {
       final now = DateTime.now();
       final todayWeekday = now.weekday;
 
-      await ruleRepository.saveRule(WeeklyScheduleRule(
-        subjectId: 101,
-        dayOfWeek: todayWeekday,
-        startTime: '10:00',
-        endTime: '11:00',
-        room: 'Room A203',
-        createdAt: now,
-        updatedAt: now,
-      ));
+      await ruleRepository.saveRule(
+        WeeklyScheduleRule(
+          subjectId: 101,
+          dayOfWeek: todayWeekday,
+          startTime: '10:00',
+          endTime: '11:00',
+          room: 'Room A203',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
 
       final activeRules = await ruleRepository.getRulesForSemester(1);
       final todayClasses =
@@ -119,7 +123,7 @@ void main() {
 
       final exception = ScheduleException(
         date: holidayDate,
-        type: ScheduleExceptionType.HOLIDAY,
+        type: ScheduleExceptionType.holiday,
         title: 'Spring Break Holiday',
         description: 'All classes cancelled',
         createdAt: now,
@@ -131,7 +135,7 @@ void main() {
       final exceptionsOnHoliday =
           await exceptionRepository.getExceptionsForDate(holidayDate);
       expect(exceptionsOnHoliday.length, 1);
-      expect(exceptionsOnHoliday.first.type, ScheduleExceptionType.HOLIDAY);
+      expect(exceptionsOnHoliday.first.type, ScheduleExceptionType.holiday);
     });
 
     test('4. Cancelled class removes only that date for target subject',
@@ -142,7 +146,7 @@ void main() {
       final exception = ScheduleException(
         date: cancelDate,
         subjectId: 101, // Operating Systems
-        type: ScheduleExceptionType.CANCELLED_CLASS,
+        type: ScheduleExceptionType.cancelledClass,
         title: 'OS Class Cancelled',
         description: 'Faculty on leave',
         createdAt: now,
@@ -156,7 +160,9 @@ void main() {
       expect(exceptionsOnDate.length, 1);
       expect(exceptionsOnDate.first.subjectId, 101);
       expect(
-          exceptionsOnDate.first.type, ScheduleExceptionType.CANCELLED_CLASS);
+        exceptionsOnDate.first.type,
+        ScheduleExceptionType.cancelledClass,
+      );
     });
 
     test('5. Exam appears correctly for date and subject', () async {
@@ -166,7 +172,7 @@ void main() {
       final exception = ScheduleException(
         date: examDate,
         subjectId: 101,
-        type: ScheduleExceptionType.EXAM,
+        type: ScheduleExceptionType.exam,
         title: 'OS Midterm Exam',
         description: 'Units 1-4 Covered',
         createdAt: now,
@@ -178,7 +184,7 @@ void main() {
       final exceptionsOnDate =
           await exceptionRepository.getExceptionsForDate(examDate);
       expect(exceptionsOnDate.length, 1);
-      expect(exceptionsOnDate.first.type, ScheduleExceptionType.EXAM);
+      expect(exceptionsOnDate.first.type, ScheduleExceptionType.exam);
       expect(exceptionsOnDate.first.title, 'OS Midterm Exam');
     });
 

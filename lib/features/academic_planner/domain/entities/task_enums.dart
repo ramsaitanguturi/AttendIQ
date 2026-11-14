@@ -2,81 +2,117 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
 
 enum TaskType {
-  MID_SEM,
-  END_SEM,
-  ASSIGNMENT,
-  PROJECT,
-  LAB_SUBMISSION,
-  QUIZ,
-  PRESENTATION,
-  OTHER;
+  midSem,
+  endSem,
+  assignment,
+  project,
+  labSubmission,
+  quiz,
+  presentation,
+  other;
+
+  String toShortString() {
+    switch (this) {
+      case TaskType.midSem:
+        return 'MID_SEM';
+      case TaskType.endSem:
+        return 'END_SEM';
+      case TaskType.assignment:
+        return 'ASSIGNMENT';
+      case TaskType.project:
+        return 'PROJECT';
+      case TaskType.labSubmission:
+        return 'LAB_SUBMISSION';
+      case TaskType.quiz:
+        return 'QUIZ';
+      case TaskType.presentation:
+        return 'PRESENTATION';
+      case TaskType.other:
+        return 'OTHER';
+    }
+  }
 
   String get displayName {
     switch (this) {
-      case TaskType.MID_SEM:
+      case TaskType.midSem:
         return 'Mid Sem';
-      case TaskType.END_SEM:
+      case TaskType.endSem:
         return 'End Sem';
-      case TaskType.ASSIGNMENT:
+      case TaskType.assignment:
         return 'Assignment';
-      case TaskType.PROJECT:
+      case TaskType.project:
         return 'Project';
-      case TaskType.LAB_SUBMISSION:
+      case TaskType.labSubmission:
         return 'Lab Submission';
-      case TaskType.QUIZ:
+      case TaskType.quiz:
         return 'Quiz';
-      case TaskType.PRESENTATION:
+      case TaskType.presentation:
         return 'Presentation';
-      case TaskType.OTHER:
+      case TaskType.other:
         return 'Other';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case TaskType.MID_SEM:
-      case TaskType.END_SEM:
+      case TaskType.midSem:
+      case TaskType.endSem:
         return Icons.menu_book;
-      case TaskType.ASSIGNMENT:
+      case TaskType.assignment:
         return Icons.assignment;
-      case TaskType.PROJECT:
+      case TaskType.project:
         return Icons.work_outline;
-      case TaskType.LAB_SUBMISSION:
+      case TaskType.labSubmission:
         return Icons.science;
-      case TaskType.QUIZ:
+      case TaskType.quiz:
         return Icons.quiz;
-      case TaskType.PRESENTATION:
+      case TaskType.presentation:
         return Icons.co_present;
-      case TaskType.OTHER:
+      case TaskType.other:
         return Icons.task_alt;
     }
   }
 
   static TaskType fromString(String value) {
+    final norm = value.trim().toUpperCase();
     return TaskType.values.firstWhere(
       (e) =>
-          e.name.toUpperCase() == value.toUpperCase() ||
-          e.displayName.toUpperCase() == value.toUpperCase(),
-      orElse: () => TaskType.OTHER,
+          e.toShortString() == norm ||
+          e.name.toUpperCase() == norm ||
+          e.displayName.toUpperCase() == norm,
+      orElse: () => TaskType.other,
     );
   }
 }
 
 enum TaskPriority {
-  LOW,
-  MEDIUM,
-  HIGH,
-  CRITICAL;
+  low,
+  medium,
+  high,
+  critical;
+
+  String toShortString() {
+    switch (this) {
+      case TaskPriority.low:
+        return 'LOW';
+      case TaskPriority.medium:
+        return 'MEDIUM';
+      case TaskPriority.high:
+        return 'HIGH';
+      case TaskPriority.critical:
+        return 'CRITICAL';
+    }
+  }
 
   String get displayName {
     switch (this) {
-      case TaskPriority.LOW:
+      case TaskPriority.low:
         return 'Low';
-      case TaskPriority.MEDIUM:
+      case TaskPriority.medium:
         return 'Medium';
-      case TaskPriority.HIGH:
+      case TaskPriority.high:
         return 'High';
-      case TaskPriority.CRITICAL:
+      case TaskPriority.critical:
         return 'Critical';
     }
   }
@@ -86,24 +122,24 @@ enum TaskPriority {
   Color getAdaptiveColor(bool isDark) {
     if (isDark) {
       switch (this) {
-        case TaskPriority.LOW:
+        case TaskPriority.low:
           return AppColors.gray400;
-        case TaskPriority.MEDIUM:
+        case TaskPriority.medium:
           return AppColors.gray300;
-        case TaskPriority.HIGH:
+        case TaskPriority.high:
           return AppColors.gray200;
-        case TaskPriority.CRITICAL:
+        case TaskPriority.critical:
           return AppColors.gray100;
       }
     } else {
       switch (this) {
-        case TaskPriority.LOW:
+        case TaskPriority.low:
           return AppColors.gray600;
-        case TaskPriority.MEDIUM:
+        case TaskPriority.medium:
           return AppColors.gray700;
-        case TaskPriority.HIGH:
+        case TaskPriority.high:
           return AppColors.gray800;
-        case TaskPriority.CRITICAL:
+        case TaskPriority.critical:
           return AppColors.gray900;
       }
     }
@@ -111,125 +147,161 @@ enum TaskPriority {
 
   int get level {
     switch (this) {
-      case TaskPriority.LOW:
+      case TaskPriority.low:
         return 1;
-      case TaskPriority.MEDIUM:
+      case TaskPriority.medium:
         return 2;
-      case TaskPriority.HIGH:
+      case TaskPriority.high:
         return 3;
-      case TaskPriority.CRITICAL:
+      case TaskPriority.critical:
         return 4;
     }
   }
 
   static TaskPriority fromString(String value) {
+    final norm = value.trim().toUpperCase();
     return TaskPriority.values.firstWhere(
       (e) =>
-          e.name.toUpperCase() == value.toUpperCase() ||
-          e.displayName.toUpperCase() == value.toUpperCase(),
-      orElse: () => TaskPriority.MEDIUM,
+          e.toShortString() == norm ||
+          e.name.toUpperCase() == norm ||
+          e.displayName.toUpperCase() == norm,
+      orElse: () => TaskPriority.medium,
     );
   }
 }
 
 enum TaskStatus {
-  PENDING,
-  IN_PROGRESS,
-  COMPLETED;
+  pending,
+  inProgress,
+  completed;
+
+  String toShortString() {
+    switch (this) {
+      case TaskStatus.pending:
+        return 'PENDING';
+      case TaskStatus.inProgress:
+        return 'IN_PROGRESS';
+      case TaskStatus.completed:
+        return 'COMPLETED';
+    }
+  }
 
   String get displayName {
     switch (this) {
-      case TaskStatus.PENDING:
+      case TaskStatus.pending:
         return 'Pending';
-      case TaskStatus.IN_PROGRESS:
+      case TaskStatus.inProgress:
         return 'In Progress';
-      case TaskStatus.COMPLETED:
+      case TaskStatus.completed:
         return 'Completed';
     }
   }
 
   static TaskStatus fromString(String value) {
+    final norm = value.trim().toUpperCase();
     return TaskStatus.values.firstWhere(
       (e) =>
-          e.name.toUpperCase() == value.toUpperCase() ||
-          e.displayName.toUpperCase() == value.toUpperCase(),
-      orElse: () => TaskStatus.PENDING,
+          e.toShortString() == norm ||
+          e.name.toUpperCase() == norm ||
+          e.displayName.toUpperCase() == norm,
+      orElse: () => TaskStatus.pending,
     );
   }
 }
 
 enum TaskReminder {
-  NONE,
-  AT_DEADLINE,
-  MINUTES_15,
-  HOURS_1,
-  HOURS_2,
-  DAYS_1,
-  DAYS_2;
+  none,
+  atDeadline,
+  minutes15,
+  hours1,
+  hours2,
+  days1,
+  days2;
+
+  String toShortString() {
+    switch (this) {
+      case TaskReminder.none:
+        return 'NONE';
+      case TaskReminder.atDeadline:
+        return 'AT_DEADLINE';
+      case TaskReminder.minutes15:
+        return 'MINUTES_15';
+      case TaskReminder.hours1:
+        return 'HOURS_1';
+      case TaskReminder.hours2:
+        return 'HOURS_2';
+      case TaskReminder.days1:
+        return 'DAYS_1';
+      case TaskReminder.days2:
+        return 'DAYS_2';
+    }
+  }
 
   String get displayName {
     switch (this) {
-      case TaskReminder.NONE:
+      case TaskReminder.none:
         return 'No Reminder';
-      case TaskReminder.AT_DEADLINE:
+      case TaskReminder.atDeadline:
         return 'At Deadline';
-      case TaskReminder.MINUTES_15:
+      case TaskReminder.minutes15:
         return '15 Minutes Before';
-      case TaskReminder.HOURS_1:
+      case TaskReminder.hours1:
         return '1 Hour Before';
-      case TaskReminder.HOURS_2:
+      case TaskReminder.hours2:
         return '2 Hours Before';
-      case TaskReminder.DAYS_1:
+      case TaskReminder.days1:
         return '1 Day Before';
-      case TaskReminder.DAYS_2:
+      case TaskReminder.days2:
         return '2 Days Before';
     }
   }
 
   Duration? get offset {
     switch (this) {
-      case TaskReminder.NONE:
+      case TaskReminder.none:
         return null;
-      case TaskReminder.AT_DEADLINE:
+      case TaskReminder.atDeadline:
         return Duration.zero;
-      case TaskReminder.MINUTES_15:
+      case TaskReminder.minutes15:
         return const Duration(minutes: 15);
-      case TaskReminder.HOURS_1:
+      case TaskReminder.hours1:
         return const Duration(hours: 1);
-      case TaskReminder.HOURS_2:
+      case TaskReminder.hours2:
         return const Duration(hours: 2);
-      case TaskReminder.DAYS_1:
+      case TaskReminder.days1:
         return const Duration(days: 1);
-      case TaskReminder.DAYS_2:
+      case TaskReminder.days2:
         return const Duration(days: 2);
     }
   }
 
   static TaskReminder fromString(String value) {
+    final norm = value.trim().toUpperCase();
     return TaskReminder.values.firstWhere(
       (e) =>
-          e.name.toUpperCase() == value.toUpperCase() ||
-          e.displayName.toUpperCase() == value.toUpperCase(),
-      orElse: () => TaskReminder.DAYS_1,
+          e.toShortString() == norm ||
+          e.name.toUpperCase() == norm ||
+          e.displayName.toUpperCase() == norm,
+      orElse: () => TaskReminder.days1,
     );
   }
 }
 
 enum TaskUrgency {
-  NORMAL,
-  WARNING,
-  URGENT,
-  OVERDUE;
+  normal,
+  warning,
+  urgent,
+  overdue;
 
   String get displayName {
     switch (this) {
-      case TaskUrgency.NORMAL:
+      case TaskUrgency.normal:
         return 'Normal';
-      case TaskUrgency.WARNING:
+      case TaskUrgency.warning:
         return 'Warning';
-      case TaskUrgency.URGENT:
+      case TaskUrgency.urgent:
         return 'Urgent';
-      case TaskUrgency.OVERDUE:
+      case TaskUrgency.overdue:
         return 'Overdue';
     }
   }
@@ -239,47 +311,50 @@ enum TaskUrgency {
   Color getAdaptiveColor(bool isDark) {
     if (isDark) {
       switch (this) {
-        case TaskUrgency.NORMAL:
+        case TaskUrgency.normal:
           return AppColors.gray400;
-        case TaskUrgency.WARNING:
+        case TaskUrgency.warning:
           return AppColors.gray300;
-        case TaskUrgency.URGENT:
+        case TaskUrgency.urgent:
           return AppColors.gray200;
-        case TaskUrgency.OVERDUE:
+        case TaskUrgency.overdue:
           return AppColors.gray100;
       }
     } else {
       switch (this) {
-        case TaskUrgency.NORMAL:
+        case TaskUrgency.normal:
           return AppColors.gray600;
-        case TaskUrgency.WARNING:
+        case TaskUrgency.warning:
           return AppColors.gray700;
-        case TaskUrgency.URGENT:
+        case TaskUrgency.urgent:
           return AppColors.gray800;
-        case TaskUrgency.OVERDUE:
+        case TaskUrgency.overdue:
           return AppColors.gray900;
       }
     }
   }
 
-  static TaskUrgency calculate(DateTime dueDate, DateTime now,
-      {TaskStatus? status}) {
-    if (status == TaskStatus.COMPLETED) {
-      return TaskUrgency.NORMAL;
+  static TaskUrgency calculate(
+    DateTime dueDate,
+    DateTime now, {
+    TaskStatus? status,
+  }) {
+    if (status == TaskStatus.completed) {
+      return TaskUrgency.normal;
     }
     if (dueDate.isBefore(now)) {
-      return TaskUrgency.OVERDUE;
+      return TaskUrgency.overdue;
     }
 
     final diff = dueDate.difference(now);
     final days = diff.inDays;
 
     if (diff.inHours < 72) {
-      return TaskUrgency.URGENT;
+      return TaskUrgency.urgent;
     } else if (days < 7) {
-      return TaskUrgency.WARNING;
+      return TaskUrgency.warning;
     } else {
-      return TaskUrgency.NORMAL;
+      return TaskUrgency.normal;
     }
   }
 }

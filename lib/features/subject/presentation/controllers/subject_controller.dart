@@ -34,12 +34,18 @@ class SubjectListController extends _$SubjectListController {
 
     if (semester == null || semester.localId == null) {
       if (kDebugMode) {
-        developer.log('[SubjectListController] Selected semester: None active',
-            name: 'SubjectListController');
-        developer.log('[SubjectListController] Loaded subjects: []',
-            name: 'SubjectListController');
-        developer.log('[SubjectListController] Subject count: 0',
-            name: 'SubjectListController');
+        developer.log(
+          '[SubjectListController] Selected semester: None active',
+          name: 'SubjectListController',
+        );
+        developer.log(
+          '[SubjectListController] Loaded subjects: []',
+          name: 'SubjectListController',
+        );
+        developer.log(
+          '[SubjectListController] Subject count: 0',
+          name: 'SubjectListController',
+        );
       }
       return const [];
     }
@@ -51,13 +57,17 @@ class SubjectListController extends _$SubjectListController {
 
     if (kDebugMode) {
       developer.log(
-          '[SubjectListController] Selected semester: ${semester.name} (localId: ${semester.localId})',
-          name: 'SubjectListController');
+        '[SubjectListController] Selected semester: ${semester.name} (localId: ${semester.localId})',
+        name: 'SubjectListController',
+      );
       developer.log(
-          '[SubjectListController] Loaded subjects: ${subjects.map((s) => '${s.code}[id=${s.id}]').toList()}',
-          name: 'SubjectListController');
-      developer.log('[SubjectListController] Subject count: ${subjects.length}',
-          name: 'SubjectListController');
+        '[SubjectListController] Loaded subjects: ${subjects.map((s) => '${s.code}[id=${s.id}]').toList()}',
+        name: 'SubjectListController',
+      );
+      developer.log(
+        '[SubjectListController] Subject count: ${subjects.length}',
+        name: 'SubjectListController',
+      );
     }
 
     final stream = repo.watchSubjects(localSemId);
@@ -66,8 +76,9 @@ class SubjectListController extends _$SubjectListController {
       state = AsyncValue.data(updatedList);
       if (kDebugMode) {
         developer.log(
-            '[SubjectListController Stream Update] Subject count: ${updatedList.length}',
-            name: 'SubjectListController');
+          '[SubjectListController Stream Update] Subject count: ${updatedList.length}',
+          name: 'SubjectListController',
+        );
       }
     });
 
@@ -91,7 +102,8 @@ class SubjectListController extends _$SubjectListController {
         await ref.read(semesterRepositoryProvider).getActiveSemester();
     if (semester == null || semester.localId == null) {
       throw Exception(
-          'No active semester found. Please configure a semester first.');
+        'No active semester found. Please configure a semester first.',
+      );
     }
 
     final subject = Subject(
@@ -117,8 +129,9 @@ class SubjectListController extends _$SubjectListController {
 
     if (kDebugMode) {
       developer.log(
-          '[SubjectListController] Added subject ${subject.code}. Updated Subject count: ${updatedList.length}',
-          name: 'SubjectListController');
+        '[SubjectListController] Added subject ${subject.code}. Updated Subject count: ${updatedList.length}',
+        name: 'SubjectListController',
+      );
     }
     return createdSubject;
   }
@@ -137,8 +150,9 @@ class SubjectListController extends _$SubjectListController {
 
     if (kDebugMode) {
       developer.log(
-          '[SubjectListController] Updated subject ${subject.code}. Subject count: ${updatedList.length}',
-          name: 'SubjectListController');
+        '[SubjectListController] Updated subject ${subject.code}. Subject count: ${updatedList.length}',
+        name: 'SubjectListController',
+      );
     }
   }
 
@@ -155,8 +169,9 @@ class SubjectListController extends _$SubjectListController {
       } catch (_) {}
       if (kDebugMode) {
         developer.log(
-            '[SubjectListController] Removed subject id=$id. Subject count: ${updatedList.length}',
-            name: 'SubjectListController');
+          '[SubjectListController] Removed subject id=$id. Subject count: ${updatedList.length}',
+          name: 'SubjectListController',
+        );
       }
     }
   }

@@ -82,7 +82,9 @@ class SemesterWeekCalculator {
   /// Find the week index corresponding to a specific date (e.g. today).
   /// Returns 0 if before semester start, or last week index if after semester end.
   static int getWeekIndexForDate(
-      List<SemesterWeek> weeks, DateTime targetDate) {
+    List<SemesterWeek> weeks,
+    DateTime targetDate,
+  ) {
     if (weeks.isEmpty) return 0;
     final target =
         DateTime.utc(targetDate.year, targetDate.month, targetDate.day);

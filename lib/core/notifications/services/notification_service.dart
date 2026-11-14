@@ -215,7 +215,7 @@ class LocalNotificationServiceImpl implements NotificationService {
 
     final type = NotificationType.fromString(item.type);
     switch (type) {
-      case NotificationType.CLASS_REMINDER:
+      case NotificationType.classReminder:
         channelId = 'class_reminders';
         channelName = 'Class Reminders';
         channelDescription =
@@ -224,8 +224,8 @@ class LocalNotificationServiceImpl implements NotificationService {
         playSound = true;
         enableVibrate = true;
         break;
-      case NotificationType.ATTENDANCE_WARNING:
-      case NotificationType.LOW_ATTENDANCE_ALERT:
+      case NotificationType.attendanceWarning:
+      case NotificationType.lowAttendanceAlert:
         channelId = 'attendance_warnings';
         channelName = 'Attendance Warnings';
         channelDescription =
@@ -234,7 +234,7 @@ class LocalNotificationServiceImpl implements NotificationService {
         playSound = true;
         enableVibrate = true;
         break;
-      case NotificationType.WEEKLY_REPORT:
+      case NotificationType.weeklyReport:
         channelId = 'weekly_reports';
         channelName = 'Weekly Reports';
         channelDescription = 'Weekly summaries of class attendance.';
@@ -252,7 +252,7 @@ class LocalNotificationServiceImpl implements NotificationService {
     }
 
     List<AndroidNotificationAction>? actions;
-    if (type == NotificationType.CLASS_REMINDER) {
+    if (type == NotificationType.classReminder) {
       actions = [
         const AndroidNotificationAction(
           NotificationActionHandler.actionPresent,
@@ -292,9 +292,9 @@ class LocalNotificationServiceImpl implements NotificationService {
       playSound: playSound,
       enableVibration: enableVibrate,
       actions: actions,
-      ongoing: type == NotificationType.CLASS_REMINDER,
+      ongoing: type == NotificationType.classReminder,
       autoCancel: true,
-      category: type == NotificationType.CLASS_REMINDER
+      category: type == NotificationType.classReminder
           ? AndroidNotificationCategory.reminder
           : null,
     );
@@ -324,7 +324,8 @@ class LocalNotificationServiceImpl implements NotificationService {
       );
     } catch (e) {
       debugPrint(
-          'Exact notification scheduling failed (e.g., SecurityException on Android 14+): $e');
+        'Exact notification scheduling failed (e.g., SecurityException on Android 14+): $e',
+      );
       debugPrint('Attempting fallback to inexact notification scheduling...');
       try {
         await _plugin.zonedSchedule(
@@ -341,7 +342,8 @@ class LocalNotificationServiceImpl implements NotificationService {
         debugPrint('Inexact notification scheduling fallback succeeded.');
       } catch (fallbackError) {
         debugPrint(
-            'Fallback notification scheduling also failed: $fallbackError');
+          'Fallback notification scheduling also failed: $fallbackError',
+        );
       }
     }
   }

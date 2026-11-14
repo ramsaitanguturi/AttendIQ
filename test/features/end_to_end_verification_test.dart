@@ -22,7 +22,8 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
 
   @override
   Future<List<AttendanceRecordLocal>> getAttendanceForSubject(
-      int subjectId) async {
+    int subjectId,
+  ) async {
     return records.values
         .where((r) => r.subjectId == subjectId && !r.isDeleted)
         .toList();
@@ -30,7 +31,8 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForOccurrence(
-      int occurrenceId) async {
+    int occurrenceId,
+  ) async {
     if (occurrenceId <= 0) return null;
     try {
       return records.values.firstWhere(
@@ -43,7 +45,8 @@ class InMemoryAttendanceLocalDataSource implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForOccurrenceAnyStatus(
-      int occurrenceId) async {
+    int occurrenceId,
+  ) async {
     if (occurrenceId <= 0) return null;
     try {
       return records.values.firstWhere(
@@ -139,7 +142,7 @@ void main() {
         final record = AttendanceRecord(
           eventId: eventId,
           subjectId: 100 + eventId, // 5 different subjects or same subject
-          status: AttendanceStatus.PRESENT,
+          status: AttendanceStatus.present,
           markedAt: date,
           updatedAt: DateTime.now(),
         );
@@ -186,7 +189,7 @@ void main() {
       final record1 = AttendanceRecord(
         eventId: eventId,
         subjectId: 101,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: date,
         updatedAt: DateTime.now(),
       );
@@ -199,7 +202,7 @@ void main() {
       final record2 = AttendanceRecord(
         eventId: eventId,
         subjectId: 101,
-        status: AttendanceStatus.ABSENT,
+        status: AttendanceStatus.absent,
         markedAt: date,
         updatedAt: DateTime.now(),
       );
@@ -212,7 +215,7 @@ void main() {
       final record3 = AttendanceRecord(
         eventId: eventId,
         subjectId: 101,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: date,
         updatedAt: DateTime.now(),
       );
@@ -230,7 +233,7 @@ void main() {
       final record = AttendanceRecord(
         eventId: eventId,
         subjectId: 101,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: date,
         updatedAt: DateTime.now(),
       );
@@ -253,7 +256,7 @@ void main() {
         ScheduleException(
           id: 1,
           date: date,
-          type: ScheduleExceptionType.HOLIDAY,
+          type: ScheduleExceptionType.holiday,
           title: 'Independence Day',
           description: 'National Holiday',
           createdAt: DateTime.now(),
@@ -262,7 +265,7 @@ void main() {
       ];
 
       final holidayException = exceptions
-          .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+          .where((e) => e.type == ScheduleExceptionType.holiday)
           .firstOrNull;
 
       expect(holidayException, isNotNull);
@@ -278,10 +281,10 @@ void main() {
         title: 'Assignment 1',
         startDate: DateTime.utc(2026, 7, 21),
         dueDate: DateTime.utc(2026, 7, 25),
-        priority: TaskPriority.HIGH,
-        taskType: TaskType.ASSIGNMENT,
-        status: TaskStatus.PENDING,
-        reminder: TaskReminder.DAYS_1,
+        priority: TaskPriority.high,
+        taskType: TaskType.assignment,
+        status: TaskStatus.pending,
+        reminder: TaskReminder.days1,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -292,33 +295,33 @@ void main() {
         id: 2,
         title: 'Tech Fest',
         date: DateTime.utc(2026, 7, 28),
-        type: AcademicEventType.EVENT,
+        type: AcademicEventType.event,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      expect(event.type, equals(AcademicEventType.EVENT));
+      expect(event.type, equals(AcademicEventType.event));
 
       // 3. Holiday (ScheduleException)
       final holiday = ScheduleException(
         id: 3,
         date: DateTime.utc(2026, 8, 15),
-        type: ScheduleExceptionType.HOLIDAY,
+        type: ScheduleExceptionType.holiday,
         title: 'Independence Day',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      expect(holiday.type, equals(ScheduleExceptionType.HOLIDAY));
+      expect(holiday.type, equals(ScheduleExceptionType.holiday));
 
       // 4. Exam (AcademicEvent)
       final exam = AcademicEvent(
         id: 4,
         title: 'Mid-term Exam',
         date: DateTime.utc(2026, 8, 20),
-        type: AcademicEventType.EXAM,
+        type: AcademicEventType.exam,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      expect(exam.type, equals(AcademicEventType.EXAM));
+      expect(exam.type, equals(AcademicEventType.exam));
 
       // 5. Extra Class (DailyScheduleOccurrence)
       final extraClass = DailyScheduleOccurrence(
@@ -328,13 +331,13 @@ void main() {
         title: 'OS Extra Class',
         startTime: '16:00',
         endTime: '17:00',
-        type: OccurrenceType.EXTRA_CLASS,
-        status: OccurrenceStatus.UPCOMING,
-        createdFrom: OccurrenceCreatedFrom.MANUAL,
+        type: OccurrenceType.extraClass,
+        status: OccurrenceStatus.upcoming,
+        createdFrom: OccurrenceCreatedFrom.manual,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      expect(extraClass.type, equals(OccurrenceType.EXTRA_CLASS));
+      expect(extraClass.type, equals(OccurrenceType.extraClass));
     });
   });
 
@@ -435,8 +438,10 @@ void main() {
 
       expect(restored.metadata.backupVersion, equals(2));
       expect(restored.scheduleExceptions.length, equals(1));
-      expect(restored.scheduleExceptions.first['title'],
-          equals('College Holiday'));
+      expect(
+        restored.scheduleExceptions.first['title'],
+        equals('College Holiday'),
+      );
       expect(restored.weeklyRules.length, equals(1));
       expect(restored.occurrences.length, equals(1));
       expect(restored.academicEvents.length, equals(1));

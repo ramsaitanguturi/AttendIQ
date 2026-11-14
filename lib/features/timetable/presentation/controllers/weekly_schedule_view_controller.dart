@@ -102,7 +102,7 @@ final dayScheduleByKeyProvider =
   final exceptions = await exceptionRepo.getExceptionsForDate(utcDate);
 
   final holiday = exceptions
-      .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+      .where((e) => e.type == ScheduleExceptionType.holiday)
       .firstOrNull;
   if (holiday != null) {
     return DayScheduleData(
@@ -116,14 +116,16 @@ final dayScheduleByKeyProvider =
   }
 
   final cancelledSubjectIds = exceptions
-      .where((e) =>
-          e.type == ScheduleExceptionType.CANCELLED_CLASS &&
-          e.subjectId != null)
+      .where(
+        (e) =>
+            e.type == ScheduleExceptionType.cancelledClass &&
+            e.subjectId != null,
+      )
       .map((e) => e.subjectId!)
       .toSet();
 
   final examExceptions =
-      exceptions.where((e) => e.type == ScheduleExceptionType.EXAM).toList();
+      exceptions.where((e) => e.type == ScheduleExceptionType.exam).toList();
 
   List<AcademicEvent> academicEvents = [];
   try {
@@ -139,7 +141,7 @@ final dayScheduleByKeyProvider =
   final subjects = await ref.watch(subjectListControllerProvider.future);
   final subjectMap = {
     for (var s in subjects)
-      if (s.id != null) s.id!: s
+      if (s.id != null) s.id!: s,
   };
 
   final activeSemester = await ref.watch(activeSemesterProvider.future);
@@ -157,10 +159,12 @@ final dayScheduleByKeyProvider =
   final savedOccurrences = await occurrenceRepo.getOccurrencesForDate(utcDate);
 
   final dayRules = allRules
-      .where((r) =>
-          r.dayOfWeek == weekday &&
-          r.isActive &&
-          !cancelledSubjectIds.contains(r.subjectId))
+      .where(
+        (r) =>
+            r.dayOfWeek == weekday &&
+            r.isActive &&
+            !cancelledSubjectIds.contains(r.subjectId),
+      )
       .toList();
 
   final items = <ScheduleClassSlot>[];
@@ -187,7 +191,7 @@ final dayScheduleByKeyProvider =
           o.subjectId == rule.subjectId &&
           normalizeTimeSlotPart(o.startTime) == normStart &&
           normalizeTimeSlotPart(o.endTime) == normEnd &&
-          o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE;
+          o.createdFrom == OccurrenceCreatedFrom.weeklyRule;
     }).firstOrNull;
 
     matchedSavedByRuleIndex[i] = saved;
@@ -217,7 +221,7 @@ final dayScheduleByKeyProvider =
       final subjectMatches = sub != null &&
           (normalizeTitleForKey(ae.title)
                   .contains(normalizeTitleForKey(sub.name)) ||
-              (ae.type == AcademicEventType.EXAM && titleMatches));
+              (ae.type == AcademicEventType.exam && titleMatches));
 
       if (titleMatches || subjectMatches) {
         matchingEvent = ae;
@@ -277,7 +281,7 @@ final dayScheduleByKeyProvider =
   // Add remaining academic events
   for (final ae in activeAcademicEvents) {
     if (ae.id != null && consumedAcademicEventIds.contains(ae.id)) continue;
-    final isExam = ae.type == AcademicEventType.EXAM;
+    final isExam = ae.type == AcademicEventType.exam;
     final startTime = (ae.startTime != null && ae.startTime!.trim().isNotEmpty)
         ? normalizeTimeSlotPart(ae.startTime!)
         : '09:00';
@@ -323,7 +327,7 @@ final dayScheduleByKeyProvider =
     String status = 'UNMARKED';
 
     if (saved != null) {
-      if (saved.status != OccurrenceStatus.UPCOMING) {
+      if (saved.status != OccurrenceStatus.upcoming) {
         status = saved.status.toShortString();
       } else if (saved.id != null && saved.id! > 0) {
         final rec = await attendanceRepo.getAttendanceForOccurrence(saved.id!);
@@ -335,8 +339,9 @@ final dayScheduleByKeyProvider =
       final records = recordsCache[rule.subjectId] ??=
           await attendanceRepo.getAttendanceForSubject(rule.subjectId);
       final unlinkedOnDate = records.where((r) {
-        if (!normalizeUtcDate(r.markedAt).isAtSameMomentAs(utcDate))
+        if (!normalizeUtcDate(r.markedAt).isAtSameMomentAs(utcDate)) {
           return false;
+        }
         final occId = r.occurrenceId ?? (r.eventId > 0 ? r.eventId : null);
         return occId == null || !savedOccIds.contains(occId);
       }).toList();
@@ -381,8 +386,8 @@ final dayScheduleByKeyProvider =
   for (final extra in savedOccurrences) {
     if (extra.id != null && consumedOccIds.contains(extra.id)) continue;
     final sub = extra.subjectId != null ? subjectMap[extra.subjectId] : null;
-    if (sub == null && extra.type != OccurrenceType.EXAM) continue;
-    if (extra.type == OccurrenceType.EXAM) continue; // handled above
+    if (sub == null && extra.type != OccurrenceType.exam) continue;
+    if (extra.type == OccurrenceType.exam) continue; // handled above
 
     items.add(
       ScheduleClassSlot(
@@ -400,7 +405,7 @@ final dayScheduleByKeyProvider =
         faculty: extra.faculty ?? sub?.faculty,
         description: extra.reason,
         colorHex: sub?.color ?? '#3B82F6',
-        status: extra.status == OccurrenceStatus.UPCOMING
+        status: extra.status == OccurrenceStatus.upcoming
             ? 'UNMARKED'
             : extra.status.toShortString(),
         date: utcDate,
@@ -420,15 +425,15 @@ final dayScheduleByKeyProvider =
 
 String _attendanceToSlotStatus(AttendanceStatus status) {
   switch (status) {
-    case AttendanceStatus.PRESENT:
-    case AttendanceStatus.EXTRA_PRESENT:
+    case AttendanceStatus.present:
+    case AttendanceStatus.extraPresent:
       return 'PRESENT';
-    case AttendanceStatus.ABSENT:
-    case AttendanceStatus.EXTRA_ABSENT:
+    case AttendanceStatus.absent:
+    case AttendanceStatus.extraAbsent:
       return 'ABSENT';
-    case AttendanceStatus.CANCELLED:
+    case AttendanceStatus.cancelled:
       return 'CANCELLED';
-    case AttendanceStatus.LATE:
+    case AttendanceStatus.late:
       return 'LATE';
   }
 }

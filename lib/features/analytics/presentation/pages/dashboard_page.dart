@@ -220,13 +220,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
                 // 4. Overall Attendance Summary Card (with quick analytics button)
                 _buildOverallProgressCard(
-                    context, analyticsAsync, isDark, isGlassy),
+                  context,
+                  analyticsAsync,
+                  isDark,
+                  isGlassy,
+                ),
                 const SizedBox(height: 24.0),
 
                 // 4. Danger Subjects
                 statsListAsync.when(
                   data: (stats) => _buildDangerSubjectsSection(
-                      context, stats, isDark, isGlassy),
+                    context,
+                    stats,
+                    isDark,
+                    isGlassy,
+                  ),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
@@ -236,7 +244,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   data: (analytics) => analytics == null
                       ? const SizedBox.shrink()
                       : _buildTrendPreviewSection(
-                          context, analytics, isDark, isGlassy),
+                          context,
+                          analytics,
+                          isDark,
+                          isGlassy,
+                        ),
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                 ),
@@ -254,13 +266,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                     TextButton(
                       onPressed: () => context.push('/timetable'),
-                      child: Text('Manage Timetable',
-                          style: TextStyle(
-                            color: isDark
-                                ? AppColors.darkTextPrimary
-                                : AppColors.lightTextPrimary,
-                            fontWeight: FontWeight.bold,
-                          )),
+                      child: Text(
+                        'Manage Timetable',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -390,7 +404,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                               : AppColors.lightBorder,
                         ),
                         boxShadow: GlassTokens.cardShadows(
-                            isGlassy: false, isDark: isDark),
+                          isGlassy: false,
+                          isDark: isDark,
+                        ),
                       ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -454,10 +470,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           }
 
           final percentage = analytics.overallPercentage;
-          final isSafe = analytics.riskLevel == RiskStatus.SAFE;
-          final riskColor = analytics.riskLevel == RiskStatus.CRITICAL
+          final isSafe = analytics.riskLevel == RiskStatus.safe;
+          final riskColor = analytics.riskLevel == RiskStatus.critical
               ? AppColors.attendanceLow
-              : (analytics.riskLevel == RiskStatus.WARNING
+              : (analytics.riskLevel == RiskStatus.warning
                   ? AppColors.attendanceMid
                   : (isDark ? AppColors.gray100 : AppColors.gray900));
 
@@ -492,12 +508,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: riskColor.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                    color: riskColor.withOpacity(0.3)),
+                                  color: riskColor.withOpacity(0.3),
+                                ),
                               ),
                               child: Text(
                                 isSafe ? 'SAFE' : 'ACTION REQUIRED',
@@ -983,13 +1002,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 isDark ? AppColors.primary : AppColors.gray900;
             String alertBadgeText = 'Safe Skips: ${stats.safeBunks}';
 
-            if (stats.bunkAnalysis.status == BunkStatus.CRITICAL) {
+            if (stats.bunkAnalysis.status == BunkStatus.critical) {
               alertBadgeColor = AppColors.attendanceLow;
               final req = stats.requiredClasses;
               alertBadgeText = req == null
                   ? 'Target Unreachable (N/A)'
                   : 'Must Attend: $req';
-            } else if (stats.bunkAnalysis.status == BunkStatus.WARNING) {
+            } else if (stats.bunkAnalysis.status == BunkStatus.warning) {
               alertBadgeColor = AppColors.attendanceMid;
               alertBadgeText = 'Warning skips: ${stats.safeBunks}';
             }
@@ -1082,7 +1101,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       // Badge Pill
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: alertBadgeColor.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(6),
@@ -1230,10 +1251,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ] else ...[
           Column(
             children: upcomingTasks
-                .map((task) => TaskCardWidget(
-                      key: ValueKey(task.id),
-                      task: task,
-                    ))
+                .map(
+                  (task) => TaskCardWidget(
+                    key: ValueKey(task.id),
+                    task: task,
+                  ),
+                )
                 .toList(),
           ),
         ],

@@ -69,9 +69,9 @@ class _DelayedFakeAttendanceRepository implements AttendanceRepository {
       title: subjectTitle ?? 'Algorithms',
       startTime: startTime ?? '14:00',
       endTime: endTime ?? '15:00',
-      type: OccurrenceType.EXTRA_CLASS,
-      status: OccurrenceStatus.PRESENT,
-      createdFrom: OccurrenceCreatedFrom.MANUAL,
+      type: OccurrenceType.extraClass,
+      status: OccurrenceStatus.present,
+      createdFrom: OccurrenceCreatedFrom.manual,
       reason: reason,
       createdAt: now,
       updatedAt: now,
@@ -584,7 +584,7 @@ void main() {
             startTime: '16:00',
             endTime: '17:00',
             reason: 'First extra',
-            initialStatus: AttendanceStatus.EXTRA_PRESENT,
+            initialStatus: AttendanceStatus.extraPresent,
           );
           expect(created.id, isNotNull);
           expect(created.id!, greaterThan(0));
@@ -598,7 +598,7 @@ void main() {
               startTime: '16:00',
               endTime: '17:00',
               reason: 'Duplicate attempt',
-              initialStatus: AttendanceStatus.EXTRA_ABSENT,
+              initialStatus: AttendanceStatus.extraAbsent,
             ),
             throwsA(
               isA<ValidationException>().having(
@@ -701,7 +701,7 @@ void main() {
             subjectTitle: 'Algorithms',
             startTime: '18:00',
             endTime: '19:00',
-            initialStatus: AttendanceStatus.EXTRA_PRESENT,
+            initialStatus: AttendanceStatus.extraPresent,
           );
           await expectLater(
             () => attCtrl.addExtraClass(
@@ -710,7 +710,7 @@ void main() {
               subjectId: fixture.activeSubId,
               startTime: '16:00',
               endTime: '17:00',
-              initialStatus: AttendanceStatus.EXTRA_PRESENT,
+              initialStatus: AttendanceStatus.extraPresent,
             ),
             throwsA(
               isA<ValidationException>().having(
@@ -852,7 +852,7 @@ void main() {
           final occId = upcoming.id!;
           final occServerId = upcoming.serverId!;
           expect(occId, greaterThan(0));
-          expect(upcoming.status, equals(OccurrenceStatus.UPCOMING));
+          expect(upcoming.status, equals(OccurrenceStatus.upcoming));
           expect(
             isar.attendanceRecordLocals
                 .where()
@@ -868,11 +868,11 @@ void main() {
             date: targetDate,
             startTime: '15:00',
             endTime: '16:00',
-            status: AttendanceStatus.EXTRA_PRESENT,
+            status: AttendanceStatus.extraPresent,
           );
           expect(presentOcc.id, equals(occId));
           expect(presentOcc.serverId, equals(occServerId));
-          expect(presentOcc.status, equals(OccurrenceStatus.PRESENT));
+          expect(presentOcc.status, equals(OccurrenceStatus.present));
 
           final attAfterPresent = isar.attendanceRecordLocals
               .where()
@@ -894,11 +894,11 @@ void main() {
             date: targetDate,
             startTime: '15:00',
             endTime: '16:00',
-            status: AttendanceStatus.EXTRA_ABSENT,
+            status: AttendanceStatus.extraAbsent,
           );
           expect(absentOcc.id, equals(occId));
           expect(absentOcc.serverId, equals(occServerId));
-          expect(absentOcc.status, equals(OccurrenceStatus.ABSENT));
+          expect(absentOcc.status, equals(OccurrenceStatus.absent));
 
           final attAfterAbsent = isar.attendanceRecordLocals
               .where()
@@ -917,11 +917,11 @@ void main() {
             date: targetDate,
             startTime: '15:00',
             endTime: '16:00',
-            status: AttendanceStatus.CANCELLED,
+            status: AttendanceStatus.cancelled,
           );
           expect(cancelledOcc.id, equals(occId));
           expect(cancelledOcc.serverId, equals(occServerId));
-          expect(cancelledOcc.status, equals(OccurrenceStatus.CANCELLED));
+          expect(cancelledOcc.status, equals(OccurrenceStatus.cancelled));
 
           final attAfterCancel = isar.attendanceRecordLocals.get(attId)!;
           expect(attAfterCancel.id, equals(attId));
@@ -940,7 +940,7 @@ void main() {
             date: targetDate,
             startTime: '15:00',
             endTime: '16:00',
-            status: AttendanceStatus.EXTRA_PRESENT,
+            status: AttendanceStatus.extraPresent,
           );
           final attRestored = isar.attendanceRecordLocals
               .where()
@@ -961,7 +961,7 @@ void main() {
             endTime: '16:00',
             initialStatus: null,
           );
-          expect(backToUpcoming.status, equals(OccurrenceStatus.UPCOMING));
+          expect(backToUpcoming.status, equals(OccurrenceStatus.upcoming));
           final attAfterUpcoming = isar.attendanceRecordLocals.get(attId)!;
           expect(attAfterUpcoming.isDeleted, isTrue);
           expect(attAfterUpcoming.serverId, equals(attServerId));
@@ -971,7 +971,7 @@ void main() {
             occurrenceId: occId,
             subjectId: fixture.activeSubId,
             date: targetDate,
-            status: AttendanceStatus.EXTRA_PRESENT,
+            status: AttendanceStatus.extraPresent,
           );
           expect(omittedTimesUpdate.id, equals(occId));
           expect(omittedTimesUpdate.startTime, equals('15:00'));
@@ -987,7 +987,7 @@ void main() {
             occurrenceId: occId,
             subjectId: fixture.activeSubId,
             date: targetDate,
-            status: AttendanceStatus.EXTRA_ABSENT,
+            status: AttendanceStatus.extraAbsent,
             reason: '   ',
           );
           expect(clearedReasonOcc.id, equals(occId));
@@ -1238,7 +1238,7 @@ void main() {
             final occ = await attCtrl.markExtraClass(
               subjectId: fixture.activeSubId,
               date: targetDate,
-              status: AttendanceStatus.EXTRA_PRESENT,
+              status: AttendanceStatus.extraPresent,
             );
             allocatedSlots.add((occ.startTime, occ.endTime));
           }
@@ -1280,7 +1280,7 @@ void main() {
             () => attCtrl.markExtraClass(
               subjectId: fixture.activeSubId,
               date: fullDate,
-              status: AttendanceStatus.EXTRA_PRESENT,
+              status: AttendanceStatus.extraPresent,
             ),
             throwsA(
               isA<ValidationException>().having(
@@ -1526,7 +1526,7 @@ void main() {
             credits: futSub.credits,
             attendanceTarget: futSub.attendanceTarget,
             color: futSub.color,
-            type: SubjectType.THEORY,
+            type: SubjectType.theory,
             updatedAt: futSub.updatedAt,
           );
           final archSubLocal = db.subjectLocals.get(fixture.archivedSubId)!;
@@ -1538,7 +1538,7 @@ void main() {
             credits: archSubLocal.credits,
             attendanceTarget: archSubLocal.attendanceTarget,
             color: archSubLocal.color,
-            type: SubjectType.THEORY,
+            type: SubjectType.theory,
             updatedAt: archSubLocal.updatedAt,
           );
         });

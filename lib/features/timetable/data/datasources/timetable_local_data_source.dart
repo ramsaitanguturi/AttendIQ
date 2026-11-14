@@ -17,7 +17,8 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
 
   @override
   Future<List<TimetableTemplateLocal>> getTemplatesForSubject(
-      int subjectId) async {
+    int subjectId,
+  ) async {
     return _isar.timetableTemplateLocals
         .where()
         .subjectIdEqualTo(subjectId)
@@ -27,7 +28,8 @@ class TimetableLocalDataSourceImpl implements TimetableLocalDataSource {
 
   @override
   Future<List<TimetableTemplateLocal>> getTemplatesForSemester(
-      int semesterId) async {
+    int semesterId,
+  ) async {
     // 1. Get all subject IDs for the semester
     final subjects = _isar.subjectLocals
         .where()

@@ -71,7 +71,7 @@ final isAiAdvisorEnabledProvider = AutoDisposeProvider<bool>.internal(
 );
 
 typedef IsAiAdvisorEnabledRef = AutoDisposeProviderRef<bool>;
-String _$appThemeModeHash() => r'45af4f038c23474e0aad5778ee55d8aba013ef53';
+String _$appThemeModeHash() => r'1da25f4924e94d4dc2930fe962974bc9b4792f8f';
 
 /// See also [appThemeMode].
 @ProviderFor(appThemeMode)
@@ -86,7 +86,7 @@ final appThemeModeProvider = AutoDisposeProvider<ThemeMode>.internal(
 
 typedef AppThemeModeRef = AutoDisposeProviderRef<ThemeMode>;
 String _$settingsControllerHash() =>
-    r'02ebc95e1fc09f35fd162878b00cf5865d1765d1';
+    r'97f317cc39a4990b217936a3b1d66d063a5014c3';
 
 /// See also [SettingsController].
 @ProviderFor(SettingsController)

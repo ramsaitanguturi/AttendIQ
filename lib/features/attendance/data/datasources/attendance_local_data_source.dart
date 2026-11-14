@@ -15,7 +15,8 @@ abstract class AttendanceLocalDataSource {
   Future<List<AttendanceRecordLocal>> getAttendanceForSubject(int subjectId);
   Future<AttendanceRecordLocal?> getAttendanceForOccurrence(int occurrenceId);
   Future<AttendanceRecordLocal?> getAttendanceForOccurrenceAnyStatus(
-      int occurrenceId);
+    int occurrenceId,
+  );
   Future<AttendanceRecordLocal?> getAttendanceForEvent(int eventId);
   Future<AttendanceRecordLocal?> getAttendanceForEventAnyStatus(int eventId);
   Future<AttendanceRecordLocal?> getAttendanceRecordById(int id);
@@ -43,7 +44,8 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
 
   @override
   Future<List<AttendanceRecordLocal>> getAttendanceForSubject(
-      int subjectId) async {
+    int subjectId,
+  ) async {
     return _isar.attendanceRecordLocals
         .where()
         .subjectIdEqualTo(subjectId)
@@ -53,7 +55,8 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForOccurrence(
-      int occurrenceId) async {
+    int occurrenceId,
+  ) async {
     if (occurrenceId <= 0) return null;
     final byOccurrence = _isar.attendanceRecordLocals
         .where()
@@ -71,7 +74,8 @@ class AttendanceLocalDataSourceImpl implements AttendanceLocalDataSource {
 
   @override
   Future<AttendanceRecordLocal?> getAttendanceForOccurrenceAnyStatus(
-      int occurrenceId) async {
+    int occurrenceId,
+  ) async {
     if (occurrenceId <= 0) return null;
     final byOccurrence = _isar.attendanceRecordLocals
         .where()
@@ -258,9 +262,11 @@ String _formatMinutesToHhMm(int totalMinutes) {
   switch (normalized) {
     case 'PRESENT':
     case 'EXTRA_PRESENT':
+    case 'EXTRAPRESENT':
       return (occStatus: 'PRESENT', attStatus: 'EXTRA_PRESENT');
     case 'ABSENT':
     case 'EXTRA_ABSENT':
+    case 'EXTRAABSENT':
       return (occStatus: 'ABSENT', attStatus: 'EXTRA_ABSENT');
     case 'CANCELLED':
       return (occStatus: 'CANCELLED', attStatus: 'CANCELLED');

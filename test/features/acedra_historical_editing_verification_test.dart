@@ -96,9 +96,9 @@ void main() {
         startTime: '09:00',
         endTime: '10:00',
         title: 'Data Structures',
-        targetStatus: OccurrenceStatus.PRESENT,
+        targetStatus: OccurrenceStatus.present,
       );
-      expect(yOcc1.status, OccurrenceStatus.PRESENT);
+      expect(yOcc1.status, OccurrenceStatus.present);
 
       var records =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
@@ -113,9 +113,9 @@ void main() {
         startTime: '09:00',
         endTime: '10:00',
         title: 'Data Structures',
-        targetStatus: OccurrenceStatus.ABSENT,
+        targetStatus: OccurrenceStatus.absent,
       );
-      expect(yOcc2.status, OccurrenceStatus.ABSENT);
+      expect(yOcc2.status, OccurrenceStatus.absent);
 
       records =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
@@ -130,9 +130,9 @@ void main() {
         startTime: '09:00',
         endTime: '10:00',
         title: 'Data Structures',
-        targetStatus: OccurrenceStatus.CANCELLED,
+        targetStatus: OccurrenceStatus.cancelled,
       );
-      expect(yOcc3.status, OccurrenceStatus.CANCELLED);
+      expect(yOcc3.status, OccurrenceStatus.cancelled);
 
       records =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
@@ -146,9 +146,9 @@ void main() {
         startTime: '09:00',
         endTime: '10:00',
         title: 'Data Structures',
-        targetStatus: OccurrenceStatus.PRESENT,
+        targetStatus: OccurrenceStatus.present,
       );
-      expect(yOcc4.status, OccurrenceStatus.PRESENT);
+      expect(yOcc4.status, OccurrenceStatus.present);
 
       records =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
@@ -162,9 +162,9 @@ void main() {
         startTime: '14:00',
         endTime: '15:00',
         title: 'Data Structures',
-        targetStatus: OccurrenceStatus.ABSENT,
+        targetStatus: OccurrenceStatus.absent,
       );
-      expect(lwOcc.status, OccurrenceStatus.ABSENT);
+      expect(lwOcc.status, OccurrenceStatus.absent);
 
       records =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
@@ -189,7 +189,7 @@ void main() {
         color: '#2563EB',
         credits: 4,
         semesterId: 1,
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
 
@@ -201,7 +201,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 1,
             subjectId: 100,
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             markedAt: DateTime.utc(2026, 10, i + 1),
             updatedAt: DateTime.utc(2026, 10, i + 1),
           ),
@@ -211,7 +211,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 17,
             subjectId: 100,
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             markedAt: DateTime.utc(2026, 10, i + 17),
             updatedAt: DateTime.utc(2026, 10, i + 17),
           ),
@@ -224,7 +224,7 @@ void main() {
       );
       expect(a1.percentage, 80.0);
       expect(a1.safeBunks, 1);
-      expect(a1.riskStatus, RiskStatus.SAFE);
+      expect(a1.riskStatus, RiskStatus.safe);
 
       // Historical Edit: User changes 1 past ABSENT into PRESENT.
       // Now: 17 PRESENT, 3 ABSENT out of 20 total.
@@ -234,7 +234,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 1,
             subjectId: 100,
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             markedAt: DateTime.utc(2026, 10, i + 1),
             updatedAt: DateTime.utc(2026, 10, i + 1),
           ),
@@ -244,7 +244,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 18,
             subjectId: 100,
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             markedAt: DateTime.utc(2026, 10, i + 18),
             updatedAt: DateTime.utc(2026, 10, i + 18),
           ),
@@ -257,7 +257,7 @@ void main() {
       );
       expect(a2.percentage, 85.0);
       expect(a2.safeBunks, 2);
-      expect(a2.riskStatus, RiskStatus.SAFE);
+      expect(a2.riskStatus, RiskStatus.safe);
 
       // Historical Edit: User changes 3 past PRESENT into ABSENT.
       // Now: 14 PRESENT, 6 ABSENT out of 20 total.
@@ -267,7 +267,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 1,
             subjectId: 100,
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             markedAt: DateTime.utc(2026, 10, i + 1),
             updatedAt: DateTime.utc(2026, 10, i + 1),
           ),
@@ -277,7 +277,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 15,
             subjectId: 100,
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             markedAt: DateTime.utc(2026, 10, i + 15),
             updatedAt: DateTime.utc(2026, 10, i + 15),
           ),
@@ -291,7 +291,7 @@ void main() {
       expect(a3.percentage, 70.0);
       expect(a3.safeBunks, 0);
       expect(a3.classesNeeded, 4);
-      expect(a3.riskStatus, RiskStatus.CRITICAL);
+      expect(a3.riskStatus, RiskStatus.critical);
 
       // Historical Edit: User marks 2 classes as CANCELLED.
       // Cancelled records have isDeleted = true (or are omitted).
@@ -302,7 +302,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 1,
             subjectId: 100,
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             markedAt: DateTime.utc(2026, 10, i + 1),
             updatedAt: DateTime.utc(2026, 10, i + 1),
           ),
@@ -312,7 +312,7 @@ void main() {
           (i) => AttendanceRecord(
             id: i + 15,
             subjectId: 100,
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             markedAt: DateTime.utc(2026, 10, i + 15),
             updatedAt: DateTime.utc(2026, 10, i + 15),
           ),
@@ -321,7 +321,7 @@ void main() {
         AttendanceRecord(
           id: 19,
           subjectId: 100,
-          status: AttendanceStatus.CANCELLED,
+          status: AttendanceStatus.cancelled,
           isDeleted: true,
           markedAt: DateTime.utc(2026, 10, 19),
           updatedAt: DateTime.utc(2026, 10, 19),
@@ -329,7 +329,7 @@ void main() {
         AttendanceRecord(
           id: 20,
           subjectId: 100,
-          status: AttendanceStatus.CANCELLED,
+          status: AttendanceStatus.cancelled,
           isDeleted: true,
           markedAt: DateTime.utc(2026, 10, 20),
           updatedAt: DateTime.utc(2026, 10, 20),
@@ -343,7 +343,7 @@ void main() {
       expect(a4.percentage.toStringAsFixed(1), '77.8');
       expect(a4.safeBunks, 0);
       expect(a4.classesNeeded, 0);
-      expect(a4.riskStatus, RiskStatus.SAFE);
+      expect(a4.riskStatus, RiskStatus.safe);
     });
   });
 }

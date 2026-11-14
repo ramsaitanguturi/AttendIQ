@@ -88,11 +88,13 @@ class AIChatController extends _$AIChatController {
       timestamp: DateTime.now(),
     );
 
-    state = AsyncData(currentState.copyWith(
-      messages: [...currentState.messages, userMsg],
-      isLoading: true,
-      error: null,
-    ));
+    state = AsyncData(
+      currentState.copyWith(
+        messages: [...currentState.messages, userMsg],
+        isLoading: true,
+        error: null,
+      ),
+    );
 
     try {
       final context = await ref.read(aiContextProvider.future);
@@ -136,19 +138,23 @@ class AIChatController extends _$AIChatController {
 
       final updatedState = state.valueOrNull;
       if (updatedState != null) {
-        state = AsyncData(updatedState.copyWith(
-          messages: [...updatedState.messages, assistantMsg],
-          isLoading: false,
-          isOffline: isOffline,
-        ));
+        state = AsyncData(
+          updatedState.copyWith(
+            messages: [...updatedState.messages, assistantMsg],
+            isLoading: false,
+            isOffline: isOffline,
+          ),
+        );
       }
     } catch (e) {
       final updatedState = state.valueOrNull;
       if (updatedState != null) {
-        state = AsyncData(updatedState.copyWith(
-          isLoading: false,
-          error: e.toString(),
-        ));
+        state = AsyncData(
+          updatedState.copyWith(
+            isLoading: false,
+            error: e.toString(),
+          ),
+        );
       }
     }
   }
@@ -164,10 +170,12 @@ class AIChatController extends _$AIChatController {
     final isOffline = connectivityResult.contains(ConnectivityResult.none) ||
         connectivityResult.isEmpty;
 
-    state = AsyncData(AIChatState(
-      messages: [initialMessage],
-      isLoading: false,
-      isOffline: isOffline,
-    ));
+    state = AsyncData(
+      AIChatState(
+        messages: [initialMessage],
+        isLoading: false,
+        isOffline: isOffline,
+      ),
+    );
   }
 }

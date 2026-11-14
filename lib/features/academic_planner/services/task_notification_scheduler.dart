@@ -14,8 +14,10 @@ class TaskNotificationScheduler {
     return 800000 + taskId;
   }
 
-  Future<void> scheduleTaskNotification(AcademicTask task,
-      {String? subjectName}) async {
+  Future<void> scheduleTaskNotification(
+    AcademicTask task, {
+    String? subjectName,
+  }) async {
     if (task.id == null) return;
     final notifId = _getNotificationId(task.id!);
 
@@ -26,9 +28,9 @@ class TaskNotificationScheduler {
       debugPrint('Error cancelling previous task notification: $e');
     }
 
-    if (task.status == TaskStatus.COMPLETED ||
+    if (task.status == TaskStatus.completed ||
         task.isDeleted ||
-        task.reminder == TaskReminder.NONE) {
+        task.reminder == TaskReminder.none) {
       return;
     }
 
@@ -40,7 +42,8 @@ class TaskNotificationScheduler {
 
     if (scheduledTime.isBefore(now)) {
       debugPrint(
-          'Task reminder scheduled time $scheduledTime is in the past. Skipping notification.');
+        'Task reminder scheduled time $scheduledTime is in the past. Skipping notification.',
+      );
       return;
     }
 
@@ -50,22 +53,22 @@ class TaskNotificationScheduler {
         subjectName != null && subjectName.isNotEmpty ? '$subjectName: ' : '';
 
     switch (task.reminder) {
-      case TaskReminder.AT_DEADLINE:
+      case TaskReminder.atDeadline:
         bodyText = '$prefix${task.title} is due now!';
         break;
-      case TaskReminder.MINUTES_15:
+      case TaskReminder.minutes15:
         bodyText = '$prefix${task.title} due in 15 minutes';
         break;
-      case TaskReminder.HOURS_1:
+      case TaskReminder.hours1:
         bodyText = '$prefix${task.title} due in 1 hour';
         break;
-      case TaskReminder.HOURS_2:
+      case TaskReminder.hours2:
         bodyText = '$prefix${task.title} due in 2 hours';
         break;
-      case TaskReminder.DAYS_1:
+      case TaskReminder.days1:
         bodyText = '$prefix${task.title} deadline tomorrow';
         break;
-      case TaskReminder.DAYS_2:
+      case TaskReminder.days2:
         bodyText = '$prefix${task.title} due in 2 days';
         break;
       default:
@@ -77,7 +80,7 @@ class TaskNotificationScheduler {
       ..id = notifId
       ..title = '${task.taskType.displayName} Reminder'
       ..body = bodyText
-      ..type = NotificationType.ASSIGNMENT_REMINDER.name
+      ..type = NotificationType.assignmentReminder.toShortString()
       ..scheduledTime = scheduledTime
       ..relatedId = task.id.toString()
       ..isRead = false;
@@ -85,7 +88,8 @@ class TaskNotificationScheduler {
     try {
       await _notificationService.scheduleNotification(item);
       debugPrint(
-          'Successfully scheduled task notification ID $notifId for $scheduledTime');
+        'Successfully scheduled task notification ID $notifId for $scheduledTime',
+      );
     } catch (e) {
       debugPrint('Failed to schedule task notification: $e');
     }

@@ -83,8 +83,10 @@ class AcedraFloatingBottomBar extends ConsumerStatefulWidget {
 
   /// Recommended bottom padding to wrap a FloatingActionButton so it floats
   /// comfortably above the floating navigation bar and its raised bubble without colliding.
-  static double fabBottomPadding(BuildContext context,
-      {double clearance = 24.0}) {
+  static double fabBottomPadding(
+    BuildContext context, {
+    double clearance = 24.0,
+  }) {
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final barBottomMargin = bottomPadding > 0 ? bottomPadding + 6.0 : 16.0;
     // Scaffold default endFloat places the FAB at (bottomPadding + 16.0).
@@ -569,7 +571,8 @@ class GlassBubblePainter extends CustomPainter {
         Offset(size.width / 2, topHighlightHeight),
         const [
           Color(
-              0xC0FFFFFF), // Softened silver-white crest (refined from harsh glare)
+            0xC0FFFFFF,
+          ), // Softened silver-white crest (refined from harsh glare)
           Color(0x55FFFFFF), // Soft mid sheen
           Color(0x00FFFFFF), // Tapers smoothly into dark glass
         ],

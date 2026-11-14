@@ -131,15 +131,18 @@ class ClassScheduleCard extends StatelessWidget {
                       if (isExam)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 1.5),
+                            horizontal: 6,
+                            vertical: 1.5,
+                          ),
                           decoration: BoxDecoration(
                             color:
                                 isDark ? AppColors.gray700 : AppColors.gray200,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                                color: isDark
-                                    ? AppColors.gray400
-                                    : AppColors.gray700),
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray700,
+                            ),
                           ),
                           child: Text(
                             'EXAM',
@@ -155,15 +158,18 @@ class ClassScheduleCard extends StatelessWidget {
                       else if (isEvent)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 1.5),
+                            horizontal: 6,
+                            vertical: 1.5,
+                          ),
                           decoration: BoxDecoration(
                             color:
                                 isDark ? AppColors.gray700 : AppColors.gray200,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                                color: isDark
-                                    ? AppColors.gray400
-                                    : AppColors.gray700),
+                              color: isDark
+                                  ? AppColors.gray400
+                                  : AppColors.gray700,
+                            ),
                           ),
                           child: Text(
                             slot.code.isNotEmpty ? slot.code : 'EVENT',
@@ -222,7 +228,9 @@ class ClassScheduleCard extends StatelessWidget {
 
                             return Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1.5),
+                                horizontal: 6,
+                                vertical: 1.5,
+                              ),
                               decoration: BoxDecoration(
                                 color: pillBg,
                                 borderRadius: BorderRadius.circular(6),
@@ -251,8 +259,11 @@ class ClassScheduleCard extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.access_time_rounded,
-                              size: isCompact ? 11.0 : 13.0, color: cardColor),
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: isCompact ? 11.0 : 13.0,
+                            color: cardColor,
+                          ),
                           const SizedBox(width: 3.0),
                           Text(
                             '${slot.startTime} - ${slot.endTime}',
@@ -268,9 +279,11 @@ class ClassScheduleCard extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.meeting_room_outlined,
-                                size: isCompact ? 11.0 : 13.0,
-                                color: cardColor),
+                            Icon(
+                              Icons.meeting_room_outlined,
+                              size: isCompact ? 11.0 : 13.0,
+                              color: cardColor,
+                            ),
                             const SizedBox(width: 3.0),
                             Text(
                               slot.room!,
@@ -287,8 +300,11 @@ class ClassScheduleCard extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.person_outline,
-                                size: 13.0, color: cardColor),
+                            Icon(
+                              Icons.person_outline,
+                              size: 13.0,
+                              color: cardColor,
+                            ),
                             const SizedBox(width: 3.0),
                             Text(
                               slot.faculty!,

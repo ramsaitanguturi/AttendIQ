@@ -367,7 +367,9 @@ class _SemesterTile extends StatelessWidget {
                   child: Text(
                     'Read-only (activate to edit)',
                     style: TextStyle(
-                        fontSize: 12, color: AppColors.textMuted(isDark)),
+                      fontSize: 12,
+                      color: AppColors.textMuted(isDark),
+                    ),
                   ),
                 ),
             ],

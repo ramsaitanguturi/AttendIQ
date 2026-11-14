@@ -59,7 +59,7 @@ void main() {
         code: 'CS401',
         credits: 3,
         attendanceTarget: 75.0,
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         color: '#2196F3',
         updatedAt: now,
       );
@@ -70,7 +70,7 @@ void main() {
           AttendanceRecord(
             id: i + 1,
             subjectId: 1,
-            status: AttendanceStatus.PRESENT,
+            status: AttendanceStatus.present,
             markedAt: now.subtract(Duration(days: i)),
             updatedAt: now,
           ),
@@ -79,7 +79,7 @@ void main() {
           AttendanceRecord(
             id: i + 10,
             subjectId: 1,
-            status: AttendanceStatus.ABSENT,
+            status: AttendanceStatus.absent,
             markedAt: now.subtract(Duration(days: i + 10)),
             updatedAt: now,
           ),
@@ -88,7 +88,7 @@ void main() {
           AttendanceRecord(
             id: i + 20,
             subjectId: 1,
-            status: AttendanceStatus.LATE,
+            status: AttendanceStatus.late,
             markedAt: now.subtract(Duration(days: i + 20)),
             updatedAt: now,
           ),

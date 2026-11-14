@@ -6,7 +6,7 @@ part of 'ai_chat_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$aIChatControllerHash() => r'f88fb831a9693a561ab83223fc36762dfa55ef83';
+String _$aIChatControllerHash() => r'28626f2050f10cadc05a2e85904ed30dc0cc3968';
 
 /// See also [AIChatController].
 @ProviderFor(AIChatController)

@@ -40,14 +40,14 @@ class AcademicTask {
   }
 
   int daysRemainingAt(DateTime now) {
-    if (status == TaskStatus.COMPLETED) return 0;
+    if (status == TaskStatus.completed) return 0;
     final cleanDue = DateTime(dueDate.year, dueDate.month, dueDate.day);
     final cleanNow = DateTime(now.year, now.month, now.day);
     return cleanDue.difference(cleanNow).inDays;
   }
 
   String remainingDaysText(DateTime now) {
-    if (status == TaskStatus.COMPLETED) {
+    if (status == TaskStatus.completed) {
       return 'Completed';
     }
     final days = daysRemainingAt(now);

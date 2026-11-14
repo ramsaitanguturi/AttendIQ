@@ -24,7 +24,12 @@ class BackupScheduler {
       candidate = candidate.add(const Duration(days: 1));
       if (candidate.weekday == targetWeekday) {
         candidate = DateTime(
-            candidate.year, candidate.month, candidate.day, targetHour, 0);
+          candidate.year,
+          candidate.month,
+          candidate.day,
+          targetHour,
+          0,
+        );
         if (candidate.isAfter(now)) {
           break;
         }

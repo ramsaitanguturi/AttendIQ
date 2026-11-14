@@ -122,7 +122,9 @@ class _SpyNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     getEventsCalls++;
     activeConcurrentRescheduleReads++;
     if (activeConcurrentRescheduleReads > maxConcurrentRescheduleReads) {
@@ -147,7 +149,9 @@ class _SpyNotificationDatabase implements NotificationDatabase {
 
   @override
   Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     return scheduleExceptions.where((e) {
       final dateStripped = DateTime.utc(e.date.year, e.date.month, e.date.day);
       return !dateStripped.isBefore(start) && !dateStripped.isAfter(end);
@@ -366,8 +370,10 @@ class _FakeSubjectRepository implements SubjectRepository {
   Future<Subject?> getSubjectById(int id) async => null;
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-          {bool includeDeleted = false}) async =>
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async =>
       const <Subject>[];
 
   @override
@@ -716,7 +722,7 @@ void main() {
         expect(
           spyService.scheduled.any(
             (n) =>
-                n.type == NotificationType.CLASS_REMINDER.toShortString() &&
+                n.type == NotificationType.classReminder.toShortString() &&
                 n.title.contains('Distributed Systems'),
           ),
           isTrue,
@@ -730,8 +736,7 @@ void main() {
         expect(
           spyService.scheduled.any(
             (n) =>
-                n.type ==
-                    NotificationType.LOW_ATTENDANCE_ALERT.toShortString() &&
+                n.type == NotificationType.lowAttendanceAlert.toShortString() &&
                 n.title.contains('Distributed Systems'),
           ),
           isTrue,
@@ -746,7 +751,7 @@ void main() {
         expect(
           spyService.scheduled.any(
             (n) =>
-                n.type == NotificationType.CLASS_REMINDER.toShortString() &&
+                n.type == NotificationType.classReminder.toShortString() &&
                 n.body.contains('Midterm Exam'),
           ),
           isTrue,
@@ -1308,12 +1313,12 @@ void main() {
       // Exactly 1 class reminder + 1 weekly report (no duplicate class reminders!).
       final classReminders = spyDb.notifications
           .where(
-            (n) => n.type == NotificationType.CLASS_REMINDER.toShortString(),
+            (n) => n.type == NotificationType.classReminder.toShortString(),
           )
           .toList();
       final scheduledClassReminders = spyService.scheduled
           .where(
-            (n) => n.type == NotificationType.CLASS_REMINDER.toShortString(),
+            (n) => n.type == NotificationType.classReminder.toShortString(),
           )
           .toList();
       expect(classReminders, hasLength(1));
@@ -1398,12 +1403,12 @@ void main() {
       final task = AcademicTask(
         id: 7,
         title: 'Lab Viva',
-        taskType: TaskType.ASSIGNMENT,
+        taskType: TaskType.assignment,
         startDate: DateTime.now(),
         dueDate: futureDue,
-        priority: TaskPriority.HIGH,
-        status: TaskStatus.PENDING,
-        reminder: TaskReminder.HOURS_1,
+        priority: TaskPriority.high,
+        status: TaskStatus.pending,
+        reminder: TaskReminder.hours1,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );

@@ -96,13 +96,13 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   int absent = 0;
   int lateCount = 0;
   for (final r in records) {
-    if (r.status == AttendanceStatus.PRESENT ||
-        r.status == AttendanceStatus.EXTRA_PRESENT) {
+    if (r.status == AttendanceStatus.present ||
+        r.status == AttendanceStatus.extraPresent) {
       present++;
-    } else if (r.status == AttendanceStatus.ABSENT ||
-        r.status == AttendanceStatus.EXTRA_ABSENT) {
+    } else if (r.status == AttendanceStatus.absent ||
+        r.status == AttendanceStatus.extraAbsent) {
       absent++;
-    } else if (r.status == AttendanceStatus.LATE) {
+    } else if (r.status == AttendanceStatus.late) {
       lateCount++;
     }
   }
@@ -126,11 +126,19 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   // 5. Calculate percentage, safe bunks, must-attend
   final target = subject.attendanceTarget;
   final percentage = AttendanceCalculator.calculatePercentage(
-      attended: effectiveAttended, total: total);
+    attended: effectiveAttended,
+    total: total,
+  );
   final safeBunks = AttendanceCalculator.calculateSafeBunks(
-      attended: effectiveAttended, total: total, target: target);
+    attended: effectiveAttended,
+    total: total,
+    target: target,
+  );
   final requiredClasses = AttendanceCalculator.calculateRequiredClasses(
-      attended: effectiveAttended, total: total, target: target);
+    attended: effectiveAttended,
+    total: total,
+    target: target,
+  );
 
   // 6. Calculate remaining classes using canonical WeeklyScheduleRuleRepository,
   // accounting for schedule exceptions (holidays, cancelled classes) and already-marked classes today
@@ -158,9 +166,9 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
     for (final ex in exceptions) {
       if (ex.isDeleted) continue;
       final exDateKey = formatUtcDateKey(ex.date);
-      if (ex.type == ScheduleExceptionType.HOLIDAY) {
+      if (ex.type == ScheduleExceptionType.holiday) {
         holidayDates.add(exDateKey);
-      } else if (ex.type == ScheduleExceptionType.CANCELLED_CLASS &&
+      } else if (ex.type == ScheduleExceptionType.cancelledClass &&
           (ex.subjectId == null || ex.subjectId == subjectId)) {
         cancelledDatesForSubject.add(exDateKey);
       }
@@ -168,9 +176,11 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 
     // Classes already marked today for this subject
     final alreadyMarkedTodayCount = records
-        .where((r) =>
-            !r.isDeleted &&
-            normalizeUtcDate(r.markedAt).isAtSameMomentAs(todayUtc))
+        .where(
+          (r) =>
+              !r.isDeleted &&
+              normalizeUtcDate(r.markedAt).isAtSameMomentAs(todayUtc),
+        )
         .length;
 
     DateTime current = todayUtc;
@@ -206,12 +216,12 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
   int recentPresent = 0;
   int recentTotal = 0;
   for (final r in recentRecords) {
-    if (r.status == AttendanceStatus.PRESENT ||
-        r.status == AttendanceStatus.EXTRA_PRESENT) {
+    if (r.status == AttendanceStatus.present ||
+        r.status == AttendanceStatus.extraPresent) {
       recentPresent++;
       recentTotal++;
-    } else if (r.status == AttendanceStatus.ABSENT ||
-        r.status == AttendanceStatus.EXTRA_ABSENT) {
+    } else if (r.status == AttendanceStatus.absent ||
+        r.status == AttendanceStatus.extraAbsent) {
       recentTotal++;
     }
   }
@@ -252,7 +262,8 @@ Future<SubjectAttendanceStats?> subjectAttendanceStats(
 
 @riverpod
 Future<List<SubjectAttendanceStats>> allSubjectAttendanceStats(
-    AllSubjectAttendanceStatsRef ref) async {
+  AllSubjectAttendanceStatsRef ref,
+) async {
   final semester = await ref.watch(activeSemesterProvider.future);
   if (semester == null || semester.localId == null) return const [];
 
@@ -272,7 +283,8 @@ Future<List<SubjectAttendanceStats>> allSubjectAttendanceStats(
 
 @riverpod
 Future<double> overallAttendancePercentage(
-    OverallAttendancePercentageRef ref) async {
+  OverallAttendancePercentageRef ref,
+) async {
   final statsList = await ref.watch(allSubjectAttendanceStatsProvider.future);
   if (statsList.isEmpty) return 100.0;
 
@@ -305,7 +317,9 @@ Future<double> overallAttendancePercentage(
 
 @riverpod
 Future<List<DailyScheduleOccurrence>> subjectOccurrences(
-    SubjectOccurrencesRef ref, int subjectId) async {
+  SubjectOccurrencesRef ref,
+  int subjectId,
+) async {
   var isDisposed = false;
   ref.onDispose(() => isDisposed = true);
 
@@ -335,7 +349,8 @@ Future<List<DailyScheduleOccurrence>> subjectOccurrences(
 
 @riverpod
 Future<List<DailyScheduleOccurrence>> todayOccurrences(
-    TodayOccurrencesRef ref) async {
+  TodayOccurrencesRef ref,
+) async {
   final scheduleState = await ref.watch(todayScheduleProvider().future);
   return scheduleState.occurrences;
 }

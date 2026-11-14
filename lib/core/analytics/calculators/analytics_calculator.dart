@@ -32,13 +32,13 @@ class AnalyticsCalculator {
 
     for (final record in records) {
       if (record.isDeleted) continue;
-      if (record.status == AttendanceStatus.PRESENT ||
-          record.status == AttendanceStatus.EXTRA_PRESENT) {
+      if (record.status == AttendanceStatus.present ||
+          record.status == AttendanceStatus.extraPresent) {
         present++;
-      } else if (record.status == AttendanceStatus.ABSENT ||
-          record.status == AttendanceStatus.EXTRA_ABSENT) {
+      } else if (record.status == AttendanceStatus.absent ||
+          record.status == AttendanceStatus.extraAbsent) {
         absent++;
-      } else if (record.status == AttendanceStatus.LATE) {
+      } else if (record.status == AttendanceStatus.late) {
         lateCount++;
       }
     }
@@ -69,11 +69,11 @@ class AnalyticsCalculator {
     // CRITICAL: Below target (percentage < target)
     RiskStatus riskStatus;
     if (percentage < target) {
-      riskStatus = RiskStatus.CRITICAL;
+      riskStatus = RiskStatus.critical;
     } else if (percentage - target <= 2.5) {
-      riskStatus = RiskStatus.WARNING;
+      riskStatus = RiskStatus.warning;
     } else {
-      riskStatus = RiskStatus.SAFE;
+      riskStatus = RiskStatus.safe;
     }
 
     return SubjectAnalytics(
@@ -144,9 +144,11 @@ class AnalyticsCalculator {
 
     if (subjectAnalyticsList.isNotEmpty) {
       highestAttendanceSubject = subjectAnalyticsList.reduce(
-          (curr, next) => curr.percentage > next.percentage ? curr : next);
+        (curr, next) => curr.percentage > next.percentage ? curr : next,
+      );
       lowestAttendanceSubject = subjectAnalyticsList.reduce(
-          (curr, next) => curr.percentage < next.percentage ? curr : next);
+        (curr, next) => curr.percentage < next.percentage ? curr : next,
+      );
       mostMissedSubject = subjectAnalyticsList
           .reduce((curr, next) => curr.absent > next.absent ? curr : next);
       mostAttendedSubject = subjectAnalyticsList
@@ -173,14 +175,14 @@ class AnalyticsCalculator {
     int currentStreak = 0;
 
     for (final occ in sortedOccurrences) {
-      if (occ.status == AttendanceStatus.PRESENT ||
-          occ.status == AttendanceStatus.EXTRA_PRESENT) {
+      if (occ.status == AttendanceStatus.present ||
+          occ.status == AttendanceStatus.extraPresent) {
         currentStreak++;
         if (currentStreak > longestPresentStreak) {
           longestPresentStreak = currentStreak;
         }
-      } else if (occ.status == AttendanceStatus.ABSENT ||
-          occ.status == AttendanceStatus.EXTRA_ABSENT) {
+      } else if (occ.status == AttendanceStatus.absent ||
+          occ.status == AttendanceStatus.extraAbsent) {
         currentStreak = 0;
       }
       // CANCELLED is ignored and does not break or increment streak
@@ -195,11 +197,11 @@ class AnalyticsCalculator {
     final target = semester.requiredAttendanceRate;
     RiskStatus riskLevel;
     if (overallPercentage < target) {
-      riskLevel = RiskStatus.CRITICAL;
+      riskLevel = RiskStatus.critical;
     } else if (overallPercentage - target <= 2.5) {
-      riskLevel = RiskStatus.WARNING;
+      riskLevel = RiskStatus.warning;
     } else {
-      riskLevel = RiskStatus.SAFE;
+      riskLevel = RiskStatus.safe;
     }
 
     // 6. Trend Generation
@@ -259,12 +261,12 @@ class AnalyticsCalculator {
         final occDateOnly =
             DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
         if (!occDateOnly.isAfter(date)) {
-          if (occ.status == AttendanceStatus.PRESENT ||
-              occ.status == AttendanceStatus.EXTRA_PRESENT) {
+          if (occ.status == AttendanceStatus.present ||
+              occ.status == AttendanceStatus.extraPresent) {
             presentUpToDate++;
             totalUpToDate++;
-          } else if (occ.status == AttendanceStatus.ABSENT ||
-              occ.status == AttendanceStatus.EXTRA_ABSENT) {
+          } else if (occ.status == AttendanceStatus.absent ||
+              occ.status == AttendanceStatus.extraAbsent) {
             totalUpToDate++;
           }
         }
@@ -317,12 +319,12 @@ class AnalyticsCalculator {
         final occDateOnly =
             DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
         if (!occDateOnly.isAfter(sunday)) {
-          if (occ.status == AttendanceStatus.PRESENT ||
-              occ.status == AttendanceStatus.EXTRA_PRESENT) {
+          if (occ.status == AttendanceStatus.present ||
+              occ.status == AttendanceStatus.extraPresent) {
             presentUpToDate++;
             totalUpToDate++;
-          } else if (occ.status == AttendanceStatus.ABSENT ||
-              occ.status == AttendanceStatus.EXTRA_ABSENT) {
+          } else if (occ.status == AttendanceStatus.absent ||
+              occ.status == AttendanceStatus.extraAbsent) {
             totalUpToDate++;
           }
         }
@@ -370,12 +372,12 @@ class AnalyticsCalculator {
         final occDateOnly =
             DateTime.utc(occ.date.year, occ.date.month, occ.date.day);
         if (!occDateOnly.isAfter(monthEnd)) {
-          if (occ.status == AttendanceStatus.PRESENT ||
-              occ.status == AttendanceStatus.EXTRA_PRESENT) {
+          if (occ.status == AttendanceStatus.present ||
+              occ.status == AttendanceStatus.extraPresent) {
             presentUpToDate++;
             totalUpToDate++;
-          } else if (occ.status == AttendanceStatus.ABSENT ||
-              occ.status == AttendanceStatus.EXTRA_ABSENT) {
+          } else if (occ.status == AttendanceStatus.absent ||
+              occ.status == AttendanceStatus.extraAbsent) {
             totalUpToDate++;
           }
         }

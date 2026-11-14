@@ -28,7 +28,7 @@ class TaskCardWidget extends ConsumerWidget {
     final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final now = DateTime.now();
     final urgency = task.urgencyAt(now);
-    final isCompleted = task.status == TaskStatus.COMPLETED;
+    final isCompleted = task.status == TaskStatus.completed;
 
     final subjects = ref.watch(subjectListControllerProvider).valueOrNull ?? [];
     Subject? subject;
@@ -43,7 +43,7 @@ class TaskCardWidget extends ConsumerWidget {
           credits: 3,
           attendanceTarget: 75,
           color: '#42A5F5',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           updatedAt: DateTime.now(),
         ),
       );
@@ -149,7 +149,9 @@ class TaskCardWidget extends ConsumerWidget {
                           // Priority Chip
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: task.priority
                                   .getAdaptiveColor(isDark)
@@ -183,7 +185,9 @@ class TaskCardWidget extends ConsumerWidget {
                           // Task Category Tag
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? AppColors.gray700.withOpacity(0.4)
@@ -193,11 +197,13 @@ class TaskCardWidget extends ConsumerWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(task.taskType.icon,
-                                    size: 12,
-                                    color: isDark
-                                        ? AppColors.gray300
-                                        : AppColors.gray800),
+                                Icon(
+                                  task.taskType.icon,
+                                  size: 12,
+                                  color: isDark
+                                      ? AppColors.gray300
+                                      : AppColors.gray800,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   task.taskType.displayName,
@@ -217,7 +223,9 @@ class TaskCardWidget extends ConsumerWidget {
                           if (subject != null) ...[
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? AppColors.gray700.withOpacity(0.4)
@@ -288,7 +296,9 @@ class TaskCardWidget extends ConsumerWidget {
                           // Urgency Chip
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: isCompleted
                                   ? AppColors.darkBorderSubtle

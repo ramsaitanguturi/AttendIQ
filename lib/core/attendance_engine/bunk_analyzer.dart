@@ -1,4 +1,4 @@
-enum BunkStatus { NORMAL, WARNING, CRITICAL }
+enum BunkStatus { normal, warning, critical }
 
 class BunkAnalysis {
   final BunkStatus status;
@@ -31,7 +31,7 @@ class BunkAnalyzer {
     if (currentPercentage < targetPercentage) {
       final reqStr = requiredClasses != null ? '$requiredClasses' : 'N/A';
       return BunkAnalysis(
-        status: BunkStatus.CRITICAL,
+        status: BunkStatus.critical,
         statusText: 'Critical',
         safeBunks: 0,
         requiredClasses: requiredClasses,
@@ -40,7 +40,7 @@ class BunkAnalyzer {
       );
     } else if (currentPercentage - targetPercentage <= 2.5) {
       return BunkAnalysis(
-        status: BunkStatus.WARNING,
+        status: BunkStatus.warning,
         statusText: 'Warning',
         safeBunks: safeBunks,
         requiredClasses: 0,
@@ -49,7 +49,7 @@ class BunkAnalyzer {
       );
     } else {
       return BunkAnalysis(
-        status: BunkStatus.NORMAL,
+        status: BunkStatus.normal,
         statusText: 'Normal',
         safeBunks: safeBunks,
         requiredClasses: 0,

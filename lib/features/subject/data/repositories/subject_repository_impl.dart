@@ -22,7 +22,7 @@ class SubjectRepositoryImpl implements SubjectRepository {
       credits: local.credits,
       attendanceTarget: local.attendanceTarget,
       color: local.color,
-      type: local.type == 'LAB' ? SubjectType.LAB : SubjectType.THEORY,
+      type: local.type == 'LAB' ? SubjectType.lab : SubjectType.theory,
       updatedAt: local.updatedAt,
       isDirty: local.isDirty,
       isDeleted: local.isDeleted,
@@ -47,10 +47,14 @@ class SubjectRepositoryImpl implements SubjectRepository {
   }
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-      {bool includeDeleted = false}) async {
-    final list = await _localDataSource.getSubjectsBySemester(semesterId,
-        includeDeleted: includeDeleted);
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async {
+    final list = await _localDataSource.getSubjectsBySemester(
+      semesterId,
+      includeDeleted: includeDeleted,
+    );
     return list.map(_toEntity).toList();
   }
 

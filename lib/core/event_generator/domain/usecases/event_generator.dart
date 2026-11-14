@@ -32,26 +32,30 @@ class EventGenerator {
         if (subject == null) continue;
 
         // Check if event already exists
-        final exists = existingEvents.any((e) =>
-            e.subjectId == template.subjectId &&
-            _stripTime(e.date).isAtSameMomentAs(current) &&
-            e.startTime == template.startTime &&
-            e.endTime == template.endTime);
+        final exists = existingEvents.any(
+          (e) =>
+              e.subjectId == template.subjectId &&
+              _stripTime(e.date).isAtSameMomentAs(current) &&
+              e.startTime == template.startTime &&
+              e.endTime == template.endTime,
+        );
 
         if (!exists) {
-          final eventType = subject.type == SubjectType.LAB
-              ? EventType.LAB
-              : EventType.REGULAR_CLASS;
+          final eventType = subject.type == SubjectType.lab
+              ? EventType.lab
+              : EventType.regularClass;
 
-          newEvents.add(Event(
-            subjectId: template.subjectId,
-            date: current,
-            startTime: template.startTime,
-            endTime: template.endTime,
-            eventType: eventType,
-            status: EventStatus.UNMARKED,
-            updatedAt: DateTime.now(),
-          ));
+          newEvents.add(
+            Event(
+              subjectId: template.subjectId,
+              date: current,
+              startTime: template.startTime,
+              endTime: template.endTime,
+              eventType: eventType,
+              status: EventStatus.unmarked,
+              updatedAt: DateTime.now(),
+            ),
+          );
         }
       }
       current = current.add(const Duration(days: 1));
@@ -93,26 +97,30 @@ class EventGenerator {
         final subject = subjectMap[template.subjectId];
         if (subject == null) continue;
 
-        final exists = existingEvents.any((e) =>
-            e.subjectId == template.subjectId &&
-            _stripTime(e.date).isAtSameMomentAs(current) &&
-            e.startTime == template.startTime &&
-            e.endTime == template.endTime);
+        final exists = existingEvents.any(
+          (e) =>
+              e.subjectId == template.subjectId &&
+              _stripTime(e.date).isAtSameMomentAs(current) &&
+              e.startTime == template.startTime &&
+              e.endTime == template.endTime,
+        );
 
         if (!exists) {
-          final eventType = subject.type == SubjectType.LAB
-              ? EventType.LAB
-              : EventType.REGULAR_CLASS;
+          final eventType = subject.type == SubjectType.lab
+              ? EventType.lab
+              : EventType.regularClass;
 
-          newEvents.add(Event(
-            subjectId: template.subjectId,
-            date: current,
-            startTime: template.startTime,
-            endTime: template.endTime,
-            eventType: eventType,
-            status: EventStatus.UNMARKED,
-            updatedAt: DateTime.now(),
-          ));
+          newEvents.add(
+            Event(
+              subjectId: template.subjectId,
+              date: current,
+              startTime: template.startTime,
+              endTime: template.endTime,
+              eventType: eventType,
+              status: EventStatus.unmarked,
+              updatedAt: DateTime.now(),
+            ),
+          );
         }
       }
       current = current.add(const Duration(days: 1));

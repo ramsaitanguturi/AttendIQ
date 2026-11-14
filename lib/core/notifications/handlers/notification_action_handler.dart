@@ -127,7 +127,9 @@ class NotificationActionPayload {
             // Remaining parts are type and title
             final remaining = parts.sublist(5).join('_');
             final cleanTitle = remaining.replaceFirst(
-                RegExp(r'^(REGULAR_CLASS|EXTRA_CLASS|EXAM|EVENT)_?'), '');
+              RegExp(r'^(REGULAR_CLASS|EXTRA_CLASS|EXAM|EVENT)_?'),
+              '',
+            );
             final parsedDate = DateTime.tryParse(datePart) ?? DateTime.now();
             return NotificationActionPayload(
               slotKey: slotKey,
@@ -161,13 +163,13 @@ class NotificationActionHandler {
   static OccurrenceStatus? parseActionId(String actionId) {
     switch (actionId.toUpperCase().trim()) {
       case actionPresent:
-        return OccurrenceStatus.PRESENT;
+        return OccurrenceStatus.present;
       case actionAbsent:
-        return OccurrenceStatus.ABSENT;
+        return OccurrenceStatus.absent;
       case actionCancelled:
-        return OccurrenceStatus.CANCELLED;
+        return OccurrenceStatus.cancelled;
       case actionLate:
-        return OccurrenceStatus.LATE;
+        return OccurrenceStatus.late;
       default:
         return null;
     }
@@ -258,10 +260,12 @@ class NotificationActionHandler {
             .where()
             .dateEqualTo(dateUtc)
             .findAll()
-            .where((o) =>
-                !o.isDeleted &&
-                o.subjectId == payload.subjectId &&
-                o.startTime == payload.startTime)
+            .where(
+              (o) =>
+                  !o.isDeleted &&
+                  o.subjectId == payload.subjectId &&
+                  o.startTime == payload.startTime,
+            )
             .toList();
         if (dayMatches.isNotEmpty) {
           occurrence = dayMatches.first;
@@ -324,7 +328,7 @@ class NotificationActionHandler {
           .occurrenceIdEqualTo(occId)
           .findAll();
 
-      if (newStatus == OccurrenceStatus.CANCELLED) {
+      if (newStatus == OccurrenceStatus.cancelled) {
         for (final r in existingRecords) {
           r.isDeleted = true;
           r.updatedAt = nowUtc;

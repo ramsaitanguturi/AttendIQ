@@ -16,7 +16,6 @@ import 'package:attend_iq/features/timetable/domain/entities/weekly_schedule_rul
 import 'package:attend_iq/features/timetable/domain/entities/schedule_exception.dart';
 import 'package:attend_iq/features/timetable/domain/entities/daily_schedule_occurrence.dart';
 import 'package:attend_iq/features/timetable/domain/repositories/schedule_exception_repository.dart';
-import 'package:attend_iq/features/timetable/domain/repositories/daily_schedule_occurrence_repository.dart';
 import 'package:attend_iq/features/timetable/presentation/controllers/weekly_schedule_view_controller.dart';
 import 'package:attend_iq/features/timetable/presentation/controllers/academic_calendar_controller.dart';
 import 'package:attend_iq/features/timetable/presentation/widgets/class_schedule_card.dart';
@@ -39,11 +38,14 @@ class _InMemorySubjectRepo implements SubjectRepository {
   int _nextId = 1;
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-      {bool includeDeleted = false}) async {
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async {
     return subjects
-        .where((s) =>
-            s.semesterId == semesterId && (includeDeleted || !s.isDeleted))
+        .where(
+          (s) => s.semesterId == semesterId && (includeDeleted || !s.isDeleted),
+        )
         .toList();
   }
 
@@ -78,11 +80,17 @@ class _InMemorySubjectRepo implements SubjectRepository {
     }
     // Cascade soft-delete future schedule occurrences (date >= today)
     final today = DateTime.utc(
-        DateTime.now().year, DateTime.now().month, DateTime.now().day);
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
     for (int i = 0; i < occurrences.length; i++) {
       if (occurrences[i].subjectId == id) {
-        final occDate = DateTime.utc(occurrences[i].date.year,
-            occurrences[i].date.month, occurrences[i].date.day);
+        final occDate = DateTime.utc(
+          occurrences[i].date.year,
+          occurrences[i].date.month,
+          occurrences[i].date.day,
+        );
         if (!occDate.isBefore(today)) {
           occurrences[i] = occurrences[i].copyWith(isDeleted: true);
         }
@@ -110,7 +118,9 @@ class _InMemoryExceptionRepo implements ScheduleExceptionRepository {
 
   @override
   Future<List<ScheduleException>> getExceptionsForRange(
-      DateTime startDate, DateTime endDate) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     return exceptions.where((e) {
       return !e.isDeleted &&
           !e.date.isBefore(startDate) &&
@@ -146,76 +156,6 @@ class _InMemoryExceptionRepo implements ScheduleExceptionRepository {
 
   @override
   Stream<void> watchExceptions() => const Stream.empty();
-}
-
-class _InMemoryOccurrenceRepo implements DailyScheduleOccurrenceRepository {
-  final List<DailyScheduleOccurrence> occurrences = [];
-  int _nextId = 1;
-
-  @override
-  Future<List<DailyScheduleOccurrence>> getOccurrencesForDate(
-      DateTime date) async {
-    final d = DateTime.utc(date.year, date.month, date.day);
-    return occurrences.where((o) {
-      final od = DateTime.utc(o.date.year, o.date.month, o.date.day);
-      return od.isAtSameMomentAs(d) && !o.isDeleted;
-    }).toList();
-  }
-
-  @override
-  Future<List<DailyScheduleOccurrence>> getOccurrencesForDateRange(
-      DateTime start, DateTime end) async {
-    return occurrences.where((o) {
-      return !o.isDeleted && !o.date.isBefore(start) && !o.date.isAfter(end);
-    }).toList();
-  }
-
-  @override
-  Future<List<DailyScheduleOccurrence>> getOccurrencesForSubject(
-          int subjectId) async =>
-      occurrences
-          .where((o) => o.subjectId == subjectId && !o.isDeleted)
-          .toList();
-
-  @override
-  Future<DailyScheduleOccurrence?> getOccurrenceById(int id) async =>
-      occurrences.where((o) => o.id == id).firstOrNull;
-
-  @override
-  Future<DailyScheduleOccurrence> saveOccurrence(
-      DailyScheduleOccurrence occurrence) async {
-    final toSave = occurrence.id == null || occurrence.id == 0
-        ? occurrence.copyWith(id: _nextId++)
-        : occurrence;
-    occurrences.removeWhere((o) => o.id == toSave.id);
-    occurrences.add(toSave);
-    return toSave;
-  }
-
-  @override
-  Future<List<DailyScheduleOccurrence>> saveOccurrences(
-      List<DailyScheduleOccurrence> list) async {
-    final res = <DailyScheduleOccurrence>[];
-    for (final item in list) {
-      res.add(await saveOccurrence(item));
-    }
-    return res;
-  }
-
-  @override
-  Future<void> deleteOccurrence(int id) async {
-    final idx = occurrences.indexWhere((o) => o.id == id);
-    if (idx != -1) {
-      occurrences[idx] = occurrences[idx].copyWith(isDeleted: true);
-    }
-  }
-
-  @override
-  Future<List<DailyScheduleOccurrence>> getAllOccurrences() async =>
-      occurrences.where((o) => !o.isDeleted).toList();
-
-  @override
-  Stream<void> watchOccurrencesForDate(DateTime date) => const Stream.empty();
 }
 
 class _InMemoryTaskRepo implements TaskRepository {
@@ -268,7 +208,7 @@ void main() {
         credits: 4,
         attendanceTarget: 80.0,
         color: '#4ECDC4',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
 
@@ -288,70 +228,80 @@ void main() {
       final tomorrow = today.add(const Duration(days: 1));
 
       // 1. Create subject
-      final sub = await subjectRepo.createSubject(Subject(
-        id: 10,
-        semesterId: 1,
-        name: 'Database Systems',
-        code: 'CS301',
-        credits: 3,
-        attendanceTarget: 75.0,
-        color: '#FF6B6B',
-        type: SubjectType.THEORY,
-        updatedAt: now,
-      ));
+      final sub = await subjectRepo.createSubject(
+        Subject(
+          id: 10,
+          semesterId: 1,
+          name: 'Database Systems',
+          code: 'CS301',
+          credits: 3,
+          attendanceTarget: 75.0,
+          color: '#FF6B6B',
+          type: SubjectType.theory,
+          updatedAt: now,
+        ),
+      );
 
       // 2. Add recurring rule
-      subjectRepo.rules.add(WeeklyScheduleRule(
-        id: 1,
-        subjectId: sub.id!,
-        dayOfWeek: 1,
-        startTime: '09:00',
-        endTime: '10:00',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
+      subjectRepo.rules.add(
+        WeeklyScheduleRule(
+          id: 1,
+          subjectId: sub.id!,
+          dayOfWeek: 1,
+          startTime: '09:00',
+          endTime: '10:00',
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
 
       // 3. Add past occurrence with attendance record
-      subjectRepo.occurrences.add(DailyScheduleOccurrence(
-        id: 101,
-        date: yesterday,
-        subjectId: sub.id!,
-        ruleId: 1,
-        title: 'CS301 Class',
-        startTime: '09:00',
-        endTime: '10:00',
-        type: OccurrenceType.REGULAR_CLASS,
-        status: OccurrenceStatus.PRESENT,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      subjectRepo.attendanceRecords.add(AttendanceRecord(
-        id: 501,
-        occurrenceId: 101,
-        eventId: 101,
-        subjectId: sub.id!,
-        status: AttendanceStatus.PRESENT,
-        markedAt: yesterday,
-        updatedAt: now,
-      ));
+      subjectRepo.occurrences.add(
+        DailyScheduleOccurrence(
+          id: 101,
+          date: yesterday,
+          subjectId: sub.id!,
+          ruleId: 1,
+          title: 'CS301 Class',
+          startTime: '09:00',
+          endTime: '10:00',
+          type: OccurrenceType.regularClass,
+          status: OccurrenceStatus.present,
+          createdFrom: OccurrenceCreatedFrom.weeklyRule,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      subjectRepo.attendanceRecords.add(
+        AttendanceRecord(
+          id: 501,
+          occurrenceId: 101,
+          eventId: 101,
+          subjectId: sub.id!,
+          status: AttendanceStatus.present,
+          markedAt: yesterday,
+          updatedAt: now,
+        ),
+      );
 
       // 4. Add future occurrence (tomorrow)
-      subjectRepo.occurrences.add(DailyScheduleOccurrence(
-        id: 102,
-        date: tomorrow,
-        subjectId: sub.id!,
-        ruleId: 1,
-        title: 'CS301 Class',
-        startTime: '09:00',
-        endTime: '10:00',
-        type: OccurrenceType.REGULAR_CLASS,
-        status: OccurrenceStatus.UPCOMING,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
-        createdAt: now,
-        updatedAt: now,
-      ));
+      subjectRepo.occurrences.add(
+        DailyScheduleOccurrence(
+          id: 102,
+          date: tomorrow,
+          subjectId: sub.id!,
+          ruleId: 1,
+          title: 'CS301 Class',
+          startTime: '09:00',
+          endTime: '10:00',
+          type: OccurrenceType.regularClass,
+          status: OccurrenceStatus.upcoming,
+          createdFrom: OccurrenceCreatedFrom.weeklyRule,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
 
       // 5. Delete subject
       await subjectRepo.deleteSubject(sub.id!);
@@ -376,8 +326,10 @@ void main() {
       // Assert historical attendance record is STRICTLY preserved
       expect(subjectRepo.attendanceRecords.length, equals(1));
       expect(subjectRepo.attendanceRecords.first.subjectId, equals(sub.id));
-      expect(subjectRepo.attendanceRecords.first.status,
-          equals(AttendanceStatus.PRESENT));
+      expect(
+        subjectRepo.attendanceRecords.first.status,
+        equals(AttendanceStatus.present),
+      );
     });
 
     test(
@@ -392,7 +344,7 @@ void main() {
           credits: 3,
           attendanceTarget: 75.0,
           color: '#4ECDC4',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           updatedAt: DateTime.now(),
         ),
       ];
@@ -403,14 +355,26 @@ void main() {
             .any((s) => s.code.toUpperCase() == upper && s.id != editId);
       }
 
-      expect(hasCollision('cs501'), isTrue,
-          reason: 'Matching lowercase code should collide');
-      expect(hasCollision('CS501'), isTrue,
-          reason: 'Matching uppercase code should collide');
-      expect(hasCollision('CS501', editId: 1), isFalse,
-          reason: 'Self-edit on existing subject should not collide');
-      expect(hasCollision('CS502'), isFalse,
-          reason: 'Distinct subject code should not collide');
+      expect(
+        hasCollision('cs501'),
+        isTrue,
+        reason: 'Matching lowercase code should collide',
+      );
+      expect(
+        hasCollision('CS501'),
+        isTrue,
+        reason: 'Matching uppercase code should collide',
+      );
+      expect(
+        hasCollision('CS501', editId: 1),
+        isFalse,
+        reason: 'Self-edit on existing subject should not collide',
+      );
+      expect(
+        hasCollision('CS502'),
+        isFalse,
+        reason: 'Distinct subject code should not collide',
+      );
     });
 
     test(
@@ -421,8 +385,14 @@ void main() {
         return int.parse(p[0]) * 60 + int.parse(p[1]);
       }
 
-      bool checkOverlap(int dayA, String startA, String endA, int dayB,
-          String startB, String endB) {
+      bool checkOverlap(
+        int dayA,
+        String startA,
+        String endA,
+        int dayB,
+        String startB,
+        String endB,
+      ) {
         if (dayA != dayB) return false;
         final sA = toMinutes(startA);
         final eA = toMinutes(endA);
@@ -450,13 +420,15 @@ void main() {
 
       // Add a holiday 120 days out (beyond old 90d window)
       final holidayDate = now.add(const Duration(days: 120));
-      await repo.saveException(ScheduleException(
-        date: holidayDate,
-        type: ScheduleExceptionType.HOLIDAY,
-        title: 'Spring Festival Holiday',
-        createdAt: now,
-        updatedAt: now,
-      ));
+      await repo.saveException(
+        ScheduleException(
+          date: holidayDate,
+          type: ScheduleExceptionType.holiday,
+          title: 'Spring Festival Holiday',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
 
       final all = await repo.getAllExceptions();
       expect(all.length, equals(1));
@@ -469,13 +441,15 @@ void main() {
         () async {
       final container = ProviderContainer(
         overrides: [
-          activeSemesterProvider.overrideWith((ref) async => Semester(
-                localId: 1,
-                name: 'Fall 2026',
-                startDate: DateTime.utc(2026, 8, 1),
-                endDate: DateTime.utc(2026, 12, 31),
-                requiredAttendanceRate: 75.0,
-              )),
+          activeSemesterProvider.overrideWith(
+            (ref) async => Semester(
+              localId: 1,
+              name: 'Fall 2026',
+              startDate: DateTime.utc(2026, 8, 1),
+              endDate: DateTime.utc(2026, 12, 31),
+              requiredAttendanceRate: 75.0,
+            ),
+          ),
           subjectListControllerProvider.overrideWith(
             () => _FakeSubjectListNotifier([
               Subject(
@@ -486,26 +460,28 @@ void main() {
                 credits: 3,
                 attendanceTarget: 75.0,
                 color: '#4ECDC4',
-                type: SubjectType.THEORY,
+                type: SubjectType.theory,
                 updatedAt: DateTime.now(),
               ),
             ]),
           ),
-          allDailyOccurrencesProvider.overrideWith((ref) async => [
-                DailyScheduleOccurrence(
-                  id: 99,
-                  date: DateTime.utc(2026, 11, 15),
-                  subjectId: 1,
-                  title: 'Algorithms Extra Class',
-                  startTime: '14:00',
-                  endTime: '15:30',
-                  type: OccurrenceType.EXTRA_CLASS,
-                  status: OccurrenceStatus.UPCOMING,
-                  createdFrom: OccurrenceCreatedFrom.MANUAL,
-                  createdAt: DateTime.now(),
-                  updatedAt: DateTime.now(),
-                ),
-              ]),
+          allDailyOccurrencesProvider.overrideWith(
+            (ref) async => [
+              DailyScheduleOccurrence(
+                id: 99,
+                date: DateTime.utc(2026, 11, 15),
+                subjectId: 1,
+                title: 'Algorithms Extra Class',
+                startTime: '14:00',
+                endTime: '15:30',
+                type: OccurrenceType.extraClass,
+                status: OccurrenceStatus.upcoming,
+                createdFrom: OccurrenceCreatedFrom.manual,
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              ),
+            ],
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -522,11 +498,12 @@ void main() {
       final days = daysAsync.value!;
 
       final day15 = days.firstWhere(
-          (d) => d.date.year == 2026 && d.date.month == 11 && d.date.day == 15);
+        (d) => d.date.year == 2026 && d.date.month == 11 && d.date.day == 15,
+      );
       expect(day15.hasExtraClass, isTrue);
 
       final extraItem = day15.items
-          .firstWhere((it) => it.type == CalendarItemType.EXTRA_CLASS);
+          .firstWhere((it) => it.type == CalendarItemType.extraClass);
       expect(extraItem.title, contains('Algorithms'));
       expect(extraItem.startTime, equals('14:00'));
       expect(extraItem.endTime, equals('15:30'));
@@ -592,7 +569,8 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           hasActiveSemesterProvider.overrideWith(
-              (ref) => Future.error('Database connection failed')),
+            (ref) => Future.error('Database connection failed'),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -771,11 +749,11 @@ void main() {
       expect(
         () => notifier.addTask(
           title: 'Invalid Interval Assignment',
-          taskType: TaskType.ASSIGNMENT,
+          taskType: TaskType.assignment,
           startDate: startDate,
           dueDate: dueDate,
-          priority: TaskPriority.HIGH,
-          reminder: TaskReminder.DAYS_1,
+          priority: TaskPriority.high,
+          reminder: TaskReminder.days1,
         ),
         throwsA(isA<ArgumentError>()),
       );
@@ -797,11 +775,11 @@ void main() {
 
       await notifier.addTask(
         title: 'Term Project Report',
-        taskType: TaskType.PROJECT,
+        taskType: TaskType.project,
         startDate: startDate,
         dueDate: dueDate,
-        priority: TaskPriority.HIGH,
-        reminder: TaskReminder.HOURS_2,
+        priority: TaskPriority.high,
+        reminder: TaskReminder.hours2,
       );
 
       final tasks = await taskRepo.getAllTasks();

@@ -38,7 +38,9 @@ class _SemesterWeeklyCalendarViewState
     final initialWeeks = ref.read(semesterWeeksProvider).valueOrNull ?? [];
     if (initialWeeks.isNotEmpty) {
       _selectedWeekIndex = SemesterWeekCalculator.getWeekIndexForDate(
-          initialWeeks, DateTime.now());
+        initialWeeks,
+        DateTime.now(),
+      );
       _isInitialized = true;
     }
     _weekPageController = PageController(initialPage: _selectedWeekIndex);
@@ -76,7 +78,7 @@ class _SemesterWeeklyCalendarViewState
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]}';
   }
@@ -125,7 +127,9 @@ class _SemesterWeeklyCalendarViewState
             startDate: activeSemester.startDate,
             endDate: activeSemester.startDate.add(const Duration(days: 6)),
             dates: List.generate(
-                7, (d) => activeSemester.startDate.add(Duration(days: d))),
+              7,
+              (d) => activeSemester.startDate.add(Duration(days: d)),
+            ),
           );
 
     return Column(

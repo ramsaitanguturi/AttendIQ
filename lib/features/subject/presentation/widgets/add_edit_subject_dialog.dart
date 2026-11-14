@@ -26,7 +26,7 @@ class _ScheduleSlotInput {
     required String startTime,
     required String endTime,
     String? room,
-    this.type = SubjectType.THEORY,
+    this.type = SubjectType.theory,
     this.ruleId,
   })  : startTimeController = TextEditingController(text: startTime),
         endTimeController = TextEditingController(text: endTime),
@@ -47,8 +47,10 @@ class AddEditSubjectDialog extends ConsumerStatefulWidget {
     this.existingSubject,
   });
 
-  static Future<void> show(BuildContext context,
-      {Subject? existingSubject}) async {
+  static Future<void> show(
+    BuildContext context, {
+    Subject? existingSubject,
+  }) async {
     return showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
@@ -78,7 +80,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
 
   final List<_ScheduleSlotInput> _slots = [];
 
-  SubjectType _selectedType = SubjectType.THEORY;
+  SubjectType _selectedType = SubjectType.theory;
   String _selectedColor = AppColors.paletteHex[2];
   bool _isLoading = false;
 
@@ -100,7 +102,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
       'Thursday',
       'Friday',
       'Saturday',
-      'Sunday'
+      'Sunday',
     ];
     if (day >= 1 && day <= 7) return days[day - 1];
     return 'Day $day';
@@ -244,7 +246,8 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
     if (_slots.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please add at least one weekly schedule slot.')),
+          content: Text('Please add at least one weekly schedule slot.'),
+        ),
       );
       return;
     }
@@ -254,9 +257,11 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
     // Subject Code collision check across active semester
     final activeSubjects =
         ref.read(subjectListControllerProvider).valueOrNull ?? [];
-    final hasDuplicateCode = activeSubjects.any((s) =>
-        s.code.toUpperCase() == inputCode &&
-        s.id != widget.existingSubject?.id);
+    final hasDuplicateCode = activeSubjects.any(
+      (s) =>
+          s.code.toUpperCase() == inputCode &&
+          s.id != widget.existingSubject?.id,
+    );
     if (hasDuplicateCode) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -276,7 +281,8 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'Slot ${i + 1}: End time ($end) must be after start time ($start).'),
+              'Slot ${i + 1}: End time ($end) must be after start time ($start).',
+            ),
             backgroundColor: AppColors.attendanceLow,
           ),
         );
@@ -300,7 +306,8 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                    'Time slot conflict on ${_dayName(slotA.dayOfWeek)} between Slot ${i + 1} and Slot ${j + 1}.'),
+                  'Time slot conflict on ${_dayName(slotA.dayOfWeek)} between Slot ${i + 1} and Slot ${j + 1}.',
+                ),
                 backgroundColor: AppColors.attendanceLow,
               ),
             );
@@ -339,7 +346,8 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                        'Time slot conflict on ${_dayName(slot.dayOfWeek)} with $otherName (${rule.startTime} - ${rule.endTime}).'),
+                      'Time slot conflict on ${_dayName(slot.dayOfWeek)} with $otherName (${rule.startTime} - ${rule.endTime}).',
+                    ),
                     backgroundColor: AppColors.attendanceLow,
                   ),
                 );
@@ -602,9 +610,11 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                 items: SubjectType.values.map((t) {
                   return DropdownMenuItem(
                     value: t,
-                    child: Text(t == SubjectType.THEORY
-                        ? 'Theory Class'
-                        : 'Lab / Practical'),
+                    child: Text(
+                      t == SubjectType.theory
+                          ? 'Theory Class'
+                          : 'Lab / Practical',
+                    ),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -656,12 +666,17 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                             Text(
                               'Slot ${index + 1}',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 14.0),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.0,
+                              ),
                             ),
                             if (_slots.length > 1)
                               IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: AppColors.attendanceLow, size: 20),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.attendanceLow,
+                                  size: 20,
+                                ),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                                 onPressed: () => _removeSlot(index),
@@ -675,13 +690,17 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                             labelText: 'Day',
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                           ),
                           items: const [
                             DropdownMenuItem(value: 1, child: Text('Monday')),
                             DropdownMenuItem(value: 2, child: Text('Tuesday')),
                             DropdownMenuItem(
-                                value: 3, child: Text('Wednesday')),
+                              value: 3,
+                              child: Text('Wednesday'),
+                            ),
                             DropdownMenuItem(value: 4, child: Text('Thursday')),
                             DropdownMenuItem(value: 5, child: Text('Friday')),
                             DropdownMenuItem(value: 6, child: Text('Saturday')),
@@ -705,7 +724,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                                   border: OutlineInputBorder(),
                                   suffixIcon: Icon(Icons.access_time, size: 18),
                                   contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
                                 ),
                                 onTap: () =>
                                     _selectTime(slot.startTimeController),
@@ -721,7 +742,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                                   border: OutlineInputBorder(),
                                   suffixIcon: Icon(Icons.access_time, size: 18),
                                   contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
                                 ),
                                 onTap: () =>
                                     _selectTime(slot.endTimeController),
@@ -741,7 +764,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                                   hintText: 'e.g. Room A203',
                                   border: OutlineInputBorder(),
                                   contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
                                 ),
                               ),
                             ),
@@ -754,15 +779,19 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                                   labelText: 'Type',
                                   border: OutlineInputBorder(),
                                   contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 8),
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
                                 ),
                                 items: const [
                                   DropdownMenuItem(
-                                      value: SubjectType.THEORY,
-                                      child: Text('Theory')),
+                                    value: SubjectType.theory,
+                                    child: Text('Theory'),
+                                  ),
                                   DropdownMenuItem(
-                                      value: SubjectType.LAB,
-                                      child: Text('Lab')),
+                                    value: SubjectType.lab,
+                                    child: Text('Lab'),
+                                  ),
                                 ],
                                 onChanged: (val) {
                                   if (val != null) {
@@ -782,17 +811,21 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
               OutlinedButton.icon(
                 onPressed: _addSlot,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('+ Add Another Time Slot',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  '+ Add Another Time Slot',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor:
                       isDark ? AppColors.primary : AppColors.gray900,
                   side: BorderSide(
-                      color: (isDark ? AppColors.primary : AppColors.gray900)
-                          .withOpacity(0.5)),
+                    color: (isDark ? AppColors.primary : AppColors.gray900)
+                        .withOpacity(0.5),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
 
@@ -829,7 +862,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                                   color: c.withOpacity(0.6),
                                   blurRadius: 8,
                                   spreadRadius: 2,
-                                )
+                                ),
                               ]
                             : null,
                       ),
@@ -871,7 +904,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                     : Text(
                         isEdit ? 'Save Subject' : 'Save Subject',
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
               ),
               SizedBox(

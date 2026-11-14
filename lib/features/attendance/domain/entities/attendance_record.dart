@@ -1,18 +1,38 @@
 enum AttendanceStatus {
-  PRESENT,
-  ABSENT,
-  CANCELLED,
-  EXTRA_PRESENT,
-  EXTRA_ABSENT,
-  LATE;
+  present,
+  absent,
+  cancelled,
+  extraPresent,
+  extraAbsent,
+  late;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case AttendanceStatus.present:
+        return 'PRESENT';
+      case AttendanceStatus.absent:
+        return 'ABSENT';
+      case AttendanceStatus.cancelled:
+        return 'CANCELLED';
+      case AttendanceStatus.extraPresent:
+        return 'EXTRA_PRESENT';
+      case AttendanceStatus.extraAbsent:
+        return 'EXTRA_ABSENT';
+      case AttendanceStatus.late:
+        return 'LATE';
+    }
+  }
 
   static AttendanceStatus fromString(String value) {
-    return AttendanceStatus.values.firstWhere(
-      (e) => e.name == value || e.name.toUpperCase() == value.toUpperCase(),
-      orElse: () => AttendanceStatus.PRESENT,
-    );
+    final norm = value.trim().toUpperCase();
+    for (final status in AttendanceStatus.values) {
+      if (status.toShortString() == norm ||
+          status.name.toUpperCase() == norm ||
+          status.name == value) {
+        return status;
+      }
+    }
+    return AttendanceStatus.present;
   }
 }
 

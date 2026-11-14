@@ -34,8 +34,10 @@ class AnalyticsService {
 
     // 2. Fetch subjects for semester (including soft-deleted for historical records)
     final subjectRepo = _ref.read(subjectRepositoryProvider);
-    final subjects = await subjectRepo.getSubjectsBySemester(semesterId,
-        includeDeleted: true);
+    final subjects = await subjectRepo.getSubjectsBySemester(
+      semesterId,
+      includeDeleted: true,
+    );
     if (subjects.isEmpty) {
       return AttendanceAnalytics(
         overallPercentage: 100.0,
@@ -50,7 +52,7 @@ class AnalyticsService {
         subjectComparison: const SubjectComparison(),
         attendanceStreak:
             const AttendanceStreak(longestPresentStreak: 0, currentStreak: 0),
-        riskLevel: RiskStatus.SAFE,
+        riskLevel: RiskStatus.safe,
       );
     }
 
@@ -84,17 +86,21 @@ class AnalyticsService {
       final occId = rec.occurrenceId;
       final occ = (occId != null && occId > 0) ? occurrenceMap[occId] : null;
       if (occ != null) {
-        occurrences.add(LoggedOccurrence(
-          date: occ.date,
-          startTime: occ.startTime,
-          status: rec.status,
-        ));
+        occurrences.add(
+          LoggedOccurrence(
+            date: occ.date,
+            startTime: occ.startTime,
+            status: rec.status,
+          ),
+        );
       } else {
-        occurrences.add(LoggedOccurrence(
-          date: rec.markedAt,
-          startTime: '09:00',
-          status: rec.status,
-        ));
+        occurrences.add(
+          LoggedOccurrence(
+            date: rec.markedAt,
+            startTime: '09:00',
+            status: rec.status,
+          ),
+        );
       }
     }
 
@@ -116,7 +122,8 @@ AnalyticsService analyticsService(AnalyticsServiceRef ref) {
 
 @riverpod
 Future<AttendanceAnalytics?> attendanceAnalytics(
-    AttendanceAnalyticsRef ref) async {
+  AttendanceAnalyticsRef ref,
+) async {
   ref.watch(activeSemesterProvider);
   final service = ref.watch(analyticsServiceProvider);
 

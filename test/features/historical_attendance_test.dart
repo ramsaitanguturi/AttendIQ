@@ -56,11 +56,11 @@ void main() {
         endTime: '10:00',
         title: 'Algorithms',
         room: 'Hall A',
-        targetStatus: OccurrenceStatus.PRESENT,
+        targetStatus: OccurrenceStatus.present,
       );
 
       expect(occ.id, isNotNull);
-      expect(occ.status, equals(OccurrenceStatus.PRESENT));
+      expect(occ.status, equals(OccurrenceStatus.present));
       expect(occ.room, equals('Hall A'));
 
       // Check Isar record
@@ -84,9 +84,9 @@ void main() {
         startTime: '10:00',
         endTime: '11:00',
         title: 'Database Systems',
-        targetStatus: OccurrenceStatus.PRESENT,
+        targetStatus: OccurrenceStatus.present,
       );
-      expect(occ1.status, equals(OccurrenceStatus.PRESENT));
+      expect(occ1.status, equals(OccurrenceStatus.present));
       var activeRecords =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
@@ -100,9 +100,9 @@ void main() {
         startTime: '10:00',
         endTime: '11:00',
         title: 'Database Systems',
-        targetStatus: OccurrenceStatus.ABSENT,
+        targetStatus: OccurrenceStatus.absent,
       );
-      expect(occ2.status, equals(OccurrenceStatus.ABSENT));
+      expect(occ2.status, equals(OccurrenceStatus.absent));
       activeRecords =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
@@ -116,9 +116,9 @@ void main() {
         startTime: '10:00',
         endTime: '11:00',
         title: 'Database Systems',
-        targetStatus: OccurrenceStatus.LATE,
+        targetStatus: OccurrenceStatus.late,
       );
-      expect(occ3.status, equals(OccurrenceStatus.LATE));
+      expect(occ3.status, equals(OccurrenceStatus.late));
       activeRecords =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
@@ -132,13 +132,15 @@ void main() {
         startTime: '10:00',
         endTime: '11:00',
         title: 'Database Systems',
-        targetStatus: OccurrenceStatus.CANCELLED,
+        targetStatus: OccurrenceStatus.cancelled,
       );
-      expect(occ4.status, equals(OccurrenceStatus.CANCELLED));
+      expect(occ4.status, equals(OccurrenceStatus.cancelled));
       activeRecords =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
-      expect(activeRecords.isEmpty,
-          isTrue); // Cancelled classes have no active attendance records
+      expect(
+        activeRecords.isEmpty,
+        isTrue,
+      ); // Cancelled classes have no active attendance records
 
       // 5. Cancelled -> Present
       final occ5 = await historicalService.setAttendanceStatus(
@@ -148,9 +150,9 @@ void main() {
         startTime: '10:00',
         endTime: '11:00',
         title: 'Database Systems',
-        targetStatus: OccurrenceStatus.PRESENT,
+        targetStatus: OccurrenceStatus.present,
       );
-      expect(occ5.status, equals(OccurrenceStatus.PRESENT));
+      expect(occ5.status, equals(OccurrenceStatus.present));
       activeRecords =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(activeRecords.length, equals(1));
@@ -169,9 +171,9 @@ void main() {
         startTime: '11:00',
         endTime: '12:00',
         title: 'Networks',
-        targetStatus: OccurrenceStatus.CANCELLED,
+        targetStatus: OccurrenceStatus.cancelled,
       );
-      expect(occCancel.status, equals(OccurrenceStatus.CANCELLED));
+      expect(occCancel.status, equals(OccurrenceStatus.cancelled));
       var records =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(records.isEmpty, isTrue);
@@ -184,9 +186,9 @@ void main() {
         startTime: '14:00',
         endTime: '15:00',
         title: 'Security',
-        targetStatus: OccurrenceStatus.ABSENT,
+        targetStatus: OccurrenceStatus.absent,
       );
-      expect(occAbsent.status, equals(OccurrenceStatus.ABSENT));
+      expect(occAbsent.status, equals(OccurrenceStatus.absent));
       records =
           isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
       expect(records.length, equals(1));
@@ -204,7 +206,7 @@ void main() {
         startTime: '15:00',
         endTime: '16:00',
         title: 'Cloud Computing',
-        targetStatus: OccurrenceStatus.PRESENT,
+        targetStatus: OccurrenceStatus.present,
       );
 
       final afterTime = DateTime.now().toUtc().add(const Duration(seconds: 1));

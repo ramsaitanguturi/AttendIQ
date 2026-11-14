@@ -181,7 +181,7 @@ void main() {
       // Resolve as PRESENT
       await service.resolveCheckIn(
         item: pending.first,
-        status: OccurrenceStatus.PRESENT,
+        status: OccurrenceStatus.present,
       );
 
       // Verify pending list is now empty

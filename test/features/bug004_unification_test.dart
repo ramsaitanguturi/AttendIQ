@@ -101,9 +101,15 @@ int _serializePreRule(IsarWriter writer, _PreBug004RuleLocal object) {
   IsarCore.writeString(writer, 8, object.type);
   IsarCore.writeBool(writer, 9, object.isActive);
   IsarCore.writeLong(
-      writer, 10, object.createdAt.toUtc().microsecondsSinceEpoch);
+    writer,
+    10,
+    object.createdAt.toUtc().microsecondsSinceEpoch,
+  );
   IsarCore.writeLong(
-      writer, 11, object.updatedAt.toUtc().microsecondsSinceEpoch);
+    writer,
+    11,
+    object.updatedAt.toUtc().microsecondsSinceEpoch,
+  );
   IsarCore.writeBool(writer, 12, object.isDirty);
   IsarCore.writeBool(writer, 13, object.isDeleted);
   return object.id;
@@ -135,20 +141,23 @@ const _preBug004RuleSchema = IsarGeneratedSchema(
     ],
     indexes: [
       IsarIndexSchema(
-          name: 'serverId',
-          properties: ['serverId'],
-          unique: true,
-          hash: false),
+        name: 'serverId',
+        properties: ['serverId'],
+        unique: true,
+        hash: false,
+      ),
       IsarIndexSchema(
-          name: 'subjectId',
-          properties: ['subjectId'],
-          unique: false,
-          hash: false),
+        name: 'subjectId',
+        properties: ['subjectId'],
+        unique: false,
+        hash: false,
+      ),
       IsarIndexSchema(
-          name: 'dayOfWeek',
-          properties: ['dayOfWeek'],
-          unique: false,
-          hash: false),
+        name: 'dayOfWeek',
+        properties: ['dayOfWeek'],
+        unique: false,
+        hash: false,
+      ),
     ],
   ),
   converter: IsarObjectConverter<int, _PreBug004RuleLocal>(
@@ -198,9 +207,15 @@ int _serializePreOcc(IsarWriter writer, _PreBug004OccLocal object) {
   _writeNullableString(writer, 11, object.faculty);
   _writeNullableString(writer, 12, object.reason);
   IsarCore.writeLong(
-      writer, 13, object.createdAt.toUtc().microsecondsSinceEpoch);
+    writer,
+    13,
+    object.createdAt.toUtc().microsecondsSinceEpoch,
+  );
   IsarCore.writeLong(
-      writer, 14, object.updatedAt.toUtc().microsecondsSinceEpoch);
+    writer,
+    14,
+    object.updatedAt.toUtc().microsecondsSinceEpoch,
+  );
   IsarCore.writeBool(writer, 15, object.isDirty);
   IsarCore.writeBool(writer, 16, object.isDeleted);
   return object.id;
@@ -235,17 +250,23 @@ const _preBug004OccSchema = IsarGeneratedSchema(
     ],
     indexes: [
       IsarIndexSchema(
-          name: 'serverId',
-          properties: ['serverId'],
-          unique: true,
-          hash: false),
+        name: 'serverId',
+        properties: ['serverId'],
+        unique: true,
+        hash: false,
+      ),
       IsarIndexSchema(
-          name: 'date', properties: ['date'], unique: false, hash: false),
+        name: 'date',
+        properties: ['date'],
+        unique: false,
+        hash: false,
+      ),
       IsarIndexSchema(
-          name: 'subjectId',
-          properties: ['subjectId'],
-          unique: false,
-          hash: false),
+        name: 'subjectId',
+        properties: ['subjectId'],
+        unique: false,
+        hash: false,
+      ),
     ],
   ),
   converter: IsarObjectConverter<int, _PreBug004OccLocal>(
@@ -277,9 +298,15 @@ int _serializePreAtt(IsarWriter writer, _PreBug004AttLocal object) {
   IsarCore.writeString(writer, 4, object.status);
   IsarCore.writeLong(writer, 5, object.markedAt.toUtc().microsecondsSinceEpoch);
   IsarCore.writeLong(
-      writer, 6, object.createdAt.toUtc().microsecondsSinceEpoch);
+    writer,
+    6,
+    object.createdAt.toUtc().microsecondsSinceEpoch,
+  );
   IsarCore.writeLong(
-      writer, 7, object.updatedAt.toUtc().microsecondsSinceEpoch);
+    writer,
+    7,
+    object.updatedAt.toUtc().microsecondsSinceEpoch,
+  );
   IsarCore.writeBool(writer, 8, object.isDirty);
   IsarCore.writeBool(writer, 9, object.isDeleted);
   return object.id;
@@ -307,17 +334,23 @@ const _preBug004AttSchema = IsarGeneratedSchema(
     ],
     indexes: [
       IsarIndexSchema(
-          name: 'serverId',
-          properties: ['serverId'],
-          unique: true,
-          hash: false),
+        name: 'serverId',
+        properties: ['serverId'],
+        unique: true,
+        hash: false,
+      ),
       IsarIndexSchema(
-          name: 'eventId', properties: ['eventId'], unique: false, hash: false),
+        name: 'eventId',
+        properties: ['eventId'],
+        unique: false,
+        hash: false,
+      ),
       IsarIndexSchema(
-          name: 'subjectId',
-          properties: ['subjectId'],
-          unique: false,
-          hash: false),
+        name: 'subjectId',
+        properties: ['subjectId'],
+        unique: false,
+        hash: false,
+      ),
     ],
   ),
   converter: IsarObjectConverter<int, _PreBug004AttLocal>(
@@ -445,7 +478,7 @@ void main() {
           container.dispose();
         } catch (_) {}
         if (isar.isOpen) {
-          await isar.close();
+          isar.close();
         }
         if (tempDir.existsSync()) {
           try {
@@ -585,8 +618,8 @@ void main() {
           await attCtrl.markOccurrenceAbsent(todayState.occurrences[1]);
 
       expect(markedPresent.id, isNot(equals(markedAbsent.id)));
-      expect(markedPresent.status, equals(OccurrenceStatus.PRESENT));
-      expect(markedAbsent.status, equals(OccurrenceStatus.ABSENT));
+      expect(markedPresent.status, equals(OccurrenceStatus.present));
+      expect(markedAbsent.status, equals(OccurrenceStatus.absent));
 
       // Verify legacy EventLocal was NOT mutated or written!
       expect(isar.eventLocals.count(), equals(0));
@@ -633,7 +666,7 @@ void main() {
       await attCtrl.markExtraClass(
         subjectId: subCsId,
         date: now,
-        status: AttendanceStatus.EXTRA_ABSENT,
+        status: AttendanceStatus.extraAbsent,
       );
       // Must NOT touch EventLocal
       expect(isar.eventLocals.count(), equals(0));
@@ -734,7 +767,7 @@ void main() {
           container.read(scheduleExceptionControllerProvider.notifier);
       await excCtrl.addException(
         date: futureHour,
-        type: ScheduleExceptionType.HOLIDAY,
+        type: ScheduleExceptionType.holiday,
         title: 'Founders Day',
       );
 
@@ -766,7 +799,7 @@ void main() {
         date: now.add(const Duration(days: 3)),
         startTime: '10:00',
         endTime: '12:00',
-        type: AcademicEventType.EXAM,
+        type: AcademicEventType.exam,
       );
       await scheduler.rescheduleRollingWindow(
         offsets: const [15],
@@ -785,7 +818,7 @@ void main() {
       // Notification ID & slot: relatedId stay identical when an unmaterialized rule materializes & updates in-place
       await excCtrl.addException(
         date: futureHour,
-        type: ScheduleExceptionType.EVENT,
+        type: ScheduleExceptionType.event,
         title: 'Check',
       );
       // Verify widget data matches multi-slot schedule for today accurately
@@ -1158,8 +1191,10 @@ void main() {
             .serverIdEqualTo('att_ev1')
             .findFirst()!;
         expect(att1.occurrenceId, isNotNull);
-        expect(att1.occurrenceId,
-            isNot(equals(1))); // Must NOT collide with Occ #1 (subject 20)!
+        expect(
+          att1.occurrenceId,
+          isNot(equals(1)),
+        ); // Must NOT collide with Occ #1 (subject 20)!
         final boundOcc1 =
             openedIsar.dailyScheduleOccurrenceLocals.get(att1.occurrenceId!)!;
         expect(boundOcc1.subjectId, equals(10));
@@ -1222,14 +1257,18 @@ void main() {
         openedIsar = openTempIsar(tempDir, customName: dbName);
         await migrateLegacyDatabaseRecords(openedIsar);
 
-        expect(openedIsar.weeklyScheduleRuleLocals.count(),
-            equals(ruleCountBefore));
+        expect(
+          openedIsar.weeklyScheduleRuleLocals.count(),
+          equals(ruleCountBefore),
+        );
         expect(
           openedIsar.dailyScheduleOccurrenceLocals.count(),
           equals(occCountBefore),
         );
         expect(
-            openedIsar.attendanceRecordLocals.count(), equals(attCountBefore));
+          openedIsar.attendanceRecordLocals.count(),
+          equals(attCountBefore),
+        );
       } finally {
         if (openedIsar != null && openedIsar.isOpen) {
           openedIsar.close();
@@ -1453,7 +1492,7 @@ void main() {
               ..id = 1
               ..title = 'Quantum Physics Lab Reminder'
               ..body = 'Starts at 11:00'
-              ..type = NotificationType.CLASS_REMINDER.toShortString()
+              ..type = NotificationType.classReminder.toShortString()
               ..scheduledTime = DateTime.utc(2026, 8, 3, 10, 45)
               ..relatedId = NotificationRelatedKeys.forSlotKey(occ.slotKey!)
               ..isRead = false,
@@ -1626,7 +1665,9 @@ void main() {
         expect(destIsar.subjectLocals.get(1)!.code, equals('PHY301L'));
         expect(destIsar.weeklyScheduleRuleLocals.get(1)!.type, equals('LAB'));
         expect(
-            destIsar.dailyScheduleOccurrenceLocals.get(1)!.ruleId, equals(1));
+          destIsar.dailyScheduleOccurrenceLocals.get(1)!.ruleId,
+          equals(1),
+        );
         expect(destIsar.attendanceRecordLocals.get(1)!.occurrenceId, equals(1));
       } finally {
         srcIsar?.close();
@@ -1788,8 +1829,10 @@ void main() {
             .subjectIdEqualTo(compSub.id)
             .findFirst()!;
         expect(compAtt.occurrenceId, equals(compOcc.id));
-        expect(compAtt.occurrenceId,
-            isNot(equals(1))); // Did NOT attach to HIS101 occ #1!
+        expect(
+          compAtt.occurrenceId,
+          isNot(equals(1)),
+        ); // Did NOT attach to HIS101 occ #1!
       } finally {
         isar?.close();
         if (tempDir.existsSync()) {

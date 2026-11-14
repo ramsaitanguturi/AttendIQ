@@ -1,16 +1,32 @@
 enum AcademicEventType {
-  EVENT,
-  EXAM,
-  ASSIGNMENT,
-  DEADLINE;
+  event,
+  exam,
+  assignment,
+  deadline;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case AcademicEventType.event:
+        return 'EVENT';
+      case AcademicEventType.exam:
+        return 'EXAM';
+      case AcademicEventType.assignment:
+        return 'ASSIGNMENT';
+      case AcademicEventType.deadline:
+        return 'DEADLINE';
+    }
+  }
 
   static AcademicEventType fromString(String value) {
-    return AcademicEventType.values.firstWhere(
-      (e) => e.name.toUpperCase() == value.toUpperCase(),
-      orElse: () => AcademicEventType.EVENT,
-    );
+    final norm = value.trim().toUpperCase();
+    for (final type in AcademicEventType.values) {
+      if (type.toShortString() == norm ||
+          type.name.toUpperCase() == norm ||
+          type.name == value) {
+        return type;
+      }
+    }
+    return AcademicEventType.event;
   }
 }
 

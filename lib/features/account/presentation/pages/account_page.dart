@@ -43,8 +43,10 @@ class AccountPage extends ConsumerWidget {
           left: 20.0,
           right: 20.0,
           top: 8.0,
-          bottom: AcedraFloatingBottomBar.contentBottomPadding(context,
-              additionalClearance: 44.0),
+          bottom: AcedraFloatingBottomBar.contentBottomPadding(
+            context,
+            additionalClearance: 44.0,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +254,9 @@ class AccountPage extends ConsumerWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 3.0),
+                        horizontal: 8.0,
+                        vertical: 3.0,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.14),
                         borderRadius: BorderRadius.circular(8.0),
@@ -270,15 +274,18 @@ class AccountPage extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 3.0),
+                        horizontal: 8.0,
+                        vertical: 3.0,
+                      ),
                       decoration: BoxDecoration(
                         color: (isDark ? AppColors.gray400 : AppColors.gray700)
                             .withOpacity(0.14),
                         borderRadius: BorderRadius.circular(8.0),
                         border: Border.all(
-                            color:
-                                (isDark ? AppColors.gray400 : AppColors.gray700)
-                                    .withOpacity(0.3)),
+                          color:
+                              (isDark ? AppColors.gray400 : AppColors.gray700)
+                                  .withOpacity(0.3),
+                        ),
                       ),
                       child: Text(
                         '$subjectCount Subjects',
@@ -327,8 +334,11 @@ class AccountPage extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.school_rounded,
-                      color: AppColors.iconPrimary(isDark), size: 20),
+                  Icon(
+                    Icons.school_rounded,
+                    color: AppColors.iconPrimary(isDark),
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     activeSemester?.name ?? 'No Active Semester',
@@ -342,7 +352,9 @@ class AccountPage extends ConsumerWidget {
               if (activeSemester != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0, vertical: 2.0),
+                    horizontal: 8.0,
+                    vertical: 2.0,
+                  ),
                   decoration: BoxDecoration(
                     color: (isDark ? AppColors.primary : AppColors.gray900)
                         .withOpacity(0.15),
@@ -447,8 +459,11 @@ class AccountPage extends ConsumerWidget {
               : AppColors.lightTextSecondary,
         ),
       ),
-      trailing: Icon(Icons.chevron_right_rounded,
-          size: 20, color: AppColors.iconSecondary(isDark)),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        size: 20,
+        color: AppColors.iconSecondary(isDark),
+      ),
       onTap: onTap,
     );
   }

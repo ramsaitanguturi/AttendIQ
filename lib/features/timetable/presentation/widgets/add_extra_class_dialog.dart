@@ -103,16 +103,16 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
   static AttendanceStatus? _normalizeInitialStatus(AttendanceStatus? status) {
     if (status == null) return null;
     switch (status) {
-      case AttendanceStatus.PRESENT:
-      case AttendanceStatus.EXTRA_PRESENT:
-        return AttendanceStatus.EXTRA_PRESENT;
-      case AttendanceStatus.ABSENT:
-      case AttendanceStatus.EXTRA_ABSENT:
-        return AttendanceStatus.EXTRA_ABSENT;
-      case AttendanceStatus.CANCELLED:
+      case AttendanceStatus.present:
+      case AttendanceStatus.extraPresent:
+        return AttendanceStatus.extraPresent;
+      case AttendanceStatus.absent:
+      case AttendanceStatus.extraAbsent:
+        return AttendanceStatus.extraAbsent;
+      case AttendanceStatus.cancelled:
         return null;
-      case AttendanceStatus.LATE:
-        return AttendanceStatus.LATE;
+      case AttendanceStatus.late:
+        return AttendanceStatus.late;
     }
   }
 
@@ -454,7 +454,8 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
             ? BorderSide(
                 color: isDark
                     ? AppColors.silverBorder
-                    : GlassTokens.lightGlassBorder)
+                    : GlassTokens.lightGlassBorder,
+              )
             : BorderSide.none,
       ),
       backgroundColor:
@@ -563,7 +564,9 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                     Text(
                       'Checking subject semester...',
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary(isDark)),
+                        fontSize: 12,
+                        color: AppColors.textSecondary(isDark),
+                      ),
                     ),
                   ],
                 ),
@@ -658,7 +661,9 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                 Text(
                   'Semester: ${DateFormat('d MMM yyyy').format(bounds.firstDate)} – ${DateFormat('d MMM yyyy').format(bounds.lastDate)}',
                   style: TextStyle(
-                      fontSize: 11, color: AppColors.textSecondary(isDark)),
+                    fontSize: 11,
+                    color: AppColors.textSecondary(isDark),
+                  ),
                 ),
               ],
 
@@ -692,8 +697,9 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                             Text(
                               'Start Time',
                               style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary(isDark)),
+                                fontSize: 11,
+                                color: AppColors.textSecondary(isDark),
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -734,8 +740,9 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                             Text(
                               'End Time',
                               style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary(isDark)),
+                                fontSize: 11,
+                                color: AppColors.textSecondary(isDark),
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -782,11 +789,11 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                     child: Text('Scheduled (Upcoming)'),
                   ),
                   DropdownMenuItem<AttendanceStatus?>(
-                    value: AttendanceStatus.EXTRA_PRESENT,
+                    value: AttendanceStatus.extraPresent,
                     child: Text('Extra Present'),
                   ),
                   DropdownMenuItem<AttendanceStatus?>(
-                    value: AttendanceStatus.EXTRA_ABSENT,
+                    value: AttendanceStatus.extraAbsent,
                     child: Text('Extra Absent'),
                   ),
                 ],

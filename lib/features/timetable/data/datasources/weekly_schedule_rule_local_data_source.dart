@@ -37,7 +37,8 @@ class WeeklyScheduleRuleLocalDataSourceImpl
 
   @override
   Future<List<WeeklyScheduleRuleLocal>> getRulesForSubject(
-      int subjectId) async {
+    int subjectId,
+  ) async {
     await _ensureLegacyTemplatesMigratedIfNeeded();
     return _isar.weeklyScheduleRuleLocals
         .where()
@@ -48,7 +49,8 @@ class WeeklyScheduleRuleLocalDataSourceImpl
 
   @override
   Future<List<WeeklyScheduleRuleLocal>> getRulesForSemester(
-      int semesterId) async {
+    int semesterId,
+  ) async {
     await _ensureLegacyTemplatesMigratedIfNeeded();
     final subjects = _isar.subjectLocals
         .where()

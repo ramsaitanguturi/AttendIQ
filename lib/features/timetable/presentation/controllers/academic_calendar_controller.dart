@@ -15,29 +15,29 @@ import 'timetable_controller.dart';
 import '../../../academic_planner/presentation/controllers/task_controller.dart';
 
 enum CalendarItemType {
-  EXAM,
-  TASK,
-  HOLIDAY,
-  CANCELLED_CLASS,
-  EXTRA_CLASS,
-  REGULAR_CLASS,
-  EVENT;
+  exam,
+  task,
+  holiday,
+  cancelledClass,
+  extraClass,
+  regularClass,
+  event;
 
   int get priority {
     switch (this) {
-      case CalendarItemType.EXAM:
+      case CalendarItemType.exam:
         return 1;
-      case CalendarItemType.TASK:
+      case CalendarItemType.task:
         return 2;
-      case CalendarItemType.HOLIDAY:
+      case CalendarItemType.holiday:
         return 3;
-      case CalendarItemType.CANCELLED_CLASS:
+      case CalendarItemType.cancelledClass:
         return 4;
-      case CalendarItemType.EXTRA_CLASS:
+      case CalendarItemType.extraClass:
         return 5;
-      case CalendarItemType.REGULAR_CLASS:
+      case CalendarItemType.regularClass:
         return 6;
-      case CalendarItemType.EVENT:
+      case CalendarItemType.event:
         return 7;
     }
   }
@@ -47,36 +47,36 @@ enum CalendarItemType {
   Color getAdaptiveIndicatorColor(bool isDark) {
     if (isDark) {
       switch (this) {
-        case CalendarItemType.REGULAR_CLASS:
+        case CalendarItemType.regularClass:
           return AppColors.gray100;
-        case CalendarItemType.EXAM:
+        case CalendarItemType.exam:
           return AppColors.gray300;
-        case CalendarItemType.TASK:
+        case CalendarItemType.task:
           return AppColors.gray400;
-        case CalendarItemType.HOLIDAY:
+        case CalendarItemType.holiday:
           return AppColors.gray200;
-        case CalendarItemType.EXTRA_CLASS:
+        case CalendarItemType.extraClass:
           return AppColors.gray300;
-        case CalendarItemType.CANCELLED_CLASS:
+        case CalendarItemType.cancelledClass:
           return AppColors.gray400;
-        case CalendarItemType.EVENT:
+        case CalendarItemType.event:
           return AppColors.gray400;
       }
     } else {
       switch (this) {
-        case CalendarItemType.REGULAR_CLASS:
+        case CalendarItemType.regularClass:
           return AppColors.gray900;
-        case CalendarItemType.EXAM:
+        case CalendarItemType.exam:
           return AppColors.gray700;
-        case CalendarItemType.TASK:
+        case CalendarItemType.task:
           return AppColors.gray800;
-        case CalendarItemType.HOLIDAY:
+        case CalendarItemType.holiday:
           return AppColors.gray700;
-        case CalendarItemType.EXTRA_CLASS:
+        case CalendarItemType.extraClass:
           return AppColors.gray800;
-        case CalendarItemType.CANCELLED_CLASS:
+        case CalendarItemType.cancelledClass:
           return AppColors.gray700;
-        case CalendarItemType.EVENT:
+        case CalendarItemType.event:
           return AppColors.gray800;
       }
     }
@@ -181,7 +181,7 @@ final monthlyCalendarDataProvider =
   final occurrences = occurrencesAsync.valueOrNull ?? [];
   final subjectMap = {
     for (final s in subjects)
-      if (s.id != null) s.id!: s
+      if (s.id != null) s.id!: s,
   };
 
   // Build grid matrix for selectedMonth (starting from Monday of first week)
@@ -213,10 +213,16 @@ final monthlyCalendarDataProvider =
 
     bool isInSemesterRange = true;
     if (semester != null) {
-      final startClean = DateTime.utc(semester.startDate.year,
-          semester.startDate.month, semester.startDate.day);
+      final startClean = DateTime.utc(
+        semester.startDate.year,
+        semester.startDate.month,
+        semester.startDate.day,
+      );
       final endClean = DateTime.utc(
-          semester.endDate.year, semester.endDate.month, semester.endDate.day);
+        semester.endDate.year,
+        semester.endDate.month,
+        semester.endDate.day,
+      );
       isInSemesterRange = (cleanDate.isAfter(startClean) ||
               cleanDate.isAtSameMomentAs(startClean)) &&
           (cleanDate.isBefore(endClean) ||
@@ -232,21 +238,23 @@ final monthlyCalendarDataProvider =
     }).toList();
 
     final isHoliday =
-        dayExceptions.any((e) => e.type == ScheduleExceptionType.HOLIDAY);
+        dayExceptions.any((e) => e.type == ScheduleExceptionType.holiday);
     String? holidayTitle;
     if (isHoliday) {
       holidayTitle = dayExceptions
-          .firstWhere((e) => e.type == ScheduleExceptionType.HOLIDAY)
+          .firstWhere((e) => e.type == ScheduleExceptionType.holiday)
           .title;
-      dayItems.add(CalendarItem(
-        id: 'holiday_${cleanDate.toIso8601String()}',
-        title: holidayTitle.isEmpty ? 'Holiday' : holidayTitle,
-        subtitle: 'Semester Holiday',
-        type: CalendarItemType.HOLIDAY,
-        description: dayExceptions
-            .firstWhere((e) => e.type == ScheduleExceptionType.HOLIDAY)
-            .description,
-      ));
+      dayItems.add(
+        CalendarItem(
+          id: 'holiday_${cleanDate.toIso8601String()}',
+          title: holidayTitle.isEmpty ? 'Holiday' : holidayTitle,
+          subtitle: 'Semester Holiday',
+          type: CalendarItemType.holiday,
+          description: dayExceptions
+              .firstWhere((e) => e.type == ScheduleExceptionType.holiday)
+              .description,
+        ),
+      );
     }
 
     // 2. Academic Events on date
@@ -256,41 +264,47 @@ final monthlyCalendarDataProvider =
     }).toList();
 
     for (final ae in dayAcademicEvents) {
-      CalendarItemType cType = CalendarItemType.EVENT;
-      if (ae.type == AcademicEventType.EXAM) {
-        cType = CalendarItemType.EXAM;
+      CalendarItemType cType = CalendarItemType.event;
+      if (ae.type == AcademicEventType.exam) {
+        cType = CalendarItemType.exam;
       }
-      dayItems.add(CalendarItem(
-        id: 'academic_event_${ae.id}',
-        title: ae.title,
-        subtitle: ae.type.toShortString(),
-        startTime: ae.startTime,
-        endTime: ae.endTime,
-        type: cType,
-        description: ae.description,
-      ));
+      dayItems.add(
+        CalendarItem(
+          id: 'academic_event_${ae.id}',
+          title: ae.title,
+          subtitle: ae.type.toShortString(),
+          startTime: ae.startTime,
+          endTime: ae.endTime,
+          type: cType,
+          description: ae.description,
+        ),
+      );
     }
 
     // Also check exception exams/events
     for (final ex in dayExceptions) {
-      if (ex.type == ScheduleExceptionType.EXAM) {
+      if (ex.type == ScheduleExceptionType.exam) {
         final sub = ex.subjectId != null ? subjectMap[ex.subjectId] : null;
-        dayItems.add(CalendarItem(
-          id: 'exception_exam_${ex.id}',
-          title: ex.title,
-          subtitle: sub?.name ?? 'Exam',
-          type: CalendarItemType.EXAM,
-          subjectId: ex.subjectId,
-          description: ex.description,
-        ));
-      } else if (ex.type == ScheduleExceptionType.EVENT) {
-        dayItems.add(CalendarItem(
-          id: 'exception_event_${ex.id}',
-          title: ex.title,
-          subtitle: 'Event',
-          type: CalendarItemType.EVENT,
-          description: ex.description,
-        ));
+        dayItems.add(
+          CalendarItem(
+            id: 'exception_exam_${ex.id}',
+            title: ex.title,
+            subtitle: sub?.name ?? 'Exam',
+            type: CalendarItemType.exam,
+            subjectId: ex.subjectId,
+            description: ex.description,
+          ),
+        );
+      } else if (ex.type == ScheduleExceptionType.event) {
+        dayItems.add(
+          CalendarItem(
+            id: 'exception_event_${ex.id}',
+            title: ex.title,
+            subtitle: 'Event',
+            type: CalendarItemType.event,
+            description: ex.description,
+          ),
+        );
       }
     }
 
@@ -302,16 +316,18 @@ final monthlyCalendarDataProvider =
 
     for (final task in dayTasks) {
       final sub = task.subjectId != null ? subjectMap[task.subjectId] : null;
-      dayItems.add(CalendarItem(
-        id: 'task_${task.id}',
-        title: task.title,
-        subtitle:
-            '${task.taskType.displayName}${sub != null ? ' (${sub.name})' : ''}',
-        type: CalendarItemType.TASK,
-        subjectId: task.subjectId,
-        description: task.description,
-        status: task.status.displayName,
-      ));
+      dayItems.add(
+        CalendarItem(
+          id: 'task_${task.id}',
+          title: task.title,
+          subtitle:
+              '${task.taskType.displayName}${sub != null ? ' (${sub.name})' : ''}',
+          type: CalendarItemType.task,
+          subjectId: task.subjectId,
+          description: task.description,
+          status: task.status.displayName,
+        ),
+      );
     }
 
     // 4. Daily Schedule Occurrences on date
@@ -327,86 +343,96 @@ final monthlyCalendarDataProvider =
           rules.where((r) => r.isActive && r.dayOfWeek == dayOfWeek).toList();
 
       for (final rule in matchingRules) {
-        final isCancelled = dayExceptions.any((e) =>
-            e.type == ScheduleExceptionType.CANCELLED_CLASS &&
-            e.subjectId == rule.subjectId);
+        final isCancelled = dayExceptions.any(
+          (e) =>
+              e.type == ScheduleExceptionType.cancelledClass &&
+              e.subjectId == rule.subjectId,
+        );
 
         final sub = subjectMap[rule.subjectId];
         final subName = sub?.name ?? 'Subject';
 
         // Check if there is already a materialized occurrence for this date and rule/slot
-        final matchingOcc = dayOccurrences.firstWhereOrNull((o) =>
-            !o.isDeleted &&
-            o.subjectId == rule.subjectId &&
-            o.startTime == rule.startTime);
+        final matchingOcc = dayOccurrences.firstWhereOrNull(
+          (o) =>
+              !o.isDeleted &&
+              o.subjectId == rule.subjectId &&
+              o.startTime == rule.startTime,
+        );
 
         final effectiveStatus = matchingOcc != null
             ? matchingOcc.status.toShortString()
             : (isCancelled ? 'CANCELLED' : 'UNMARKED');
 
         if (isCancelled && matchingOcc == null) {
-          dayItems.add(CalendarItem(
-            id: 'cancelled_rule_${rule.id}_${cleanDate.toIso8601String()}',
-            title: subName,
-            subtitle: 'Cancelled Class',
-            startTime: rule.startTime,
-            endTime: rule.endTime,
-            type: CalendarItemType.CANCELLED_CLASS,
-            subjectId: rule.subjectId,
-            ruleId: rule.id,
-            room: rule.room,
-            status: 'CANCELLED',
-            originalStatus: 'CANCELLED',
-          ));
+          dayItems.add(
+            CalendarItem(
+              id: 'cancelled_rule_${rule.id}_${cleanDate.toIso8601String()}',
+              title: subName,
+              subtitle: 'Cancelled Class',
+              startTime: rule.startTime,
+              endTime: rule.endTime,
+              type: CalendarItemType.cancelledClass,
+              subjectId: rule.subjectId,
+              ruleId: rule.id,
+              room: rule.room,
+              status: 'CANCELLED',
+              originalStatus: 'CANCELLED',
+            ),
+          );
         } else {
-          dayItems.add(CalendarItem(
-            id: matchingOcc != null
-                ? 'occ_${matchingOcc.id}'
-                : 'regular_rule_${rule.id}_${cleanDate.toIso8601String()}',
-            title: subName,
-            subtitle: rule.room != null && rule.room!.isNotEmpty
-                ? 'Room ${rule.room}'
-                : 'Regular Class',
-            startTime: rule.startTime,
-            endTime: rule.endTime,
-            type: (matchingOcc?.status == OccurrenceStatus.CANCELLED ||
-                    isCancelled)
-                ? CalendarItemType.CANCELLED_CLASS
-                : CalendarItemType.REGULAR_CLASS,
-            subjectId: rule.subjectId,
-            occurrenceId: matchingOcc?.id,
-            ruleId: rule.id,
-            slotKey: matchingOcc?.slotKey,
-            room: matchingOcc?.room ?? rule.room,
-            status: effectiveStatus,
-            originalStatus: matchingOcc?.status.toShortString() ?? 'UNMARKED',
-            updatedAt: matchingOcc?.updatedAt,
-          ));
+          dayItems.add(
+            CalendarItem(
+              id: matchingOcc != null
+                  ? 'occ_${matchingOcc.id}'
+                  : 'regular_rule_${rule.id}_${cleanDate.toIso8601String()}',
+              title: subName,
+              subtitle: rule.room != null && rule.room!.isNotEmpty
+                  ? 'Room ${rule.room}'
+                  : 'Regular Class',
+              startTime: rule.startTime,
+              endTime: rule.endTime,
+              type: (matchingOcc?.status == OccurrenceStatus.cancelled ||
+                      isCancelled)
+                  ? CalendarItemType.cancelledClass
+                  : CalendarItemType.regularClass,
+              subjectId: rule.subjectId,
+              occurrenceId: matchingOcc?.id,
+              ruleId: rule.id,
+              slotKey: matchingOcc?.slotKey,
+              room: matchingOcc?.room ?? rule.room,
+              status: effectiveStatus,
+              originalStatus: matchingOcc?.status.toShortString() ?? 'UNMARKED',
+              updatedAt: matchingOcc?.updatedAt,
+            ),
+          );
         }
       }
     }
 
     // 6. Daily Schedule Occurrences (Extra Classes) on date
     for (final occ in dayOccurrences) {
-      if (occ.type == OccurrenceType.EXTRA_CLASS) {
+      if (occ.type == OccurrenceType.extraClass) {
         final sub = occ.subjectId != null ? subjectMap[occ.subjectId] : null;
-        dayItems.add(CalendarItem(
-          id: 'extra_class_${occ.id}_${cleanDate.toIso8601String()}',
-          title:
-              occ.title.isNotEmpty ? occ.title : (sub?.name ?? 'Extra Class'),
-          subtitle: 'Extra Class',
-          startTime: occ.startTime,
-          endTime: occ.endTime,
-          type: CalendarItemType.EXTRA_CLASS,
-          subjectId: occ.subjectId,
-          occurrenceId: occ.id,
-          slotKey: occ.slotKey,
-          room: occ.room,
-          status: occ.status.toShortString(),
-          originalStatus: occ.status.toShortString(),
-          description: occ.reason,
-          updatedAt: occ.updatedAt,
-        ));
+        dayItems.add(
+          CalendarItem(
+            id: 'extra_class_${occ.id}_${cleanDate.toIso8601String()}',
+            title:
+                occ.title.isNotEmpty ? occ.title : (sub?.name ?? 'Extra Class'),
+            subtitle: 'Extra Class',
+            startTime: occ.startTime,
+            endTime: occ.endTime,
+            type: CalendarItemType.extraClass,
+            subjectId: occ.subjectId,
+            occurrenceId: occ.id,
+            slotKey: occ.slotKey,
+            room: occ.room,
+            status: occ.status.toShortString(),
+            originalStatus: occ.status.toShortString(),
+            description: occ.reason,
+            updatedAt: occ.updatedAt,
+          ),
+        );
       }
     }
 
@@ -414,29 +440,31 @@ final monthlyCalendarDataProvider =
     dayItems.sort((a, b) => a.type.priority.compareTo(b.type.priority));
 
     // Dots calculation
-    final hasExam = dayItems.any((it) => it.type == CalendarItemType.EXAM);
-    final hasTask = dayItems.any((it) => it.type == CalendarItemType.TASK);
+    final hasExam = dayItems.any((it) => it.type == CalendarItemType.exam);
+    final hasTask = dayItems.any((it) => it.type == CalendarItemType.task);
     final hasHoliday =
-        dayItems.any((it) => it.type == CalendarItemType.HOLIDAY);
+        dayItems.any((it) => it.type == CalendarItemType.holiday);
     final hasExtraClass =
-        dayItems.any((it) => it.type == CalendarItemType.EXTRA_CLASS);
+        dayItems.any((it) => it.type == CalendarItemType.extraClass);
     final hasRegularClass =
-        dayItems.any((it) => it.type == CalendarItemType.REGULAR_CLASS);
-    final hasEvent = dayItems.any((it) => it.type == CalendarItemType.EVENT);
+        dayItems.any((it) => it.type == CalendarItemType.regularClass);
+    final hasEvent = dayItems.any((it) => it.type == CalendarItemType.event);
 
-    dayList.add(CalendarDayData(
-      date: cleanDate,
-      isCurrentMonth: isCurrentMonth,
-      isToday: isToday,
-      isInSemesterRange: isInSemesterRange,
-      items: dayItems,
-      hasRegularClass: hasRegularClass,
-      hasExam: hasExam,
-      hasTask: hasTask,
-      hasHoliday: hasHoliday,
-      hasExtraClass: hasExtraClass,
-      hasEvent: hasEvent,
-    ));
+    dayList.add(
+      CalendarDayData(
+        date: cleanDate,
+        isCurrentMonth: isCurrentMonth,
+        isToday: isToday,
+        isInSemesterRange: isInSemesterRange,
+        items: dayItems,
+        hasRegularClass: hasRegularClass,
+        hasExam: hasExam,
+        hasTask: hasTask,
+        hasHoliday: hasHoliday,
+        hasExtraClass: hasExtraClass,
+        hasEvent: hasEvent,
+      ),
+    );
   }
 
   return AsyncValue.data(dayList);
@@ -449,7 +477,7 @@ final upcomingMonthEventsCountProvider = Provider<int>((ref) {
   for (final day in days) {
     if (day.isCurrentMonth) {
       count += day.items
-          .where((it) => it.type != CalendarItemType.REGULAR_CLASS)
+          .where((it) => it.type != CalendarItemType.regularClass)
           .length;
     }
   }

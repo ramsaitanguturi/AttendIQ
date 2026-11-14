@@ -31,15 +31,19 @@ class TodayScheduleState {
 }
 
 @riverpod
-Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
-    {DateTime? customDate}) async {
+Future<TodayScheduleState> todaySchedule(
+  TodayScheduleRef ref, {
+  DateTime? customDate,
+}) async {
   final now = customDate ?? DateTime.now();
   final todayUtc = DateTime.utc(now.year, now.month, now.day);
   final weekday = now.weekday; // 1 = Monday, 7 = Sunday
 
   if (kDebugMode) {
-    developer.log('TodayScheduleProvider started',
-        name: 'TodayScheduleProvider');
+    developer.log(
+      'TodayScheduleProvider started',
+      name: 'TodayScheduleProvider',
+    );
     developer.log('Today\'s date: $todayUtc', name: 'TodayScheduleProvider');
     developer.log('Weekday: $weekday', name: 'TodayScheduleProvider');
   }
@@ -54,20 +58,26 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
     final exceptions = await exceptionRepo.getExceptionsForDate(todayUtc);
 
     if (kDebugMode) {
-      developer.log('Exceptions found: ${exceptions.length}',
-          name: 'TodayScheduleProvider');
-      developer.log('Number of ScheduleExceptions: ${exceptions.length}',
-          name: 'TodayScheduleProvider');
+      developer.log(
+        'Exceptions found: ${exceptions.length}',
+        name: 'TodayScheduleProvider',
+      );
+      developer.log(
+        'Number of ScheduleExceptions: ${exceptions.length}',
+        name: 'TodayScheduleProvider',
+      );
     }
 
     // Check if today is a Holiday
     final holidayException = exceptions
-        .where((e) => e.type == ScheduleExceptionType.HOLIDAY)
+        .where((e) => e.type == ScheduleExceptionType.holiday)
         .firstOrNull;
     if (holidayException != null) {
       if (kDebugMode) {
-        developer.log('Today is a holiday: ${holidayException.title}',
-            name: 'TodayScheduleProvider');
+        developer.log(
+          'Today is a holiday: ${holidayException.title}',
+          name: 'TodayScheduleProvider',
+        );
         developer.log('Returning AsyncData', name: 'TodayScheduleProvider');
       }
       return TodayScheduleState(
@@ -80,14 +90,16 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
     }
 
     final cancelledSubjectIds = exceptions
-        .where((e) =>
-            e.type == ScheduleExceptionType.CANCELLED_CLASS &&
-            e.subjectId != null)
+        .where(
+          (e) =>
+              e.type == ScheduleExceptionType.cancelledClass &&
+              e.subjectId != null,
+        )
         .map((e) => e.subjectId!)
         .toSet();
 
     final examExceptions =
-        exceptions.where((e) => e.type == ScheduleExceptionType.EXAM).toList();
+        exceptions.where((e) => e.type == ScheduleExceptionType.exam).toList();
 
     // 1b. Fetch Academic Events for today
     List<AcademicEvent> academicEvents = [];
@@ -96,8 +108,10 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
       academicEvents = await academicEventRepo.getEventsForDate(todayUtc);
     } catch (e) {
       if (kDebugMode) {
-        developer.log('Academic events unavailable: $e',
-            name: 'TodayScheduleProvider');
+        developer.log(
+          'Academic events unavailable: $e',
+          name: 'TodayScheduleProvider',
+        );
       }
     }
     final activeAcademicEvents =
@@ -110,8 +124,10 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
 
     // 3. Loading WeeklyScheduleRules...
     if (kDebugMode) {
-      developer.log('Loading WeeklyScheduleRules...',
-          name: 'TodayScheduleProvider');
+      developer.log(
+        'Loading WeeklyScheduleRules...',
+        name: 'TodayScheduleProvider',
+      );
     }
 
     final activeSemester = await ref.watch(activeSemesterProvider.future);
@@ -133,11 +149,14 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
     }
 
     if (kDebugMode) {
-      developer.log('Rules found: ${todayRules.length}',
-          name: 'TodayScheduleProvider');
       developer.log(
-          'Number of WeeklyScheduleRules loaded: ${todayRules.length}',
-          name: 'TodayScheduleProvider');
+        'Rules found: ${todayRules.length}',
+        name: 'TodayScheduleProvider',
+      );
+      developer.log(
+        'Number of WeeklyScheduleRules loaded: ${todayRules.length}',
+        name: 'TodayScheduleProvider',
+      );
       developer.log('Generating occurrences...', name: 'TodayScheduleProvider');
     }
 
@@ -176,7 +195,7 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
             o.subjectId == rule.subjectId &&
             normalizeTimeSlotPart(o.startTime) == normRuleStart &&
             normalizeTimeSlotPart(o.endTime) == normRuleEnd &&
-            o.createdFrom == OccurrenceCreatedFrom.WEEKLY_RULE;
+            o.createdFrom == OccurrenceCreatedFrom.weeklyRule;
       }).firstOrNull;
 
       if (saved != null) {
@@ -193,7 +212,7 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
                       ruleId: rule.id,
                       startTime: rule.startTime,
                       endTime: rule.endTime,
-                      type: OccurrenceType.REGULAR_CLASS.toShortString(),
+                      type: OccurrenceType.regularClass.toShortString(),
                       title: sub.name,
                     ),
               )
@@ -220,7 +239,7 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
       final isCancelled = cancelledSubjectIds.contains(rule.subjectId);
 
       OccurrenceStatus status =
-          isCancelled ? OccurrenceStatus.CANCELLED : OccurrenceStatus.UPCOMING;
+          isCancelled ? OccurrenceStatus.cancelled : OccurrenceStatus.upcoming;
 
       final unmaterializedForSubject =
           unmaterializedCountBySubject[rule.subjectId] ?? 0;
@@ -237,14 +256,14 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
 
         if (unlinkedOnToday.length == 1) {
           final record = unlinkedOnToday.first;
-          if (record.status == AttendanceStatus.PRESENT ||
-              record.status == AttendanceStatus.EXTRA_PRESENT) {
-            status = OccurrenceStatus.PRESENT;
-          } else if (record.status == AttendanceStatus.ABSENT ||
-              record.status == AttendanceStatus.EXTRA_ABSENT) {
-            status = OccurrenceStatus.ABSENT;
-          } else if (record.status == AttendanceStatus.CANCELLED) {
-            status = OccurrenceStatus.CANCELLED;
+          if (record.status == AttendanceStatus.present ||
+              record.status == AttendanceStatus.extraPresent) {
+            status = OccurrenceStatus.present;
+          } else if (record.status == AttendanceStatus.absent ||
+              record.status == AttendanceStatus.extraAbsent) {
+            status = OccurrenceStatus.absent;
+          } else if (record.status == AttendanceStatus.cancelled) {
+            status = OccurrenceStatus.cancelled;
           }
         }
       }
@@ -259,15 +278,15 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
           ruleId: rule.id,
           startTime: rule.startTime,
           endTime: rule.endTime,
-          type: OccurrenceType.REGULAR_CLASS.toShortString(),
+          type: OccurrenceType.regularClass.toShortString(),
           title: sub.name,
         ),
         title: sub.name,
         startTime: normalizeTimeSlotPart(rule.startTime),
         endTime: normalizeTimeSlotPart(rule.endTime),
-        type: OccurrenceType.REGULAR_CLASS,
+        type: OccurrenceType.regularClass,
         status: status,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+        createdFrom: OccurrenceCreatedFrom.weeklyRule,
         room: rule.room,
         faculty: rule.faculty ?? sub.faculty,
         createdAt: DateTime.now().toUtc(),
@@ -306,7 +325,7 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
         final subjectMatches = sub != null &&
             (normalizeTitleForKey(ae.title)
                     .contains(normalizeTitleForKey(sub.name)) ||
-                (ae.type == AcademicEventType.EXAM && titleMatches));
+                (ae.type == AcademicEventType.exam && titleMatches));
 
         if (titleMatches || subjectMatches) {
           matchingEvent = ae;
@@ -344,14 +363,16 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
         subjectId: exam.subjectId,
         startTime: startTime,
         endTime: endTime,
-        type: OccurrenceType.EXAM.toShortString(),
+        type: OccurrenceType.exam.toShortString(),
         title: title,
       );
 
       final existing = resultList
-          .where((o) =>
-              o.type == OccurrenceType.EXAM &&
-              (o.slotKey == examSlotKey || o.title == title))
+          .where(
+            (o) =>
+                o.type == OccurrenceType.exam &&
+                (o.slotKey == examSlotKey || o.title == title),
+          )
           .firstOrNull;
       if (existing == null) {
         resultList.add(
@@ -362,9 +383,9 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
             title: title,
             startTime: startTime,
             endTime: endTime,
-            type: OccurrenceType.EXAM,
-            status: OccurrenceStatus.UPCOMING,
-            createdFrom: OccurrenceCreatedFrom.MANUAL,
+            type: OccurrenceType.exam,
+            status: OccurrenceStatus.upcoming,
+            createdFrom: OccurrenceCreatedFrom.manual,
             reason:
                 matchingEvent?.description ?? exam.description ?? 'Exam Event',
             createdAt: matchingEvent?.createdAt ?? DateTime.now().toUtc(),
@@ -377,8 +398,8 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
     // Add remaining Academic Events
     for (final ae in activeAcademicEvents) {
       if (ae.id != null && consumedAcademicEventIds.contains(ae.id)) continue;
-      final isExam = ae.type == AcademicEventType.EXAM;
-      final occType = isExam ? OccurrenceType.EXAM : OccurrenceType.EVENT;
+      final isExam = ae.type == AcademicEventType.exam;
+      final occType = isExam ? OccurrenceType.exam : OccurrenceType.event;
 
       final startTime =
           (ae.startTime != null && ae.startTime!.trim().isNotEmpty)
@@ -397,9 +418,11 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
       );
 
       final existing = resultList
-          .where((o) =>
-              (o.type == occType) &&
-              (o.slotKey == slotKey || o.title == ae.title))
+          .where(
+            (o) =>
+                (o.type == occType) &&
+                (o.slotKey == slotKey || o.title == ae.title),
+          )
           .firstOrNull;
       if (existing == null) {
         resultList.add(
@@ -410,8 +433,8 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
             startTime: startTime,
             endTime: endTime,
             type: occType,
-            status: OccurrenceStatus.UPCOMING,
-            createdFrom: OccurrenceCreatedFrom.MANUAL,
+            status: OccurrenceStatus.upcoming,
+            createdFrom: OccurrenceCreatedFrom.manual,
             reason: ae.description ?? ae.type.toShortString(),
             createdAt: ae.createdAt,
             updatedAt: ae.updatedAt,
@@ -424,10 +447,14 @@ Future<TodayScheduleState> todaySchedule(TodayScheduleRef ref,
     resultList.sort((a, b) => a.startTime.compareTo(b.startTime));
 
     if (kDebugMode) {
-      developer.log('Occurrences generated: ${resultList.length}',
-          name: 'TodayScheduleProvider');
-      developer.log('Number of DailyScheduleOccurrences: ${resultList.length}',
-          name: 'TodayScheduleProvider');
+      developer.log(
+        'Occurrences generated: ${resultList.length}',
+        name: 'TodayScheduleProvider',
+      );
+      developer.log(
+        'Number of DailyScheduleOccurrences: ${resultList.length}',
+        name: 'TodayScheduleProvider',
+      );
       developer.log('Returning AsyncData', name: 'TodayScheduleProvider');
     }
 

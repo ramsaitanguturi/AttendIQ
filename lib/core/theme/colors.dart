@@ -66,7 +66,8 @@ class AppColors {
       gray800; // #343a40 - Secondary background
   static const Color darkSurface = gray800; // #343a40 - Standard cards
   static const Color darkSurfaceGlass = Color(
-      0xF0343A40); // Translucent smoked glass surface (94.1% opacity matching GlassTokens)
+    0xF0343A40,
+  ); // Translucent smoked glass surface (94.1% opacity matching GlassTokens)
   static const Color darkCard = gray800; // #343a40 - Standard card surface
   static const Color darkElevated = gray700; // #495057 - Elevated cards
   static const Color darkBorder = gray700; // #495057 - Perimeter borders
@@ -144,7 +145,8 @@ class AppColors {
       gray200; // #e9ecef - Secondary background
   static const Color lightSurface = gray100; // #f8f9fa - Standard surfaces
   static const Color lightSurfaceGlass = Color(
-      0xF2F8F9FA); // Translucent light glass surface (95% opaque for contrast)
+    0xF2F8F9FA,
+  ); // Translucent light glass surface (95% opaque for contrast)
   static const Color lightCard = gray100; // #f8f9fa - Standard cards
   static const Color lightElevated = gray200; // #e9ecef - Elevated surfaces
   static const Color lightBorder = gray400; // #ced4da - Borders

@@ -84,14 +84,14 @@ void main() {
       final type = NotificationType.fromString(item.type);
       final String channelId;
       switch (type) {
-        case NotificationType.CLASS_REMINDER:
+        case NotificationType.classReminder:
           channelId = 'class_reminders';
           break;
-        case NotificationType.ATTENDANCE_WARNING:
-        case NotificationType.LOW_ATTENDANCE_ALERT:
+        case NotificationType.attendanceWarning:
+        case NotificationType.lowAttendanceAlert:
           channelId = 'attendance_warnings';
           break;
-        case NotificationType.WEEKLY_REPORT:
+        case NotificationType.weeklyReport:
           channelId = 'weekly_reports';
           break;
         default:
@@ -266,6 +266,7 @@ void main() {
 }
 
 class _FakeHttpClient extends Fake implements HttpClient {
+  @override
   Duration? connectionTimeout;
   _FakeHttpClientRequest? recordedRequest;
 

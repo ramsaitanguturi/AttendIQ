@@ -49,7 +49,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
     _descriptionController =
         TextEditingController(text: task?.description ?? '');
 
-    _selectedTaskType = task?.taskType ?? TaskType.ASSIGNMENT;
+    _selectedTaskType = task?.taskType ?? TaskType.assignment;
     _selectedSubjectId = task?.subjectId;
 
     final rawStart = task?.startDate ?? widget.initialDate ?? now;
@@ -65,8 +65,8 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
         ? TimeOfDay.fromDateTime(task.dueDate)
         : const TimeOfDay(hour: 23, minute: 59);
 
-    _selectedPriority = task?.priority ?? TaskPriority.MEDIUM;
-    _selectedReminder = task?.reminder ?? TaskReminder.DAYS_1;
+    _selectedPriority = task?.priority ?? TaskPriority.medium;
+    _selectedReminder = task?.reminder ?? TaskReminder.days1;
   }
 
   @override
@@ -264,8 +264,10 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   ),
                   if (isEditing)
                     IconButton(
-                      icon: Icon(Icons.delete_outline,
-                          color: AppColors.statusAbsent(isDark)),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: AppColors.statusAbsent(isDark),
+                      ),
                       onPressed: _deleteTask,
                     )
                   else
@@ -307,14 +309,17 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                         prefixIcon: Icon(Icons.category),
                       ),
                       items: TaskType.values
-                          .map((type) => DropdownMenuItem(
-                                value: type,
-                                child: Text(type.displayName),
-                              ))
+                          .map(
+                            (type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type.displayName),
+                            ),
+                          )
                           .toList(),
                       onChanged: (val) {
-                        if (val != null)
+                        if (val != null) {
                           setState(() => _selectedTaskType = val);
+                        }
                       },
                     ),
                   ),
@@ -432,21 +437,27 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                         prefixIcon: Icon(Icons.flag),
                       ),
                       items: TaskPriority.values
-                          .map((p) => DropdownMenuItem(
-                                value: p,
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.circle,
-                                        size: 10, color: p.color),
-                                    const SizedBox(width: 6),
-                                    Text(p.displayName),
-                                  ],
-                                ),
-                              ))
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    size: 10,
+                                    color: p.color,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(p.displayName),
+                                ],
+                              ),
+                            ),
+                          )
                           .toList(),
                       onChanged: (val) {
-                        if (val != null)
+                        if (val != null) {
                           setState(() => _selectedPriority = val);
+                        }
                       },
                     ),
                   ),
@@ -463,10 +474,12 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   prefixIcon: Icon(Icons.notifications_active),
                 ),
                 items: TaskReminder.values
-                    .map((rem) => DropdownMenuItem(
-                          value: rem,
-                          child: Text(rem.displayName),
-                        ))
+                    .map(
+                      (rem) => DropdownMenuItem(
+                        value: rem,
+                        child: Text(rem.displayName),
+                      ),
+                    )
                     .toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedReminder = val);
@@ -502,7 +515,9 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                       foregroundColor:
                           isDark ? AppColors.gray900 : AppColors.gray100,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

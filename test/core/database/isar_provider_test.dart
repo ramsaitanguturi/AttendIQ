@@ -206,8 +206,10 @@ class _FakeSubjectRepository implements SubjectRepository {
   Future<Subject?> getSubjectById(int id) async => null;
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-          {bool includeDeleted = false}) async =>
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async =>
       const [];
 
   @override

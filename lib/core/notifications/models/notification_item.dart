@@ -3,20 +3,40 @@ import 'package:isar/isar.dart';
 part 'notification_item.g.dart';
 
 enum NotificationType {
-  CLASS_REMINDER,
-  ATTENDANCE_WARNING,
-  LOW_ATTENDANCE_ALERT,
-  ASSIGNMENT_REMINDER,
-  EXAM_REMINDER,
-  WEEKLY_REPORT;
+  classReminder,
+  attendanceWarning,
+  lowAttendanceAlert,
+  assignmentReminder,
+  examReminder,
+  weeklyReport;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case NotificationType.classReminder:
+        return 'CLASS_REMINDER';
+      case NotificationType.attendanceWarning:
+        return 'ATTENDANCE_WARNING';
+      case NotificationType.lowAttendanceAlert:
+        return 'LOW_ATTENDANCE_ALERT';
+      case NotificationType.assignmentReminder:
+        return 'ASSIGNMENT_REMINDER';
+      case NotificationType.examReminder:
+        return 'EXAM_REMINDER';
+      case NotificationType.weeklyReport:
+        return 'WEEKLY_REPORT';
+    }
+  }
 
   static NotificationType fromString(String value) {
-    return NotificationType.values.firstWhere(
-      (e) => e.name == value,
-      orElse: () => NotificationType.CLASS_REMINDER,
-    );
+    final norm = value.trim().toUpperCase();
+    for (final type in NotificationType.values) {
+      if (type.toShortString() == norm ||
+          type.name.toUpperCase() == norm ||
+          type.name == value) {
+        return type;
+      }
+    }
+    return NotificationType.classReminder;
   }
 }
 

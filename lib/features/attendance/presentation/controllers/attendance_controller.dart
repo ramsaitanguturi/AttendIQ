@@ -21,7 +21,8 @@ part 'attendance_controller.g.dart';
 
 @riverpod
 AttendanceLocalDataSource attendanceLocalDataSource(
-    AttendanceLocalDataSourceRef ref) {
+  AttendanceLocalDataSourceRef ref,
+) {
   final isar = ref.watch(isarProvider).requireValue;
   return AttendanceLocalDataSourceImpl(isar);
 }
@@ -41,12 +42,13 @@ class AttendanceController extends _$AttendanceController {
   }
 
   Future<DailyScheduleOccurrence> markOccurrencePresent(
-      DailyScheduleOccurrence occurrence) async {
+    DailyScheduleOccurrence occurrence,
+  ) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
     final attendanceRepo = ref.read(attendanceRepositoryProvider);
 
     final updatedOccurrence = occurrence.copyWith(
-      status: OccurrenceStatus.PRESENT,
+      status: OccurrenceStatus.present,
       updatedAt: DateTime.now().toUtc(),
     );
 
@@ -59,9 +61,9 @@ class AttendanceController extends _$AttendanceController {
       final occId = savedOccurrence.id!;
       final existingRecord =
           await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
-      final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
-          ? AttendanceStatus.EXTRA_PRESENT
-          : AttendanceStatus.PRESENT;
+      final status = savedOccurrence.type == OccurrenceType.extraClass
+          ? AttendanceStatus.extraPresent
+          : AttendanceStatus.present;
 
       final record = AttendanceRecord(
         id: existingRecord?.id,
@@ -83,12 +85,13 @@ class AttendanceController extends _$AttendanceController {
   }
 
   Future<DailyScheduleOccurrence> markOccurrenceAbsent(
-      DailyScheduleOccurrence occurrence) async {
+    DailyScheduleOccurrence occurrence,
+  ) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
     final attendanceRepo = ref.read(attendanceRepositoryProvider);
 
     final updatedOccurrence = occurrence.copyWith(
-      status: OccurrenceStatus.ABSENT,
+      status: OccurrenceStatus.absent,
       updatedAt: DateTime.now().toUtc(),
     );
 
@@ -101,9 +104,9 @@ class AttendanceController extends _$AttendanceController {
       final occId = savedOccurrence.id!;
       final existingRecord =
           await attendanceRepo.getAttendanceForOccurrenceAnyStatus(occId);
-      final status = savedOccurrence.type == OccurrenceType.EXTRA_CLASS
-          ? AttendanceStatus.EXTRA_ABSENT
-          : AttendanceStatus.ABSENT;
+      final status = savedOccurrence.type == OccurrenceType.extraClass
+          ? AttendanceStatus.extraAbsent
+          : AttendanceStatus.absent;
 
       final record = AttendanceRecord(
         id: existingRecord?.id,
@@ -125,12 +128,13 @@ class AttendanceController extends _$AttendanceController {
   }
 
   Future<DailyScheduleOccurrence> markOccurrenceLate(
-      DailyScheduleOccurrence occurrence) async {
+    DailyScheduleOccurrence occurrence,
+  ) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
     final attendanceRepo = ref.read(attendanceRepositoryProvider);
 
     final updatedOccurrence = occurrence.copyWith(
-      status: OccurrenceStatus.LATE,
+      status: OccurrenceStatus.late,
       updatedAt: DateTime.now().toUtc(),
     );
 
@@ -150,7 +154,7 @@ class AttendanceController extends _$AttendanceController {
         occurrenceId: occId,
         eventId: occId,
         subjectId: savedOccurrence.subjectId!,
-        status: AttendanceStatus.LATE,
+        status: AttendanceStatus.late,
         markedAt: savedOccurrence.date,
         updatedAt: DateTime.now().toUtc(),
         isDirty: false,
@@ -164,12 +168,13 @@ class AttendanceController extends _$AttendanceController {
   }
 
   Future<DailyScheduleOccurrence> markOccurrenceCancelled(
-      DailyScheduleOccurrence occurrence) async {
+    DailyScheduleOccurrence occurrence,
+  ) async {
     final occurrenceRepo = ref.read(dailyScheduleOccurrenceRepositoryProvider);
     final attendanceRepo = ref.read(attendanceRepositoryProvider);
 
     final updatedOccurrence = occurrence.copyWith(
-      status: OccurrenceStatus.CANCELLED,
+      status: OccurrenceStatus.cancelled,
       updatedAt: DateTime.now().toUtc(),
     );
 
@@ -226,7 +231,7 @@ class AttendanceController extends _$AttendanceController {
     final existing = await repo.getAttendanceForOccurrenceAnyStatus(eventId);
     final now = DateTime.now().toUtc();
 
-    if (status == AttendanceStatus.CANCELLED) {
+    if (status == AttendanceStatus.cancelled) {
       if (existing?.id != null) {
         await repo.deleteAttendanceRecord(existing!.id!);
       }
@@ -295,7 +300,7 @@ class AttendanceController extends _$AttendanceController {
     required String title,
     String? room,
     required OccurrenceStatus targetStatus,
-    OccurrenceType type = OccurrenceType.REGULAR_CLASS,
+    OccurrenceType type = OccurrenceType.regularClass,
   }) async {
     final service = ref.read(historicalAttendanceServiceProvider);
     final result = await service.setAttendanceStatus(
@@ -339,15 +344,15 @@ class AttendanceController extends _$AttendanceController {
 
   String _mapToEventStatus(AttendanceStatus status) {
     switch (status) {
-      case AttendanceStatus.PRESENT:
-      case AttendanceStatus.EXTRA_PRESENT:
+      case AttendanceStatus.present:
+      case AttendanceStatus.extraPresent:
         return 'PRESENT';
-      case AttendanceStatus.ABSENT:
-      case AttendanceStatus.EXTRA_ABSENT:
+      case AttendanceStatus.absent:
+      case AttendanceStatus.extraAbsent:
         return 'ABSENT';
-      case AttendanceStatus.CANCELLED:
+      case AttendanceStatus.cancelled:
         return 'CANCELLED';
-      case AttendanceStatus.LATE:
+      case AttendanceStatus.late:
         return 'LATE';
     }
   }

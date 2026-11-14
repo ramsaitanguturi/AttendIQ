@@ -35,8 +35,10 @@ class FakeSubjectRepository implements SubjectRepository {
   final List<Subject> subjects = [];
 
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-          {bool includeDeleted = false}) async =>
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async =>
       includeDeleted ? subjects : subjects.where((s) => !s.isDeleted).toList();
 
   @override
@@ -145,7 +147,7 @@ void main() {
         credits: 4,
         attendanceTarget: 75.0,
         color: '#FF0000',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
       final sub2 = Subject(
@@ -157,7 +159,7 @@ void main() {
         credits: 3,
         attendanceTarget: 75.0,
         color: '#0000FF',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
       final sub3 = Subject(
@@ -169,7 +171,7 @@ void main() {
         credits: 3,
         attendanceTarget: 75.0,
         color: '#00FF00',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
 
@@ -182,7 +184,7 @@ void main() {
               id: i,
               eventId: i,
               subjectId: 10,
-              status: AttendanceStatus.PRESENT,
+              status: AttendanceStatus.present,
               markedAt: DateTime.now(),
               updatedAt: DateTime.now(),
             ),
@@ -193,7 +195,7 @@ void main() {
               id: 100 + i,
               eventId: 100 + i,
               subjectId: 10,
-              status: AttendanceStatus.ABSENT,
+              status: AttendanceStatus.absent,
               markedAt: DateTime.now(),
               updatedAt: DateTime.now(),
             ),
@@ -206,7 +208,7 @@ void main() {
               id: 20 + i,
               eventId: 20 + i,
               subjectId: 20,
-              status: AttendanceStatus.PRESENT,
+              status: AttendanceStatus.present,
               markedAt: DateTime.now(),
               updatedAt: DateTime.now(),
             ),
@@ -217,7 +219,7 @@ void main() {
               id: 200 + i,
               eventId: 200 + i,
               subjectId: 20,
-              status: AttendanceStatus.ABSENT,
+              status: AttendanceStatus.absent,
               markedAt: DateTime.now(),
               updatedAt: DateTime.now(),
             ),
@@ -230,7 +232,7 @@ void main() {
               id: 30 + i,
               eventId: 30 + i,
               subjectId: 30,
-              status: AttendanceStatus.PRESENT,
+              status: AttendanceStatus.present,
               markedAt: DateTime.now(),
               updatedAt: DateTime.now(),
             ),
@@ -241,7 +243,7 @@ void main() {
               id: 300 + i,
               eventId: 300 + i,
               subjectId: 30,
-              status: AttendanceStatus.ABSENT,
+              status: AttendanceStatus.absent,
               markedAt: DateTime.now(),
               updatedAt: DateTime.now(),
             ),
@@ -257,17 +259,17 @@ void main() {
       final mathReport = report.subjectReports
           .firstWhere((s) => s.subjectName == 'Mathematics');
       expect(mathReport.percentage, 80.0);
-      expect(mathReport.riskStatus, RiskStatus.SAFE);
+      expect(mathReport.riskStatus, RiskStatus.safe);
 
       final physReport =
           report.subjectReports.firstWhere((s) => s.subjectName == 'Physics');
       expect(physReport.percentage, 70.0);
-      expect(physReport.riskStatus, RiskStatus.CRITICAL);
+      expect(physReport.riskStatus, RiskStatus.critical);
 
       final chemReport =
           report.subjectReports.firstWhere((s) => s.subjectName == 'Chemistry');
       expect(chemReport.percentage, closeTo(76.67, 0.1));
-      expect(chemReport.riskStatus, RiskStatus.WARNING);
+      expect(chemReport.riskStatus, RiskStatus.warning);
     });
 
     test('PdfReportGenerator compiles a valid document', () async {
@@ -287,7 +289,7 @@ void main() {
             present: 8,
             absent: 2,
             totalClasses: 10,
-            riskStatus: RiskStatus.SAFE,
+            riskStatus: RiskStatus.safe,
           ),
           const SubjectReport(
             subjectName: 'Physics',
@@ -296,7 +298,7 @@ void main() {
             present: 7,
             absent: 3,
             totalClasses: 10,
-            riskStatus: RiskStatus.CRITICAL,
+            riskStatus: RiskStatus.critical,
           ),
         ],
       );
@@ -322,7 +324,7 @@ void main() {
             present: 8,
             absent: 2,
             totalClasses: 10,
-            riskStatus: RiskStatus.SAFE,
+            riskStatus: RiskStatus.safe,
           ),
         ],
       );

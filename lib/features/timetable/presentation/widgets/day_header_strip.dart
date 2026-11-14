@@ -13,7 +13,7 @@ class DayHeaderStrip extends StatelessWidget {
     'THU',
     'FRI',
     'SAT',
-    'SUN'
+    'SUN',
   ];
 
   const DayHeaderStrip({
@@ -75,7 +75,7 @@ class DayHeaderStrip extends StatelessWidget {
                                 : AppColors.gray900.withOpacity(0.2),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
-                          )
+                          ),
                         ]
                       : null,
                 ),

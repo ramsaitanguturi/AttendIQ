@@ -33,7 +33,7 @@ void main() {
     credits: 4,
     attendanceTarget: 75.0,
     color: '#42A5F5',
-    type: SubjectType.THEORY,
+    type: SubjectType.theory,
     updatedAt: DateTime.now(),
   );
 
@@ -74,7 +74,8 @@ void main() {
 
     // July 21, 2026 is Tuesday
     final july21 = days.firstWhere(
-        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
+      (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21,
+    );
     expect(july21.isInSemesterRange, isTrue);
     expect(july21.hasRegularClass, isTrue);
     expect(july21.items.any((i) => i.title == 'Operating Systems'), isTrue);
@@ -84,7 +85,7 @@ void main() {
     final holidayException = ScheduleException(
       id: 5,
       date: DateTime(2026, 7, 21),
-      type: ScheduleExceptionType.HOLIDAY,
+      type: ScheduleExceptionType.holiday,
       title: 'National Holiday',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
@@ -111,11 +112,12 @@ void main() {
     final days = daysAsync.value!;
 
     final july21 = days.firstWhere(
-        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
+      (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21,
+    );
     expect(july21.hasHoliday, isTrue);
     // Holiday hides regular class execution
     expect(july21.hasRegularClass, isFalse);
-    expect(july21.items.any((i) => i.type == CalendarItemType.HOLIDAY), isTrue);
+    expect(july21.items.any((i) => i.type == CalendarItemType.holiday), isTrue);
   });
 
   test('Multiple events on same date calculate priority correctly', () async {
@@ -125,7 +127,7 @@ void main() {
       date: DateTime(2026, 7, 21),
       startTime: '10:00',
       endTime: '12:00',
-      type: AcademicEventType.EXAM,
+      type: AcademicEventType.exam,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -134,7 +136,7 @@ void main() {
       id: 2,
       title: 'Assignment Submission',
       date: DateTime(2026, 7, 21),
-      type: AcademicEventType.ASSIGNMENT,
+      type: AcademicEventType.assignment,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -148,7 +150,8 @@ void main() {
         scheduleExceptionControllerProvider
             .overrideWith(() => FakeExceptionNotifier([])),
         academicEventControllerProvider.overrideWith(
-            () => FakeAcademicEventNotifier([examEvent, deadlineEvent])),
+          () => FakeAcademicEventNotifier([examEvent, deadlineEvent]),
+        ),
         subjectListControllerProvider
             .overrideWith(() => FakeSubjectListNotifier([testSubject])),
         selectedMonthProvider.overrideWith((ref) => DateTime(2026, 7, 1)),
@@ -160,13 +163,14 @@ void main() {
     final days = daysAsync.value!;
 
     final july21 = days.firstWhere(
-        (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21);
+      (d) => d.date.year == 2026 && d.date.month == 7 && d.date.day == 21,
+    );
     expect(july21.hasExam, isTrue);
     expect(july21.hasEvent, isTrue);
     expect(july21.hasRegularClass, isTrue);
 
     // Verify priority sorting (Exam first, Regular Class, Event)
-    expect(july21.items.first.type, equals(CalendarItemType.EXAM));
+    expect(july21.items.first.type, equals(CalendarItemType.exam));
   });
 
   testWidgets(

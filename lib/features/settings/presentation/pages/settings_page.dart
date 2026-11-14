@@ -124,7 +124,9 @@ class SettingsPage extends ConsumerWidget {
                     isGlassy: isGlassy,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 12.0, horizontal: 16.0),
+                        vertical: 12.0,
+                        horizontal: 16.0,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -221,19 +223,24 @@ class SettingsPage extends ConsumerWidget {
                                   underline: const SizedBox.shrink(),
                                   items: const [
                                     DropdownMenuItem(
-                                        value: 'weighted',
-                                        child: Text('Weighted')),
+                                      value: 'weighted',
+                                      child: Text('Weighted'),
+                                    ),
                                     DropdownMenuItem(
-                                        value: 'present',
-                                        child: Text('Full Present')),
+                                      value: 'present',
+                                      child: Text('Full Present'),
+                                    ),
                                     DropdownMenuItem(
-                                        value: 'absent', child: Text('Absent')),
+                                      value: 'absent',
+                                      child: Text('Absent'),
+                                    ),
                                   ],
                                   onChanged: (val) {
                                     if (val != null) {
                                       ref
-                                          .read(settingsControllerProvider
-                                              .notifier)
+                                          .read(
+                                            settingsControllerProvider.notifier,
+                                          )
                                           .updateLateAttendanceSettings(
                                             weight:
                                                 settings.lateAttendanceWeight,
@@ -299,7 +306,9 @@ class SettingsPage extends ConsumerWidget {
                           _buildDivider(isDark, isGlassy),
                           Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0),
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -320,23 +329,28 @@ class SettingsPage extends ConsumerWidget {
                                   underline: const SizedBox.shrink(),
                                   items: const [
                                     DropdownMenuItem(
-                                        value: 5,
-                                        child: Text('5 minutes before')),
+                                      value: 5,
+                                      child: Text('5 minutes before'),
+                                    ),
                                     DropdownMenuItem(
-                                        value: 10,
-                                        child: Text('10 minutes before')),
+                                      value: 10,
+                                      child: Text('10 minutes before'),
+                                    ),
                                     DropdownMenuItem(
-                                        value: 15,
-                                        child: Text('15 minutes before')),
+                                      value: 15,
+                                      child: Text('15 minutes before'),
+                                    ),
                                     DropdownMenuItem(
-                                        value: 30,
-                                        child: Text('30 minutes before')),
+                                      value: 30,
+                                      child: Text('30 minutes before'),
+                                    ),
                                   ],
                                   onChanged: (val) {
                                     if (val != null) {
                                       ref
-                                          .read(settingsControllerProvider
-                                              .notifier)
+                                          .read(
+                                            settingsControllerProvider.notifier,
+                                          )
                                           .updateClassReminderOffset(val);
                                     }
                                   },
@@ -474,34 +488,48 @@ class SettingsPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: Icon(Icons.widgets_outlined,
-                              color: AppColors.iconPrimary(isDark)),
+                          leading: Icon(
+                            Icons.widgets_outlined,
+                            color: AppColors.iconPrimary(isDark),
+                          ),
                           title: const Text('Home Screen Widgets'),
                           subtitle: const Text(
-                              'Configure Today, Weekly, and Calendar widgets'),
-                          trailing: Icon(Icons.chevron_right,
-                              color: AppColors.iconSecondary(isDark)),
+                            'Configure Today, Weekly, and Calendar widgets',
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: AppColors.iconSecondary(isDark),
+                          ),
                           onTap: () => context.push('/widget-settings'),
                         ),
                         _buildDivider(isDark, isGlassy),
                         ListTile(
-                          leading: Icon(Icons.backup_outlined,
-                              color: AppColors.iconPrimary(isDark)),
+                          leading: Icon(
+                            Icons.backup_outlined,
+                            color: AppColors.iconPrimary(isDark),
+                          ),
                           title: const Text('Backup & Restore'),
                           subtitle: const Text(
-                              'Export or restore database backup (.attendiq)'),
-                          trailing: Icon(Icons.chevron_right,
-                              color: AppColors.iconSecondary(isDark)),
+                            'Export or restore database backup (.attendiq)',
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: AppColors.iconSecondary(isDark),
+                          ),
                           onTap: () => context.push('/backup'),
                         ),
                         _buildDivider(isDark, isGlassy),
                         ListTile(
-                          leading: Icon(Icons.picture_as_pdf_outlined,
-                              color: AppColors.iconPrimary(isDark)),
+                          leading: Icon(
+                            Icons.picture_as_pdf_outlined,
+                            color: AppColors.iconPrimary(isDark),
+                          ),
                           title: const Text('Attendance Reports'),
                           subtitle: const Text('Generate PDF & CSV reports'),
-                          trailing: Icon(Icons.chevron_right,
-                              color: AppColors.iconSecondary(isDark)),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: AppColors.iconSecondary(isDark),
+                          ),
                           onTap: () => context.push('/reports'),
                         ),
                         _buildDivider(isDark, isGlassy),
@@ -531,24 +559,34 @@ class SettingsPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: Icon(Icons.info_outline,
-                              color: AppColors.iconPrimary(isDark)),
+                          leading: Icon(
+                            Icons.info_outline,
+                            color: AppColors.iconPrimary(isDark),
+                          ),
                           title: const Text('About ACEDRA'),
                           subtitle: const Text(
-                              'Version 1.1.0 • Academic & Attendance Intelligence'),
-                          trailing: Icon(Icons.chevron_right,
-                              color: AppColors.iconSecondary(isDark)),
+                            'Version 1.1.0 • Academic & Attendance Intelligence',
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: AppColors.iconSecondary(isDark),
+                          ),
                           onTap: () => context.push('/about'),
                         ),
                         _buildDivider(isDark, isGlassy),
                         ListTile(
-                          leading: Icon(Icons.privacy_tip_outlined,
-                              color: AppColors.iconPrimary(isDark)),
+                          leading: Icon(
+                            Icons.privacy_tip_outlined,
+                            color: AppColors.iconPrimary(isDark),
+                          ),
                           title: const Text('Privacy Commitment'),
                           subtitle: const Text(
-                              '100% On-Device Data Privacy & Local Storage'),
-                          trailing: Icon(Icons.chevron_right,
-                              color: AppColors.iconSecondary(isDark)),
+                            '100% On-Device Data Privacy & Local Storage',
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: AppColors.iconSecondary(isDark),
+                          ),
                           onTap: () => context.push('/about'),
                         ),
                       ],

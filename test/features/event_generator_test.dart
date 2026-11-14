@@ -26,7 +26,7 @@ void main() {
           credits: 4,
           attendanceTarget: 75.0,
           color: '#FF5733',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           updatedAt: DateTime.now(),
         ),
         Subject(
@@ -37,7 +37,7 @@ void main() {
           credits: 2,
           attendanceTarget: 80.0,
           color: '#33FF57',
-          type: SubjectType.LAB,
+          type: SubjectType.lab,
           updatedAt: DateTime.now(),
         ),
       ];
@@ -84,9 +84,9 @@ void main() {
       expect(mathEvents.length, 4);
       expect(physEvents.length, 5);
 
-      expect(mathEvents.first.eventType, EventType.REGULAR_CLASS);
-      expect(physEvents.first.eventType, EventType.LAB);
-      expect(mathEvents.first.status, EventStatus.UNMARKED);
+      expect(mathEvents.first.eventType, EventType.regularClass);
+      expect(physEvents.first.eventType, EventType.lab);
+      expect(mathEvents.first.status, EventStatus.unmarked);
     });
 
     test('generateWholeSemester does not duplicate existing logged events', () {
@@ -96,8 +96,8 @@ void main() {
         date: DateTime.utc(2026, 10, 5), // First Monday
         startTime: '09:00',
         endTime: '10:00',
-        eventType: EventType.REGULAR_CLASS,
-        status: EventStatus.PRESENT, // Already logged Present
+        eventType: EventType.regularClass,
+        status: EventStatus.present, // Already logged Present
         updatedAt: DateTime.now(),
       );
 

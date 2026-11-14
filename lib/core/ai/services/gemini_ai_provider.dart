@@ -26,7 +26,8 @@ class GeminiAIProvider implements AIProvider {
   }) async {
     if (apiKey.isEmpty) {
       throw Exception(
-          'API Key is empty. Configure GEMINI_API_KEY in compilation variables.');
+        'API Key is empty. Configure GEMINI_API_KEY in compilation variables.',
+      );
     }
 
     final url = requestUri;
@@ -69,7 +70,8 @@ class GeminiAIProvider implements AIProvider {
       if (response.statusCode != 200) {
         final errorBody = await response.transform(utf8.decoder).join();
         throw Exception(
-            'Gemini API status ${response.statusCode}: ${_sanitizeError(errorBody)}');
+          'Gemini API status ${response.statusCode}: ${_sanitizeError(errorBody)}',
+        );
       }
 
       final responseBody = await response.transform(utf8.decoder).join();

@@ -34,7 +34,7 @@ class AcedraLogo extends StatelessWidget {
             ? AppColors.darkTextPrimary
             : AppColors.lightTextPrimary);
 
-    Widget iconWidget = Container(
+    final Widget iconWidget = Container(
       width: size,
       height: size,
       decoration: withContainer
@@ -163,7 +163,9 @@ class AcedraMonogramPainter extends CustomPainter {
           const [0.0, 0.5, 1.0],
         );
       canvas.drawRRect(
-          bgRect.deflate(borderPaint.strokeWidth / 2), borderPaint);
+        bgRect.deflate(borderPaint.strokeWidth / 2),
+        borderPaint,
+      );
     }
 
     // 2. Precision Geometric Monogram "A"

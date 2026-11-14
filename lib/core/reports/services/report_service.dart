@@ -76,12 +76,12 @@ class ReportService {
 
       for (final record in records) {
         if (record.isDeleted) continue;
-        if (record.status == AttendanceStatus.PRESENT ||
-            record.status == AttendanceStatus.EXTRA_PRESENT) {
+        if (record.status == AttendanceStatus.present ||
+            record.status == AttendanceStatus.extraPresent) {
           attended++;
           total++;
-        } else if (record.status == AttendanceStatus.ABSENT ||
-            record.status == AttendanceStatus.EXTRA_ABSENT) {
+        } else if (record.status == AttendanceStatus.absent ||
+            record.status == AttendanceStatus.extraAbsent) {
           total++;
         }
       }
@@ -93,18 +93,20 @@ class ReportService {
       totalAttendedOverall += attended;
 
       final currentRate = AttendanceCalculator.calculatePercentage(
-          attended: attended, total: total);
+        attended: attended,
+        total: total,
+      );
       final target = subject.attendanceTarget > 0
           ? subject.attendanceTarget
           : effectiveTarget;
 
       RiskStatus risk;
       if (currentRate < target) {
-        risk = RiskStatus.CRITICAL;
+        risk = RiskStatus.critical;
       } else if (currentRate - target <= 2.5) {
-        risk = RiskStatus.WARNING;
+        risk = RiskStatus.warning;
       } else {
-        risk = RiskStatus.SAFE;
+        risk = RiskStatus.safe;
       }
 
       final displayName =

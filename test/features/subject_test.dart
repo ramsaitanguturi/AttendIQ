@@ -38,7 +38,7 @@ void main() {
         credits: 4,
         attendanceTarget: 75.0,
         color: '#FF5733',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
 
@@ -62,7 +62,7 @@ void main() {
         credits: 3,
         attendanceTarget: 75.0,
         color: '#3357FF',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
 
@@ -89,7 +89,7 @@ void main() {
         credits: 3,
         attendanceTarget: 75.0,
         color: '#E0E0E0',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       );
 

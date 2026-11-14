@@ -206,8 +206,10 @@ class FakeSubjectRepository implements SubjectRepository {
   final List<Subject> subjects;
   FakeSubjectRepository(this.subjects);
   @override
-  Future<List<Subject>> getSubjectsBySemester(int semesterId,
-          {bool includeDeleted = false}) async =>
+  Future<List<Subject>> getSubjectsBySemester(
+    int semesterId, {
+    bool includeDeleted = false,
+  }) async =>
       includeDeleted ? subjects : subjects.where((s) => !s.isDeleted).toList();
   @override
   Future<Subject?> getSubjectById(int id) async => subjects.firstOrNull;
@@ -324,7 +326,7 @@ void main() {
         credits: 4,
         attendanceTarget: 75.0,
         color: '#4CAF50',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       ),
       Subject(
@@ -335,7 +337,7 @@ void main() {
         credits: 4,
         attendanceTarget: 75.0,
         color: '#2196F3',
-        type: SubjectType.THEORY,
+        type: SubjectType.theory,
         updatedAt: DateTime.now(),
       ),
     ];
@@ -394,7 +396,7 @@ void main() {
       final holidayException = ScheduleException(
         id: 1,
         date: DateTime.utc(2026, 7, 20),
-        type: ScheduleExceptionType.HOLIDAY,
+        type: ScheduleExceptionType.holiday,
         title: 'Founder\'s Day',
         description: 'College Holiday',
         createdAt: DateTime.now(),
@@ -454,9 +456,9 @@ void main() {
           title: 'Operating Systems',
           startTime: '09:00',
           endTime: '10:00',
-          type: OccurrenceType.REGULAR_CLASS,
-          status: OccurrenceStatus.CANCELLED,
-          createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+          type: OccurrenceType.regularClass,
+          status: OccurrenceStatus.cancelled,
+          createdFrom: OccurrenceCreatedFrom.weeklyRule,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -502,12 +504,12 @@ void main() {
         final completedTask = AcademicTask(
           id: 1,
           title: 'Completed Assignment',
-          taskType: TaskType.ASSIGNMENT,
+          taskType: TaskType.assignment,
           startDate: mondayDate,
           dueDate: DateTime(2026, 7, 21),
-          priority: TaskPriority.HIGH,
-          status: TaskStatus.COMPLETED,
-          reminder: TaskReminder.HOURS_1,
+          priority: TaskPriority.high,
+          status: TaskStatus.completed,
+          reminder: TaskReminder.hours1,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -515,12 +517,12 @@ void main() {
         final laterPendingTask = AcademicTask(
           id: 2,
           title: 'OS Project Submission',
-          taskType: TaskType.ASSIGNMENT,
+          taskType: TaskType.assignment,
           startDate: mondayDate,
           dueDate: DateTime(2026, 7, 29),
-          priority: TaskPriority.HIGH,
-          status: TaskStatus.PENDING,
-          reminder: TaskReminder.HOURS_1,
+          priority: TaskPriority.high,
+          status: TaskStatus.pending,
+          reminder: TaskReminder.hours1,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -529,7 +531,7 @@ void main() {
           id: 1,
           title: 'Mid Semester Exam',
           date: DateTime.utc(2026, 7, 23),
-          type: AcademicEventType.EXAM,
+          type: AcademicEventType.exam,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -537,7 +539,7 @@ void main() {
         final holidayException = ScheduleException(
           id: 2,
           date: DateTime.utc(2026, 7, 25),
-          type: ScheduleExceptionType.HOLIDAY,
+          type: ScheduleExceptionType.holiday,
           title: 'College Foundation Day',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),

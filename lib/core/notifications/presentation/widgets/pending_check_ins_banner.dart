@@ -172,7 +172,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
-                                OccurrenceStatus.PRESENT,
+                                OccurrenceStatus.present,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -183,7 +183,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
-                                OccurrenceStatus.LATE,
+                                OccurrenceStatus.late,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -194,7 +194,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
-                                OccurrenceStatus.ABSENT,
+                                OccurrenceStatus.absent,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -205,7 +205,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
-                                OccurrenceStatus.CANCELLED,
+                                OccurrenceStatus.cancelled,
                               ),
                             ),
                           ],

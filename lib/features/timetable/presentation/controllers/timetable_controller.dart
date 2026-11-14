@@ -26,14 +26,16 @@ part 'timetable_controller.g.dart';
 
 @riverpod
 AcademicEventLocalDataSource academicEventLocalDataSource(
-    AcademicEventLocalDataSourceRef ref) {
+  AcademicEventLocalDataSourceRef ref,
+) {
   final isar = ref.watch(isarProvider).requireValue;
   return AcademicEventLocalDataSourceImpl(isar);
 }
 
 @riverpod
 AcademicEventRepository academicEventRepository(
-    AcademicEventRepositoryRef ref) {
+  AcademicEventRepositoryRef ref,
+) {
   return AcademicEventRepositoryImpl(
     ref.watch(academicEventLocalDataSourceProvider),
   );
@@ -113,14 +115,16 @@ class AcademicEventController extends _$AcademicEventController {
 
 @riverpod
 WeeklyScheduleRuleLocalDataSource weeklyScheduleRuleLocalDataSource(
-    WeeklyScheduleRuleLocalDataSourceRef ref) {
+  WeeklyScheduleRuleLocalDataSourceRef ref,
+) {
   final isar = ref.watch(isarProvider).requireValue;
   return WeeklyScheduleRuleLocalDataSourceImpl(isar);
 }
 
 @riverpod
 WeeklyScheduleRuleRepository weeklyScheduleRuleRepository(
-    WeeklyScheduleRuleRepositoryRef ref) {
+  WeeklyScheduleRuleRepositoryRef ref,
+) {
   return WeeklyScheduleRuleRepositoryImpl(
     localDataSource: ref.watch(weeklyScheduleRuleLocalDataSourceProvider),
   );
@@ -128,14 +132,16 @@ WeeklyScheduleRuleRepository weeklyScheduleRuleRepository(
 
 @riverpod
 ScheduleExceptionLocalDataSource scheduleExceptionLocalDataSource(
-    ScheduleExceptionLocalDataSourceRef ref) {
+  ScheduleExceptionLocalDataSourceRef ref,
+) {
   final isar = ref.watch(isarProvider).requireValue;
   return ScheduleExceptionLocalDataSourceImpl(isar);
 }
 
 @riverpod
 ScheduleExceptionRepository scheduleExceptionRepository(
-    ScheduleExceptionRepositoryRef ref) {
+  ScheduleExceptionRepositoryRef ref,
+) {
   return ScheduleExceptionRepositoryImpl(
     localDataSource: ref.watch(scheduleExceptionLocalDataSourceProvider),
   );
@@ -143,7 +149,8 @@ ScheduleExceptionRepository scheduleExceptionRepository(
 
 @riverpod
 TimetableLocalDataSource timetableLocalDataSource(
-    TimetableLocalDataSourceRef ref) {
+  TimetableLocalDataSourceRef ref,
+) {
   final isar = ref.watch(isarProvider).requireValue;
   return TimetableLocalDataSourceImpl(isar);
 }
@@ -197,8 +204,12 @@ class WeeklyScheduleRuleListController
     return hours * 60 + minutes;
   }
 
-  bool checkCollision(int dayOfWeek, String startTime, String endTime,
-      {int? excludeId}) {
+  bool checkCollision(
+    int dayOfWeek,
+    String startTime,
+    String endTime, {
+    int? excludeId,
+  }) {
     final list = state.valueOrNull ?? [];
     final startMin = _timeToMinutes(startTime);
     final endMin = _timeToMinutes(endTime);
@@ -231,7 +242,8 @@ class WeeklyScheduleRuleListController
     for (final day in daysOfWeek) {
       if (checkCollision(day, startTime, endTime)) {
         throw Exception(
-            'Schedule collision on day $day: overlapping class exists.');
+          'Schedule collision on day $day: overlapping class exists.',
+        );
       }
       newRules.add(
         WeeklyScheduleRule(
@@ -257,10 +269,15 @@ class WeeklyScheduleRuleListController
   }
 
   Future<void> saveRule(WeeklyScheduleRule rule) async {
-    if (checkCollision(rule.dayOfWeek, rule.startTime, rule.endTime,
-        excludeId: rule.id)) {
+    if (checkCollision(
+      rule.dayOfWeek,
+      rule.startTime,
+      rule.endTime,
+      excludeId: rule.id,
+    )) {
       throw Exception(
-          'Schedule collision: overlapping class exists at this time.');
+        'Schedule collision: overlapping class exists at this time.',
+      );
     }
     final repo = ref.read(weeklyScheduleRuleRepositoryProvider);
     await repo.saveRule(rule);
@@ -391,8 +408,12 @@ class TimetableListController extends _$TimetableListController {
     return hours * 60 + minutes;
   }
 
-  bool checkCollision(int weekday, String startTime, String endTime,
-      {int? excludeId}) {
+  bool checkCollision(
+    int weekday,
+    String startTime,
+    String endTime, {
+    int? excludeId,
+  }) {
     final list = state.valueOrNull ?? [];
     final startMin = _timeToMinutes(startTime);
     final endMin = _timeToMinutes(endTime);

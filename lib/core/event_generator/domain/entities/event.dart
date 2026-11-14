@@ -1,18 +1,67 @@
 enum EventType {
-  REGULAR_CLASS,
-  LAB,
-  TUTORIAL;
+  regularClass,
+  lab,
+  tutorial;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case EventType.regularClass:
+        return 'REGULAR_CLASS';
+      case EventType.lab:
+        return 'LAB';
+      case EventType.tutorial:
+        return 'TUTORIAL';
+    }
+  }
+
+  static EventType fromString(String value) {
+    switch (value.trim().toUpperCase()) {
+      case 'REGULAR_CLASS':
+      case 'REGULARCLASS':
+        return EventType.regularClass;
+      case 'LAB':
+        return EventType.lab;
+      case 'TUTORIAL':
+        return EventType.tutorial;
+      default:
+        return EventType.regularClass;
+    }
+  }
 }
 
 enum EventStatus {
-  UNMARKED,
-  PRESENT,
-  ABSENT,
-  CANCELLED;
+  unmarked,
+  present,
+  absent,
+  cancelled;
 
-  String toShortString() => name;
+  String toShortString() {
+    switch (this) {
+      case EventStatus.unmarked:
+        return 'UNMARKED';
+      case EventStatus.present:
+        return 'PRESENT';
+      case EventStatus.absent:
+        return 'ABSENT';
+      case EventStatus.cancelled:
+        return 'CANCELLED';
+    }
+  }
+
+  static EventStatus fromString(String value) {
+    switch (value.trim().toUpperCase()) {
+      case 'UNMARKED':
+        return EventStatus.unmarked;
+      case 'PRESENT':
+        return EventStatus.present;
+      case 'ABSENT':
+        return EventStatus.absent;
+      case 'CANCELLED':
+        return EventStatus.cancelled;
+      default:
+        return EventStatus.unmarked;
+    }
+  }
 }
 
 class Event {

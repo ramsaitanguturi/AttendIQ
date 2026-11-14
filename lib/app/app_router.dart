@@ -118,7 +118,9 @@ GoRouter appRouter(AppRouterRef ref) {
                     Text(
                       errorMsg,
                       style: TextStyle(
-                          fontSize: 14, color: AppColors.textSecondary(isDark)),
+                        fontSize: 14,
+                        color: AppColors.textSecondary(isDark),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
@@ -150,8 +152,11 @@ GoRouter appRouter(AppRouterRef ref) {
         },
       ),
       StatefulShellRoute.indexedStack(
-        builder: (BuildContext context, GoRouterState state,
-            StatefulNavigationShell navigationShell) {
+        builder: (
+          BuildContext context,
+          GoRouterState state,
+          StatefulNavigationShell navigationShell,
+        ) {
           return Scaffold(
             body: Stack(
               children: [

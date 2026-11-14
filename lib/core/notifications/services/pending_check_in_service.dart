@@ -106,10 +106,10 @@ class PendingCheckInService {
     final endUtc = normalizeUtcDate(now);
 
     final subjects =
-        await _isar.subjectLocals.where().isDeletedEqualTo(false).findAll();
+        _isar.subjectLocals.where().isDeletedEqualTo(false).findAll();
     final subjectMap = {for (final s in subjects) s.id: s};
 
-    final exceptions = await _isar.scheduleExceptionLocals
+    final exceptions = _isar.scheduleExceptionLocals
         .where()
         .dateBetween(startUtc, endUtc)
         .isDeletedEqualTo(false)
@@ -128,16 +128,14 @@ class PendingCheckInService {
       }
     }
 
-    final occurrences = await _isar.dailyScheduleOccurrenceLocals
+    final occurrences = _isar.dailyScheduleOccurrenceLocals
         .where()
         .dateBetween(startUtc, endUtc)
         .isDeletedEqualTo(false)
         .findAll();
 
-    final records = await _isar.attendanceRecordLocals
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+    final records =
+        _isar.attendanceRecordLocals.where().isDeletedEqualTo(false).findAll();
 
     final recordedOccurrenceIds = <int>{
       for (final r in records)
@@ -197,23 +195,25 @@ class PendingCheckInService {
           );
       consumedSlotKeys.add(canonicalKey);
 
-      pendingList.add(PendingCheckInItem(
-        occurrenceId: occ.id,
-        subjectId: occ.subjectId!,
-        subjectName: sub.name,
-        subjectCode: sub.code,
-        ruleId: occ.ruleId,
-        slotKey: canonicalKey,
-        date: occ.date,
-        startTime: occ.startTime,
-        endTime: occ.endTime,
-        room: occ.room,
-        type: occ.type,
-      ));
+      pendingList.add(
+        PendingCheckInItem(
+          occurrenceId: occ.id,
+          subjectId: occ.subjectId!,
+          subjectName: sub.name,
+          subjectCode: sub.code,
+          ruleId: occ.ruleId,
+          slotKey: canonicalKey,
+          date: occ.date,
+          startTime: occ.startTime,
+          endTime: occ.endTime,
+          room: occ.room,
+          type: occ.type,
+        ),
+      );
     }
 
     // 2. Process Unmaterialized Active Weekly Rules within Lookback Window
-    final rules = await _isar.weeklyScheduleRuleLocals
+    final rules = _isar.weeklyScheduleRuleLocals
         .where()
         .isDeletedEqualTo(false)
         .findAll();
@@ -264,22 +264,25 @@ class PendingCheckInService {
         );
 
         if (consumedSlotKeys.contains(canonicalKey)) continue;
-        if (recordedSubjectDates.contains('${rule.subjectId}_$dateKey'))
+        if (recordedSubjectDates.contains('${rule.subjectId}_$dateKey')) {
           continue;
+        }
 
         consumedSlotKeys.add(canonicalKey);
-        pendingList.add(PendingCheckInItem(
-          subjectId: rule.subjectId,
-          subjectName: sub.name,
-          subjectCode: sub.code,
-          ruleId: rule.id,
-          slotKey: canonicalKey,
-          date: dateUtc,
-          startTime: rule.startTime,
-          endTime: rule.endTime,
-          room: rule.room,
-          type: 'REGULAR_CLASS',
-        ));
+        pendingList.add(
+          PendingCheckInItem(
+            subjectId: rule.subjectId,
+            subjectName: sub.name,
+            subjectCode: sub.code,
+            ruleId: rule.id,
+            slotKey: canonicalKey,
+            date: dateUtc,
+            startTime: rule.startTime,
+            endTime: rule.endTime,
+            room: rule.room,
+            type: 'REGULAR_CLASS',
+          ),
+        );
       }
     }
 
@@ -309,8 +312,8 @@ class PendingCheckInService {
       room: item.room,
       targetStatus: status,
       type: item.type == 'EXTRA_CLASS'
-          ? OccurrenceType.EXTRA_CLASS
-          : OccurrenceType.REGULAR_CLASS,
+          ? OccurrenceType.extraClass
+          : OccurrenceType.regularClass,
     );
 
     // Invalidate UI providers

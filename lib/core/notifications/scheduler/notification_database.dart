@@ -175,22 +175,31 @@ int allocateNotificationAndroidIdFromUsedSet({
 
 abstract class NotificationDatabase {
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
-      DateTime start, DateTime end);
+    DateTime start,
+    DateTime end,
+  );
   Future<List<WeeklyScheduleRuleLocal>> getWeeklyRules();
   Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
-      DateTime start, DateTime end);
+    DateTime start,
+    DateTime end,
+  );
   Future<List<AcademicEventLocal>> getAcademicEvents(
-      DateTime start, DateTime end);
+    DateTime start,
+    DateTime end,
+  );
   Future<List<SubjectLocal>> getSubjects();
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
-      int subjectId);
+    int subjectId,
+  );
   Future<List<AttendanceRecordLocal>> getAllAttendanceRecords();
   Future<SemesterLocal?> getActiveSemester();
   Future<UserPreferencesLocal?> getUserPreferences();
 
   Future<List<NotificationItem>> getFutureNotifications(DateTime now);
   Future<List<NotificationItem>> getFutureNotificationsByType(
-      String type, DateTime now);
+    String type,
+    DateTime now,
+  );
   Future<NotificationItem?> getLastNotification(String type, String relatedId);
 
   Future<void> deleteNotification(int id);
@@ -255,7 +264,9 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrences(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     final startUtc = DateTime.utc(start.year, start.month, start.day);
     final endUtc = DateTime.utc(end.year, end.month, end.day, 23, 59, 59);
     return _isar.dailyScheduleOccurrenceLocals
@@ -275,7 +286,9 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
 
   @override
   Future<List<ScheduleExceptionLocal>> getScheduleExceptions(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     final startUtc = DateTime.utc(start.year, start.month, start.day);
     final endUtc = DateTime.utc(end.year, end.month, end.day, 23, 59, 59);
     return _isar.scheduleExceptionLocals
@@ -287,7 +300,9 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
 
   @override
   Future<List<AcademicEventLocal>> getAcademicEvents(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     final startUtc = DateTime.utc(start.year, start.month, start.day);
     final endUtc = DateTime.utc(end.year, end.month, end.day, 23, 59, 59);
     return _isar.academicEventLocals
@@ -304,7 +319,8 @@ class IsarNotificationDatabaseImpl implements NotificationDatabase {
 
   @override
   Future<List<AttendanceRecordLocal>> getAttendanceRecordsForSubject(
-      int subjectId) async {
+    int subjectId,
+  ) async {
     return _isar.attendanceRecordLocals
         .where()
         .subjectIdEqualTo(subjectId)

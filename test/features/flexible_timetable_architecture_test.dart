@@ -15,7 +15,7 @@ void main() {
       credits: 4,
       attendanceTarget: 75.0,
       color: '#4ECDC4',
-      type: SubjectType.THEORY,
+      type: SubjectType.theory,
       updatedAt: DateTime.utc(2026, 1, 1),
     );
 
@@ -83,7 +83,7 @@ void main() {
           dayOfWeek: 1, // Monday
           startTime: '09:00',
           endTime: '10:00',
-          type: SubjectType.THEORY,
+          type: SubjectType.theory,
           createdAt: DateTime.utc(2026, 1, 1),
           updatedAt: DateTime.utc(2026, 1, 1),
         ),
@@ -93,7 +93,7 @@ void main() {
           dayOfWeek: 1, // Monday
           startTime: '14:00',
           endTime: '15:00',
-          type: SubjectType.LAB,
+          type: SubjectType.lab,
           createdAt: DateTime.utc(2026, 1, 1),
           updatedAt: DateTime.utc(2026, 1, 1),
         ),
@@ -109,9 +109,9 @@ void main() {
           title: osSubject.name,
           startTime: rule.startTime,
           endTime: rule.endTime,
-          type: OccurrenceType.REGULAR_CLASS,
-          status: OccurrenceStatus.UPCOMING,
-          createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+          type: OccurrenceType.regularClass,
+          status: OccurrenceStatus.upcoming,
+          createdFrom: OccurrenceCreatedFrom.weeklyRule,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -147,9 +147,9 @@ void main() {
         title: osSubject.name,
         startTime: regularRule.startTime,
         endTime: regularRule.endTime,
-        type: OccurrenceType.REGULAR_CLASS,
-        status: OccurrenceStatus.UPCOMING,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+        type: OccurrenceType.regularClass,
+        status: OccurrenceStatus.upcoming,
+        createdFrom: OccurrenceCreatedFrom.weeklyRule,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -161,9 +161,9 @@ void main() {
         title: osSubject.name,
         startTime: '15:00',
         endTime: '16:00',
-        type: OccurrenceType.EXTRA_CLASS,
-        status: OccurrenceStatus.UPCOMING,
-        createdFrom: OccurrenceCreatedFrom.MANUAL,
+        type: OccurrenceType.extraClass,
+        status: OccurrenceStatus.upcoming,
+        createdFrom: OccurrenceCreatedFrom.manual,
         reason: 'Catch-up Lab Session',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -172,8 +172,8 @@ void main() {
       final todaySchedule = [regularOccurrence, extraClassOccurrence];
 
       expect(todaySchedule.length, equals(2));
-      expect(todaySchedule[0].type, equals(OccurrenceType.REGULAR_CLASS));
-      expect(todaySchedule[1].type, equals(OccurrenceType.EXTRA_CLASS));
+      expect(todaySchedule[0].type, equals(OccurrenceType.regularClass));
+      expect(todaySchedule[1].type, equals(OccurrenceType.extraClass));
 
       // Weekly schedule rule remains unchanged
       expect(regularRule.startTime, equals('09:00'));
@@ -200,7 +200,7 @@ void main() {
         id: 10,
         date: tuesdayDate,
         subjectId: osSubject.id,
-        type: ScheduleExceptionType.CANCELLED_CLASS,
+        type: ScheduleExceptionType.cancelledClass,
         title: 'OS Class Cancelled',
         description: 'Instructor away on conference',
         createdAt: DateTime.now(),
@@ -209,7 +209,7 @@ void main() {
 
       // Evaluate occurrence status for tuesdayDate
       final isCancelled =
-          exception.type == ScheduleExceptionType.CANCELLED_CLASS &&
+          exception.type == ScheduleExceptionType.cancelledClass &&
               exception.subjectId == weeklyRule.subjectId;
       final occurrence = DailyScheduleOccurrence(
         id: 5,
@@ -218,16 +218,16 @@ void main() {
         title: osSubject.name,
         startTime: weeklyRule.startTime,
         endTime: weeklyRule.endTime,
-        type: OccurrenceType.REGULAR_CLASS,
+        type: OccurrenceType.regularClass,
         status: isCancelled
-            ? OccurrenceStatus.CANCELLED
-            : OccurrenceStatus.UPCOMING,
-        createdFrom: OccurrenceCreatedFrom.WEEKLY_RULE,
+            ? OccurrenceStatus.cancelled
+            : OccurrenceStatus.upcoming,
+        createdFrom: OccurrenceCreatedFrom.weeklyRule,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
-      expect(occurrence.status, equals(OccurrenceStatus.CANCELLED));
+      expect(occurrence.status, equals(OccurrenceStatus.cancelled));
 
       // The rule itself remains active for next week
       expect(weeklyRule.isActive, isTrue);

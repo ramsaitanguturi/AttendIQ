@@ -90,7 +90,11 @@ class AboutPage extends StatelessWidget {
   }
 
   Widget _buildFeatureRow(
-      IconData icon, String title, String subtitle, bool isDark) {
+    IconData icon,
+    String title,
+    String subtitle,
+    bool isDark,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

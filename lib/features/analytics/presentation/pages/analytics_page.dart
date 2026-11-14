@@ -79,22 +79,34 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
 
                   // 2. Streaks Card
                   _buildStreakCard(
-                      analytics.attendanceStreak, isDark, isGlassy),
+                    analytics.attendanceStreak,
+                    isDark,
+                    isGlassy,
+                  ),
                   const SizedBox(height: 24.0),
 
                   // 3. Attendance Trend Chart (Line Chart)
                   _buildTrendChartSection(
-                      analytics.attendanceTrend, isDark, isGlassy),
+                    analytics.attendanceTrend,
+                    isDark,
+                    isGlassy,
+                  ),
                   const SizedBox(height: 24.0),
 
                   // 4. Subject Comparison Chart (Bar Chart)
                   _buildSubjectComparisonChartSection(
-                      analytics.subjectComparison, isDark, isGlassy),
+                    analytics.subjectComparison,
+                    isDark,
+                    isGlassy,
+                  ),
                   const SizedBox(height: 24.0),
 
                   // 5. Subject Ranking Summary Card
                   _buildComparisonRankingCard(
-                      analytics.subjectComparison, isDark, isGlassy),
+                    analytics.subjectComparison,
+                    isDark,
+                    isGlassy,
+                  ),
                   const SizedBox(height: 24.0),
 
                   // 6. Risk Level Subjects Section
@@ -117,13 +129,16 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   }
 
   Widget _buildOverallHeroCard(
-      AttendanceAnalytics analytics, bool isDark, bool isGlassy) {
+    AttendanceAnalytics analytics,
+    bool isDark,
+    bool isGlassy,
+  ) {
     Color riskColor = isDark ? AppColors.primary : AppColors.gray900;
     String riskTitle = 'Safe';
-    if (analytics.riskLevel == RiskStatus.CRITICAL) {
+    if (analytics.riskLevel == RiskStatus.critical) {
       riskColor = isDark ? AppColors.gray300 : AppColors.gray800;
       riskTitle = 'Critical';
-    } else if (analytics.riskLevel == RiskStatus.WARNING) {
+    } else if (analytics.riskLevel == RiskStatus.warning) {
       riskColor = isDark ? AppColors.gray200 : AppColors.gray700;
       riskTitle = 'Warning';
     }
@@ -339,7 +354,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   }
 
   Widget _buildTrendChartSection(
-      AttendanceTrend trend, bool isDark, bool isGlassy) {
+    AttendanceTrend trend,
+    bool isDark,
+    bool isGlassy,
+  ) {
     List<TrendPoint> points = [];
     if (_trendPeriod == 'daily') {
       points = trend.daily;
@@ -436,10 +454,11 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                               return Text(
                                 '${date.day}/${date.month}',
                                 style: TextStyle(
-                                    fontSize: 10,
-                                    color: isDark
-                                        ? AppColors.darkTextSecondary
-                                        : AppColors.lightTextSecondary),
+                                  fontSize: 10,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.lightTextSecondary,
+                                ),
                               );
                             },
                           ),
@@ -452,10 +471,11 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                               return Text(
                                 '${value.toInt()}%',
                                 style: TextStyle(
-                                    fontSize: 10,
-                                    color: isDark
-                                        ? AppColors.darkTextSecondary
-                                        : AppColors.lightTextSecondary),
+                                  fontSize: 10,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.lightTextSecondary,
+                                ),
                               );
                             },
                             reservedSize: 32,
@@ -475,7 +495,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                         LineChartBarData(
                           spots: List.generate(points.length, (index) {
                             return FlSpot(
-                                index.toDouble(), points[index].percentage);
+                              index.toDouble(),
+                              points[index].percentage,
+                            );
                           }),
                           isCurved: points.length > 1,
                           gradient: LinearGradient(
@@ -655,10 +677,11 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                               return Text(
                                 '${value.toInt()}%',
                                 style: TextStyle(
-                                    fontSize: 10,
-                                    color: isDark
-                                        ? AppColors.darkTextSecondary
-                                        : AppColors.lightTextSecondary),
+                                  fontSize: 10,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.lightTextSecondary,
+                                ),
                               );
                             },
                           ),
@@ -715,7 +738,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   }
 
   Widget _buildComparisonRankingCard(
-      SubjectComparison comparison, bool isDark, bool isGlassy) {
+    SubjectComparison comparison,
+    bool isDark,
+    bool isGlassy,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
@@ -823,7 +849,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   }
 
   Widget _buildRiskSubjectsSection(
-      AttendanceAnalytics analytics, bool isDark, bool isGlassy) {
+    AttendanceAnalytics analytics,
+    bool isDark,
+    bool isGlassy,
+  ) {
     // Let's watch all subjects analytics from the provider and list the Warning/Critical ones
     final refStats = ref.watch(allSubjectAttendanceStatsProvider);
     final statsList = refStats.valueOrNull ?? [];
@@ -868,8 +897,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               child: Text(
                 '🎉 All subjects are in the safe zone!',
                 style: TextStyle(
-                    color: isDark ? AppColors.primary : AppColors.gray900,
-                    fontWeight: FontWeight.bold),
+                  color: isDark ? AppColors.primary : AppColors.gray900,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           )
@@ -953,7 +983,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(6),

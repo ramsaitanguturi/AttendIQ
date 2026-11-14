@@ -1,18 +1,32 @@
 enum ScheduleExceptionType {
-  HOLIDAY,
-  CANCELLED_CLASS,
-  EXAM,
-  EVENT;
+  holiday,
+  cancelledClass,
+  exam,
+  event;
 
   String toShortString() {
-    return toString().split('.').last;
+    switch (this) {
+      case ScheduleExceptionType.holiday:
+        return 'HOLIDAY';
+      case ScheduleExceptionType.cancelledClass:
+        return 'CANCELLED_CLASS';
+      case ScheduleExceptionType.exam:
+        return 'EXAM';
+      case ScheduleExceptionType.event:
+        return 'EVENT';
+    }
   }
 
   static ScheduleExceptionType fromString(String val) {
-    return ScheduleExceptionType.values.firstWhere(
-      (e) => e.toShortString().toUpperCase() == val.toUpperCase(),
-      orElse: () => ScheduleExceptionType.EVENT,
-    );
+    final norm = val.trim().toUpperCase();
+    for (final type in ScheduleExceptionType.values) {
+      if (type.toShortString() == norm ||
+          type.name.toUpperCase() == norm ||
+          type.name == val) {
+        return type;
+      }
+    }
+    return ScheduleExceptionType.event;
   }
 }
 

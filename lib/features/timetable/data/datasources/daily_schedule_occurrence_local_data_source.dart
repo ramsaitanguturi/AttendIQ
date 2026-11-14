@@ -5,15 +5,21 @@ import '../utils/occurrence_identity.dart';
 
 abstract class DailyScheduleOccurrenceLocalDataSource {
   Future<DailyScheduleOccurrenceLocal> saveOccurrence(
-      DailyScheduleOccurrenceLocal occurrence);
+    DailyScheduleOccurrenceLocal occurrence,
+  );
   Future<List<DailyScheduleOccurrenceLocal>> saveOccurrences(
-      List<DailyScheduleOccurrenceLocal> occurrences);
+    List<DailyScheduleOccurrenceLocal> occurrences,
+  );
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForDate(
-      DateTime date);
+    DateTime date,
+  );
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForDateRange(
-      DateTime start, DateTime end);
+    DateTime start,
+    DateTime end,
+  );
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForSubject(
-      int subjectId);
+    int subjectId,
+  );
   Future<DailyScheduleOccurrenceLocal?> getOccurrenceById(int id);
   Future<void> deleteOccurrence(int id);
   Future<List<DailyScheduleOccurrenceLocal>> getAllOccurrences();
@@ -28,7 +34,8 @@ class DailyScheduleOccurrenceLocalDataSourceImpl
 
   @override
   Future<DailyScheduleOccurrenceLocal> saveOccurrence(
-      DailyScheduleOccurrenceLocal occurrence) async {
+    DailyScheduleOccurrenceLocal occurrence,
+  ) async {
     return _isar.writeAsync<DailyScheduleOccurrenceLocal>((isar) {
       return upsertCanonicalOccurrenceInWriteTx(isar, occurrence);
     });
@@ -36,7 +43,8 @@ class DailyScheduleOccurrenceLocalDataSourceImpl
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> saveOccurrences(
-      List<DailyScheduleOccurrenceLocal> occurrences) async {
+    List<DailyScheduleOccurrenceLocal> occurrences,
+  ) async {
     return _isar.writeAsync<List<DailyScheduleOccurrenceLocal>>((isar) {
       final saved = <DailyScheduleOccurrenceLocal>[];
       for (final occurrence in occurrences) {
@@ -48,7 +56,8 @@ class DailyScheduleOccurrenceLocalDataSourceImpl
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForDate(
-      DateTime date) async {
+    DateTime date,
+  ) async {
     final startUtc = DateTime.utc(date.year, date.month, date.day);
     final endUtc = DateTime.utc(date.year, date.month, date.day, 23, 59, 59);
     final all = _isar.dailyScheduleOccurrenceLocals
@@ -61,7 +70,9 @@ class DailyScheduleOccurrenceLocalDataSourceImpl
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForDateRange(
-      DateTime start, DateTime end) async {
+    DateTime start,
+    DateTime end,
+  ) async {
     final startUtc = DateTime.utc(start.year, start.month, start.day);
     final endUtc = DateTime.utc(end.year, end.month, end.day, 23, 59, 59);
     return _isar.dailyScheduleOccurrenceLocals
@@ -73,7 +84,8 @@ class DailyScheduleOccurrenceLocalDataSourceImpl
 
   @override
   Future<List<DailyScheduleOccurrenceLocal>> getOccurrencesForSubject(
-      int subjectId) async {
+    int subjectId,
+  ) async {
     return _isar.dailyScheduleOccurrenceLocals
         .where()
         .subjectIdEqualTo(subjectId)

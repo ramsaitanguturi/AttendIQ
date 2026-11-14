@@ -63,7 +63,7 @@ void main() {
         'metadata': {
           'createdAt': futureTime.toIso8601String(),
           'version': 2,
-        }
+        },
       };
 
       final success = await notifier.syncNow(mockRemoteData: mockRemote);
@@ -91,7 +91,7 @@ void main() {
         'metadata': {
           'createdAt': pastTime.toIso8601String(),
           'version': 2,
-        }
+        },
       };
 
       final success = await notifier.syncNow(mockRemoteData: mockRemote);

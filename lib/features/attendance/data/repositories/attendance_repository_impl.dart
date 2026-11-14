@@ -19,10 +19,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       legacyEventId: local.legacyEventId,
       eventId: local.occurrenceId ?? local.eventId,
       subjectId: local.subjectId,
-      status: AttendanceStatus.values.firstWhere(
-        (e) => e.name == local.status,
-        orElse: () => AttendanceStatus.PRESENT,
-      ),
+      status: AttendanceStatus.fromString(local.status),
       markedAt: local.markedAt,
       updatedAt: local.updatedAt,
       isDirty: local.isDirty,
@@ -42,7 +39,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       ..legacyEventId = entity.legacyEventId
       ..eventId = resolvedOccurrenceId ?? entity.eventId
       ..subjectId = entity.subjectId
-      ..status = entity.status.name
+      ..status = entity.status.toShortString()
       ..markedAt = entity.markedAt
       ..updatedAt = entity.updatedAt
       ..isDirty = entity.isDirty
@@ -67,7 +64,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
 
   @override
   Future<AttendanceRecord?> getAttendanceForOccurrenceAnyStatus(
-      int occurrenceId) async {
+    int occurrenceId,
+  ) async {
     final local = await _localDataSource
         .getAttendanceForOccurrenceAnyStatus(occurrenceId);
     if (local != null) {
@@ -179,7 +177,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       startTime: startTime,
       endTime: endTime,
       reason: reason,
-      attendanceStatus: status?.name,
+      attendanceStatus: status?.toShortString(),
       autoAllocateSlot: autoAllocateSlot,
     );
     return _occurrenceToEntity(saved);

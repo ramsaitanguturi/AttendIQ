@@ -33,7 +33,7 @@ class EventGeneratorService {
       credits: s.credits,
       attendanceTarget: s.attendanceTarget,
       color: s.color,
-      type: s.type == 'LAB' ? SubjectType.LAB : SubjectType.THEORY,
+      type: s.type == 'LAB' ? SubjectType.lab : SubjectType.theory,
       updatedAt: s.updatedAt,
     );
   }
@@ -59,10 +59,10 @@ class EventGeneratorService {
       date: e.date,
       startTime: e.startTime,
       endTime: e.endTime,
-      eventType: e.eventType == 'LAB' ? EventType.LAB : EventType.REGULAR_CLASS,
+      eventType: e.eventType == 'LAB' ? EventType.lab : EventType.regularClass,
       status: e.status == 'PRESENT'
-          ? EventStatus.PRESENT
-          : (e.status == 'ABSENT' ? EventStatus.ABSENT : EventStatus.UNMARKED),
+          ? EventStatus.present
+          : (e.status == 'ABSENT' ? EventStatus.absent : EventStatus.unmarked),
       updatedAt: e.updatedAt,
     );
   }

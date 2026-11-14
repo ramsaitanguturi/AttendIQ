@@ -33,7 +33,7 @@ void main() {
       final record = AttendanceRecord(
         eventId: 10,
         subjectId: 5,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: DateTime.utc(2026, 10, 15),
         updatedAt: DateTime.utc(2026, 10, 15),
       );
@@ -79,7 +79,7 @@ void main() {
       final result = await repository.getAttendanceForSubject(5);
       expect(result.length, 1);
       expect(result.first.eventId, 101);
-      expect(result.first.status, AttendanceStatus.PRESENT);
+      expect(result.first.status, AttendanceStatus.present);
     });
 
     test('getAttendanceForEvent returns matching entity', () async {
@@ -99,14 +99,14 @@ void main() {
       final result = await repository.getAttendanceForEvent(200);
       expect(result, isNotNull);
       expect(result!.eventId, 200);
-      expect(result.status, AttendanceStatus.ABSENT);
+      expect(result.status, AttendanceStatus.absent);
     });
 
     test('deleteAttendanceRecord marks local isDeleted=true', () async {
       final record = AttendanceRecord(
         eventId: 300,
         subjectId: 5,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -128,7 +128,7 @@ void main() {
       final recordPresent = AttendanceRecord(
         eventId: 500,
         subjectId: 10,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -142,7 +142,7 @@ void main() {
       final recordAbsent = AttendanceRecord(
         eventId: 500,
         subjectId: 10,
-        status: AttendanceStatus.ABSENT,
+        status: AttendanceStatus.absent,
         markedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -164,7 +164,7 @@ void main() {
       final recordBackPresent = AttendanceRecord(
         eventId: 500,
         subjectId: 10,
-        status: AttendanceStatus.PRESENT,
+        status: AttendanceStatus.present,
         markedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );

@@ -77,6 +77,7 @@ class _MockHttpClientResponse extends Stream<List<int>>
 }
 
 class _MockHttpClient implements HttpClient {
+  @override
   Duration? connectionTimeout;
   bool wasClosedWithForce = false;
   Future<HttpClientRequest> Function(Uri url)? postUrlHandler;
@@ -102,7 +103,7 @@ class _MockHttpClient implements HttpClient {
 
 void main() {
   group('Group D: AI Assistant Reliability (BUG-015, BUG-016, NEW-BUG-08)', () {
-    final sampleContext = AttendanceAIContext(
+    const sampleContext = AttendanceAIContext(
       studentInfo: {'name': 'Student'},
       semester: {'name': 'Fall 2026'},
       attendanceSummary: {
@@ -204,7 +205,7 @@ void main() {
 
       mockClient.postUrlHandler = (url) async => mockRequest;
 
-      final secretKey = 'AIzaSyD-Secret-Key-Must-Not-Leak';
+      const secretKey = 'AIzaSyD-Secret-Key-Must-Not-Leak';
       final provider = GeminiAIProvider(
         apiKey: secretKey,
         clientOverride: mockClient,
@@ -278,8 +279,10 @@ void main() {
         question: 'Can I skip tomorrow?',
       );
 
-      expect(response.answer,
-          contains('No, you should not skip tomorrow\'s classes'));
+      expect(
+        response.answer,
+        contains('No, you should not skip tomorrow\'s classes'),
+      );
       expect(response.relatedSubjects, contains('Physics'));
       expect(response.confidence, 1.0);
     });

@@ -79,7 +79,7 @@ void main() {
         ..id = 1
         ..title = 'Mathematics starts at 09:00'
         ..body = 'Starts at 09:00 in Room 101'
-        ..type = NotificationType.CLASS_REMINDER.toShortString()
+        ..type = NotificationType.classReminder.toShortString()
         ..scheduledTime = DateTime(2026, 11, 14, 8, 45)
         ..relatedId = NotificationActionPayload(
           occurrenceId: 101,
@@ -94,7 +94,7 @@ void main() {
         ..id = 2
         ..title = 'Operating Systems starts at 10:15'
         ..body = 'Starts at 10:15 in Lab A'
-        ..type = NotificationType.CLASS_REMINDER.toShortString()
+        ..type = NotificationType.classReminder.toShortString()
         ..scheduledTime = DateTime(2026, 11, 14, 10, 0)
         ..relatedId = NotificationActionPayload(
           occurrenceId: 102,
@@ -109,7 +109,7 @@ void main() {
         ..id = 3
         ..title = 'Database Management Systems starts at 11:30'
         ..body = 'Starts at 11:30 in Hall C'
-        ..type = NotificationType.CLASS_REMINDER.toShortString()
+        ..type = NotificationType.classReminder.toShortString()
         ..scheduledTime = DateTime(2026, 11, 14, 11, 15)
         ..relatedId = NotificationActionPayload(
           occurrenceId: 103,

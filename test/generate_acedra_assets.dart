@@ -90,8 +90,10 @@ Future<void> _generateIcon({
   required bool withBackground,
 }) async {
   final recorder = ui.PictureRecorder();
-  final canvas = Canvas(recorder,
-      Rect.fromLTWH(0, 0, dimension.toDouble(), dimension.toDouble()));
+  final canvas = Canvas(
+    recorder,
+    Rect.fromLTWH(0, 0, dimension.toDouble(), dimension.toDouble()),
+  );
   final size = Size(dimension.toDouble(), dimension.toDouble());
 
   _paintAcedraMonogram(

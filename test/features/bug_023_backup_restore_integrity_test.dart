@@ -101,7 +101,7 @@ void main() {
 
     tearDown(() async {
       if (isar.isOpen) {
-        await isar.close();
+        isar.close();
       }
       if (tempDir.existsSync()) {
         try {
@@ -142,8 +142,10 @@ void main() {
       expect(exportedPref['autoBackupDay'], equals(3));
       expect(exportedPref['autoBackupHour'], equals(4));
       expect(exportedPref['lastBackupDate'], isNotNull);
-      expect(DateTime.parse(exportedPref['lastBackupDate'] as String).toUtc(),
-          equals(now));
+      expect(
+        DateTime.parse(exportedPref['lastBackupDate'] as String).toUtc(),
+        equals(now),
+      );
     });
 
     test(
@@ -268,7 +270,9 @@ void main() {
       expect(mergedPrefs.autoBackupDay, equals(1));
       expect(mergedPrefs.autoBackupHour, equals(6));
       expect(
-          mergedPrefs.lastBackupDate!.isAtSameMomentAs(existingDate), isTrue);
+        mergedPrefs.lastBackupDate!.isAtSameMomentAs(existingDate),
+        isTrue,
+      );
     });
 
     test(

@@ -50,7 +50,9 @@ class AcademicEventRepositoryImpl implements AcademicEventRepository {
 
   @override
   Future<List<AcademicEvent>> getEventsForRange(
-      DateTime startDate, DateTime endDate) async {
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
     final locals = await _localDataSource.getEventsForRange(startDate, endDate);
     return locals.map(_mapToDomain).toList();
   }
