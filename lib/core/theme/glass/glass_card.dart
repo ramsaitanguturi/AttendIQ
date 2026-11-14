@@ -46,6 +46,7 @@ class GlassCard extends ConsumerWidget {
         margin: margin,
         decoration: GlassTokens.glassBoxDecoration(
           borderRadius: borderRadius,
+          isDark: isDark,
           isElevated: isElevated,
           customBorderColor: borderColor,
         ),
@@ -71,14 +72,15 @@ class GlassCard extends ConsumerWidget {
         margin: margin,
         padding: padding,
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          color: isElevated
+              ? AppColors.elevated(isDark)
+              : AppColors.surface(isDark),
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: borderColor ??
-                (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            color: borderColor ?? AppColors.border(isDark),
             width: 1.0,
           ),
-          boxShadow: GlassTokens.cardShadows(isGlassy: false),
+          boxShadow: GlassTokens.cardShadows(isGlassy: false, isDark: isDark),
         ),
         child: child,
       );

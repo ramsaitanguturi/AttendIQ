@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../semester/presentation/widgets/add_edit_semester_dialog.dart';
 import '../../../semester/presentation/widgets/semester_management_sheet.dart';
@@ -18,9 +19,8 @@ class SettingsPage extends ConsumerWidget {
     final settingsAsync = ref.watch(settingsControllerProvider);
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF090D16)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -213,8 +213,8 @@ class SettingsPage extends ConsumerWidget {
                                 DropdownButton<String>(
                                   value: settings.lateAttendancePolicy,
                                   dropdownColor: isDark
-                                      ? const Color(0xFF1E1E26)
-                                      : Colors.white,
+                                      ? AppColors.darkSurface
+                                      : AppColors.lightSurface,
                                   underline: const SizedBox.shrink(),
                                   items: const [
                                     DropdownMenuItem(
@@ -249,7 +249,7 @@ class SettingsPage extends ConsumerWidget {
                                 min: 0.1,
                                 max: 0.9,
                                 divisions: 8,
-                                activeColor: const Color(0xFFFFB300),
+                                activeColor: AppColors.primary,
                                 inactiveColor: isDark
                                     ? AppColors.darkBorder
                                     : AppColors.lightBorder,
@@ -310,8 +310,8 @@ class SettingsPage extends ConsumerWidget {
                                       ? settings.classReminderOffset
                                       : 15,
                                   dropdownColor: isDark
-                                      ? const Color(0xFF1E1E26)
-                                      : Colors.white,
+                                      ? AppColors.darkSurface
+                                      : AppColors.lightSurface,
                                   underline: const SizedBox.shrink(),
                                   items: const [
                                     DropdownMenuItem(
@@ -574,17 +574,18 @@ class SettingsPage extends ConsumerWidget {
   }) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: isGlassy
-            ? const Color(0xB8141822)
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isGlassy
-              ? const Color(0x33E2E8F0)
-              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
+              borderRadius: 16.0,
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: child,
@@ -597,7 +598,9 @@ class SettingsPage extends ConsumerWidget {
       height: 1,
       thickness: 1,
       color: isGlassy
-          ? const Color(0x20E2E8F0)
+          ? (isDark
+              ? AppColors.silverBorderSubtle
+              : GlassTokens.lightGlassBorderSubtle)
           : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
     );
   }
@@ -612,11 +615,16 @@ class SettingsPage extends ConsumerWidget {
     return RadioListTile<String>(
       title: Text(
         title,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color:
+              isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+        ),
       ),
       value: value,
       groupValue: groupValue,
-      activeColor: AppColors.primary,
+      activeColor: isDark ? AppColors.primary : AppColors.gray900,
       onChanged: onChanged,
     );
   }
@@ -631,14 +639,22 @@ class SettingsPage extends ConsumerWidget {
     return SwitchListTile(
       title: Text(
         title,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color:
+              isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(fontSize: 12, color: Colors.grey),
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+        ),
       ),
       value: value,
-      activeColor: AppColors.primary,
+      activeColor: isDark ? AppColors.primary : AppColors.gray900,
       onChanged: onChanged,
     );
   }
@@ -668,25 +684,28 @@ class _SemesterManagementCard extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: isGlassy
-            ? const Color(0xB8141822)
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isGlassy
-              ? const Color(0x33E2E8F0)
-              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-        ),
-      ),
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
+              borderRadius: 16.0,
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Column(
           children: [
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.school_outlined,
-                color: AppColors.primary,
+                color: isDark
+                    ? AppColors.darkIconPrimary
+                    : AppColors.lightIconPrimary,
               ),
               title: Text(
                 active?.name ?? 'No Active Semester',
@@ -694,19 +713,27 @@ class _SemesterManagementCard extends ConsumerWidget {
               ),
               subtitle: Text(
                 subtitleText,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.lightTextMuted,
+                ),
               ),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (active != null ? AppColors.primary : Colors.amber)
-                      .withOpacity(0.14),
+                  color:
+                      (active != null ? AppColors.primary : AppColors.gray400)
+                          .withOpacity(0.14),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   active != null ? 'Active' : 'Inactive',
                   style: TextStyle(
-                    color: active != null ? AppColors.primary : Colors.amber,
+                    color: active != null
+                        ? (isDark ? AppColors.primary : AppColors.gray900)
+                        : AppColors.gray400,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -718,7 +745,9 @@ class _SemesterManagementCard extends ConsumerWidget {
               height: 1,
               thickness: 1,
               color: isGlassy
-                  ? const Color(0x20E2E8F0)
+                  ? (isDark
+                      ? AppColors.silverBorderSubtle
+                      : GlassTokens.lightGlassBorderSubtle)
                   : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
             ),
             Padding(
@@ -739,8 +768,10 @@ class _SemesterManagementCard extends ConsumerWidget {
                       key: const ValueKey<String>('new_semester_button'),
                       onPressed: () => AddEditSemesterDialog.show(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.black,
+                        backgroundColor:
+                            isDark ? AppColors.primary : AppColors.gray900,
+                        foregroundColor:
+                            isDark ? AppColors.onPrimary : AppColors.gray100,
                       ),
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text(

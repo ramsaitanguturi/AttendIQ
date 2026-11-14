@@ -70,7 +70,7 @@ class DayHeaderStrip extends StatelessWidget {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: AppColors.primaryGlow,
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           )
@@ -86,7 +86,7 @@ class DayHeaderStrip extends StatelessWidget {
                         fontSize: 11.0,
                         fontWeight: FontWeight.bold,
                         color: isSelected
-                            ? Colors.white
+                            ? AppColors.onPrimary
                             : (isDark
                                 ? AppColors.darkTextSecondary
                                 : AppColors.lightTextSecondary),
@@ -103,8 +103,10 @@ class DayHeaderStrip extends StatelessWidget {
                             fontSize: 15.0,
                             fontWeight: FontWeight.w800,
                             color: isSelected
-                                ? Colors.white
-                                : (isDark ? Colors.white : Colors.black87),
+                                ? AppColors.onPrimary
+                                : (isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary),
                           ),
                         ),
                         if (isTodayDate) ...[
@@ -114,7 +116,7 @@ class DayHeaderStrip extends StatelessWidget {
                             height: 6,
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? Colors.amberAccent
+                                  ? AppColors.onPrimary
                                   : AppColors.primary,
                               shape: BoxShape.circle,
                             ),

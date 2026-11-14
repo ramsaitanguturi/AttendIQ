@@ -79,7 +79,7 @@ class SemesterManagementSheet extends ConsumerWidget {
               onPressed: () => Navigator.of(dialogCtx).pop(true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                foregroundColor: AppColors.onPrimary,
               ),
               child: const Text('Archive'),
             ),
@@ -132,7 +132,7 @@ class SemesterManagementSheet extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey[700] : Colors.grey[300],
+                color: isDark ? AppColors.gray700 : AppColors.gray300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -150,7 +150,7 @@ class SemesterManagementSheet extends ConsumerWidget {
                 onPressed: () => AddEditSemesterDialog.show(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -250,10 +250,10 @@ class _SemesterTile extends StatelessWidget {
         badgeColor = AppColors.primary;
         break;
       case SemesterStatus.draft:
-        badgeColor = Colors.amber;
+        badgeColor = AppColors.gray400;
         break;
       case SemesterStatus.archived:
-        badgeColor = Colors.grey;
+        badgeColor = AppColors.gray600;
         break;
     }
 
@@ -328,7 +328,7 @@ class _SemesterTile extends StatelessWidget {
               'Semester end date has passed — consider archiving or starting a new semester.',
               style: TextStyle(
                 fontSize: 11,
-                color: Colors.amber,
+                color: AppColors.gray400,
                 fontWeight: FontWeight.w500,
               ),
             ),

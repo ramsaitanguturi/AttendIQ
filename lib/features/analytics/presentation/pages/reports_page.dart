@@ -26,9 +26,8 @@ class ReportsPage extends ConsumerWidget {
     final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -108,7 +107,7 @@ class ReportsPage extends ConsumerWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.black,
+                        foregroundColor: AppColors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -119,7 +118,7 @@ class ReportsPage extends ConsumerWidget {
                         'Regenerate Report',
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: AppColors.onPrimary,
                         ),
                       ),
                     ),
@@ -152,9 +151,12 @@ class ReportsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(20.0),
       decoration: isGlassy
           ? GlassTokens.glassBoxDecoration(
-              fillColor: const Color(0xD9141824),
-              borderColor: const Color(0x38E2E8F0),
+              fillColor: AppColors.surfaceGlass(isDark),
+              borderColor: isDark
+                  ? AppColors.silverBorder
+                  : GlassTokens.lightGlassBorder,
               borderRadius: BorderRadius.circular(20),
+              isDark: isDark,
             )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
@@ -235,7 +237,7 @@ class ReportsPage extends ConsumerWidget {
                 width: 1,
                 height: 50,
                 color: isGlassy
-                    ? const Color(0x38E2E8F0)
+                    ? AppColors.silverBorder
                     : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
               ),
               _buildMetric('Total', '${report.totalClasses}', isDark),
@@ -281,12 +283,14 @@ class ReportsPage extends ConsumerWidget {
             onPressed: () => _exportPdf(context, report),
             style: ElevatedButton.styleFrom(
               backgroundColor: isGlassy
-                  ? const Color(0xB8141822)
-                  : (isDark ? AppColors.darkSurface : Colors.white),
-              foregroundColor: AppColors.secondary,
+                  ? AppColors.surfaceGlass(isDark)
+                  : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+              foregroundColor: isDark ? AppColors.secondary : AppColors.gray900,
               side: BorderSide(
                 color: isGlassy
-                    ? const Color(0x38E2E8F0)
+                    ? (isDark
+                        ? AppColors.silverBorder
+                        : GlassTokens.lightGlassBorder)
                     : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -299,7 +303,7 @@ class ReportsPage extends ConsumerWidget {
               'Export PDF',
               style: AppTextStyles.bodyMedium.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.secondary,
+                color: isDark ? AppColors.secondary : AppColors.gray900,
               ),
             ),
           ),
@@ -310,12 +314,14 @@ class ReportsPage extends ConsumerWidget {
             onPressed: () => _exportCsv(context, report),
             style: ElevatedButton.styleFrom(
               backgroundColor: isGlassy
-                  ? const Color(0xB8141822)
-                  : (isDark ? AppColors.darkSurface : Colors.white),
-              foregroundColor: AppColors.secondary,
+                  ? AppColors.surfaceGlass(isDark)
+                  : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+              foregroundColor: isDark ? AppColors.secondary : AppColors.gray900,
               side: BorderSide(
                 color: isGlassy
-                    ? const Color(0x38E2E8F0)
+                    ? (isDark
+                        ? AppColors.silverBorder
+                        : GlassTokens.lightGlassBorder)
                     : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -328,7 +334,7 @@ class ReportsPage extends ConsumerWidget {
               'Export CSV',
               style: AppTextStyles.bodyMedium.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.secondary,
+                color: isDark ? AppColors.secondary : AppColors.gray900,
               ),
             ),
           ),
@@ -345,9 +351,12 @@ class ReportsPage extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         decoration: isGlassy
             ? GlassTokens.glassBoxDecoration(
-                fillColor: const Color(0xD9141824),
-                borderColor: const Color(0x38E2E8F0),
+                fillColor: AppColors.surfaceGlass(isDark),
+                borderColor: isDark
+                    ? AppColors.silverBorder
+                    : GlassTokens.lightGlassBorder,
                 borderRadius: BorderRadius.circular(16),
+                isDark: isDark,
               )
             : BoxDecoration(
                 color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
@@ -372,7 +381,7 @@ class ReportsPage extends ConsumerWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final sub = reports[index];
-        Color statusColor = AppColors.primary;
+        Color statusColor = isDark ? AppColors.primary : AppColors.gray900;
         if (sub.riskStatus == RiskStatus.CRITICAL) {
           statusColor = AppColors.attendanceLow;
         } else if (sub.riskStatus == RiskStatus.WARNING) {
@@ -383,9 +392,12 @@ class ReportsPage extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           decoration: isGlassy
               ? GlassTokens.glassBoxDecoration(
-                  fillColor: const Color(0xD9141824),
-                  borderColor: const Color(0x38E2E8F0),
+                  fillColor: AppColors.surfaceGlass(isDark),
+                  borderColor: isDark
+                      ? AppColors.silverBorder
+                      : GlassTokens.lightGlassBorder,
                   borderRadius: BorderRadius.circular(16),
+                  isDark: isDark,
                 )
               : BoxDecoration(
                   color:

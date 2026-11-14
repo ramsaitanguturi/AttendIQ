@@ -9,6 +9,7 @@ import '../../../../core/analytics/models/risk_status.dart';
 import '../controllers/analytics_controller.dart';
 import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../../../core/widgets/acedra_floating_bottom_bar.dart';
 
 class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
@@ -27,9 +28,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -59,8 +59,12 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 20.0, right: 20.0, top: 12.0, bottom: 120.0),
+              padding: EdgeInsets.only(
+                left: 20.0,
+                right: 20.0,
+                top: 12.0,
+                bottom: AcedraFloatingBottomBar.contentBottomPadding(context),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -100,7 +104,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
         error: (err, _) => Center(
           child: Text(
             'Error loading analytics data: $err',
-            style: const TextStyle(color: Colors.red),
+            style: const TextStyle(color: AppColors.gray400),
           ),
         ),
       ),
@@ -109,7 +113,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
 
   Widget _buildOverallHeroCard(
       AttendanceAnalytics analytics, bool isDark, bool isGlassy) {
-    Color riskColor = AppColors.primary;
+    Color riskColor = isDark ? AppColors.primary : AppColors.gray900;
     String riskTitle = 'Safe';
     if (analytics.riskLevel == RiskStatus.CRITICAL) {
       riskColor = AppColors.attendanceLow;
@@ -123,7 +127,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          ? GlassTokens.glassBoxDecoration(
+              borderRadius: 24.0,
+              isDark: isDark,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(24.0),
@@ -234,25 +241,16 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       decoration: isGlassy
-          ? BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xD91E283D), Color(0xB8121622)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20.0),
-              border: Border.all(color: const Color(0x38E2E8F0)),
-              boxShadow: GlassTokens.cardShadows(isGlassy: true),
+          ? GlassTokens.glassBoxDecoration(
+              borderRadius: 20.0,
+              isDark: isDark,
             )
           : BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF1E3C72), const Color(0xFF2A5298)]
-                    : [const Color(0xFFE0EAFC), const Color(0xFFCFDEF3)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(20.0),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
             ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -261,7 +259,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             children: [
               Icon(
                 Icons.local_fire_department,
-                color: isDark ? Colors.orange : Colors.deepOrange,
+                color: isDark ? AppColors.gray100 : AppColors.gray900,
                 size: 32,
               ),
               const SizedBox(width: 12),
@@ -273,14 +271,18 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                     style: TextStyle(
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black87,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                     ),
                   ),
                   Text(
                     'Current Streak',
                     style: TextStyle(
                       fontSize: 12.0,
-                      color: isDark ? Colors.white70 : Colors.black54,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                     ),
                   ),
                 ],
@@ -290,13 +292,13 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           Container(
             width: 1,
             height: 40,
-            color: isDark ? Colors.white24 : Colors.black12,
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           ),
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.emoji_events,
-                color: isDark ? Colors.amber : Colors.amber[700],
+                color: AppColors.gray300,
                 size: 32,
               ),
               const SizedBox(width: 12),
@@ -308,14 +310,18 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                     style: TextStyle(
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black87,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                     ),
                   ),
                   Text(
                     'Longest Streak',
                     style: TextStyle(
                       fontSize: 12.0,
-                      color: isDark ? Colors.white70 : Colors.black54,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                     ),
                   ),
                 ],
@@ -342,7 +348,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          ? GlassTokens.glassBoxDecoration(
+              borderRadius: 24.0,
+              isDark: isDark,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(24.0),
@@ -365,7 +374,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkBackground : Colors.grey[200],
+                  color: isDark
+                      ? AppColors.darkBackground
+                      : AppColors.lightSecondaryBackground,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 padding: const EdgeInsets.all(2),
@@ -457,7 +468,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                           }),
                           isCurved: points.length > 1,
                           gradient: const LinearGradient(
-                            colors: [AppColors.primary, Color(0xFF00BFFF)],
+                            colors: [AppColors.gray100, AppColors.gray400],
                           ),
                           barWidth: 3,
                           isStrokeCapRound: true,
@@ -466,17 +477,17 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                             getDotPainter: (spot, percent, barData, index) =>
                                 FlDotCirclePainter(
                               radius: 3,
-                              color: AppColors.primary,
+                              color: AppColors.gray100,
                               strokeWidth: 1.5,
-                              strokeColor: Colors.white,
+                              strokeColor: AppColors.gray800,
                             ),
                           ),
                           belowBarData: BarAreaData(
                             show: true,
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.primary.withOpacity(0.2),
-                                const Color(0xFF00BFFF).withOpacity(0.0),
+                                AppColors.gray100.withOpacity(0.2),
+                                AppColors.gray400.withOpacity(0.0),
                               ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
@@ -504,7 +515,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.darkSurface : Colors.white)
+              ? (isDark ? AppColors.darkSurface : AppColors.lightSurface)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
@@ -512,7 +523,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           label,
           style: TextStyle(
             color: isSelected
-                ? AppColors.primary
+                ? (isDark ? AppColors.primary : AppColors.gray900)
                 : (isDark
                     ? AppColors.darkTextSecondary
                     : AppColors.lightTextSecondary),
@@ -537,7 +548,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          ? GlassTokens.glassBoxDecoration(
+              borderRadius: 24.0,
+              isDark: isDark,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(24.0),
@@ -566,15 +580,18 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                       maxY: 100,
                       barTouchData: BarTouchData(
                         touchTooltipData: BarTouchTooltipData(
-                          getTooltipColor: (_) =>
-                              isDark ? AppColors.darkSurface : Colors.white,
+                          getTooltipColor: (_) => isDark
+                              ? AppColors.darkSurface
+                              : AppColors.lightSurface,
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
                             final subjectName =
                                 statsList[group.x.toInt()].subject.name;
                             return BarTooltipItem(
                               '$subjectName\n${rod.toY.toStringAsFixed(1)}%',
                               TextStyle(
-                                color: isDark ? Colors.white : Colors.black87,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                             );
@@ -679,7 +696,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 24.0)
+          ? GlassTokens.glassBoxDecoration(
+              borderRadius: 24.0,
+              isDark: isDark,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(24.0),
@@ -718,7 +738,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             'Most Attended Subject',
             comparison.mostAttendedSubject?.subjectName ?? 'N/A',
             '${comparison.mostAttendedSubject?.present ?? 0} classes',
-            Colors.blue,
+            AppColors.gray200,
             isDark,
           ),
           const Divider(height: 24),
@@ -726,7 +746,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             'Most Missed Subject',
             comparison.mostMissedSubject?.subjectName ?? 'N/A',
             '${comparison.mostMissedSubject?.absent ?? 0} classes',
-            Colors.orange,
+            AppColors.gray500,
             isDark,
           ),
         ],
@@ -807,7 +827,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             padding:
                 const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
             decoration: isGlassy
-                ? GlassTokens.glassBoxDecoration(borderRadius: 16.0)
+                ? GlassTokens.glassBoxDecoration(
+                    borderRadius: 16.0,
+                    isDark: isDark,
+                  )
                 : BoxDecoration(
                     color:
                         isDark ? AppColors.darkSurface : AppColors.lightSurface,
@@ -817,11 +840,12 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                           isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
                   ),
-            child: const Center(
+            child: Center(
               child: Text(
                 '🎉 All subjects are in the safe zone!',
                 style: TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.bold),
+                    color: isDark ? AppColors.primary : AppColors.gray900,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           )
@@ -845,7 +869,10 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               return Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: isGlassy
-                    ? GlassTokens.glassBoxDecoration(borderRadius: 16.0)
+                    ? GlassTokens.glassBoxDecoration(
+                        borderRadius: 16.0,
+                        isDark: isDark,
+                      )
                     : BoxDecoration(
                         color: isDark
                             ? AppColors.darkSurface
@@ -928,11 +955,6 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   }
 
   Color _parseColor(String colorHex) {
-    try {
-      final hex = colorHex.replaceAll('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return AppColors.primary;
-    }
+    return AppColors.parseMonochromeHex(colorHex);
   }
 }

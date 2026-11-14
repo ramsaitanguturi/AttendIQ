@@ -27,7 +27,7 @@ class SettingsController extends _$SettingsController {
 
     const defaultPrefs = UserPreferences(
       id: 'local_user',
-      themeMode: 'system',
+      themeMode: 'dark',
       defaultAttendanceTarget: 75.0,
       classReminderOffset: 5,
       enableNotifications: true,
@@ -321,11 +321,12 @@ ThemeMode appThemeMode(AppThemeModeRef ref) {
         case 'dark':
           return ThemeMode.dark;
         case 'system':
-        default:
           return ThemeMode.system;
+        default:
+          return ThemeMode.dark;
       }
     },
-    loading: () => ThemeMode.system,
-    error: (_, __) => ThemeMode.system,
+    loading: () => ThemeMode.dark,
+    error: (_, __) => ThemeMode.dark,
   );
 }

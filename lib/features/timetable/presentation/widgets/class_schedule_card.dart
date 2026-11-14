@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/glass/glass_theme_tokens.dart';
 import '../controllers/weekly_schedule_view_controller.dart';
 
 class ClassScheduleCard extends StatelessWidget {
@@ -15,247 +16,264 @@ class ClassScheduleCard extends StatelessWidget {
   });
 
   Color _parseColor(String hex) {
-    try {
-      var h = hex.replaceAll('#', '');
-      if (h.length == 6) {
-        h = 'FF$h';
-      }
-      return Color(int.parse(h, radix: 16));
-    } catch (_) {
-      return AppColors.primary;
-    }
+    return AppColors.parseMonochromeHex(hex, AppColors.gray300);
   }
 
   Color _adaptiveTextColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
-        ? Colors.grey.shade300
-        : Colors.grey.shade800;
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = _parseColor(slot.colorHex);
     final isExam = slot.type == ScheduleSlotType.exam;
     final isEvent = slot.type == ScheduleSlotType.event;
     final textColor = _adaptiveTextColor(context);
 
     final borderColor = isExam
-        ? Colors.redAccent.withOpacity(0.5)
+        ? AppColors.gray600
         : (isEvent
-            ? Colors.blueAccent.withOpacity(0.5)
+            ? AppColors.gray500
             : (isGlassy
-                ? const Color(0x38E2E8F0)
-                : cardColor.withOpacity(0.3)));
+                ? (isDark
+                    ? GlassTokens.silverBorder
+                    : GlassTokens.lightGlassBorder)
+                : (isDark ? AppColors.darkBorder : AppColors.lightBorder)));
 
-    final cardBgColor =
-        isGlassy ? const Color(0xD9141824) : cardColor.withOpacity(0.12);
+    final cardBgColor = isGlassy
+        ? (isDark
+            ? GlassTokens.smokedGlassSurface
+            : GlassTokens.lightGlassSurface)
+        : (isDark ? AppColors.darkSurface : AppColors.lightSurface);
 
-    return Card(
-      elevation: isGlassy ? 4 : 2,
-      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14.0),
-        side: BorderSide(
-          color: borderColor,
-          width: 1.2,
-        ),
-      ),
-      color: cardBgColor,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14.0),
-        child: Container(
-          padding: const EdgeInsets.all(12.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14.0),
-            border: Border(
-              left: BorderSide(
-                color: isExam
-                    ? Colors.red
-                    : (isEvent ? Colors.blueAccent : cardColor),
-                width: 5.0,
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxHeight < 85.0;
+
+        return Card(
+          elevation: isGlassy ? 4 : 0,
+          margin: EdgeInsets.symmetric(
+            vertical: isCompact ? 2.0 : 4.0,
+            horizontal: 2.0,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(isCompact ? 10.0 : 14.0),
+            side: BorderSide(
+              color: borderColor,
+              width: 1.1,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Title & Badges Row
-              Row(
+          color: cardBgColor,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(isCompact ? 10.0 : 14.0),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 10.0,
+                vertical: isCompact ? 4.0 : 10.0,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(isCompact ? 10.0 : 14.0),
+                border: Border(
+                  left: BorderSide(
+                    color: isExam
+                        ? AppColors.gray600
+                        : (isEvent ? AppColors.gray500 : cardColor),
+                    width: 4.0,
+                  ),
+                ),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          slot.title,
-                          style: TextStyle(
-                            fontSize: 15.0,
-                            fontWeight: FontWeight.bold,
-                            color: cardColor.computeLuminance() > 0.6
-                                ? Colors.black87
-                                : cardColor,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  // Title & Badges Row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                slot.title,
+                                style: TextStyle(
+                                  fontSize: isCompact ? 13.0 : 15.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.lightTextPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (slot.code.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Text(
+                                slot.code,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                        if (slot.code.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            slot.code,
+                      ),
+
+                      // Exam / Event / Status Pills
+                      if (isExam)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.gray700,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.gray600),
+                          ),
+                          child: const Text(
+                            'EXAM',
                             style: TextStyle(
-                              fontSize: 11.0,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.gray100,
+                            ),
+                          ),
+                        )
+                      else if (isEvent)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.gray700,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.gray500),
+                          ),
+                          child: Text(
+                            slot.code.isNotEmpty ? slot.code : 'EVENT',
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.gray200,
+                            ),
+                          ),
+                        )
+                      else if (slot.status != 'UNMARKED')
+                        Builder(
+                          builder: (context) {
+                            final st = slot.status.toUpperCase();
+                            Color pillColor;
+                            Color pillBg;
+
+                            if (st == 'PRESENT' || st == 'EXTRA_PRESENT') {
+                              pillColor = AppColors.attendanceHigh;
+                              pillBg = AppColors.gray700.withOpacity(0.5);
+                            } else if (st == 'CANCELLED' ||
+                                st == 'CANCELLED_CLASS') {
+                              pillColor = AppColors.statusCancelled;
+                              pillBg = AppColors.gray800;
+                            } else if (st == 'LATE') {
+                              pillColor = AppColors.attendanceMid;
+                              pillBg = AppColors.gray700.withOpacity(0.4);
+                            } else {
+                              // ABSENT / EXTRA_ABSENT
+                              pillColor = AppColors.attendanceLow;
+                              pillBg = AppColors.gray800;
+                            }
+
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: pillBg,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: pillColor),
+                              ),
+                              child: Text(
+                                slot.status,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: pillColor,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: isCompact ? 3.0 : 6.0),
+
+                  // Time, Room & Faculty Row
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 2.0,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.access_time_rounded,
+                              size: isCompact ? 11.0 : 13.0, color: cardColor),
+                          const SizedBox(width: 3.0),
+                          Text(
+                            '${slot.startTime} - ${slot.endTime}',
+                            style: TextStyle(
+                              fontSize: isCompact ? 11.0 : 12.0,
                               fontWeight: FontWeight.w600,
-                              color: cardColor.withOpacity(0.9),
+                              color: textColor,
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-
-                  // Exam / Event / Status Pills
-                  if (isExam)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'EXAM',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    )
-                  else if (isEvent)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        slot.code.isNotEmpty ? slot.code : 'EVENT',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    )
-                  else if (slot.status != 'UNMARKED')
-                    Builder(
-                      builder: (context) {
-                        final st = slot.status.toUpperCase();
-                        Color pillColor;
-                        Color pillBg;
-
-                        if (st == 'PRESENT' || st == 'EXTRA_PRESENT') {
-                          pillColor = AppColors.attendanceHigh;
-                          pillBg = AppColors.attendanceHigh.withOpacity(0.18);
-                        } else if (st == 'CANCELLED' ||
-                            st == 'CANCELLED_CLASS') {
-                          pillColor = AppColors.statusCancelled;
-                          pillBg = AppColors.statusCancelled.withOpacity(0.18);
-                        } else if (st == 'LATE') {
-                          pillColor = AppColors.attendanceMid;
-                          pillBg = AppColors.attendanceMid.withOpacity(0.18);
-                        } else {
-                          // ABSENT / EXTRA_ABSENT
-                          pillColor = AppColors.attendanceLow;
-                          pillBg = AppColors.attendanceLow.withOpacity(0.18);
-                        }
-
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: pillBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: pillColor),
-                          ),
-                          child: Text(
-                            slot.status,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: pillColor,
+                      if (slot.room != null && slot.room!.isNotEmpty)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.meeting_room_outlined,
+                                size: isCompact ? 11.0 : 13.0,
+                                color: cardColor),
+                            const SizedBox(width: 3.0),
+                            Text(
+                              slot.room!,
+                              style: TextStyle(
+                                fontSize: isCompact ? 10.5 : 12.0,
+                                color: textColor,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8.0),
-
-              // Time, Room & Faculty Row
-              Wrap(
-                spacing: 12.0,
-                runSpacing: 4.0,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.access_time_rounded,
-                          size: 13.0, color: cardColor),
-                      const SizedBox(width: 4.0),
-                      Text(
-                        '${slot.startTime} - ${slot.endTime}',
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
+                          ],
                         ),
-                      ),
+                      if (!isCompact &&
+                          slot.faculty != null &&
+                          slot.faculty!.isNotEmpty)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.person_outline,
+                                size: 13.0, color: cardColor),
+                            const SizedBox(width: 3.0),
+                            Text(
+                              slot.faculty!,
+                              style: TextStyle(
+                                fontSize: 12.0,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
-                  if (slot.room != null && slot.room!.isNotEmpty)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.meeting_room_outlined,
-                            size: 13.0, color: cardColor),
-                        const SizedBox(width: 4.0),
-                        Text(
-                          slot.room!,
-                          style: TextStyle(
-                            fontSize: 12.0,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (slot.faculty != null && slot.faculty!.isNotEmpty)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.person_outline,
-                            size: 13.0, color: cardColor),
-                        const SizedBox(width: 4.0),
-                        Text(
-                          slot.faculty!,
-                          style: TextStyle(
-                            fontSize: 12.0,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
-                    ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

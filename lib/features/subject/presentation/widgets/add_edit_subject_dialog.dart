@@ -50,6 +50,7 @@ class AddEditSubjectDialog extends ConsumerStatefulWidget {
       {Subject? existingSubject}) async {
     return showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Padding(
@@ -77,21 +78,10 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
   final List<_ScheduleSlotInput> _slots = [];
 
   SubjectType _selectedType = SubjectType.THEORY;
-  String _selectedColor = '#4ECDC4';
+  String _selectedColor = AppColors.paletteHex[2];
   bool _isLoading = false;
 
-  static const List<String> _colorPalette = [
-    '#4ECDC4', // Teal / Turquoise
-    '#FF6B6B', // Coral Red
-    '#45B7D1', // Sky Blue
-    '#FFE66D', // Warm Yellow
-    '#9B59B6', // Purple
-    '#3498DB', // Royal Blue
-    '#00E676', // Bright Green
-    '#FF9800', // Amber
-    '#EC407A', // Pink
-    '#78909C', // Blue Grey
-  ];
+  static const List<String> _colorPalette = AppColors.paletteHex;
 
   int _timeToMinutes(String time) {
     final parts = time.split(':');
@@ -200,13 +190,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
   }
 
   Color _parseHex(String hex) {
-    try {
-      var h = hex.replaceAll('#', '');
-      if (h.length == 6) h = 'FF$h';
-      return Color(int.parse(h, radix: 16));
-    } catch (_) {
-      return AppColors.primary;
-    }
+    return AppColors.parseMonochromeHex(hex);
   }
 
   Future<void> _selectTime(TextEditingController controller) async {
@@ -446,7 +430,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                   ? 'Subject and timetable updated successfully'
                   : 'Subject and timetable created successfully',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.darkSurface,
           ),
         );
       }
@@ -472,11 +456,11 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
     return Container(
       decoration: isGlassy
           ? BoxDecoration(
-              color: const Color(0xF010141D),
+              color: AppColors.darkSurfaceGlass,
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(28.0)),
               border: Border.all(
-                color: const Color(0x3DE2E8F0),
+                color: AppColors.silverBorder,
               ),
               boxShadow: [
                 BoxShadow(
@@ -650,17 +634,17 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                     padding: const EdgeInsets.all(14.0),
                     decoration: BoxDecoration(
                       color: isGlassy
-                          ? const Color(0xB8141822)
+                          ? AppColors.darkSurfaceGlass
                           : (isDark
                               ? AppColors.darkBackground
-                              : Colors.grey.shade100),
+                              : AppColors.lightSurface),
                       borderRadius: BorderRadius.circular(16.0),
                       border: Border.all(
                         color: isGlassy
-                            ? const Color(0x38E2E8F0)
+                            ? AppColors.silverBorder
                             : (isDark
                                 ? AppColors.darkBorder
-                                : Colors.grey.shade300),
+                                : AppColors.lightBorder),
                       ),
                     ),
                     child: Column(
@@ -831,7 +815,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                         color: c,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? Colors.white : Colors.transparent,
+                          color: isSelected
+                              ? AppColors.gray100
+                              : Colors.transparent,
                           width: 3,
                         ),
                         boxShadow: isSelected
@@ -845,8 +831,13 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                             : null,
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 20)
+                          ? Icon(
+                              Icons.check,
+                              color: c.computeLuminance() > 0.5
+                                  ? AppColors.gray900
+                                  : AppColors.gray100,
+                              size: 20,
+                            )
                           : null,
                     ),
                   );
@@ -857,7 +848,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                 onPressed: _isLoading ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -868,7 +859,7 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2.5, color: Colors.black),
+                            strokeWidth: 2.5, color: AppColors.onPrimary),
                       )
                     : Text(
                         isEdit ? 'Save Subject' : 'Save Subject',
@@ -876,7 +867,9 @@ class _AddEditSubjectDialogState extends ConsumerState<AddEditSubjectDialog> {
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
               ),
-              const SizedBox(height: 12.0),
+              SizedBox(
+                height: MediaQuery.of(context).padding.bottom + 24.0,
+              ),
             ],
           ),
         ),

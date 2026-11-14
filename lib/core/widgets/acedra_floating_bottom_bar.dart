@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../theme/colors.dart';
 import '../../features/settings/presentation/controllers/settings_controller.dart';
 
 /// Navigation item model for ACEDRA's 4 core destinations.
@@ -54,12 +55,48 @@ class AcedraFloatingBottomBar extends ConsumerStatefulWidget {
     ),
   ];
 
+  // Track & Bubble Dimensions
+  static const double kTrackHeight = 64.0;
+  static const double kBubbleHeight = 78.0;
+  static const double kBubbleRadius = 32.0;
+
+  /// Total height occupied by the floating bar from the bottom of the screen,
+  /// including the raised bubble and bottom margin with system navigation inset.
+  static double totalBarHeight(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomMargin = bottomPadding > 0 ? bottomPadding + 6.0 : 16.0;
+    return kBubbleHeight + bottomMargin;
+  }
+
+  /// Recommended bottom padding for scrollable page content so that the last
+  /// card, list item, or footer can scroll completely and comfortably above
+  /// the floating navigation bar and its raised bubble / drop shadows.
+  static double contentBottomPadding(BuildContext context,
+      {double additionalClearance = 24.0}) {
+    return totalBarHeight(context) + additionalClearance;
+  }
+
+  /// Recommended bottom padding to wrap a FloatingActionButton so it floats
+  /// comfortably above the floating navigation bar and its raised bubble without colliding.
+  static double fabBottomPadding(BuildContext context,
+      {double clearance = 24.0}) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final barBottomMargin = bottomPadding > 0 ? bottomPadding + 6.0 : 16.0;
+    // Scaffold default endFloat places the FAB at (bottomPadding + 16.0).
+    // To position the FAB at: (barBottomMargin + kBubbleHeight + clearance),
+    // the extra bottom padding inside the FAB widget is:
+    final targetOffset =
+        (barBottomMargin + kBubbleHeight + clearance) - (bottomPadding + 16.0);
+    return math.max(88.0, targetOffset);
+  }
+
   @override
   ConsumerState<AcedraFloatingBottomBar> createState() =>
       _AcedraFloatingBottomBarState();
 }
 
-class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBar>
+class _AcedraFloatingBottomBarState
+    extends ConsumerState<AcedraFloatingBottomBar>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late Animation<double> _slideAnimation;
@@ -68,9 +105,9 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
   int _toIndex = 0;
 
   // Track & Bubble Dimensions
-  static const double kTrackHeight = 64.0;
-  static const double kBubbleHeight = 78.0;
-  static const double kBubbleRadius = 32.0;
+  static const double kTrackHeight = AcedraFloatingBottomBar.kTrackHeight;
+  static const double kBubbleHeight = AcedraFloatingBottomBar.kBubbleHeight;
+  static const double kBubbleRadius = AcedraFloatingBottomBar.kBubbleRadius;
 
   @override
   void initState() {
@@ -170,7 +207,8 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
                     ? (velocity * travelDistance * 0.04).clamp(0.0, 0.09)
                     : 0.0;
                 final dynamicBubbleWidth = bubbleWidth * (1.0 + stretchFactor);
-                final dynamicBubbleHeight = kBubbleHeight * (1.0 - (stretchFactor * 0.4));
+                final dynamicBubbleHeight =
+                    kBubbleHeight * (1.0 - (stretchFactor * 0.4));
 
                 // Center the bubble horizontally over the animated slot
                 final centerOffset = (currentAnimatedIndex + 0.5) * slotWidth;
@@ -222,7 +260,8 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
                               activeFraction = 0.0;
                             }
                           } else {
-                            activeFraction = index == widget.currentIndex ? 1.0 : 0.0;
+                            activeFraction =
+                                index == widget.currentIndex ? 1.0 : 0.0;
                           }
 
                           return Expanded(
@@ -247,34 +286,58 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
     );
   }
 
-  /// The dark smoked-glass container pill track.
+  /// The dark/light smoked-glass container pill track.
   Widget _buildSmokedGlassTrack(bool isDark, bool isGlassy) {
     const trackRadius = kTrackHeight / 2.0;
 
-    // Pitch-black smoked obsidian glass appearance matching the reference video
-    final Color trackBgColor = isGlassy
-        ? const Color(0xD808090D) // Translucent deep obsidian
-        : const Color(0xF8090A0D); // Pure pitch obsidian smoked glass
+    // Background color matching the monochromatic palette in dark or light mode
+    final Color trackBgColor = isDark
+        ? (isGlassy
+            ? const Color(0xD8212529) // Translucent deep #212529
+            : const Color(0xF8212529)) // Solid pitch #212529 smoked glass
+        : (isGlassy
+            ? const Color(0xEAFAFAFA) // Translucent crisp light #fafafa
+            : const Color(0xFFFFFFFF)); // Crisp solid near-white
+
+    final Color borderColor = isDark
+        ? const Color(0x38DEE2E6) // Crisp translucent silver edge (#dee2e6)
+        : const Color(0x60CED4DA); // Crisp translucent light edge (#ced4da)
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(trackRadius),
-        boxShadow: [
-          // Deep ambient occlusion shadow beneath the pill
-          BoxShadow(
-            color: Colors.black.withOpacity(0.60),
-            blurRadius: 30.0,
-            spreadRadius: -2.0,
-            offset: const Offset(0, 12),
-          ),
-          // Soft ambient contact shadow
-          BoxShadow(
-            color: Colors.black.withOpacity(0.35),
-            blurRadius: 10.0,
-            spreadRadius: 0.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: isDark
+            ? [
+                // Deep ambient occlusion shadow beneath the pill
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.60),
+                  blurRadius: 30.0,
+                  spreadRadius: -2.0,
+                  offset: const Offset(0, 12),
+                ),
+                // Soft ambient contact shadow
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.35),
+                  blurRadius: 10.0,
+                  spreadRadius: 0.0,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : [
+                // Light mode subtle elevation drop shadow
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 24.0,
+                  spreadRadius: -2.0,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8.0,
+                  spreadRadius: 0.0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(trackRadius),
@@ -285,7 +348,7 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
               color: trackBgColor,
               borderRadius: BorderRadius.circular(trackRadius),
               border: Border.all(
-                color: const Color(0x2EFFFFFF), // Crisp translucent silver edge
+                color: borderColor,
                 width: 1.0,
               ),
             ),
@@ -304,23 +367,34 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
   ) {
     return Container(
       decoration: BoxDecoration(
+        color: isDark ? null : const Color(0xE8212529),
         borderRadius: BorderRadius.circular(kBubbleRadius),
-        boxShadow: [
-          // Deep ambient drop shadow casting onto track & background
-          BoxShadow(
-            color: Colors.black.withOpacity(0.65),
-            blurRadius: 20.0,
-            spreadRadius: 1.0,
-            offset: const Offset(0, 6),
-          ),
-          // Tight contact shadow for elevated 3D tactile depth
-          BoxShadow(
-            color: Colors.black.withOpacity(0.40),
-            blurRadius: 6.0,
-            spreadRadius: 0.0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDark
+            ? [
+                // Deep ambient drop shadow casting onto track & background
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.65),
+                  blurRadius: 20.0,
+                  spreadRadius: 1.0,
+                  offset: const Offset(0, 6),
+                ),
+                // Tight contact shadow for elevated 3D tactile depth
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.40),
+                  blurRadius: 6.0,
+                  spreadRadius: 0.0,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : [
+                // Light mode distinct shadow under the obsidian selection bubble
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.22),
+                  blurRadius: 16.0,
+                  spreadRadius: 0.0,
+                  offset: const Offset(0, 5),
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(kBubbleRadius),
@@ -347,18 +421,21 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
     required bool isDark,
     required bool isGlassy,
   }) {
+    // Unselected color adapts to dark vs light track
+    final unselectedColor = isDark
+        ? const Color(0x80DEE2E6) // Muted silver for dark mode
+        : const Color(0xB0495057); // Charcoal for light mode
+
     // Colors dynamically lerped based on selection state
     final iconColor = Color.lerp(
-      const Color(0x60FFFFFF), // Muted translucent silver-grey for unselected
-      Colors.white, // Glowing pure white when selected
+      unselectedColor,
+      AppColors.gray100, // Glowing pure silver-white inside the raised bubble
       activeFraction,
     )!;
 
     // When inactive, shift down (+6.5dp) to center icon alone vertically in track
     // When active, shift up (-5.5dp) to center icon+label combo in raised bubble
-    final verticalShift = activeFraction > 0.0
-        ? -5.5 * activeFraction
-        : 6.5;
+    final verticalShift = activeFraction > 0.0 ? -5.5 * activeFraction : 6.5;
 
     return Semantics(
       label: item.label,
@@ -381,8 +458,9 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.white.withOpacity(0.60 * activeFraction),
-                              blurRadius: 12.0 * activeFraction,
+                              color: AppColors.gray100
+                                  .withOpacity(0.50 * activeFraction),
+                              blurRadius: 10.0 * activeFraction,
                               spreadRadius: 1.0 * activeFraction,
                             ),
                           ],
@@ -409,7 +487,7 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.gray100,
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
@@ -431,7 +509,7 @@ class _AcedraFloatingBottomBarState extends ConsumerState<AcedraFloatingBottomBa
 /// Custom painter replicating the realistic optical glass reflections from the video:
 /// - Horizontal silver specular highlight cap along the upper crest
 /// - Horizontal silver specular highlight rim along the lower edge
-/// - Chromatic edge refractions (cool celestial cyan/blue dispersion at meniscus curves)
+/// - Neutral silver-white meniscus corner reflections
 /// - Polished silver gradient perimeter rim
 class GlassBubblePainter extends CustomPainter {
   final double borderRadius;
@@ -485,8 +563,9 @@ class GlassBubblePainter extends CustomPainter {
         Offset(size.width / 2, 0),
         Offset(size.width / 2, topHighlightHeight),
         const [
-          Color(0xF5FFFFFF), // Brilliant silver-white crest
-          Color(0x80FFFFFF), // Mid sheen
+          Color(
+              0xC0FFFFFF), // Softened silver-white crest (refined from harsh glare)
+          Color(0x55FFFFFF), // Soft mid sheen
           Color(0x00FFFFFF), // Tapers smoothly into dark glass
         ],
         const [0.0, 0.45, 1.0],
@@ -507,28 +586,28 @@ class GlassBubblePainter extends CustomPainter {
 
     canvas.drawPath(topCrescentPath, topHighlightPaint);
 
-    // Chromatic dispersion (cool celestial cyan/blue edge reflections at top corners)
-    final leftChromatic = Paint()
+    // Neutral silver-white optical reflections at top meniscus corners
+    final leftCornerSheen = Paint()
       ..shader = ui.Gradient.radial(
         Offset(size.width * 0.12, 3),
         size.width * 0.28,
         const [
-          Color(0x80629FFF), // Soft cyan/blue refraction
-          Color(0x00629FFF),
+          Color(0x45FFFFFF), // Subtle neutral silver sheen
+          Color(0x00FFFFFF),
         ],
       );
-    canvas.drawRect(topRect, leftChromatic);
+    canvas.drawRect(topRect, leftCornerSheen);
 
-    final rightChromatic = Paint()
+    final rightCornerSheen = Paint()
       ..shader = ui.Gradient.radial(
         Offset(size.width * 0.88, 3),
         size.width * 0.28,
         const [
-          Color(0x80629FFF),
-          Color(0x00629FFF),
+          Color(0x45FFFFFF), // Subtle neutral silver sheen
+          Color(0x00FFFFFF),
         ],
       );
-    canvas.drawRect(topRect, rightChromatic);
+    canvas.drawRect(topRect, rightCornerSheen);
 
     // 4. Bottom Specular Reflection (Lower Curved Silver Rim)
     // Matches the matching bottom silver rim of the reference bubble
@@ -545,11 +624,11 @@ class GlassBubblePainter extends CustomPainter {
         Offset(size.width / 2, size.height),
         Offset(size.width / 2, size.height - bottomHighlightHeight),
         const [
-          Color(0xE0FFFFFF), // Bright silver reflection along bottom rim
-          Color(0x60FFFFFF),
+          Color(0x9EFFFFFF), // Softened silver reflection along bottom rim
+          Color(0x40FFFFFF), // Soft mid sheen
           Color(0x00FFFFFF),
         ],
-        const [0.0, 0.4, 1.0],
+        const [0.0, 0.45, 1.0],
       );
 
     final bottomCrescentPath = Path()
@@ -566,17 +645,17 @@ class GlassBubblePainter extends CustomPainter {
 
     canvas.drawPath(bottomCrescentPath, bottomHighlightPaint);
 
-    // Bottom subtle chromatic edge
-    final botChromatic = Paint()
+    // Bottom subtle neutral silver edge sheen
+    final botCornerSheen = Paint()
       ..shader = ui.Gradient.radial(
         Offset(size.width / 2, size.height),
         size.width * 0.45,
         const [
-          Color(0x40629FFF),
-          Color(0x00629FFF),
+          Color(0x22FFFFFF), // Subtle neutral silver sheen
+          Color(0x00FFFFFF),
         ],
       );
-    canvas.drawRect(bottomRect, botChromatic);
+    canvas.drawRect(bottomRect, botCornerSheen);
 
     // 5. Subtle Inner Lens Bevel Stroke (Reflective 3D Volume)
     final innerBevelPaint = Paint()
@@ -586,9 +665,9 @@ class GlassBubblePainter extends CustomPainter {
         Offset.zero,
         Offset(0, size.height),
         const [
-          Color(0x60FFFFFF),
-          Color(0x0EFFFFFF),
-          Color(0x50FFFFFF),
+          Color(0x48FFFFFF),
+          Color(0x0AFFFFFF),
+          Color(0x38FFFFFF),
         ],
         const [0.0, 0.5, 1.0],
       );
@@ -604,9 +683,9 @@ class GlassBubblePainter extends CustomPainter {
         Offset.zero,
         Offset(0, size.height),
         const [
-          Color(0xB5FFFFFF), // Brilliant polished silver top crest
-          Color(0x28FFFFFF), // Sleek lateral translucent edge
-          Color(0x80FFFFFF), // Bottom reflective edge
+          Color(0x90FFFFFF), // Polished silver top crest
+          Color(0x20FFFFFF), // Sleek lateral translucent edge
+          Color(0x60FFFFFF), // Bottom reflective edge
         ],
         const [0.0, 0.5, 1.0],
       );

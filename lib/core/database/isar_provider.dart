@@ -54,7 +54,7 @@ const List<IsarGeneratedSchema> appIsarSchemas = <IsarGeneratedSchema>[
   MigrationAuditRecordLocalSchema,
 ];
 
-const Duration defaultDatabaseInitTimeout = Duration(seconds: 5);
+const Duration defaultDatabaseInitTimeout = Duration(seconds: 15);
 
 typedef DatabaseDirectoryResolver = Future<String> Function();
 

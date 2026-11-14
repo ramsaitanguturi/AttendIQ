@@ -90,6 +90,7 @@ class GlassDialog extends ConsumerWidget {
               padding: padding,
               decoration: GlassTokens.glassBoxDecoration(
                 borderRadius: borderRadius,
+                isDark: isDark,
                 customBorderColor: borderColor,
               ),
               child: child,
@@ -100,15 +101,14 @@ class GlassDialog extends ConsumerWidget {
     }
 
     return Dialog(
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      backgroundColor: AppColors.surface(isDark),
       elevation: 6,
       insetPadding:
           const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(borderRadius),
         side: BorderSide(
-          color: borderColor ??
-              (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          color: borderColor ?? AppColors.border(isDark),
         ),
       ),
       child: Padding(

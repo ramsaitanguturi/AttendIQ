@@ -516,12 +516,13 @@ class _ExportSuccessDialogState extends State<ExportSuccessDialog> {
                 onPressed: () => _handleShare(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: const Icon(Icons.share, size: 18, color: Colors.black),
+                icon: const Icon(Icons.share,
+                    size: 18, color: AppColors.onPrimary),
                 label: Text(
                   _isAttendIqBackup ? 'Share Backup' : 'Share File',
                   style: const TextStyle(

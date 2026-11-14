@@ -49,12 +49,14 @@ class TodayScheduleCard extends ConsumerWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Today',
                   style: TextStyle(
                     fontSize: 14.0,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -71,14 +73,20 @@ class TodayScheduleCard extends ConsumerWidget {
               onPressed: () =>
                   AddExtraClassDialog.show(context, initialDate: date),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary.withOpacity(0.15),
-                foregroundColor: AppColors.primary,
+                backgroundColor: isDark
+                    ? AppColors.primary.withOpacity(0.15)
+                    : AppColors.gray900.withOpacity(0.08),
+                foregroundColor: isDark ? AppColors.primary : AppColors.gray900,
                 elevation: 0,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                  side: BorderSide(
+                    color: isDark
+                        ? AppColors.primary.withOpacity(0.4)
+                        : AppColors.lightBorder,
+                  ),
                 ),
               ),
               icon: const Icon(Icons.add, size: 18),
@@ -99,14 +107,14 @@ class TodayScheduleCard extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20.0),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.12),
+                  color: AppColors.gray700.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(20.0),
-                  border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                  border: Border.all(color: AppColors.darkBorder),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.beach_access,
-                        size: 40, color: Colors.amber),
+                        size: 40, color: AppColors.gray300),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -124,8 +132,8 @@ class TodayScheduleCard extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 13,
                               color: isDark
-                                  ? Colors.grey.shade300
-                                  : Colors.grey.shade800,
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
                             ),
                           ),
                         ],
@@ -143,8 +151,8 @@ class TodayScheduleCard extends ConsumerWidget {
                 decoration: isGlassy
                     ? GlassTokens.glassBoxDecoration(
                         borderRadius: BorderRadius.circular(20.0),
-                        fillColor: const Color(0xD9141824),
-                        borderColor: const Color(0x38E2E8F0),
+                        fillColor: GlassTokens.smokedGlassSurface,
+                        borderColor: GlassTokens.silverBorder,
                       )
                     : BoxDecoration(
                         color: isDark
@@ -160,12 +168,17 @@ class TodayScheduleCard extends ConsumerWidget {
                 child: Column(
                   children: [
                     Icon(Icons.event_available,
-                        size: 42, color: Colors.grey.shade400),
+                        size: 42,
+                        color: isDark
+                            ? AppColors.darkIconPrimary
+                            : AppColors.lightTextSecondary),
                     const SizedBox(height: 10),
-                    const Text(
+                    Text(
                       'No classes scheduled today.',
                       style: TextStyle(
-                          color: Colors.grey,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                           fontWeight: FontWeight.w500,
                           fontSize: 15),
                     ),
@@ -203,18 +216,20 @@ class TodayScheduleCard extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.red.withOpacity(0.3)),
+              border: Border.all(color: AppColors.gray600),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Error loading today schedule',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.red,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                       fontSize: 14),
                 ),
                 const SizedBox(height: 4),
@@ -222,17 +237,20 @@ class TodayScheduleCard extends ConsumerWidget {
                   err.toString(),
                   style: TextStyle(
                       fontSize: 12,
-                      color:
-                          isDark ? Colors.red.shade200 : Colors.red.shade900),
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary),
                 ),
                 if (kDebugMode) ...[
                   const SizedBox(height: 8),
                   Text(
                     stackTrace.toString(),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 10,
                         fontFamily: 'monospace',
-                        color: Colors.redAccent),
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.lightTextSecondary),
                   ),
                 ],
               ],
@@ -258,14 +276,7 @@ class _OccurrenceCard extends ConsumerWidget {
   });
 
   Color _parseColor(String? hex) {
-    if (hex == null || hex.isEmpty) return AppColors.primary;
-    try {
-      final clean = hex.replaceAll('#', '');
-      if (clean.length == 6) {
-        return Color(int.parse('FF$clean', radix: 16));
-      }
-    } catch (_) {}
-    return AppColors.primary;
+    return AppColors.parseMonochromeHex(hex, AppColors.gray300);
   }
 
   @override
@@ -276,7 +287,10 @@ class _OccurrenceCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: isGlassy
-          ? GlassTokens.glassBoxDecoration(borderRadius: 20.0)
+          ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
+              borderRadius: 20.0,
+            )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
               borderRadius: BorderRadius.circular(20.0),
@@ -307,8 +321,9 @@ class _OccurrenceCard extends ConsumerWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14.0,
-                      color:
-                          isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                     ),
                   ),
                 ],
@@ -337,9 +352,12 @@ class _OccurrenceCard extends ConsumerWidget {
                   children: [
                     Text(
                       occurrence.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 17.0,
                         fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
                       ),
                     ),
                     if (subjectCode != null || occurrence.room != null) ...[
@@ -347,9 +365,11 @@ class _OccurrenceCard extends ConsumerWidget {
                       Text(
                         '${subjectCode ?? ""} ${occurrence.room != null ? "• ${occurrence.room}" : ""}'
                             .trim(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.0,
-                          color: Colors.grey,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -360,7 +380,9 @@ class _OccurrenceCard extends ConsumerWidget {
                         'Note: ${occurrence.reason}',
                         style: TextStyle(
                           fontSize: 11.0,
-                          color: Colors.deepPurpleAccent.shade100,
+                          color: isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.lightTextSecondary,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -390,19 +412,19 @@ class _OccurrenceCard extends ConsumerWidget {
 
     switch (type) {
       case OccurrenceType.REGULAR_CLASS:
-        badgeColor = AppColors.primary;
+        badgeColor = AppColors.gray100;
         label = 'Regular';
         break;
       case OccurrenceType.EXTRA_CLASS:
-        badgeColor = Colors.purpleAccent;
+        badgeColor = AppColors.gray300;
         label = 'Extra Class';
         break;
       case OccurrenceType.EXAM:
-        badgeColor = Colors.deepOrangeAccent;
+        badgeColor = AppColors.gray600;
         label = 'Exam';
         break;
       case OccurrenceType.EVENT:
-        badgeColor = Colors.blueAccent;
+        badgeColor = AppColors.gray500;
         label = 'Event';
         break;
     }
@@ -410,9 +432,9 @@ class _OccurrenceCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.15),
+        color: AppColors.gray700.withOpacity(0.4),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: badgeColor.withOpacity(0.4)),
+        border: Border.all(color: badgeColor.withOpacity(0.5)),
       ),
       child: Text(
         label,
@@ -439,7 +461,7 @@ class _OccurrenceCard extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             label: 'Present',
-            color: AppColors.primary,
+            color: AppColors.present,
             icon: Icons.check_circle_outline,
             isSelected: currentStatus == OccurrenceStatus.PRESENT,
             onPressed: () => ref
@@ -452,7 +474,7 @@ class _OccurrenceCard extends ConsumerWidget {
           Expanded(
             child: _ActionButton(
               label: 'Late',
-              color: const Color(0xFFFFB300),
+              color: AppColors.late,
               icon: Icons.access_time,
               isSelected: currentStatus == OccurrenceStatus.LATE,
               onPressed: () => ref
@@ -465,7 +487,7 @@ class _OccurrenceCard extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             label: 'Absent',
-            color: AppColors.attendanceLow,
+            color: AppColors.absent,
             icon: Icons.cancel_outlined,
             isSelected: currentStatus == OccurrenceStatus.ABSENT,
             onPressed: () => ref
@@ -477,7 +499,7 @@ class _OccurrenceCard extends ConsumerWidget {
         Expanded(
           child: _ActionButton(
             label: 'Cancelled',
-            color: Colors.grey,
+            color: AppColors.cancelled,
             icon: Icons.remove_circle_outline,
             isSelected: currentStatus == OccurrenceStatus.CANCELLED,
             onPressed: () => ref
@@ -507,41 +529,53 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (isSelected) {
+      final fgColor = color.computeLuminance() > 0.4
+          ? AppColors.gray900
+          : AppColors.gray100;
       return ElevatedButton.icon(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
-          foregroundColor: Colors.white,
+          foregroundColor: fgColor,
           elevation: 2,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
         ),
-        icon: Icon(icon, size: 14),
+        icon: Icon(icon, size: 14, color: fgColor),
         label: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 11,
+            color: fgColor,
           ),
         ),
       );
     }
 
+    final outlineColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textColor =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final iconColor =
+        (!isDark && color.computeLuminance() > 0.6) ? AppColors.gray800 : color;
+
     return OutlinedButton.icon(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.6)),
+        foregroundColor: textColor,
+        side: BorderSide(color: outlineColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
       ),
-      icon: Icon(icon, size: 14),
+      icon: Icon(icon, size: 14, color: iconColor),
       label: Text(
         label,
         style: TextStyle(
-          color: color,
+          color: textColor,
           fontWeight: FontWeight.bold,
           fontSize: 11,
         ),

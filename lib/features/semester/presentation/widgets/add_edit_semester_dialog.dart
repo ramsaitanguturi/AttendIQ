@@ -345,7 +345,7 @@ class _AddEditSemesterDialogState extends ConsumerState<AddEditSemesterDialog> {
           onPressed: _isSaving ? null : _save,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.onPrimary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -356,7 +356,7 @@ class _AddEditSemesterDialogState extends ConsumerState<AddEditSemesterDialog> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.black,
+                    color: AppColors.onPrimary,
                   ),
                 )
               : Text(

@@ -17,6 +17,7 @@ import '../../data/utils/occurrence_identity.dart';
 import '../widgets/date_details_bottom_sheet.dart';
 import '../widgets/semester_weekly_calendar_view.dart';
 import '../widgets/add_extra_class_dialog.dart';
+import '../../../../core/widgets/acedra_floating_bottom_bar.dart';
 
 class WeeklyTimetablePage extends ConsumerStatefulWidget {
   const WeeklyTimetablePage({super.key});
@@ -32,13 +33,11 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
     final semesterAsync = ref.watch(activeSemesterProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
     final activeSemester = semesterAsync.valueOrNull;
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -80,12 +79,13 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
         ],
       ),
       body: SafeArea(
+        bottom: false,
         child: Padding(
-          padding: const EdgeInsets.only(
+          padding: EdgeInsets.only(
             left: 16.0,
             right: 16.0,
             top: 8.0,
-            bottom: 110.0,
+            bottom: AcedraFloatingBottomBar.contentBottomPadding(context),
           ),
           child: SemesterWeeklyCalendarView(
             onSlotTap: (slot) => _handleSlotTap(context, slot),
@@ -93,7 +93,9 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 76.0),
+        padding: EdgeInsets.only(
+          bottom: AcedraFloatingBottomBar.fabBottomPadding(context),
+        ),
         child: FloatingActionButton.extended(
           onPressed: () {
             final subjects =
@@ -105,10 +107,11 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
             }
           },
           backgroundColor: AppColors.primary,
-          icon: const Icon(Icons.add, color: Colors.black),
+          icon: const Icon(Icons.add, color: AppColors.onPrimary),
           label: const Text(
             'Add Class',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: AppColors.onPrimary, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -232,8 +235,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                       borderRadius: BorderRadius.circular(12.0),
                       border: Border.all(
                         color: isDark
-                            ? const Color(0x28E2E8F0)
-                            : const Color(0xFFE2E8F0),
+                            ? AppColors.darkBorderSubtle
+                            : AppColors.lightBorderSubtle,
                       ),
                     ),
                     child: Column(
@@ -276,16 +279,17 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF4CAF50),
+                                  foregroundColor: AppColors.present,
                                   side: BorderSide(
                                     color: currentStatus == 'PRESENT'
-                                        ? const Color(0xFF4CAF50)
-                                        : Colors.grey.withOpacity(0.3),
+                                        ? AppColors.present
+                                        : (isDark
+                                            ? AppColors.gray700
+                                            : AppColors.gray400),
                                     width: currentStatus == 'PRESENT' ? 2 : 1,
                                   ),
                                   backgroundColor: currentStatus == 'PRESENT'
-                                      ? const Color(0xFF4CAF50)
-                                          .withOpacity(0.15)
+                                      ? AppColors.present.withOpacity(0.15)
                                       : null,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 8),
@@ -313,16 +317,17 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                               Expanded(
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFFFFB300),
+                                    foregroundColor: AppColors.late,
                                     side: BorderSide(
                                       color: currentStatus == 'LATE'
-                                          ? const Color(0xFFFFB300)
-                                          : Colors.grey.withOpacity(0.3),
+                                          ? AppColors.late
+                                          : (isDark
+                                              ? AppColors.gray700
+                                              : AppColors.gray400),
                                       width: currentStatus == 'LATE' ? 2 : 1,
                                     ),
                                     backgroundColor: currentStatus == 'LATE'
-                                        ? const Color(0xFFFFB300)
-                                            .withOpacity(0.15)
+                                        ? AppColors.late.withOpacity(0.15)
                                         : null,
                                     padding:
                                         const EdgeInsets.symmetric(vertical: 8),
@@ -350,16 +355,17 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFFEF5350),
+                                  foregroundColor: AppColors.absent,
                                   side: BorderSide(
                                     color: currentStatus == 'ABSENT'
-                                        ? const Color(0xFFEF5350)
-                                        : Colors.grey.withOpacity(0.3),
+                                        ? AppColors.absent
+                                        : (isDark
+                                            ? AppColors.gray700
+                                            : AppColors.gray400),
                                     width: currentStatus == 'ABSENT' ? 2 : 1,
                                   ),
                                   backgroundColor: currentStatus == 'ABSENT'
-                                      ? const Color(0xFFEF5350)
-                                          .withOpacity(0.15)
+                                      ? AppColors.absent.withOpacity(0.15)
                                       : null,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 8),
@@ -386,16 +392,17 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF9E9E9E),
+                                  foregroundColor: AppColors.cancelled,
                                   side: BorderSide(
                                     color: currentStatus == 'CANCELLED'
-                                        ? const Color(0xFF9E9E9E)
-                                        : Colors.grey.withOpacity(0.3),
+                                        ? AppColors.cancelled
+                                        : (isDark
+                                            ? AppColors.gray700
+                                            : AppColors.gray400),
                                     width: currentStatus == 'CANCELLED' ? 2 : 1,
                                   ),
                                   backgroundColor: currentStatus == 'CANCELLED'
-                                      ? const Color(0xFF9E9E9E)
-                                          .withOpacity(0.15)
+                                      ? AppColors.cancelled.withOpacity(0.15)
                                       : null,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 8),
@@ -429,7 +436,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
 
                   ListTile(
                     leading: const Icon(Icons.event_busy_outlined,
-                        color: Colors.orange),
+                        color: AppColors.gray300),
                     title: const Text('Edit this occurrence only'),
                     subtitle: const Text(
                         'Remove or set exception for this date without changing weekly rule'),
@@ -643,7 +650,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Date exception saved successfully.'),
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppColors.darkSurface,
                         ),
                       );
                     }
@@ -652,7 +659,8 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                       backgroundColor: AppColors.primary),
                   child: const Text('Save Exception',
                       style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold)),
+                          color: AppColors.onPrimary,
+                          fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -686,7 +694,7 @@ class _WeeklyTimetablePageState extends ConsumerState<WeeklyTimetablePage> {
                   ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               child: const Text('Register Subject',
                   style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
+                      color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
             ),
           ],
         );

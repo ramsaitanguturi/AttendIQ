@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/acedra_logo.dart';
 import '../../../../core/notifications/presentation/widgets/pending_check_ins_banner.dart';
@@ -10,6 +11,7 @@ import '../../../timetable/presentation/controllers/today_schedule_provider.dart
 import '../../../timetable/presentation/widgets/semester_weekly_calendar_view.dart';
 import '../../../timetable/presentation/widgets/today_schedule_card.dart';
 import '../../../timetable/presentation/widgets/academic_calendar_widget.dart';
+import '../../../timetable/presentation/widgets/add_extra_class_dialog.dart';
 import '../../../../core/attendance_engine/bunk_analyzer.dart';
 import '../../../../core/analytics/models/attendance_analytics.dart';
 import '../../../../core/analytics/models/risk_status.dart';
@@ -21,6 +23,7 @@ import '../../../academic_planner/presentation/widgets/add_edit_task_sheet.dart'
 import '../../../subject/presentation/widgets/add_edit_subject_dialog.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../../core/theme/glass/glass_theme_tokens.dart';
+import '../../../../core/widgets/acedra_floating_bottom_bar.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   final String? initialSection;
@@ -75,9 +78,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final statsListAsync = ref.watch(allSubjectAttendanceStatsProvider);
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -127,11 +129,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.only(
+            padding: EdgeInsets.only(
               left: 20.0,
               right: 20.0,
               top: 12.0,
-              bottom: 120.0,
+              bottom: AcedraFloatingBottomBar.contentBottomPadding(context),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,32 +141,56 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Welcome Header & Sync Pill
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Welcome back,',
+                          DateFormat('EEEE, MMMM d').format(DateTime.now()),
                           style: TextStyle(
-                            fontSize: 14.0,
+                            fontSize: 12.0,
+                            letterSpacing: 0.5,
                             color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
-                            fontWeight: FontWeight.w500,
+                                ? AppColors.darkTextMuted
+                                : AppColors.lightTextMuted,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const Text(
-                          userName,
-                          style: TextStyle(
-                            fontSize: 26.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Text(
+                              'Welcome back, ',
+                              style: TextStyle(
+                                fontSize: 24.0,
+                                fontWeight: FontWeight.w500,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
+                            ),
+                            Text(
+                              userName,
+                              style: TextStyle(
+                                fontSize: 24.0,
+                                fontWeight: FontWeight.w800,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                     _buildSyncStatusPill(isDark, isGlassy),
                   ],
                 ),
+                const SizedBox(height: 20.0),
+
+                // Quick Actions
+                _buildQuickActions(context, isDark, isGlassy),
                 const SizedBox(height: 24.0),
 
                 // 1. Semester Weekly Calendar Section (Top)
@@ -248,17 +274,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       ),
       floatingActionButton: ref.watch(isAiAdvisorEnabledProvider)
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 76.0),
+              padding: EdgeInsets.only(
+                bottom: AcedraFloatingBottomBar.fabBottomPadding(context),
+              ),
               child: FloatingActionButton(
                 onPressed: () => context.push('/ai-assistant'),
                 backgroundColor: ref.watch(isGlassyThemeEnabledProvider)
-                    ? const Color(0xFF1E2330)
-                    : Colors.deepPurpleAccent,
+                    ? AppColors.surfaceGlass(isDark)
+                    : (isDark ? AppColors.primary : AppColors.gray900),
                 elevation: 6,
                 tooltip: 'Ask ACEDRA Advisor',
-                child: const Icon(
+                child: Icon(
                   Icons.auto_awesome,
-                  color: Colors.white,
+                  color: ref.watch(isGlassyThemeEnabledProvider)
+                      ? AppColors.gray100
+                      : AppColors.onPrimary,
                 ),
               ),
             )
@@ -267,31 +297,122 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildSyncStatusPill(bool isDark, bool isGlassy) {
+    final statusColor =
+        isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isGlassy
-            ? const Color(0xB8141822)
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isGlassy
-              ? const Color(0x38E2E8F0)
-              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-        ),
-      ),
-      child: const Row(
+      decoration: isGlassy
+          ? GlassTokens.glassBoxDecoration(
+              isDark: isDark,
+              borderRadius: 12.0,
+            )
+          : BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off, size: 14, color: Colors.grey),
-          SizedBox(width: 6),
+          Icon(Icons.cloud_off_rounded, size: 14, color: statusColor),
+          const SizedBox(width: 6),
           Text(
             'Offline Mode',
             style: TextStyle(
-                fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+              fontSize: 11,
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context, bool isDark, bool isGlassy) {
+    final actions = [
+      (
+        icon: Icons.add_circle_outline_rounded,
+        label: 'Add Class',
+        onTap: () => AddExtraClassDialog.show(context),
+      ),
+      (
+        icon: Icons.calendar_month_rounded,
+        label: 'Timetable',
+        onTap: () => context.push('/timetable'),
+      ),
+      (
+        icon: Icons.history_rounded,
+        label: 'History',
+        onTap: () => _scrollToSectionIfNeeded('calendar'),
+      ),
+      (
+        icon: Icons.insights_rounded,
+        label: 'Analytics',
+        onTap: () => context.push('/analytics'),
+      ),
+    ];
+
+    return Row(
+      children: actions.map((act) {
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: InkWell(
+              onTap: act.onTap,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                decoration: isGlassy
+                    ? GlassTokens.glassBoxDecoration(
+                        isDark: isDark,
+                        borderRadius: 14.0,
+                      )
+                    : BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
+                        ),
+                        boxShadow: GlassTokens.cardShadows(
+                            isGlassy: false, isDark: isDark),
+                      ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      act.icon,
+                      size: 22,
+                      color: isDark ? AppColors.gray300 : AppColors.gray800,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      act.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -306,9 +427,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       padding: const EdgeInsets.all(20.0),
       decoration: isGlassy
           ? GlassTokens.glassBoxDecoration(
-              fillColor: const Color(0xD9141824),
-              borderColor: const Color(0x38E2E8F0),
-              borderRadius: BorderRadius.circular(20.0),
+              isDark: isDark,
+              borderRadius: 20.0,
             )
           : BoxDecoration(
               color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
@@ -316,6 +436,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               border: Border.all(
                 color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               ),
+              boxShadow:
+                  GlassTokens.cardShadows(isGlassy: false, isDark: isDark),
             ),
       child: analyticsAsync.when(
         data: (analytics) {
@@ -329,23 +451,57 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               ? AppColors.attendanceLow
               : (analytics.riskLevel == RiskStatus.WARNING
                   ? AppColors.attendanceMid
-                  : AppColors.primary);
+                  : (isDark ? AppColors.gray100 : AppColors.gray900));
+
+          final cancelledCount = (analytics.totalClasses -
+                  analytics.totalPresent -
+                  analytics.totalAbsent -
+                  analytics.totalLate)
+              .clamp(0, 999);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Semester Attendance',
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Attendance Overview',
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: riskColor.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                    color: riskColor.withOpacity(0.3)),
+                              ),
+                              child: Text(
+                                isSafe ? 'SAFE' : 'ACTION REQUIRED',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: riskColor,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -362,45 +518,80 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Stack(
                     alignment: Alignment.center,
                     children: [
                       SizedBox(
-                        width: 70,
-                        height: 70,
+                        width: 74,
+                        height: 74,
                         child: CircularProgressIndicator(
-                          value: percentage / 100.0,
-                          strokeWidth: 6,
-                          backgroundColor: isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder,
+                          value: (percentage / 100.0).clamp(0.0, 1.0),
+                          strokeWidth: 7,
+                          backgroundColor:
+                              isDark ? AppColors.gray700 : AppColors.gray300,
                           valueColor: AlwaysStoppedAnimation<Color>(riskColor),
                         ),
                       ),
                       Text(
                         '${percentage.toStringAsFixed(0)}%',
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.bold,
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.w800,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
+              Divider(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                height: 1,
+              ),
+              const SizedBox(height: 14),
+              // Present, Absent, Late, Cancelled statistics
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildDashboardMetric(
-                      'Total', '${analytics.totalClasses}', isDark),
+                    'Total',
+                    '${analytics.totalClasses}',
+                    Icons.event_note_rounded,
+                    isDark ? AppColors.gray300 : AppColors.gray800,
+                    isDark,
+                  ),
                   _buildDashboardMetric(
-                      'Present', '${analytics.totalPresent}', isDark),
+                    'Present',
+                    '${analytics.totalPresent}',
+                    Icons.check_circle_outline_rounded,
+                    isDark ? AppColors.gray100 : AppColors.gray900,
+                    isDark,
+                  ),
                   _buildDashboardMetric(
-                      'Absent', '${analytics.totalAbsent}', isDark),
+                    'Absent',
+                    '${analytics.totalAbsent}',
+                    Icons.cancel_outlined,
+                    AppColors.gray600,
+                    isDark,
+                  ),
+                  _buildDashboardMetric(
+                    'Late',
+                    '${analytics.totalLate}',
+                    Icons.schedule_rounded,
+                    AppColors.gray500,
+                    isDark,
+                  ),
+                  _buildDashboardMetric(
+                    'Cancelled',
+                    '$cancelledCount',
+                    Icons.block_rounded,
+                    isDark ? AppColors.gray700 : AppColors.gray600,
+                    isDark,
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -409,8 +600,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 child: ElevatedButton.icon(
                   onPressed: () => context.push('/analytics'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary.withOpacity(0.12),
-                    foregroundColor: AppColors.primary,
+                    backgroundColor: isDark
+                        ? AppColors.gray100.withOpacity(0.12)
+                        : AppColors.gray900.withOpacity(0.08),
+                    foregroundColor:
+                        isDark ? AppColors.gray100 : AppColors.gray900,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -433,21 +627,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
-  Widget _buildDashboardMetric(String label, String value, bool isDark) {
+  Widget _buildDashboardMetric(
+    String label,
+    String value,
+    IconData icon,
+    Color accentColor,
+    bool isDark,
+  ) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
+        Icon(icon, size: 16, color: accentColor),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16.0,
+          style: TextStyle(
+            fontSize: 15.0,
             fontWeight: FontWeight.bold,
+            color:
+                isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
           style: TextStyle(
-            fontSize: 11.0,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w500,
             color: isDark
                 ? AppColors.darkTextSecondary
                 : AppColors.lightTextSecondary,
@@ -501,8 +707,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: isGlassy
                   ? GlassTokens.glassBoxDecoration(
-                      fillColor: const Color(0xD9141824),
-                      borderColor: const Color(0x38E2E8F0),
+                      isDark: isDark,
                       borderRadius: BorderRadius.circular(16),
                     )
                   : BoxDecoration(
@@ -527,9 +732,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                           stats.subject.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14.0,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -539,9 +747,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                                   ? 'Must attend ${stats.requiredClasses} consecutive classes'
                                   : 'Target ${stats.subject.attendanceTarget.toStringAsFixed(0)}% unreachable (N/A)')
                               : 'Warning margin! Only ${stats.safeBunks} safe skips left',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey,
+                            color: isDark
+                                ? AppColors.darkTextMuted
+                                : AppColors.lightTextMuted,
                           ),
                         ),
                       ],
@@ -603,8 +813,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           padding: const EdgeInsets.all(16.0),
           decoration: isGlassy
               ? GlassTokens.glassBoxDecoration(
-                  fillColor: const Color(0xD9141824),
-                  borderColor: const Color(0x38E2E8F0),
+                  isDark: isDark,
                   borderRadius: BorderRadius.circular(20),
                 )
               : BoxDecoration(
@@ -641,8 +850,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     return FlSpot(index.toDouble(), points[index].percentage);
                   }),
                   isCurved: true,
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, Color(0xFF00BFFF)],
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? const [AppColors.gray100, AppColors.gray400]
+                        : const [AppColors.gray900, AppColors.gray600],
                   ),
                   barWidth: 3,
                   dotData: const FlDotData(show: false),
@@ -650,8 +861,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.primary.withOpacity(0.15),
-                        const Color(0xFF00BFFF).withOpacity(0.0),
+                        (isDark ? AppColors.gray100 : AppColors.gray900)
+                            .withOpacity(0.15),
+                        (isDark ? AppColors.gray400 : AppColors.gray600)
+                            .withOpacity(0.0),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -681,8 +894,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             padding: const EdgeInsets.symmetric(vertical: 40.0),
             decoration: isGlassy
                 ? GlassTokens.glassBoxDecoration(
-                    fillColor: const Color(0xD9141824),
-                    borderColor: const Color(0x38E2E8F0),
+                    isDark: isDark,
                     borderRadius: BorderRadius.circular(16.0),
                   )
                 : BoxDecoration(
@@ -698,10 +910,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.library_books_outlined,
                     size: 40,
-                    color: Colors.grey,
+                    color: isDark
+                        ? AppColors.darkTextMuted
+                        : AppColors.lightTextMuted,
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -712,9 +926,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Add your subjects to start tracking attendance.',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextMuted
+                          : AppColors.lightTextMuted,
+                      fontSize: 13,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -723,8 +942,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('Add Subject'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
+                      backgroundColor:
+                          isDark ? AppColors.primary : AppColors.gray900,
+                      foregroundColor:
+                          isDark ? AppColors.onPrimary : AppColors.gray100,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -750,7 +971,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             final stats = statsList[index];
             final color = _parseColor(stats.subject.color);
 
-            Color alertBadgeColor = AppColors.primary;
+            Color alertBadgeColor =
+                isDark ? AppColors.primary : AppColors.gray900;
             String alertBadgeText = 'Safe Skips: ${stats.safeBunks}';
 
             if (stats.bunkAnalysis.status == BunkStatus.CRITICAL) {
@@ -767,13 +989,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             return Card(
               elevation: 0,
               color: isGlassy
-                  ? const Color(0xD9141824)
+                  ? (isDark
+                      ? AppColors.darkSurfaceGlass
+                      : AppColors.lightSurfaceGlass)
                   : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
                 side: BorderSide(
                   color: isGlassy
-                      ? const Color(0x38E2E8F0)
+                      ? (isDark
+                          ? AppColors.silverBorder
+                          : GlassTokens.lightGlassBorder)
                       : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
                 ),
               ),
@@ -805,7 +1031,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                                 style: TextStyle(
                                   color: stats.attendancePercentage >=
                                           stats.subject.attendanceTarget
-                                      ? AppColors.primary
+                                      ? (isDark
+                                          ? AppColors.primary
+                                          : AppColors.gray900)
                                       : AppColors.attendanceLow,
                                   fontSize: 16.0,
                                   fontWeight: FontWeight.bold,
@@ -818,9 +1046,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                             stats.subject.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14.0,
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.lightTextPrimary,
                             ),
                           ),
                           if (stats.subject.faculty != null &&
@@ -830,8 +1061,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                               stats.subject.faculty!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.grey,
+                              style: TextStyle(
+                                color: isDark
+                                    ? AppColors.darkTextMuted
+                                    : AppColors.lightTextMuted,
                                 fontSize: 11.0,
                               ),
                             ),
@@ -869,12 +1102,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Color _parseColor(String colorHex) {
-    try {
-      final hex = colorHex.replaceAll('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return AppColors.primary;
-    }
+    return AppColors.parseMonochromeHex(colorHex);
   }
 
   Widget _buildUpcomingTasksSection(
@@ -891,15 +1119,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Row(
+            Row(
               children: [
                 Icon(
                   Icons.task_alt,
-                  color: AppColors.primary,
+                  color: isDark
+                      ? AppColors.darkIconPrimary
+                      : AppColors.lightIconPrimary,
                   size: 22,
                 ),
-                SizedBox(width: 8),
-                Text(
+                const SizedBox(width: 8),
+                const Text(
                   'Upcoming Tasks',
                   style: TextStyle(
                     fontSize: 18.0,
@@ -910,8 +1140,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ),
             TextButton(
               onPressed: () => context.push('/planner'),
-              child: const Text('View All',
-                  style: TextStyle(color: AppColors.primary)),
+              child: Text(
+                'View All',
+                style: TextStyle(
+                  color: isDark ? AppColors.primary : AppColors.gray900,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -922,9 +1157,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             padding: const EdgeInsets.all(20.0),
             decoration: isGlassy
                 ? GlassTokens.glassBoxDecoration(
-                    fillColor: const Color(0xD9141824),
-                    borderColor: const Color(0x38E2E8F0),
-                    borderRadius: BorderRadius.circular(16.0),
+                    isDark: isDark,
+                    borderRadius: 16.0,
                   )
                 : BoxDecoration(
                     color:
@@ -939,7 +1173,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               children: [
                 Icon(
                   Icons.check_circle_outline,
-                  color: AppColors.primary.withOpacity(0.6),
+                  color: (isDark ? AppColors.primary : AppColors.gray900)
+                      .withOpacity(0.6),
                   size: 32,
                 ),
                 const SizedBox(width: 14),
@@ -968,7 +1203,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                  icon: Icon(
+                    Icons.add_circle,
+                    color: isDark ? AppColors.primary : AppColors.gray900,
+                  ),
                   onPressed: () {
                     showModalBottomSheet<void>(
                       context: context,

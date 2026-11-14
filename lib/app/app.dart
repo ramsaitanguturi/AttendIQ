@@ -47,7 +47,7 @@ class AttendIQApp extends ConsumerWidget {
         title: AppConstants.appName,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.dark,
         debugShowCheckedModeBanner: false,
         home: const SplashPage(),
       ),
@@ -75,7 +75,7 @@ class _AttendIQErrorApp extends StatelessWidget {
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       home: DatabaseStartupErrorPage(
         error: error,

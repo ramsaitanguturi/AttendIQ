@@ -1,114 +1,88 @@
-# UI/UX Style Guide: AttendIQ
+# ACEDRA – Monochromatic Design System Guide (v2.0)
 
-This document details the user interface guidelines, navigation hierarchy, design tokens, color palette, screen breakdowns, and micro-interactions for the AttendIQ mobile application.
-
----
-
-## 1. Visual Identity & Design System
-
-AttendIQ adopts a modern, high-contrast, dark-mode-first aesthetic with glassmorphic accents, clean cards, and bright semantic status colors.
-
-### 1.1 Color Palette (HSL-Based)
-
-We define a curated set of HSL color tokens to ensure consistency.
-
-```css
-/* Core Palette */
---background:    hsl(240, 10%, 8%);    /* Dark charcoal/black (#111113) */
---surface:       hsl(240, 8%, 14%);   /* Slightly lighter card surface (#1B1B1F) */
---surface-glass: hsla(240, 8%, 14%, 0.7); /* Translucent surface for glassmorphism */
---primary:       hsl(160, 100%, 45%);  /* Emerald Green for presence, buttons (#00E599) */
---primary-glow:  hsla(160, 100%, 45%, 0.15);
---secondary:     hsl(195, 100%, 50%);  /* Cyan for predictions and info (#00BFFF) */
---border:        hsl(240, 6%, 22%);    /* Subtle border outline (#373740) */
-
-/* Semantic Status Colors */
---attendance-high: hsl(150, 80%, 40%);  /* Safe state (above threshold) */
---attendance-mid:  hsl(38, 90%, 50%);   /* Warning state (near threshold) */
---attendance-low:  hsl(0, 85%, 55%);    /* Danger state (below threshold) */
-
-/* Typography Colors */
---text-primary:    hsl(0, 0%, 95%);     /* Main text (#F2F2F2) */
---text-secondary:  hsl(240, 4%, 65%);   /* Muted subtext (#A0A0A5) */
-```
-
-### 1.2 Typography
-- **Primary Font**: **Outfit** (via `google_fonts` package) - clean, modern, slightly rounded geometric sans-serif.
-- **Fallback Font**: **Inter** - for dense text tables and schedules.
-- **Scale**:
-  - `Display Large`: 32pt (Bold, Outfit) - Main metrics / attendance percentages.
-  - `Title Medium`: 20pt (Semi-Bold, Outfit) - Section headers / subject titles.
-  - `Body Medium`: 14pt (Regular, Inter) - Text logs, remarks, schedule details.
-  - `Label Small`: 11pt (Medium, Inter) - Dates, badges, status labels.
-
-### 1.3 Card Styles & Glassmorphism
-All cards use a subtle border (`1px` width, `--border` color), rounded corners (`16px` radius), and a low-opacity background with backdrop blur when placed over gradients.
-- Flutter implementation: `BackdropFilter` with `ImageFilter.blur(sigmaX: 10, sigmaY: 10)`.
+This document details the official design system, semantic color tokens, typography, navigation architecture, and component standards for the **ACEDRA** academic attendance and scheduling platform.
 
 ---
 
-## 2. Navigation Model
+## 1. Official ACEDRA Monochromatic Palette
 
-AttendIQ uses a persistent **Bottom Navigation Bar** as its main navigational hub, active after authentication.
+The visual design system of ACEDRA is strictly built upon an authoritative 9-color monochromatic palette (Bootstrap Gray 100–900 tier). No extraneous color hues (blue, green, red, amber, purple, teal) are permitted in the application UI. Transparency, opacity, and blur variations of these nine colors are utilized for smoked glass effects, overlays, shadows, and specular reflections.
 
-```
-                  [ App Shell / Bottom Navigation ]
-                                  │
-      ┌──────────────┬────────────┼─────────────┬──────────────┐
-      ▼              ▼            ▼             ▼              ▼
-[ Dashboard ]  [ Timetable ] [ Analytics ] [ AI Advisor ] [ Settings ]
-```
-
-1. **Dashboard**: Shows overall attendance rate, a chronological list of classes for "Today", and a grid of subjects.
-2. **Timetable**: View and edit the weekly class schedules.
-3. **Analytics**: Subject-by-subject trends, prediction widgets, and charts.
-4. **AI Advisor**: Structured generative advice cards, priority checklist, and direct conversation interface.
-5. **Settings**: Configurations (late weight, targets, account management, offline status indicator).
+| Token | Hex | Role / Semantic Assignment |
+| :--- | :--- | :--- |
+| `gray100` | `#f8f9fa` | Primary text, selected navigation indicator, active crest, primary action labels |
+| `gray200` | `#e9ecef` | Light silver highlight, specular reflections, high-prominence badges |
+| `gray300` | `#dee2e6` | Primary icons, silver reflect, safe attendance / high-tier status |
+| `gray400` | `#ced4da` | Secondary text, active borders, card outlines |
+| `gray500` | `#adb5bd` | Mid-tone silver, warning/late attendance status, tertiary labels |
+| `gray600` | `#6c757d` | Disabled text, absent/critical attendance status, subtle dividers |
+| `gray700` | `#495057` | Elevated card surfaces, container borders, cancelled class markers |
+| `gray800` | `#343a40` | Standard card surfaces, secondary background, chip containers |
+| `gray900` | `#212529` | Main application background, selected navigation icon, pitch base |
 
 ---
 
-## 3. Key Screen Breakdowns & Mockups
+## 2. Semantic Color Architecture
 
-### 3.1 Splash & Authentication Flow
-- **Splash Screen**: Checks if user is authenticated. Displays the AttendIQ logo with a smooth fading glow.
-- **Login Screen**: Minimalist glassmorphic panel containing email/password fields, a primary emerald sign-in button, and a prominent Google Sign-In option.
-- **Onboarding Wizard**: Step-by-step setup asking:
-  1. "Name your active semester" (e.g., "Fall 2026").
-  2. "Set semester duration" (Date pickers for Start and End dates).
-  3. "Specify target rate" (Slider from 50% to 100%, defaults to 75%).
+Rather than hardcoding raw hex values in individual widgets, all components consume centralized semantic tokens from `AppColors` and `GlassTokens`:
 
-### 3.2 Main Dashboard
-- **Header**: Overall attendance rate displayed inside a large, thin circular progress indicator. If attendance is $78\%$, the ring is emerald. If $74\%$ (below $75\%$ target), the ring is orange/red.
-- **Today's Classes**: Horizontal carousel of classes for the current day.
-  - **Swipe Action**: Swipe up/down (or drag handles) to log status.
-  - Swipe **Right** to mark **Present**.
-  - Swipe **Left** to mark **Absent**.
-  - Tap for details (Cancelled, Late, Extra).
-- **Subjects Grid**: Compact cards showing subject names, current percentage, and a dynamic pill badge:
-  - `2 Safe Skips` (Green)
-  - `Must Attend 3` (Orange)
-  - `Critical` (Red)
+### 2.1 Surfaces & Layout
+- **Main Background**: `#212529` (`AppColors.darkBackground`)
+- **Secondary Background**: `#343a40` (`AppColors.darkSurface`)
+- **Standard Cards**: `#343a40` (`AppColors.darkCard`)
+- **Elevated Cards**: `#495057` (`AppColors.darkElevated`)
+- **Borders & Dividers**: `#495057` (`AppColors.darkBorder`) with subtle variants in `AppColors.silverBorder`
 
-### 3.3 Subject Detail Screen
-- **Hero Header**: Subject title, instructor, and current percentage.
-- **Metric Cards**: Two side-by-side cards:
-  - Left Card: Safe Bunk number (large digit).
-  - Right Card: Must Attend number (large digit).
-- **Log Calendar**: Interactive monthly calendar showing colored dots (Green = Present, Red = Absent, Yellow = Late, Grey = Cancelled).
-- **Logs List**: Scrollable list of recorded logs. Swipe-to-delete or tap to edit remarks.
+### 2.2 Typography
+- **Primary Headings & Key Metrics**: `#f8f9fa` (`AppColors.textPrimaryDark`)
+- **Secondary Subheadings & Details**: `#ced4da` (`AppColors.textSecondaryDark`)
+- **Disabled, Timestamps & Placeholders**: `#6c757d` (`AppColors.textDisabledDark`)
 
-### 3.4 AI Advisor Dashboard
-- **Recommendation Cards**: Swipeable deck of AI insights (e.g., "Critical: You must attend Math tomorrow at 9:00 AM, otherwise attendance will fall to 74.2%").
-- **Goal Setter**: Interactive checklist where users can add custom alerts (e.g., "Need to bunk Friday for Hackathon"). The AI will recalculate and recommend which classes to miss.
+### 2.3 Status Indicators (Contrast & Pattern Driven)
+To ensure accessibility without relying on colorful lights:
+- **Safe / Above Target / Present**: `#dee2e6` (`AppColors.attendanceHigh`), labeled with clear check icons.
+- **Warning / Near Target / Late**: `#adb5bd` (`AppColors.attendanceMid`), paired with clock/alert icons.
+- **Critical / Below Target / Absent**: `#6c757d` (`AppColors.attendanceLow`), paired with distinct cross/warning badges.
+- **Cancelled Class**: `#495057` (`AppColors.statusCancelled`), rendered with strike-through styling.
 
 ---
 
-## 4. Micro-interactions & Polish
+## 3. Dual Appearance Modes
 
-- **Spring-loaded Lists**: All scrolling lists use spring physics (`BouncingScrollPhysics`) on both iOS and Android to feel organic.
-- **Percentage Ring Transitions**: When opening the dashboard, the circular attendance progress ring animates its sweep angle from 0 to target over 800ms using a standard ease-out curve.
-- **Swipe-to-Mark Haptics**: Swiping a class to mark Present/Absent triggers a light physical vibration on the phone (`HapticFeedback.lightImpact()`) to confirm the action.
-- **Sync Status Pill**: A tiny, pulsing dot in the top right corner of the dashboard represents database status:
-  - Green (Pulsing): Fully synced.
-  - Yellow: Local changes pending sync.
-  - Grey: Offline mode active.
+### 3.1 Default Monochromatic Solid Appearance (Glass Disabled)
+- Solid dark surfaces (`#212529` and `#343a40`).
+- Crisp, high-contrast borders (`#495057`).
+- Zero background noise; maximum battery conservation on OLED panels.
+
+### 3.2 Monochromatic Glass Appearance (Glassy Interface Enabled)
+- Smoked-glass translucent surfaces (`rgba(33, 37, 41, 0.72)`).
+- Specular rim highlights (`rgba(222, 226, 230, 0.20)`).
+- Subtle monochromatic canvas ambient glows.
+- Hardware-accelerated backdrop blur (`sigmaX: 18, sigmaY: 18`).
+- Strict readability preservation with high-contrast text overlays (`#f8f9fa`).
+
+---
+
+## 4. Floating Glass Navigation Bar
+
+The navigation architecture uses a floating pill bar rendered in front of the active shell:
+- **Pill Container**: Smoked glass container with neutral silver-white specular reflections (`AppColors.glassFloatingPillBg`, `AppColors.glassFloatingPillBorder`).
+- **Selection Bubble**: Solid luminous monochromatic bubble (`#f8f9fa`).
+- **Selected Icon & Label**: High-contrast pitch tone (`#212529`).
+- **Unselected Icons & Labels**: Muted silver (`#ced4da` and `#adb5bd`).
+- **Animation**: 380ms ease-out spring physics curve.
+- **Destinations**: 4 primary tabs:
+  1. `Home` (Dashboard overview, today's schedule, quick actions)
+  2. `Timetable` (Weekly schedule, day timeline, academic calendar)
+  3. `Analytics` (Attendance charts, safe bunk calculations, subject comparisons)
+  4. `Account` (Profile, semester management, settings, backup, AI advisor)
+
+---
+
+## 5. Non-Color Accessibility & Information Design
+
+In strict compliance with WCAG 2.2:
+- No critical information is conveyed via color hue alone.
+- Attendance metrics provide explicit numerical percentages (`75.0%`), state tags (`Safe`, `Warning`, `Critical`), and status counters (`Must Attend 2 Classes`, `Safe to Bunk 1 Class`).
+- Charts use varied monochrome stroke weights, dotted/dashed gridlines, and labeled milestones rather than multi-color legends.
+- Touch targets strictly maintain minimum 48×48dp hitboxes with safe bottom insets for device navigation bars.

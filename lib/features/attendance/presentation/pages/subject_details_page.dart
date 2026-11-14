@@ -26,9 +26,8 @@ class SubjectDetailsPage extends ConsumerWidget {
     final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -199,12 +198,7 @@ class SubjectDetailsPage extends ConsumerWidget {
   }
 
   Color _parseColor(String colorHex) {
-    try {
-      final hex = colorHex.replaceAll('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      return AppColors.primary;
-    }
+    return AppColors.parseMonochromeHex(colorHex);
   }
 
   String _formatDate(DateTime date) {
@@ -372,7 +366,7 @@ class SubjectDetailsPage extends ConsumerWidget {
         break;
       case BunkStatus.NORMAL:
         alertBg = isGlassy
-            ? const Color(0xB8141822)
+            ? AppColors.darkSurfaceGlass
             : AppColors.primary.withOpacity(0.08);
         alertBorder = isGlassy
             ? GlassTokens.silverBorder
@@ -557,23 +551,23 @@ class SubjectDetailsPage extends ConsumerWidget {
 
     switch (occurrence.status) {
       case OccurrenceStatus.PRESENT:
-        statusColor = AppColors.primary;
+        statusColor = AppColors.present;
         statusIcon = Icons.check_circle_outline;
         break;
       case OccurrenceStatus.ABSENT:
-        statusColor = AppColors.attendanceLow;
+        statusColor = AppColors.absent;
         statusIcon = Icons.cancel_outlined;
         break;
       case OccurrenceStatus.CANCELLED:
-        statusColor = Colors.grey.shade600;
+        statusColor = AppColors.cancelled;
         statusIcon = Icons.block_outlined;
         break;
       case OccurrenceStatus.UPCOMING:
-        statusColor = AppColors.attendanceMid;
+        statusColor = AppColors.gray500;
         statusIcon = Icons.radio_button_unchecked;
         break;
       case OccurrenceStatus.LATE:
-        statusColor = AppColors.attendanceMid;
+        statusColor = AppColors.late;
         statusIcon = Icons.access_time_outlined;
         break;
     }
@@ -647,7 +641,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                 child: Row(
                   children: [
                     Icon(Icons.check_circle_outline,
-                        color: AppColors.primary, size: 20),
+                        color: AppColors.present, size: 20),
                     SizedBox(width: 8),
                     Text('Mark Present'),
                   ],
@@ -659,7 +653,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                   child: Row(
                     children: [
                       Icon(Icons.access_time_outlined,
-                          color: AppColors.attendanceMid, size: 20),
+                          color: AppColors.late, size: 20),
                       SizedBox(width: 8),
                       Text('Mark Late'),
                     ],
@@ -671,7 +665,7 @@ class SubjectDetailsPage extends ConsumerWidget {
                 child: Row(
                   children: [
                     Icon(Icons.cancel_outlined,
-                        color: AppColors.attendanceLow, size: 20),
+                        color: AppColors.absent, size: 20),
                     SizedBox(width: 8),
                     Text('Mark Absent'),
                   ],
@@ -681,7 +675,8 @@ class SubjectDetailsPage extends ConsumerWidget {
                 value: 'cancelled',
                 child: Row(
                   children: [
-                    Icon(Icons.block_outlined, color: Colors.grey, size: 20),
+                    Icon(Icons.block_outlined,
+                        color: AppColors.cancelled, size: 20),
                     SizedBox(width: 8),
                     Text('Mark Cancelled'),
                   ],

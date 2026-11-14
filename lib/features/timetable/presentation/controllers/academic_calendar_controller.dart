@@ -2,6 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/colors.dart';
+
 import '../../../semester/presentation/controllers/semester_controller.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../domain/entities/academic_event.dart';
@@ -43,19 +45,19 @@ enum CalendarItemType {
   Color get indicatorColor {
     switch (this) {
       case CalendarItemType.REGULAR_CLASS:
-        return const Color(0xFF66BB6A); // 🟢 Green
+        return AppColors.gray100;
       case CalendarItemType.EXAM:
-        return const Color(0xFFEF5350); // 🔴 Red
+        return AppColors.gray600;
       case CalendarItemType.TASK:
-        return const Color(0xFFFF9800); // 🟠 Orange Task Deadline
+        return AppColors.gray400;
       case CalendarItemType.HOLIDAY:
-        return const Color(0xFFFFCA28); // 🟡 Yellow
+        return AppColors.gray200;
       case CalendarItemType.EXTRA_CLASS:
-        return const Color(0xFF42A5F5); // 🔵 Blue
+        return AppColors.gray300;
       case CalendarItemType.CANCELLED_CLASS:
-        return const Color(0xFF8D6E63); // Brown / Grey
+        return AppColors.gray700;
       case CalendarItemType.EVENT:
-        return const Color(0xFFAB47BC); // 🟣 Purple
+        return AppColors.gray500;
     }
   }
 }

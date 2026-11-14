@@ -81,7 +81,7 @@ void main() {
 
       final state = await container.read(settingsControllerProvider.future);
       expect(state.id, 'local_user');
-      expect(state.themeMode, 'system');
+      expect(state.themeMode, 'dark');
       expect(state.defaultAttendanceTarget, 75.0);
       expect(state.classReminderOffset, 5);
 

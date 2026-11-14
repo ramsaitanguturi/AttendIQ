@@ -19,7 +19,7 @@ class DayTimelineView extends StatefulWidget {
 }
 
 class _DayTimelineViewState extends State<DayTimelineView> {
-  static const double _hourRowHeight = 72.0;
+  static const double _hourRowHeight = 80.0;
   static const double _timeColumnWidth = 54.0;
   static const int _startHour = 8;
   static const int _endHour = 22; // Timeline runs 08:00 - 22:00
@@ -78,13 +78,14 @@ class _DayTimelineViewState extends State<DayTimelineView> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.15),
+                  color: AppColors.gray700.withOpacity(0.35),
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.darkBorder),
                 ),
                 child: const Icon(
                   Icons.beach_access_rounded,
                   size: 48,
-                  color: Colors.amber,
+                  color: AppColors.gray300,
                 ),
               ),
               const SizedBox(height: 16),
@@ -216,14 +217,14 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                           width: 12.0,
                           height: 12.0,
                           decoration: const BoxDecoration(
-                            color: Colors.redAccent,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
                         Expanded(
                           child: Container(
                             height: 2.0,
-                            color: Colors.redAccent,
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
@@ -247,8 +248,9 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                     Icon(
                       Icons.event_available_outlined,
                       size: 40,
-                      color:
-                          isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                      color: isDark
+                          ? AppColors.darkTextDisabled
+                          : AppColors.lightTextSecondary,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -256,8 +258,8 @@ class _DayTimelineViewState extends State<DayTimelineView> {
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade600,
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

@@ -450,11 +450,11 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: isGlassy
-            ? const BorderSide(color: Color(0x3DE2E8F0))
+            ? const BorderSide(color: AppColors.silverBorder)
             : BorderSide.none,
       ),
       backgroundColor: isGlassy
-          ? const Color(0xF010141D)
+          ? AppColors.darkSurfaceGlass
           : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
       title: const Row(
         children: [
@@ -495,7 +495,7 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                     if (subjects.isEmpty) {
                       return const Text(
                         'No subjects available. Please create a subject first.',
-                        style: TextStyle(color: Colors.red),
+                        style: TextStyle(color: AppColors.gray400),
                       );
                     }
                     final validSelectedId =
@@ -542,7 +542,7 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                   ),
                   error: (err, _) => Text(
                     'Error loading subjects: $err',
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: AppColors.gray400),
                   ),
                 ),
 
@@ -827,7 +827,7 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
           onPressed: _canSubmit ? _save : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.onPrimary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -838,7 +838,7 @@ class _AddExtraClassDialogState extends ConsumerState<AddExtraClassDialog> {
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.black,
+                    color: AppColors.onPrimary,
                   ),
                 )
               : const Text(

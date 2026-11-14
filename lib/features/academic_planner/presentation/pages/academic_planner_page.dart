@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:attend_iq/core/theme/colors.dart';
-import 'package:attend_iq/features/settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/academic_task.dart';
 import '../controllers/task_controller.dart';
 import '../widgets/add_edit_task_sheet.dart';
@@ -49,7 +48,6 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     final allTasks = _filterTasks(ref.watch(allTasksProvider));
     final todayTasks = _filterTasks(ref.watch(todayTasksProvider));
@@ -58,9 +56,8 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
     final completedTasks = _filterTasks(ref.watch(completedTasksProvider));
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -72,7 +69,9 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
           controller: _tabController,
           isScrollable: true,
           labelColor: AppColors.primary,
-          unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey[600],
+          unselectedLabelColor: isDark
+              ? AppColors.darkTextSecondary
+              : AppColors.lightTextSecondary,
           indicatorColor: AppColors.primary,
           tabs: [
             Tab(text: 'All Tasks (${allTasks.length})'),
@@ -109,7 +108,8 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: isDark ? AppColors.darkSurface : Colors.grey[200],
+                fillColor:
+                    isDark ? AppColors.darkSurface : AppColors.lightSurface,
               ),
               onChanged: (val) {
                 setState(() => _searchQuery = val);
@@ -142,7 +142,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
           );
         },
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary,
         icon: const Icon(Icons.add),
         label: const Text('Add Task'),
       ),
@@ -150,6 +150,7 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
   }
 
   Widget _buildTaskList(List<AcademicTask> tasks, String emptyMessage) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (tasks.isEmpty) {
       return Center(
         child: Padding(
@@ -160,15 +161,17 @@ class _AcademicPlannerPageState extends ConsumerState<AcademicPlannerPage>
               Icon(
                 Icons.assignment_turned_in_outlined,
                 size: 64,
-                color: AppColors.primary.withOpacity(0.4),
+                color: AppColors.gray400.withOpacity(0.4),
               ),
               const SizedBox(height: 16),
               Text(
                 emptyMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15.0,
-                  color: Colors.grey,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
                 ),
               ),
             ],

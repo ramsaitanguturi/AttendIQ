@@ -34,16 +34,22 @@ class GlassBottomSheetContainer extends ConsumerWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              gradient: GlassTokens.surfaceGradient,
+              gradient: isDark
+                  ? GlassTokens.surfaceGradient
+                  : GlassTokens.lightSurfaceGradient,
               borderRadius:
                   BorderRadius.vertical(top: Radius.circular(borderRadius)),
               border: Border.all(
-                color: GlassTokens.silverBorder,
+                color: isDark
+                    ? GlassTokens.silverBorder
+                    : GlassTokens.lightGlassBorder,
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.6),
+                  color: isDark
+                      ? Colors.black.withOpacity(0.6)
+                      : Colors.black.withOpacity(0.08),
                   blurRadius: 30,
                   offset: const Offset(0, -6),
                 ),
@@ -58,10 +64,10 @@ class GlassBottomSheetContainer extends ConsumerWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: AppColors.surface(isDark),
         borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          color: AppColors.border(isDark),
         ),
       ),
       child: child,

@@ -63,7 +63,9 @@ class WeekSelectorWidget extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
                         ),
                         items: semesters.map((sem) {
                           return DropdownMenuItem<Semester>(
@@ -80,7 +82,9 @@ class WeekSelectorWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
                       ),
                     ),
                 ],
@@ -89,15 +93,16 @@ class WeekSelectorWidget extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppColors.gray700.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.darkBorder),
                 ),
                 child: const Text(
                   'Semester View',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.gray200,
                   ),
                 ),
               ),
@@ -114,7 +119,7 @@ class WeekSelectorWidget extends StatelessWidget {
                 icon: const Icon(Icons.chevron_left_rounded),
                 onPressed: currentWeekNumber > 1 ? onPrevWeek : null,
                 color: AppColors.primary,
-                disabledColor: Colors.grey.shade400,
+                disabledColor: AppColors.darkTextDisabled,
                 tooltip: 'Previous Week',
               ),
 
@@ -148,7 +153,7 @@ class WeekSelectorWidget extends StatelessWidget {
                 icon: const Icon(Icons.chevron_right_rounded),
                 onPressed: currentWeekNumber < totalWeeks ? onNextWeek : null,
                 color: AppColors.primary,
-                disabledColor: Colors.grey.shade400,
+                disabledColor: AppColors.darkTextDisabled,
                 tooltip: 'Next Week',
               ),
             ],

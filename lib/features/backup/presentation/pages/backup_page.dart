@@ -515,7 +515,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               child: const Text(
                 'Continue',
                 style: TextStyle(
-                  color: Colors.black,
+                  color: AppColors.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -912,7 +912,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                 _isExporting ? null : _handleExportBackup,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.black,
+                              foregroundColor: AppColors.onPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -1125,7 +1125,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                                         child: Row(
                                           children: [
                                             Icon(Icons.share,
-                                                size: 18, color: Colors.blue),
+                                                size: 18,
+                                                color: AppColors.gray300),
                                             SizedBox(width: 8),
                                             Text('Share'),
                                           ],

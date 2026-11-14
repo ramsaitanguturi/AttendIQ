@@ -57,15 +57,13 @@ class TaskCardWidget extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
         color: isGlassy
-            ? const Color(0xD9141824)
+            ? GlassTokens.smokedGlassSurface
             : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
           color: isCompleted
-              ? (isDark ? Colors.grey[800]! : Colors.grey[300]!)
-              : (isGlassy
-                  ? urgency.color.withOpacity(0.7)
-                  : urgency.color.withOpacity(0.5)),
+              ? (isDark ? AppColors.darkBorder : AppColors.lightBorder)
+              : urgency.color.withOpacity(0.5),
           width: isCompleted ? 1.0 : 1.5,
         ),
         boxShadow: isGlassy
@@ -136,10 +134,10 @@ class TaskCardWidget extends ConsumerWidget {
                                     ? TextDecoration.lineThrough
                                     : null,
                                 color: isCompleted
-                                    ? (isDark
-                                        ? Colors.grey[500]
-                                        : Colors.grey[600])
-                                    : (isDark ? Colors.white : Colors.black87),
+                                    ? AppColors.darkTextDisabled
+                                    : (isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.lightTextPrimary),
                               ),
                             ),
                           ),
@@ -150,8 +148,12 @@ class TaskCardWidget extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: task.priority.color.withOpacity(0.12),
+                              color: task.priority.color.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: task.priority.color.withOpacity(0.3),
+                                width: 0.8,
+                              ),
                             ),
                             child: Text(
                               task.priority.displayName,
@@ -176,21 +178,21 @@ class TaskCardWidget extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: AppColors.gray700.withOpacity(0.4),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(task.taskType.icon,
-                                    size: 12, color: AppColors.primary),
+                                    size: 12, color: AppColors.gray300),
                                 const SizedBox(width: 4),
                                 Text(
                                   task.taskType.displayName,
                                   style: const TextStyle(
                                     fontSize: 11.0,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
+                                    color: AppColors.gray300,
                                   ),
                                 ),
                               ],
@@ -203,7 +205,7 @@ class TaskCardWidget extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.purple.withOpacity(0.1),
+                                color: AppColors.gray700.withOpacity(0.4),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -211,7 +213,7 @@ class TaskCardWidget extends ConsumerWidget {
                                 style: const TextStyle(
                                   fontSize: 11.0,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.purpleAccent,
+                                  color: AppColors.gray200,
                                 ),
                               ),
                             ),
@@ -271,17 +273,24 @@ class TaskCardWidget extends ConsumerWidget {
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: isCompleted
-                                  ? Colors.grey.withOpacity(0.12)
-                                  : urgency.color.withOpacity(0.12),
+                                  ? AppColors.darkBorderSubtle
+                                  : urgency.color.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isCompleted
+                                    ? AppColors.darkBorderSubtle
+                                    : urgency.color.withOpacity(0.35),
+                                width: 0.8,
+                              ),
                             ),
                             child: Text(
                               remainingText,
                               style: TextStyle(
                                 fontSize: 11.0,
                                 fontWeight: FontWeight.bold,
-                                color:
-                                    isCompleted ? Colors.grey : urgency.color,
+                                color: isCompleted
+                                    ? AppColors.darkTextDisabled
+                                    : urgency.color,
                               ),
                             ),
                           ),

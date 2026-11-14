@@ -34,10 +34,11 @@ class GlassScaffold extends ConsumerWidget {
     if (isGlassy) {
       contentBody = Stack(
         children: [
-          // Ambient Smoked Obsidian mesh background
+          // Ambient Smoked/Light Grayscale background
           Positioned.fill(
             child: Container(
-              color: const Color(0xFF0A0C11), // Deep obsidian base
+              color:
+                  isDark ? AppColors.darkBackground : AppColors.lightBackground,
             ),
           ),
           // Soft ambient top-right specular gradient
@@ -51,15 +52,15 @@ class GlassScaffold extends ConsumerWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primary
-                        .withOpacity(0.08), // Emerald specular glow
+                    (isDark ? AppColors.gray100 : AppColors.gray300)
+                        .withOpacity(isDark ? 0.04 : 0.25),
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
           ),
-          // Soft ambient mid-left cyan/silver glow
+          // Soft ambient mid-left neutral silver glow
           Positioned(
             top: 280,
             left: -140,
@@ -70,8 +71,8 @@ class GlassScaffold extends ConsumerWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38BDF8)
-                        .withOpacity(0.05), // Cool cyan/silver ambient
+                    (isDark ? AppColors.gray300 : AppColors.gray200)
+                        .withOpacity(isDark ? 0.03 : 0.35),
                     Colors.transparent,
                   ],
                 ),
@@ -85,9 +86,8 @@ class GlassScaffold extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: appBar,
       body: contentBody,
       floatingActionButton: floatingActionButton,

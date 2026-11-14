@@ -72,7 +72,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[700] : Colors.grey[300],
+                  color: isDark ? AppColors.gray700 : AppColors.gray300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -127,7 +127,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             // Holidays
             if (holidays.isNotEmpty) ...[
               _buildSectionHeader(
-                  context, 'Holidays', Icons.beach_access, Colors.amber),
+                  context, 'Holidays', Icons.beach_access, AppColors.gray400),
               ...holidays.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
@@ -135,7 +135,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             // Exams
             if (exams.isNotEmpty) ...[
               _buildSectionHeader(
-                  context, 'Exams', Icons.assignment_late, Colors.redAccent),
+                  context, 'Exams', Icons.assignment_late, AppColors.gray100),
               ...exams.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
@@ -143,7 +143,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             // Regular Classes & Cancelled Classes (with interactive historical editing)
             if (regularClasses.isNotEmpty || cancelledClasses.isNotEmpty) ...[
               _buildSectionHeader(
-                  context, 'Classes', Icons.class_, Colors.green),
+                  context, 'Classes', Icons.class_, AppColors.gray200),
               ...regularClasses.map((item) => _buildClassItemCard(
                   context, ref, item, activeDayData.date, isDark)),
               ...cancelledClasses.map((item) => _buildClassItemCard(
@@ -154,7 +154,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             // Extra Classes
             if (extraClasses.isNotEmpty) ...[
               _buildSectionHeader(
-                  context, 'Extra Classes', Icons.more_time, Colors.blueAccent),
+                  context, 'Extra Classes', Icons.more_time, AppColors.gray300),
               ...extraClasses.map((item) => _buildClassItemCard(
                   context, ref, item, activeDayData.date, isDark)),
               const SizedBox(height: 16),
@@ -163,7 +163,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             // Events & Deadlines
             if (events.isNotEmpty) ...[
               _buildSectionHeader(context, 'Events & Deadlines', Icons.event,
-                  Colors.purpleAccent),
+                  AppColors.gray400),
               ...events.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
@@ -171,7 +171,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             // Academic Tasks
             if (tasks.isNotEmpty) ...[
               _buildSectionHeader(context, 'Tasks & Submissions',
-                  Icons.task_alt, Colors.orange),
+                  Icons.task_alt, AppColors.gray500),
               ...tasks.map((item) => _buildItemTile(context, item, isDark)),
               const SizedBox(height: 16),
             ],
@@ -215,9 +215,14 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               children: [
                 ActionChip(
                   avatar: const Icon(Icons.add_task,
-                      size: 16, color: Colors.orange),
+                      size: 16, color: AppColors.gray200),
                   label: const Text('+ Add Task'),
-                  backgroundColor: Colors.orange.withOpacity(0.1),
+                  backgroundColor:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder),
                   onPressed: () {
                     Navigator.of(context).pop();
                     showModalBottomSheet<void>(
@@ -231,17 +236,27 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                 ),
                 ActionChip(
                   avatar: const Icon(Icons.event,
-                      size: 16, color: Colors.purpleAccent),
+                      size: 16, color: AppColors.gray200),
                   label: const Text('+ Add Event'),
-                  backgroundColor: Colors.purple.withOpacity(0.1),
+                  backgroundColor:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder),
                   onPressed: () => _showAddEventDialog(
                       context, ref, dayData.date, AcademicEventType.EVENT),
                 ),
                 ActionChip(
                   avatar: const Icon(Icons.add_alarm,
-                      size: 16, color: Colors.blueAccent),
+                      size: 16, color: AppColors.gray200),
                   label: const Text('+ Add Extra Class'),
-                  backgroundColor: Colors.blue.withOpacity(0.1),
+                  backgroundColor:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder),
                   onPressed: () async {
                     final saved = await AddExtraClassDialog.show(
                       context,
@@ -254,17 +269,27 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                 ),
                 ActionChip(
                   avatar: const Icon(Icons.beach_access,
-                      size: 16, color: Colors.amber),
+                      size: 16, color: AppColors.gray200),
                   label: const Text('+ Add Holiday'),
-                  backgroundColor: Colors.amber.withOpacity(0.1),
+                  backgroundColor:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder),
                   onPressed: () =>
                       _showAddHolidayDialog(context, ref, dayData.date),
                 ),
                 ActionChip(
                   avatar: const Icon(Icons.assignment,
-                      size: 16, color: Colors.redAccent),
+                      size: 16, color: AppColors.gray200),
                   label: const Text('+ Add Exam'),
-                  backgroundColor: Colors.red.withOpacity(0.1),
+                  backgroundColor:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder),
                   onPressed: () => _showAddEventDialog(
                       context, ref, dayData.date, AcademicEventType.EXAM),
                 ),
@@ -402,19 +427,19 @@ class DateDetailsBottomSheet extends ConsumerWidget {
     Color statusColor;
     String statusLabel;
     if (isPresent) {
-      statusColor = const Color(0xFF4CAF50);
+      statusColor = AppColors.present;
       statusLabel = 'PRESENT';
     } else if (isAbsent) {
-      statusColor = const Color(0xFFEF5350);
+      statusColor = AppColors.absent;
       statusLabel = 'ABSENT';
     } else if (isLate) {
-      statusColor = const Color(0xFFFFB300);
+      statusColor = AppColors.late;
       statusLabel = 'LATE';
     } else if (isCancelled) {
-      statusColor = const Color(0xFF9E9E9E);
+      statusColor = AppColors.cancelled;
       statusLabel = 'CANCELLED';
     } else {
-      statusColor = const Color(0xFF90A4AE);
+      statusColor = AppColors.gray500;
       statusLabel = 'UNMARKED';
     }
 
@@ -426,12 +451,11 @@ class DateDetailsBottomSheet extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 10.0),
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF16161D) : AppColors.lightBackground,
+        color: isDark ? AppColors.darkSurface : AppColors.lightBackground,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.08)
-              : Colors.black.withOpacity(0.08),
+          color:
+              isDark ? AppColors.darkBorderSubtle : AppColors.lightBorderSubtle,
         ),
       ),
       child: Column(
@@ -524,7 +548,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               _buildAttendanceButton(
                 label: 'Present',
                 isSelected: isPresent,
-                activeColor: const Color(0xFF4CAF50),
+                activeColor: AppColors.present,
                 onTap: item.subjectId == null
                     ? null
                     : () => _updateAttendance(
@@ -540,7 +564,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                 _buildAttendanceButton(
                   label: 'Late',
                   isSelected: isLate,
-                  activeColor: const Color(0xFFFFB300),
+                  activeColor: AppColors.late,
                   onTap: item.subjectId == null
                       ? null
                       : () => _updateAttendance(
@@ -556,7 +580,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               _buildAttendanceButton(
                 label: 'Absent',
                 isSelected: isAbsent,
-                activeColor: const Color(0xFFEF5350),
+                activeColor: AppColors.absent,
                 onTap: item.subjectId == null
                     ? null
                     : () => _updateAttendance(
@@ -571,7 +595,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
               _buildAttendanceButton(
                 label: 'Cancel',
                 isSelected: isCancelled,
-                activeColor: const Color(0xFF9E9E9E),
+                activeColor: AppColors.cancelled,
                 onTap: item.subjectId == null
                     ? null
                     : () => _updateAttendance(
@@ -586,7 +610,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                 const SizedBox(width: 4),
                 IconButton(
                   tooltip: 'Reset to unmarked',
-                  icon: const Icon(Icons.undo, size: 16, color: Colors.grey),
+                  icon: const Icon(Icons.undo,
+                      size: 16, color: AppColors.gray500),
                   onPressed: item.subjectId == null
                       ? null
                       : () => _updateAttendance(
@@ -622,7 +647,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                 isSelected ? activeColor.withOpacity(0.2) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? activeColor : Colors.grey.withOpacity(0.3),
+              color: isSelected ? activeColor : AppColors.gray600,
               width: isSelected ? 1.5 : 1.0,
             ),
           ),
@@ -632,7 +657,7 @@ class DateDetailsBottomSheet extends ConsumerWidget {
             style: TextStyle(
               fontSize: 12.0,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? activeColor : Colors.grey,
+              color: isSelected ? activeColor : AppColors.gray500,
             ),
           ),
         ),
@@ -798,7 +823,8 @@ class DateDetailsBottomSheet extends ConsumerWidget {
                   const SizedBox(height: 6),
                   Text(
                     timeError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                    style:
+                        const TextStyle(color: AppColors.gray400, fontSize: 12),
                   ),
                 ],
                 const SizedBox(height: 12),

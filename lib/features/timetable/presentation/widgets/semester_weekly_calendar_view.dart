@@ -274,7 +274,7 @@ class _WeekPageViewState extends ConsumerState<_WeekPageView> {
                 error: (e, s) => Center(
                   child: Text(
                     'Error loading timetable: $e',
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: AppColors.gray400),
                   ),
                 ),
               );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:attend_iq/core/theme/colors.dart';
+import 'package:attend_iq/core/theme/glass/glass_theme_tokens.dart';
 import 'package:attend_iq/features/subject/presentation/controllers/subject_controller.dart';
 import 'package:attend_iq/features/settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/academic_task.dart';
@@ -135,7 +136,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Start date cannot be after due date.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.darkSurface,
         ),
       );
       return;
@@ -178,7 +179,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save task: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.darkSurface,
           ),
         );
       }
@@ -210,11 +211,11 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
       ),
       decoration: isGlassy
           ? BoxDecoration(
-              color: const Color(0xF010141D),
+              color: GlassTokens.smokedGlassSheet,
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(24.0)),
               border: Border.all(
-                color: const Color(0x3DE2E8F0),
+                color: GlassTokens.silverBorder,
               ),
               boxShadow: [
                 BoxShadow(
@@ -242,7 +243,8 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[700] : Colors.grey[300],
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -263,7 +265,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   if (isEditing)
                     IconButton(
                       icon: const Icon(Icons.delete_outline,
-                          color: Colors.redAccent),
+                          color: AppColors.gray500),
                       onPressed: _deleteTask,
                     )
                   else
@@ -496,7 +498,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.onPrimary,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -509,7 +511,7 @@ class _AddEditTaskSheetState extends ConsumerState<AddEditTaskSheet> {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppColors.onPrimary,
                             ),
                           )
                         : Icon(isEditing ? Icons.save : Icons.add),

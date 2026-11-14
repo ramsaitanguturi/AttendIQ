@@ -236,8 +236,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                               '${index + 1}',
                               style: TextStyle(
                                 color: isCurrent
-                                    ? Colors.black
-                                    : (isDark ? Colors.white : Colors.black),
+                                    ? AppColors.onPrimary
+                                    : (isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.lightTextPrimary),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -302,7 +304,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         : (_currentStep == 2 ? _finishSetup : _nextStep),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
+                      foregroundColor: AppColors.onPrimary,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32.0,
                         vertical: 16.0,
@@ -317,7 +319,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                             height: 20.0,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.0,
-                              color: Colors.black,
+                              color: AppColors.onPrimary,
                             ),
                           )
                         : Text(
@@ -541,7 +543,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               overlayColor: AppColors.primary.withOpacity(0.2),
               valueIndicatorColor: AppColors.primary,
               valueIndicatorTextStyle: const TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.bold),
+                  color: AppColors.onPrimary, fontWeight: FontWeight.bold),
             ),
             child: Slider(
               value: _requiredAttendanceRate,

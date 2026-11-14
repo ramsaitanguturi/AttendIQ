@@ -173,11 +173,11 @@ class WidgetSettingsPage extends ConsumerWidget {
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.15),
+                          color: isDark ? AppColors.gray800 : AppColors.gray200,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.calendar_month,
-                            color: Colors.purple),
+                            color: AppColors.gray300),
                       ),
                       title: const Text('ACEDRA - Month',
                           style: TextStyle(fontWeight: FontWeight.bold)),
@@ -195,15 +195,16 @@ class WidgetSettingsPage extends ConsumerWidget {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  icon: const Icon(Icons.refresh, color: AppColors.onPrimary),
                   label: const Text(
                     'Refresh Widgets Now',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.onPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 16),
                   ),

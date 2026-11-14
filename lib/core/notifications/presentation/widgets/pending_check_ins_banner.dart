@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../features/timetable/domain/entities/daily_schedule_occurrence.dart';
+import '../../../../features/settings/presentation/controllers/settings_controller.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/glass/glass_theme_tokens.dart';
 import '../../services/pending_check_in_service.dart';
 
 class PendingCheckInsBanner extends ConsumerWidget {
@@ -13,6 +15,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pendingAsync = ref.watch(pendingCheckInsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isGlassy = ref.watch(isGlassyThemeEnabledProvider);
 
     return pendingAsync.when(
       data: (items) {
@@ -20,21 +23,28 @@ class PendingCheckInsBanner extends ConsumerWidget {
 
         return Container(
           margin: const EdgeInsets.only(bottom: 16.0),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF16161F) : const Color(0xFFF7F7FA),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.amber.withOpacity(0.3),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
+          decoration: isGlassy
+              ? GlassTokens.glassBoxDecoration(
+                  isDark: isDark,
+                  borderRadius: 16.0,
+                )
+              : BoxDecoration(
+                  color:
+                      isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.15 : 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -46,12 +56,12 @@ class PendingCheckInsBanner extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.15),
+                        color: isDark ? AppColors.gray700 : AppColors.gray200,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.pending_actions,
-                        color: Colors.amber,
+                        color: isDark ? AppColors.gray100 : AppColors.gray900,
                         size: 20,
                       ),
                     ),
@@ -76,13 +86,17 @@ class PendingCheckInsBanner extends ConsumerWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.amber,
+                                  color: isDark
+                                      ? AppColors.primary
+                                      : AppColors.gray900,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   '${items.length}',
-                                  style: const TextStyle(
-                                    color: Colors.black,
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppColors.onPrimary
+                                        : AppColors.gray100,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -154,7 +168,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Present',
-                              color: const Color(0xFF4CAF50),
+                              color: AppColors.present,
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -165,7 +179,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Late',
-                              color: const Color(0xFFFFB300),
+                              color: AppColors.late,
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -176,7 +190,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Absent',
-                              color: const Color(0xFFEF5350),
+                              color: AppColors.absent,
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -187,7 +201,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                             _buildQuickButton(
                               context,
                               label: 'Cancel',
-                              color: const Color(0xFF9E9E9E),
+                              color: AppColors.cancelled,
                               onPressed: () => _resolveItem(
                                 ref,
                                 item,
@@ -210,7 +224,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
                       '+ ${items.length - 3} more pending classes in Calendar',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.amber,
+                        color: AppColors.gray400,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -232,6 +246,12 @@ class PendingCheckInsBanner extends ConsumerWidget {
     required Color color,
     required VoidCallback onPressed,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor =
+        (!isDark && color.computeLuminance() > 0.6) ? AppColors.gray900 : color;
+    final borderColor =
+        (!isDark && color.computeLuminance() > 0.6) ? AppColors.gray700 : color;
+
     return Expanded(
       child: InkWell(
         onTap: onPressed,
@@ -239,9 +259,9 @@ class PendingCheckInsBanner extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withOpacity(isDark ? 0.12 : 0.08),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: color.withOpacity(0.35)),
+            border: Border.all(color: borderColor.withOpacity(0.35)),
           ),
           alignment: Alignment.center,
           child: Text(
@@ -249,7 +269,7 @@ class PendingCheckInsBanner extends ConsumerWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: textColor,
             ),
           ),
         ),

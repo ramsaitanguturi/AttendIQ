@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/colors.dart';
 
 enum TaskType {
   MID_SEM,
@@ -83,13 +84,13 @@ enum TaskPriority {
   Color get color {
     switch (this) {
       case TaskPriority.LOW:
-        return Colors.blue;
+        return AppColors.gray500;
       case TaskPriority.MEDIUM:
-        return Colors.green;
+        return AppColors.gray400;
       case TaskPriority.HIGH:
-        return Colors.orange;
+        return AppColors.gray200;
       case TaskPriority.CRITICAL:
-        return Colors.red;
+        return AppColors.gray100;
     }
   }
 
@@ -221,13 +222,13 @@ enum TaskUrgency {
   Color get color {
     switch (this) {
       case TaskUrgency.NORMAL:
-        return Colors.green;
+        return AppColors.gray500;
       case TaskUrgency.WARNING:
-        return Colors.amber;
+        return AppColors.gray400;
       case TaskUrgency.URGENT:
-        return Colors.orange;
+        return AppColors.gray200;
       case TaskUrgency.OVERDUE:
-        return Colors.red;
+        return AppColors.gray100;
     }
   }
 

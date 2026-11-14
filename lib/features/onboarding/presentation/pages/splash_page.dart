@@ -25,8 +25,8 @@ class SplashPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28.0),
                 border: Border.all(
                   color: isDark
-                      ? const Color(0x33E2E8F0)
-                      : Colors.black.withOpacity(0.08),
+                      ? AppColors.darkBorderSubtle
+                      : AppColors.lightBorderSubtle,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -40,21 +40,24 @@ class SplashPage extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Column(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AcedraLogo(
                     size: 80.0,
                     showWordmark: true,
                     spacing: 16.0,
+                    isDark: isDark,
                   ),
-                  SizedBox(height: 6.0),
+                  const SizedBox(height: 6.0),
                   Text(
                     'Academic & Attendance Intelligence',
                     style: TextStyle(
                       fontSize: 12.0,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.darkTextSecondary,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                       letterSpacing: 0.5,
                     ),
                   ),

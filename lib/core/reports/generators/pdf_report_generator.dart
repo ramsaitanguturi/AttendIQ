@@ -76,8 +76,8 @@ class PdfReportGenerator {
                               fontWeight: pw.FontWeight.bold,
                               color: report.overallPercentage >=
                                       report.targetPercentage
-                                  ? PdfColors.green
-                                  : PdfColors.red,
+                                  ? PdfColor.fromHex('#212529')
+                                  : PdfColor.fromHex('#495057'),
                             ),
                           ),
                           pw.Text('Overall Attendance'),
@@ -177,7 +177,8 @@ class PdfReportGenerator {
         pw.Text(
           'Status: Excellent! All subjects are in the safe zone.',
           style: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold, color: PdfColors.green),
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColor.fromHex('#212529')),
         )
       ];
     }
@@ -192,7 +193,8 @@ class PdfReportGenerator {
         pw.Text(
           'Critical Subjects (Below Target):',
           style: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold, color: PdfColors.red),
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColor.fromHex('#495057')),
         ),
       );
       for (final sub in criticalSubjects) {
@@ -206,8 +208,8 @@ class PdfReportGenerator {
                   width: 4,
                   height: 4,
                   margin: const pw.EdgeInsets.only(right: 6, left: 2),
-                  decoration: const pw.BoxDecoration(
-                    color: PdfColors.red,
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromHex('#495057'),
                     shape: pw.BoxShape.circle,
                   ),
                 ),
@@ -226,7 +228,8 @@ class PdfReportGenerator {
         pw.Text(
           'Warning Subjects (Near Threshold):',
           style: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold, color: PdfColors.orange),
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColor.fromHex('#6C757D')),
         ),
       );
       for (final sub in warningSubjects) {
@@ -240,8 +243,8 @@ class PdfReportGenerator {
                   width: 4,
                   height: 4,
                   margin: const pw.EdgeInsets.only(right: 6, left: 2),
-                  decoration: const pw.BoxDecoration(
-                    color: PdfColors.orange,
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromHex('#6C757D'),
                     shape: pw.BoxShape.circle,
                   ),
                 ),

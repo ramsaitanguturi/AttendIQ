@@ -63,9 +63,8 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
     });
 
     return Scaffold(
-      backgroundColor: isGlassy
-          ? const Color(0xFF0A0C11)
-          : (isDark ? AppColors.darkBackground : AppColors.lightBackground),
+      backgroundColor:
+          isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -74,19 +73,13 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.15),
+                color: isDark ? AppColors.gray800 : AppColors.gray200,
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.deepPurpleAccent.withOpacity(0.2),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  )
-                ],
+                border: Border.all(color: AppColors.silverBorder),
               ),
               child: const Icon(
                 Icons.auto_awesome,
-                color: Colors.deepPurpleAccent,
+                color: AppColors.primary,
                 size: 20,
               ),
             ),
@@ -114,7 +107,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                   loading: () => const Text('Initializing...',
                       style: TextStyle(fontSize: 11, color: Colors.grey)),
                   error: (_, __) => const Text('Error',
-                      style: TextStyle(fontSize: 11, color: Colors.red)),
+                      style: TextStyle(fontSize: 11, color: AppColors.gray400)),
                 ),
               ],
             ),
@@ -254,14 +247,14 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                                 fontSize: 12, fontWeight: FontWeight.w600),
                           ),
                           backgroundColor: isGlassy
-                              ? const Color(0xB8141822)
+                              ? AppColors.darkSurfaceGlass
                               : (isDark
                                   ? AppColors.darkSurface
                                   : AppColors.lightSurface),
                           surfaceTintColor: Colors.transparent,
                           side: BorderSide(
                             color: isGlassy
-                                ? const Color(0x38E2E8F0)
+                                ? AppColors.silverBorder
                                 : (isDark
                                     ? AppColors.darkBorder
                                     : AppColors.lightBorder),
@@ -285,7 +278,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: Colors.deepPurpleAccent),
+              CircularProgressIndicator(color: AppColors.primary),
               SizedBox(height: 16),
               Text('Warming up advisor system...'),
             ],
@@ -314,11 +307,12 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.12),
+                color: isDark ? AppColors.gray800 : AppColors.gray200,
                 shape: BoxShape.circle,
+                border: Border.all(color: AppColors.silverBorderSubtle),
               ),
               child: const Icon(Icons.auto_awesome,
-                  size: 14, color: Colors.deepPurpleAccent),
+                  size: 14, color: AppColors.gray200),
             ),
             const SizedBox(width: 8),
           ],
@@ -332,9 +326,9 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: isUser
-                        ? Colors.deepPurpleAccent
+                        ? AppColors.primary
                         : (isGlassy
-                            ? const Color(0xD9141824)
+                            ? AppColors.darkSurfaceGlass
                             : (isDark
                                 ? AppColors.darkSurface
                                 : AppColors.lightSurface)),
@@ -348,7 +342,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                         ? null
                         : Border.all(
                             color: isGlassy
-                                ? const Color(0x38E2E8F0)
+                                ? AppColors.silverBorder
                                 : (isDark
                                     ? AppColors.darkBorder
                                     : AppColors.lightBorder)),
@@ -367,7 +361,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                     style: TextStyle(
                       fontSize: 14.0,
                       color: isUser
-                          ? Colors.black
+                          ? AppColors.onPrimary
                           : (isDark
                               ? AppColors.darkTextPrimary
                               : AppColors.lightTextPrimary),
@@ -417,14 +411,14 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isGlassy
-                            ? const Color(0xD9141824)
+                            ? AppColors.darkSurfaceGlass
                             : (isDark
                                 ? AppColors.darkSurface
                                 : AppColors.lightSurface),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isGlassy
-                              ? const Color(0x38E2E8F0)
+                              ? AppColors.silverBorder
                               : (isDark
                                   ? AppColors.darkBorder
                                   : AppColors.lightBorder),
@@ -505,7 +499,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isGlassy
-            ? const Color(0xD9141824)
+            ? AppColors.darkSurfaceGlass
             : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
@@ -515,7 +509,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
         ),
         border: Border.all(
             color: isGlassy
-                ? const Color(0x38E2E8F0)
+                ? AppColors.silverBorder
                 : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
       ),
       child: const Row(
@@ -531,7 +525,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
             width: 12,
             height: 12,
             child: CircularProgressIndicator(
-                strokeWidth: 2, color: Colors.deepPurpleAccent),
+                strokeWidth: 2, color: AppColors.primary),
           ),
         ],
       ),
@@ -543,12 +537,12 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isGlassy
-            ? const Color(0xD910141D)
+            ? AppColors.darkSurfaceGlass
             : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
         border: Border(
           top: BorderSide(
               color: isGlassy
-                  ? const Color(0x38E2E8F0)
+                  ? AppColors.silverBorder
                   : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
         ),
       ),
@@ -559,14 +553,14 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
               child: Container(
                 decoration: BoxDecoration(
                   color: isGlassy
-                      ? const Color(0xB8141822)
+                      ? AppColors.darkSurfaceGlass
                       : (isDark
                           ? AppColors.darkBackground
                           : AppColors.lightBackground),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: isGlassy
-                        ? const Color(0x38E2E8F0)
+                        ? AppColors.silverBorder
                         : (isDark
                             ? AppColors.darkBorder
                             : AppColors.lightBorder),
@@ -591,11 +585,12 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
             const SizedBox(width: 8),
             Container(
               decoration: const BoxDecoration(
-                color: Colors.deepPurpleAccent,
+                color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.black, size: 20),
+                icon: const Icon(Icons.send,
+                    color: AppColors.onPrimary, size: 20),
                 onPressed: isLoading
                     ? null
                     : () => _handleSubmit(_textController.text),

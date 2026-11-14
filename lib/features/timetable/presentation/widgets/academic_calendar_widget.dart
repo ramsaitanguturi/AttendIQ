@@ -222,12 +222,15 @@ class AcademicCalendarWidget extends ConsumerWidget {
       BuildContext context, CalendarDayData dayData, bool isDark) {
     final isDisabled = !dayData.isInSemesterRange;
 
-    Color textColor = isDark ? Colors.white : Colors.black87;
+    Color textColor =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     if (!dayData.isCurrentMonth) {
-      textColor = isDark ? Colors.white30 : Colors.black26;
+      textColor = isDark
+          ? AppColors.darkTextSecondary.withOpacity(0.5)
+          : AppColors.lightTextSecondary.withOpacity(0.5);
     }
     if (isDisabled) {
-      textColor = isDark ? Colors.white24 : Colors.black26;
+      textColor = AppColors.darkTextDisabled;
     }
 
     return InkWell(
@@ -247,8 +250,8 @@ class AcademicCalendarWidget extends ConsumerWidget {
           color: dayData.isToday
               ? AppColors.primary.withOpacity(0.15)
               : (isDark
-                  ? Colors.white.withOpacity(0.02)
-                  : Colors.black.withOpacity(0.02)),
+                  ? AppColors.gray100.withOpacity(0.03)
+                  : AppColors.gray900.withOpacity(0.03)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: dayData.isToday
@@ -271,22 +274,22 @@ class AcademicCalendarWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 3),
 
-            // Indicator Dots Row: 🟢 Class, 🔴 Exam, 🟠 Task Deadline, 🟡 Holiday, 🔵 Extra Class, 🟣 Event
+            // Indicator Dots Row (Monochromatic tones)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (dayData.hasRegularClass && !isDisabled)
-                  _buildDot(const Color(0xFF66BB6A)),
+                  _buildDot(AppColors.gray100),
                 if (dayData.hasExam && !isDisabled)
-                  _buildDot(const Color(0xFFEF5350)),
+                  _buildDot(AppColors.gray600),
                 if (dayData.hasTask && !isDisabled)
-                  _buildDot(const Color(0xFFFF9800)),
+                  _buildDot(AppColors.gray400),
                 if (dayData.hasHoliday && !isDisabled)
-                  _buildDot(const Color(0xFFFFCA28)),
+                  _buildDot(AppColors.gray200),
                 if (dayData.hasExtraClass && !isDisabled)
-                  _buildDot(const Color(0xFF42A5F5)),
+                  _buildDot(AppColors.gray300),
                 if (dayData.hasEvent && !isDisabled)
-                  _buildDot(const Color(0xFFAB47BC)),
+                  _buildDot(AppColors.gray500),
               ],
             ),
           ],

@@ -10,6 +10,7 @@ import '../../../semester/presentation/widgets/semester_management_sheet.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../subject/presentation/controllers/subject_controller.dart';
 import '../../../attendance/presentation/controllers/subject_attendance_stats_provider.dart';
+import '../../../../core/widgets/acedra_floating_bottom_bar.dart';
 
 class AccountPage extends ConsumerWidget {
   const AccountPage({super.key});
@@ -38,11 +39,12 @@ class AccountPage extends ConsumerWidget {
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(
+        padding: EdgeInsets.only(
           left: 20.0,
           right: 20.0,
           top: 8.0,
-          bottom: 120.0, // generous bottom padding for floating bar
+          bottom: AcedraFloatingBottomBar.contentBottomPadding(context,
+              additionalClearance: 44.0),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +93,7 @@ class AccountPage extends ConsumerWidget {
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.task_alt_rounded,
-                  iconColor: Colors.amberAccent,
+                  iconColor: AppColors.gray300,
                   title: 'Academic Planner',
                   subtitle: 'Assignments, exams, and academic tasks',
                   onTap: () => context.push('/planner'),
@@ -101,7 +103,7 @@ class AccountPage extends ConsumerWidget {
                   _buildDivider(isDark),
                   _buildMenuItem(
                     icon: Icons.auto_awesome_rounded,
-                    iconColor: Colors.purpleAccent,
+                    iconColor: AppColors.gray400,
                     title: 'AI Attendance Advisor',
                     subtitle:
                         'Intelligent schedule advice & attendance insights',
@@ -112,7 +114,7 @@ class AccountPage extends ConsumerWidget {
                 _buildDivider(isDark),
                 _buildMenuItem(
                   icon: Icons.widgets_rounded,
-                  iconColor: Colors.tealAccent,
+                  iconColor: AppColors.gray300,
                   title: 'Home Screen Widgets',
                   subtitle: 'Live timetable and attendance widgets',
                   onTap: () => context.push('/widget-settings'),
@@ -209,11 +211,12 @@ class AccountPage extends ConsumerWidget {
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         color: isGlassy
-            ? const Color(0xB8141822)
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+            ? AppColors.surfaceGlass(isDark)
+            : AppColors.surface(isDark),
         borderRadius: BorderRadius.circular(22.0),
         border: Border.all(
-          color: isDark ? const Color(0x33E2E8F0) : const Color(0xFFE2E8F0),
+          color:
+              isDark ? AppColors.darkBorderSubtle : AppColors.lightBorderSubtle,
         ),
         boxShadow: [
           BoxShadow(
@@ -309,11 +312,12 @@ class AccountPage extends ConsumerWidget {
       padding: const EdgeInsets.all(18.0),
       decoration: BoxDecoration(
         color: isGlassy
-            ? const Color(0xB8141822)
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+            ? AppColors.surfaceGlass(isDark)
+            : AppColors.surface(isDark),
         borderRadius: BorderRadius.circular(18.0),
         border: Border.all(
-          color: isDark ? const Color(0x28E2E8F0) : const Color(0xFFE2E8F0),
+          color:
+              isDark ? AppColors.darkBorderSubtle : AppColors.lightBorderSubtle,
         ),
       ),
       child: Column(
@@ -367,7 +371,7 @@ class AccountPage extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     side: BorderSide(
                       color:
-                          isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                          isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     ),
                   ),
                 ),
@@ -381,7 +385,8 @@ class AccountPage extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   side: BorderSide(
-                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                    color:
+                        isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   ),
                 ),
               ),
@@ -400,11 +405,12 @@ class AccountPage extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: isGlassy
-            ? const Color(0xB8141822)
-            : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+            ? AppColors.surfaceGlass(isDark)
+            : AppColors.surface(isDark),
         borderRadius: BorderRadius.circular(18.0),
         border: Border.all(
-          color: isDark ? const Color(0x28E2E8F0) : const Color(0xFFE2E8F0),
+          color:
+              isDark ? AppColors.darkBorderSubtle : AppColors.lightBorderSubtle,
         ),
       ),
       child: Column(children: children),

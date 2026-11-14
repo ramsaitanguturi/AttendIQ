@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import '../colors.dart';
 
-/// Centralized tokens for ACEDRA's Dark Smoked Glass & Silver Reflection Design System.
+/// Centralized tokens for ACEDRA's Smoked Glass & Silver Reflection Design System.
+///
+/// Built strictly from the official 9-color monochromatic palette:
+/// #f8f9fa, #e9ecef, #dee2e6, #ced4da, #adb5bd, #6c757d, #495057, #343a40, #212529.
 class GlassTokens {
   GlassTokens._();
 
@@ -8,25 +12,38 @@ class GlassTokens {
   static const double blurSigma = 12.0;
   static const double subtleBlurSigma = 8.0;
 
-  // Smoked Glass Colors
-  static const Color smokedGlassBg = Color(0xB80E1118);
-  static const Color smokedGlassSurface = Color(0xD9141824);
-  static const Color smokedGlassElevated = Color(0xEA1A202E);
-  static const Color smokedGlassSheet = Color(0xF210131C);
+  // Smoked Glass Surfaces (Dark mode: Strictly #212529, #343a40, #495057 opacities)
+  static const Color smokedGlassBg = Color(0xD9212529); // #212529 @ 85%
+  static const Color smokedGlassSurface = Color(0xD9343A40); // #343a40 @ 85%
+  static const Color smokedGlassElevated = Color(0xEA495057); // #495057 @ 92%
+  static const Color smokedGlassSheet = Color(0xF2212529); // #212529 @ 95%
 
-  // Silver Reflection Highlights & Borders
-  static const Color silverGleam = Color(0xFFE2E8F0);
-  static const Color silverBorder = Color(0x38E2E8F0);
-  static const Color silverBorderSubtle = Color(0x1FE2E8F0);
-  static const Color silverBorderBright = Color(0x5AE2E8F0);
+  // Light Glass Surfaces (Light mode: Strictly #f8f9fa, #e9ecef opacities)
+  static const Color lightGlassBg = Color(0xD9F8F9FA); // #f8f9fa @ 85%
+  static const Color lightGlassSurface = Color(0xD9F8F9FA); // #f8f9fa @ 85%
+  static const Color lightGlassElevated = Color(0xEAE9ECEF); // #e9ecef @ 92%
+  static const Color lightGlassSheet = Color(0xF2F8F9FA); // #f8f9fa @ 95%
 
-  // Gradient definitions
+  // Silver Reflection Highlights & Borders (Strictly #f8f9fa, #dee2e6, #ced4da opacities)
+  static const Color silverGleam = AppColors.gray100; // #f8f9fa
+  static const Color silverBorder = Color(0x38DEE2E6); // #dee2e6 @ 22%
+  static const Color silverBorderSubtle = Color(0x1FDEE2E6); // #dee2e6 @ 12%
+  static const Color silverBorderBright = Color(0x5AF8F9FA); // #f8f9fa @ 35%
+
+  // Light Glass Borders
+  static const Color lightGlassBorder = Color(0x50CED4DA); // #ced4da @ 31%
+  static const Color lightGlassBorderSubtle =
+      Color(0x28CED4DA); // #ced4da @ 16%
+  static const Color lightGlassBorderBright =
+      Color(0x80CED4DA); // #ced4da @ 50%
+
+  // Grayscale Gradients (Dark)
   static const LinearGradient surfaceGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xD9181D29), // Smoked dark obsidian with slight metallic tint
-      Color(0xB80E121A), // Translucent depth
+      Color(0xD9343A40), // Smoked gray800
+      Color(0xB8212529), // Translucent depth gray900
     ],
   );
 
@@ -34,8 +51,27 @@ class GlassTokens {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xEA1E2433),
-      Color(0xD9121622),
+      Color(0xEA495057), // Elevated gray700
+      Color(0xD9343A40), // Grounded gray800
+    ],
+  );
+
+  // Grayscale Gradients (Light)
+  static const LinearGradient lightSurfaceGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xE6F8F9FA), // Luminous near-white gray100
+      Color(0xD4E9ECEF), // Translucent light silver gray200
+    ],
+  );
+
+  static const LinearGradient lightElevatedSurfaceGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xEAE9ECEF), // Elevated light silver gray200
+      Color(0xD9DEE2E6), // Grounded silver gray300
     ],
   );
 
@@ -43,38 +79,63 @@ class GlassTokens {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0x5CE2E8F0), // Top-left specular silver reflection
-      Color(0x14E2E8F0), // Bottom-right shadow drop
+      Color(0x5CF8F9FA), // Top-left specular near-white reflection
+      Color(0x14F8F9FA), // Bottom-right shadow drop
     ],
   );
 
   // Shadows
-  static List<BoxShadow> cardShadows({bool isGlassy = true}) {
+  static List<BoxShadow> cardShadows({
+    bool isGlassy = true,
+    bool isDark = true,
+  }) {
     if (!isGlassy) {
-      return [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ];
+      return isDark
+          ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ]
+          : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ];
     }
-    return [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.4),
-        blurRadius: 20,
-        offset: const Offset(0, 8),
-      ),
-      BoxShadow(
-        color: const Color(0xFFE2E8F0).withOpacity(0.03),
-        blurRadius: 2,
-        offset: const Offset(0, 1),
-      ),
-    ];
+    return isDark
+        ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.45),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: AppColors.gray100.withOpacity(0.04),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ]
+        : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppColors.gray400.withOpacity(0.12),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ];
   }
 
   static BoxDecoration glassBoxDecoration({
     dynamic borderRadius = 20.0,
+    bool isDark = true,
     bool isElevated = false,
     Color? customBorderColor,
     Color? borderColor,
@@ -83,17 +144,21 @@ class GlassTokens {
     final BorderRadiusGeometry radius = borderRadius is BorderRadiusGeometry
         ? borderRadius
         : BorderRadius.circular((borderRadius as num).toDouble());
+
+    final defaultBorder = isDark ? silverBorder : lightGlassBorder;
+    final gradient = isDark
+        ? (isElevated ? elevatedSurfaceGradient : surfaceGradient)
+        : (isElevated ? lightElevatedSurfaceGradient : lightSurfaceGradient);
+
     return BoxDecoration(
       color: fillColor,
-      gradient: fillColor != null
-          ? null
-          : (isElevated ? elevatedSurfaceGradient : surfaceGradient),
+      gradient: fillColor != null ? null : gradient,
       borderRadius: radius,
       border: Border.all(
-        color: customBorderColor ?? borderColor ?? silverBorder,
+        color: customBorderColor ?? borderColor ?? defaultBorder,
         width: 1.1,
       ),
-      boxShadow: cardShadows(isGlassy: true),
+      boxShadow: cardShadows(isGlassy: true, isDark: isDark),
     );
   }
 }
